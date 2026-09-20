@@ -59,6 +59,30 @@ export default function EnvoyPanel({ wallet }: { wallet: WalletState }) {
     void refresh();
   }, [refresh, wallet.address]);
 
+  /** Insert or replace one mandate card (soroban mode has no list view) */
+  const upsert = useCallback((m: Mandate) => {
+    setMandates((cur) => [m, ...cur.filter((x) => x.id !== m.id)]);
+  }, []);
+
+  /** After create: mock re-lists from the store; soroban reads the fresh record */
+  const onMandateCreated = useCallback(
+    (id: bigint) => {
+      void (async () => {
+        if (IS_MOCK) {
+          await refresh();
+          return;
+        }
+        try {
+          const m = await getClient().get_mandate(id);
+          if (m) upsert(m);
+        } catch {
+          /* the grant notice is already shown; the card can be loaded by id */
+        }
+      })();
+    },
+    [refresh, upsert],
+  );
+
   useEffect(() => {
     try {
       const s = window.sessionStorage.getItem("agyion.agentSecret");
@@ -102,15 +126,13 @@ export default function EnvoyPanel({ wallet }: { wallet: WalletState }) {
             wallet={wallet}
             agentPub={agentPub}
             generateAgent={generateAgent}
-            onCreated={() => void refresh()}
+            onCreated={onMandateCreated}
             setError={setError}
             setNotice={setNotice}
           />
         </div>
         <div className="space-y-8 lg:col-span-7">
-          {!IS_MOCK && (
-            <LoadMandate onLoaded={(m) => setMandates((cur) => [m, ...cur.filter((x) => x.id !== m.id)])} />
-          )}
+          {!IS_MOCK && <LoadMandate onLoaded={upsert} />}
           {mandates.length === 0 && (
             <p className="rounded-xl border p-6 text-[14px] text-muted" style={{ borderColor: "var(--hairline)" }}>
               No mandates yet. Grant one on the left — the limit rings will draw here.
@@ -122,7 +144,7 @@ export default function EnvoyPanel({ wallet }: { wallet: WalletState }) {
               mandate={m}
               ledger={ledger}
               agentSecret={agentSecret}
-              onChanged={() => void refresh()}
+              onChanged={upsert}
               setError={setError}
               setNotice={setNotice}
             />
@@ -147,7 +169,7 @@ function CreateMandate({
   wallet: WalletState;
   agentPub: string;
   generateAgent: () => void;
-  onCreated: () => void;
+  onCreated: (id: bigint) => void;
   setError: (e: string | null) => void;
   setNotice: (n: string | null) => void;
 }) {
@@ -162,9 +184,11 @@ function CreateMandate({
     setNotice(null);
     try {
       if (!agentPub) throw new Error("Generate an agent key first");
+      const mins = Number(minutes);
+      if (!Number.isFinite(mins) || mins <= 0) throw new Error("Validity must be a positive number of minutes");
       const client = getClient();
       const now = await client.currentLedger();
-      const validUntil = now + Math.max(20, Math.round((Number(minutes) * 60) / SECONDS_PER_LEDGER));
+      const validUntil = now + Math.max(20, Math.round((mins * 60) / SECONDS_PER_LEDGER));
       const owner = wallet.address ?? demoAddress();
       const id = await client.create_mandate(
         owner,
@@ -184,7 +208,7 @@ function CreateMandate({
         txHash: null,
       });
       setNotice(`Mandate #${id} granted. The agent can act until ledger ${validUntil}.`);
-      onCreated();
+      onCreated(id);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -225,20 +249,37 @@ function CreateMandate({
 
 function LoadMandate({ onLoaded }: { onLoaded: (m: Mandate) => void }) {
   const [id, setId] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = () => {
+    setErr(null);
+    const t = id.trim();
+    if (!/^\d+$/.test(t)) {
+      setErr("enter a mandate id");
+      return;
+    }
+    setBusy(true);
+    getClient()
+      .get_mandate(BigInt(t))
+      .then((m) => (m ? onLoaded(m) : setErr("not found")))
+      .catch((e) => setErr(e instanceof Error ? e.message : String(e)))
+      .finally(() => setBusy(false));
+  };
+
   return (
     <div className="flex items-end gap-2">
       <Field label="Load mandate by id">
         <TextInput value={id} onChange={(e) => setId(e.target.value)} inputMode="numeric" className="w-[160px]" />
       </Field>
-      <GhostButton
-        onClick={() =>
-          void getClient()
-            .get_mandate(BigInt(id.trim()))
-            .then((m) => m && onLoaded(m))
-        }
-      >
-        Load
+      <GhostButton onClick={load} disabled={busy}>
+        {busy ? "Loading…" : "Load"}
       </GhostButton>
+      {err && (
+        <span className="text-[13px]" style={{ color: "#8F4E2A" }}>
+          {err}
+        </span>
+      )}
     </div>
   );
 }
@@ -254,7 +295,8 @@ function MandateCard({
   mandate: Mandate;
   ledger: number | null;
   agentSecret: string;
-  onChanged: () => void;
+  /** Replaces the card's record with the freshest on-chain state after claim/revoke */
+  onChanged: (fresh: Mandate) => void;
   setError: (e: string | null) => void;
   setNotice: (n: string | null) => void;
 }) {
@@ -306,7 +348,10 @@ function MandateCard({
       }
       setLiveFade(fade);
       const cur = ledgerRef.current;
-      if (cur == null) return;
+      if (cur == null) {
+        push({ ts: now(), kind: "watch", note: "ledger clock not synced yet — waiting for the RPC" });
+        return;
+      }
       const price = priceAtLedger(fade, cur);
       const thresholdMinor = parseMinor(thresholdRef.current);
 
@@ -343,11 +388,21 @@ function MandateCard({
           txHash: null,
         });
         stop();
-        onChanged();
+        // pull the freshest record so claims_used / daily_used reflect the chain
+        // (in soroban mode the parent list is not re-read automatically)
+        try {
+          const fresh = await client.get_mandate(mandate.id);
+          onChanged(fresh ?? mandate);
+        } catch {
+          onChanged(mandate);
+        }
       } catch (e) {
+        // Mock raises AgyionError; the soroban bindings throw a plain Error
+        // whose message is the contract error name (e.g. "CapExceeded")
         const cap =
-          e instanceof AgyionError &&
-          (e.code === AgyionErrorCode.CapExceeded || e.code === AgyionErrorCode.MandateExpired);
+          (e instanceof AgyionError &&
+            (e.code === AgyionErrorCode.CapExceeded || e.code === AgyionErrorCode.MandateExpired)) ||
+          (e instanceof Error && /CapExceeded|MandateExpired/.test(e.message));
         push({
           ts: now(),
           kind: "rejected",
@@ -392,7 +447,7 @@ function MandateCard({
       const duration = 300;
       const id = await m.create_fade(
         mandate.owner,
-        CONFIG.assetAddress || CONFIG.assetCode,
+        CONFIG.assetContractId,
         parseMinor("1000"),
         start,
         floor,
@@ -435,7 +490,13 @@ function MandateCard({
         txHash: null,
       });
       setNotice(`Mandate #${mandate.id} revoked. The agent key is now inert.`);
-      onChanged();
+      // the card must flip to "revoked" even though its local record is stale
+      try {
+        const fresh = await getClient().get_mandate(mandate.id);
+        onChanged(fresh ?? { ...mandate, revoked: true });
+      } catch {
+        onChanged({ ...mandate, revoked: true });
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {

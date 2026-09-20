@@ -129,7 +129,7 @@ function CreatePod({
       const unlock = now + Math.max(10, Math.round((Number(minutes) * 60) / SECONDS_PER_LEDGER));
       const id = await client.create_pod(
         wallet.address ?? demoAddress(),
-        CONFIG.assetAddress || CONFIG.assetCode,
+        CONFIG.assetContractId,
         parseMinor(amount),
         unlock,
         hash,

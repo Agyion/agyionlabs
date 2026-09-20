@@ -20,6 +20,14 @@ export const CONFIG = {
   assetAddress:
     process.env.NEXT_PUBLIC_HAK_ASSET_ADDRESS ??
     "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+  /**
+   * SAC contract id of the ramp asset on testnet — this is the address the
+   * kernel contract expects in its `asset` param (token::Client target),
+   * NOT the classic issuer account above.
+   */
+  assetContractId:
+    process.env.NEXT_PUBLIC_HAK_ASSET_CONTRACT_ID ??
+    "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
   /** Official hackathon TR mock anchor (SEP-10 + SEP-6 + SEP-38 + SEP-12) */
   anchorUrl: process.env.NEXT_PUBLIC_ANCHOR_URL ?? "https://tr-mock-anchor.fly.dev",
   /** stroop-benzeri minor unit: 7 ondalık (SPEC §3.1) */

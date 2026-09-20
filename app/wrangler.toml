@@ -1,10 +1,14 @@
 name = "agyion"
 compatibility_date = "2026-09-20"
 
-routes = [
-  { pattern = "agyionlabs.dev", custom_domain = true },
-  { pattern = "www.agyionlabs.dev", custom_domain = true },
-]
+# Custom domain (agyionlabs.dev + www): attach from the Cloudflare dash —
+# Workers → agyion → Settings → Domains & Routes → Add. The dash offers to
+# replace the conflicting placeholder A records at the apex (wrangler's OAuth
+# token cannot delete externally managed DNS). Then re-add:
+# routes = [
+#   { pattern = "agyionlabs.dev", custom_domain = true },
+#   { pattern = "www.agyionlabs.dev", custom_domain = true },
+# ]
 
 [assets]
 directory = "./out"

@@ -160,7 +160,7 @@ function CreateTrigger({
       const ben = beneficiary.trim() || demoAddress();
       const id = await client.create_trigger(
         wallet.address ?? demoAddress(),
-        CONFIG.assetAddress || CONFIG.assetCode,
+        CONFIG.assetContractId,
         parseMinor(amount),
         ben,
         attesterPub,

@@ -27,6 +27,11 @@ import {
   type WithdrawInstructions,
 } from "../../lib/anchor";
 import { defaultSigner } from "../../lib/wallet";
+import {
+  createAssetTrustline,
+  friendbotFund,
+  sendAnchorPayment,
+} from "../../lib/accountOps";
 import { CONFIG, IS_MOCK } from "../../lib/config";
 import { shortAddress } from "../../lib/format";
 import type { WalletState } from "../../lib/useWallet";
@@ -172,6 +177,37 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
       setStatus(await transactionStatus(t, id));
     });
 
+  const doFriendbot = () =>
+    run("friendbot", async () => {
+      if (!wallet.address) throw new AnchorError("auth", "Connect a wallet first.");
+      await friendbotFund(wallet.address);
+      setNotice("Friendbot funded the account with testnet XLM (fees covered).");
+    });
+
+  const doTrustline = () =>
+    run("trustline", async () => {
+      if (!signer || !wallet.address)
+        throw new AnchorError("auth", "Connect a wallet first.");
+      const hash = await createAssetTrustline(signer, wallet.address);
+      setNotice(`USDC trustline created (tx ${hash.slice(0, 12)}…) — deposits can now land.`);
+    });
+
+  const doSendPayment = () =>
+    run("pay", async () => {
+      if (!signer || !wallet.address)
+        throw new AnchorError("auth", "Connect a wallet first.");
+      if (!withdraw) return;
+      const hash = await sendAnchorPayment(
+        signer,
+        wallet.address,
+        withdraw.accountId,
+        wdAmount,
+        withdraw.memoType,
+        withdraw.memo,
+      );
+      setNotice(`USDC sent to the anchor (tx ${hash.slice(0, 12)}…). The TRY payout is simulated by the sandbox.`);
+    });
+
   return (
     <div className="space-y-10">
       <header>
@@ -248,6 +284,20 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
               <span className="tnum font-mono text-ink">{balance ?? "—"}</span>
             </div>
             {balanceNote && <p className="text-[12px] italic">{balanceNote}</p>}
+            {wallet.address && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                <GhostButton onClick={doFriendbot} disabled={busy === "friendbot"}>
+                  {busy === "friendbot" ? "Funding…" : "Fund with friendbot"}
+                </GhostButton>
+                <GhostButton onClick={doTrustline} disabled={busy === "trustline"}>
+                  {busy === "trustline" ? "Signing…" : "Create USDC trustline"}
+                </GhostButton>
+              </div>
+            )}
+            <p className="text-[12px] text-muted">
+              New testnet key? Friendbot covers the XLM for fees, the trustline
+              opens your account to USDC — then the deposit below lands.
+            </p>
           </div>
           {!token && (
             <div className="mt-4">
@@ -335,6 +385,11 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
               without it the anchor cannot match your transfer. The TRY payout
               to your IBAN is simulated by the sandbox.
             </p>
+            <div className="pt-1">
+              <FilledButton onClick={doSendPayment} disabled={busy === "pay"}>
+                {busy === "pay" ? "Sending…" : `Send ${wdAmount} ${CONFIG.assetCode} to the anchor`}
+              </FilledButton>
+            </div>
             {withdraw.paymentUri && (
               <ArrowLink href={withdraw.paymentUri}>open payment URI</ArrowLink>
             )}

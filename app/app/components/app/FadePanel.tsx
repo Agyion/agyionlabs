@@ -70,9 +70,12 @@ export default function FadePanel({ wallet }: { wallet: WalletState }) {
         <Eyebrow>Fade · declining price</Eyebrow>
         <h1 className="display mt-2 text-[34px] text-ink md:text-[44px]">The last hour, on a curve</h1>
         <p className="mt-3 max-w-[64ch] text-[16px] leading-[1.65] text-muted">
-          Lock a pot, set a price that walks backwards, and let the market pick
-          its moment. Below zero, the pot starts paying the claimant. Handoff is
-          proven with the venue&apos;s signature — or the pot refunds by rule.
+          A bakery at closing time: unsold portions, a price that walks
+          backwards on a curve — and below zero the locked pot starts paying the
+          claimant for rescuing the portion. The pot is the venue&apos;s
+          campaign budget: it says &ldquo;waste costs us more than paying you to
+          take it.&rdquo; The handoff is proven with the venue&apos;s signature —
+          or the pot refunds by rule. No discretion.
         </p>
       </header>
 
@@ -155,7 +158,7 @@ function SellerForm({
       const slopeNum = drop > 0n ? drop : 1n;
       const id = await client.create_fade(
         seller,
-        CONFIG.assetAddress || CONFIG.assetCode,
+        CONFIG.assetContractId,
         parseMinor(pot),
         start,
         floor,
@@ -207,7 +210,7 @@ function SellerForm({
           <Field label="Start price" hint="Asking price at ledger zero">
             <TextInput value={startPrice} onChange={(e) => setStartPrice(e.target.value)} inputMode="decimal" />
           </Field>
-          <Field label="Floor price" hint="Negative = the pot pays out">
+          <Field label="Floor price" hint="You decide: 0 = never goes negative · negative = the pot pays the claimant">
             <TextInput value={floorPrice} onChange={(e) => setFloorPrice(e.target.value)} inputMode="decimal" />
           </Field>
           <Field label="Duration (minutes)" hint="Until the claim deadline">
