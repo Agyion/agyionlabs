@@ -1,4 +1,4 @@
-# Agyion
+# agyionlabs
 
 > **Conditional money: it locks, it executes itself when proven, and it returns when not.**
 
