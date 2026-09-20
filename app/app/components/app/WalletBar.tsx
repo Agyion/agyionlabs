@@ -1,13 +1,15 @@
 "use client";
 
 /**
- * WalletBar — connect via Stellar Wallets Kit, or a test secret in demo mode.
- * Demo note is explicit (SPEC §4).
+ * WalletBar — connect via Stellar Wallets Kit (Freighter & co).
+ * The test-secret field only exists in mock mode (local development);
+ * the live soroban build is wallet-only.
  */
 
 import { useState } from "react";
 import type { WalletState } from "../../lib/useWallet";
 import { shortAddress } from "../../lib/format";
+import { IS_MOCK } from "../../lib/config";
 import { GhostButton, TextInput } from "../ui";
 
 export default function WalletBar({ wallet }: { wallet: WalletState }) {
@@ -40,14 +42,16 @@ export default function WalletBar({ wallet }: { wallet: WalletState }) {
           <GhostButton onClick={() => void wallet.connectKit()} disabled={wallet.connecting}>
             {wallet.connecting ? "Opening wallet…" : "Connect wallet"}
           </GhostButton>
-          <button
-            type="button"
-            className="text-[13px] font-medium text-muted underline underline-offset-4"
-            onClick={() => setShowSecret((v) => !v)}
-          >
-            test secret instead
-          </button>
-          {showSecret && (
+          {IS_MOCK && (
+            <>
+              <button
+                type="button"
+                className="text-[13px] font-medium text-muted underline underline-offset-4"
+                onClick={() => setShowSecret((v) => !v)}
+              >
+                test secret instead
+              </button>
+              {showSecret && (
             <form
               className="flex items-center gap-2"
               onSubmit={(e) => {
@@ -70,6 +74,8 @@ export default function WalletBar({ wallet }: { wallet: WalletState }) {
                 Use key
               </button>
             </form>
+              )}
+            </>
           )}
         </>
       )}

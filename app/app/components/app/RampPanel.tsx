@@ -130,7 +130,7 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
     if (!signer) {
       throw new AnchorError(
         "auth",
-        "Connect a wallet or paste a test secret in the top bar first — SEP-10 needs a signer.",
+        "Connect a wallet in the top bar first — SEP-10 needs a signer.",
       );
     }
     const t = await authenticate(signer);
@@ -306,7 +306,7 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
               </GhostButton>
               {!signer && (
                 <p className="mt-2 text-[12px] text-muted">
-                  Connect a wallet or paste a test secret in the top bar first.
+                  Connect a wallet in the top bar first.
                 </p>
               )}
             </div>

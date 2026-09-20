@@ -34,8 +34,9 @@ export function useWallet(): WalletState {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Restore a stored test secret on load
+  // Restore a stored test secret on load (mock mode only — the live build is wallet-only)
   useEffect(() => {
+    if (!IS_MOCK) return;
     const s = storedTestSigner();
     if (s) {
       s.address().then((a) => {
