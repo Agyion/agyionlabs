@@ -1,0 +1,132 @@
+/* Custom cursor — 6px dot + 68px label ring, difference blend, magnetic. */
+
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 99998;
+}
+
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border-radius: 50%;
+  margin: -3px 0 0 -3px;
+  mix-blend-mode: difference;
+  transition:
+    transform 0.03s ease,
+    opacity 0.3s ease,
+    width 0.3s ease,
+    height 0.3s ease;
+  will-change: transform;
+  opacity: 0;
+}
+
+.cursor-ring {
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  margin: -18px 0 0 -18px;
+  mix-blend-mode: difference;
+  will-change: transform;
+  transition:
+    width 0.55s var(--ease-out),
+    height 0.55s var(--ease-out),
+    margin 0.55s var(--ease-out),
+    border-radius 0.55s var(--ease-out),
+    background 0.45s var(--ease-out),
+    border-color 0.45s ease,
+    opacity 0.35s ease;
+}
+
+.cursor-dot.is-link {
+  opacity: 0 !important;
+}
+
+.cursor-ring.is-link {
+  width: 68px;
+  height: 68px;
+  margin: -34px 0 0 -34px;
+  border-radius: 50%;
+  background: #fff;
+  overflow: hidden;
+  transition:
+    width 0.52s var(--ease-out),
+    height 0.52s var(--ease-out),
+    margin 0.52s var(--ease-out),
+    background-color 0.42s var(--ease-out),
+    opacity 0.35s ease;
+}
+
+.cursor-ring::after {
+  content: attr(data-cursor-label);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 52px;
+  height: 52px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  will-change: opacity;
+}
+
+.cursor-ring.is-link::after {
+  animation: cursor-label-in 0.22s var(--ease-morph) forwards;
+}
+
+@keyframes cursor-label-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* pixel-block trail */
+.cursor-trail-block {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  background: #fff;
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99997;
+  mix-blend-mode: difference;
+  will-change: transform, opacity;
+}
+
+/* targets that keep the native pointer (decoupled from label text) */
+[data-cursor-native],
+[data-cursor-native] * {
+  cursor: pointer !important;
+}
+
+@media (max-width: 1024px), (hover: none), (pointer: coarse) {
+  .cursor-dot,
+  .cursor-ring,
+  .cursor-trail-block {
+    display: none !important;
+  }
+}

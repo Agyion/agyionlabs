@@ -1,0 +1,505 @@
+/* Home hero — ledger/poster/banner compositions, fluid ambience slot,
+ * specimen rail, word columns. Sections live in home.css. */
+
+/* Home — ledger hero, word marquee, 3D cube, manifesto statement, scroll
+ * gallery. Depth-zone tokens, Bricolage display voice. */
+
+/* ---------- hero intro panel ---------- */
+
+.home-hero {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.home-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* full-bleed photographic bg (dark texture, clearly visible) */
+.home-hero__bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* dark scrim so type stays readable; strength from config (hero.bgDim);
+ * rendered only when a bgImage is present (ledger/poster run clean) */
+.home-hero__bg-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0.34) 34%, rgba(0, 0, 0, 0.38) 62%, rgba(0, 0, 0, 0.72) 100%);
+}
+
+/* ambient field over the photo: screen blend drops the black base, blobs
+ * read as a slow glow layer (alone on the black base it is unchanged) */
+.home-hero__bg-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+}
+
+/* ledger tone: the fluid buffer paints the foam zone as its base; multiply
+ * drops that base out so only the ink bands touch the surface (ink in water) */
+.home-hero__bg-canvas--fluid[data-tone='light'] {
+  mix-blend-mode: multiply;
+}
+
+.home-hero__kicker {
+  position: relative;
+  z-index: 2;
+  margin: 11vh 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--z-ink, #fff) 72%, transparent);
+}
+
+/* giant brand word spread edge-to-edge across the hero top; size via
+ * --hero-title-vw (config hero.titleVw), letters wrap to two lines when long */
+.home-hero__word {
+  position: relative;
+  font-weight: 800;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 clamp(14px, 2.6vw, 44px);
+  margin: 1vh 0 0;
+  font-family: var(--font-display);
+  font-size: var(--hero-title-vw, 16vw);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: var(--z-ink, #fff);
+}
+
+.home-hero__word span {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.35em);
+  transition:
+    opacity 0.7s var(--ease-out),
+    transform 0.7s var(--ease-out);
+  transition-delay: calc(var(--i) * 90ms + var(--hero-delay, 0ms));
+}
+
+.home-hero.is-ready .home-hero__word span {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* bottom-left small paragraph */
+.home-hero__sub {
+  position: absolute;
+  left: var(--side-pad);
+  bottom: 5.5vh;
+  z-index: 2;
+  max-width: 22em;
+  margin: 0;
+  font-size: var(--text-sm);
+  color: color-mix(in srgb, var(--z-ink, #fff) 72%, transparent);
+}
+
+/* floating card stack (central object + small cards pressing
+ * the hero bottom edge) — middle wave image raised as the main card, the
+ * rest clustered around it, staggered and tilted, with deep shadows */
+.home-hero__stack {
+  position: absolute;
+  left: 50%;
+  bottom: -7vh;
+  transform: translateX(-50%);
+  z-index: 1;
+  width: min(74vw, 980px);
+  height: 55vh;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.home-hero__stack img {
+  position: absolute;
+  bottom: 0;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.home-hero__stack-main {
+  left: 50%;
+  z-index: 3;
+  width: clamp(240px, 23vw, 340px);
+  transform: translateX(-50%) rotate(-1.6deg);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.45),
+    0 48px 110px rgba(0, 0, 0, 0.85);
+}
+
+.home-hero__stack-card {
+  opacity: 0.82;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.4),
+    0 34px 78px rgba(0, 0, 0, 0.72);
+}
+
+.home-hero__stack-card--0 {
+  left: 5%;
+  bottom: 14%;
+  z-index: 1;
+  width: clamp(120px, 11vw, 168px);
+  transform: rotate(-5.5deg);
+}
+
+.home-hero__stack-card--1 {
+  left: 21%;
+  bottom: -3%;
+  z-index: 2;
+  width: clamp(132px, 12.5vw, 188px);
+  transform: rotate(3.2deg);
+}
+
+.home-hero__stack-card--2 {
+  right: 21%;
+  bottom: 2%;
+  z-index: 2;
+  width: clamp(132px, 12.5vw, 188px);
+  transform: rotate(-2.8deg);
+}
+
+.home-hero__stack-card--3 {
+  right: 5%;
+  bottom: 17%;
+  z-index: 1;
+  width: clamp(120px, 11vw, 168px);
+  transform: rotate(5deg);
+}
+
+.home-hero__wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -14vh;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: clamp(14px, 2.4vw, 34px);
+  pointer-events: none;
+}
+
+.home-hero__wave img {
+  width: clamp(120px, 15vw, 220px);
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  opacity: 0.85;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  will-change: transform;
+}
+
+.home-hero__wave img:nth-child(odd) {
+  margin-top: 5vh;
+}
+
+.home-hero__wave img:nth-child(3n) {
+  margin-top: -3vh;
+}
+
+/* overlapping-card strip: cards overlap with deep
+ * shadows, dimmed to 0.55, the middle card raised + lit — pressed on the hero. */
+.home-hero__wave--overlap {
+  bottom: -9vh;
+  gap: 0;
+  align-items: flex-end;
+}
+
+.home-hero__wave--overlap img {
+  width: clamp(150px, 16vw, 235px);
+  margin-top: 0;
+  opacity: 0.55;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.72);
+}
+
+.home-hero__wave--overlap img + img {
+  margin-left: calc(-1 * clamp(38px, 4.6vw, 72px));
+}
+
+.home-hero__wave--overlap img:nth-child(odd) {
+  transform: rotate(-2.4deg);
+}
+
+.home-hero__wave--overlap img:nth-child(even) {
+  transform: rotate(1.8deg);
+}
+
+.home-hero__wave--overlap img.is-active {
+  position: relative;
+  z-index: 2;
+  opacity: 1;
+  transform: translateY(-16px);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+/* ---------- poster composition ---------- */
+
+.home-hero__word-center {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.home-hero--poster .home-hero__word {
+  justify-content: center;
+  column-gap: 0.04em;
+  margin-top: 0;
+}
+
+.home-hero--poster .home-hero__sub {
+  left: auto;
+  right: var(--side-pad);
+  text-align: right;
+}
+
+/* uniform baseline rail pressed on the hero bottom edge (replaces the
+ * floating stack / overlap strip in poster composition) */
+.home-hero__wave--rail {
+  bottom: -6vh;
+  gap: clamp(18px, 3vw, 44px);
+  align-items: flex-end;
+}
+
+.home-hero__wave--rail img {
+  width: clamp(130px, 13.5vw, 200px);
+  margin-top: 0;
+  opacity: 0.8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.home-hero__wave--rail img:nth-child(odd) {
+  margin-top: 0;
+  transform: rotate(-1.6deg);
+}
+
+/* breathing room around the middle card, where the dock chrome floats */
+.home-hero__wave--rail img:nth-child(3) {
+  margin-left: clamp(36px, 7vw, 110px);
+  margin-right: clamp(36px, 7vw, 110px);
+}
+
+.home-hero__wave--rail img:nth-child(3n) {
+  margin-top: 0;
+}
+
+.home-hero__wave--rail img:nth-child(even) {
+  transform: rotate(1.4deg);
+}
+
+/* ---------- ledger composition ----------
+ * Descent ledger on the foam surface: top mono data strip, weight-contrast
+ * word pair (solid 800 + outline 340 offset), sub bottom-left, and the wave
+ * as a uniform specimen rail with hairline cells and mono indices. */
+
+.home-hero--ledger {
+  display: block;
+}
+
+.home-hero__strip {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 clamp(16px, 2.8vw, 40px);
+  padding-top: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--z-line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--z-muted);
+  opacity: 0;
+  transition: opacity 0.8s var(--ease-out) 0.1s;
+}
+
+.home-hero.is-ready .home-hero__strip {
+  opacity: 1;
+}
+
+.home-hero__pair {
+  position: relative;
+  z-index: 2;
+  margin: clamp(40px, 9vh, 90px) 0 0;
+  padding: 0 clamp(16px, 2.8vw, 40px);
+  line-height: 0.88;
+  will-change: transform, opacity;
+}
+
+.home-hero__pair-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+
+.home-hero__pair-inner {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(88px, var(--hero-title-vw, 18vw) * 0.82, 240px);
+  letter-spacing: -0.03em;
+  transform: translateY(112%);
+  transition: transform 1.05s var(--ease-out);
+  transition-delay: calc(120ms + var(--hero-delay, 0ms));
+  will-change: transform;
+}
+
+.home-hero.is-ready .home-hero__pair-inner {
+  transform: translateY(0);
+}
+
+.home-hero__pair-w1 {
+  font-weight: 800;
+  color: var(--z-ink);
+}
+
+.home-hero__pair-mask--outline {
+  margin-left: clamp(60px, 21vw, 320px);
+  margin-top: -0.08em;
+}
+
+.home-hero__pair-w2 {
+  font-weight: 340;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--z-ink);
+  transition-delay: calc(260ms + var(--hero-delay, 0ms));
+}
+
+.home-hero--ledger .home-hero__sub {
+  bottom: calc(clamp(150px, 19vh, 190px) + 4vh);
+  font-size: var(--text-base);
+  color: color-mix(in srgb, var(--z-ink) 78%, transparent);
+}
+
+/* specimen rail: uniform hairline cells pressed on the hero bottom edge */
+.home-hero__wave--specimen {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: stretch;
+  gap: 0;
+  padding: 0 clamp(16px, 2.8vw, 40px);
+  align-items: flex-end;
+}
+
+.home-hero__cell {
+  position: relative;
+  flex: 1 1 0;
+  max-width: 240px;
+  border: 1px solid var(--z-line);
+  border-bottom: none;
+  margin-left: -1px;
+  overflow: hidden;
+}
+
+.home-hero__cell img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  margin: 0;
+  opacity: 1;
+  border: none;
+  box-shadow: none;
+  transform: none;
+  filter: saturate(0.88);
+  transition: filter 0.5s var(--ease-out), transform 0.6s var(--ease-out);
+}
+
+.home-hero__cell:hover img {
+  filter: saturate(1.05);
+  transform: scale(1.03);
+}
+
+.home-hero__cell-idx {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+
+/* hero flanking word columns */
+.home-hero__words {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 clamp(20px, 4.5vw, 72px);
+  pointer-events: none;
+}
+
+.home-hero__words-col {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.6vh, 16px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 20%, #000 80%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 20%, #000 80%, transparent);
+}
+
+.home-hero__words-col--right {
+  align-items: flex-end;
+}
+
+.home-hero__words-col li {
+  font-size: clamp(1.3rem, 2.5vw, 2.35rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--z-ink, #fff) 25%, transparent);
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.8s var(--ease-out),
+    transform 0.8s var(--ease-out),
+    color 0.3s var(--ease-out);
+  transition-delay: calc(240ms + var(--i) * 55ms + var(--hero-delay, 0ms)), calc(240ms + var(--i) * 55ms + var(--hero-delay, 0ms)), 0s;
+  pointer-events: auto;
+  cursor: default;
+}
+
+.home-hero__words-col li:hover {
+  color: var(--z-ink, #fff);
+}
+
+.home-hero.is-ready .home-hero__words-col li {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 1023px) {
+  .home-hero__words {
+    display: none;
+  }
+}
+

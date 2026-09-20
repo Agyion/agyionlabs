@@ -11,5 +11,5 @@ compatibility_date = "2026-09-20"
 # ]
 
 [assets]
-directory = "./out"
+directory = "./site"
 not_found_handling = "404-page"

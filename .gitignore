@@ -5,3 +5,6 @@ target/
 .env*.local
 .DS_Store
 *.log
+landing/node_modules/
+landing/dist/
+app/site/

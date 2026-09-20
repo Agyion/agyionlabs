@@ -1,0 +1,286 @@
+/* Design system — fonts, tokens, reset. */
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  src: url('/fonts/bricolage-var.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('/fonts/instrsans-var.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Pixel face is used only for the 404 runner scoreboard — game-context
+ * micro-use. */
+@font-face {
+  font-family: 'Bitcount Grid Single';
+  src: url('/fonts/bitcount-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Space Mono';
+  src: url('/fonts/space-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Space Mono';
+  src: url('/fonts/space-mono-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* palette (overridable per instance via config → inline vars in App) */
+  --canvas: #000000;
+  --surface: #141414;
+  --ink: #ffffff;
+  --menu-bg: #e7eae8;
+  --menu-ink: #15201e;
+  --menu-line: rgba(21, 32, 30, 0.14);
+  --accent: #2fb3a4;
+  --glow: #2fb3a4;
+  --muted: #888888;
+  --faint: #666666;
+
+  /* depth-zone program ("scroll = descent").
+   * App derives five zone palettes from config.theme.depthZones; without that
+   * key every zone resolves to the classic uniform canvas/ink (backward
+   * compatible — zones become no-ops). */
+  --dz0-bg: var(--canvas);
+  --dz1-bg: var(--canvas);
+  --dz2-bg: var(--canvas);
+  --dz3-bg: var(--canvas);
+  --dz4-bg: var(--canvas);
+  --dz0-ink: var(--ink);
+  --dz1-ink: var(--ink);
+  --dz2-ink: var(--ink);
+  --dz3-ink: var(--ink);
+  --dz4-ink: var(--ink);
+  --dz0-line: rgba(255, 255, 255, 0.16);
+  --dz1-line: rgba(255, 255, 255, 0.16);
+  --dz2-line: rgba(255, 255, 255, 0.16);
+  --dz3-line: rgba(255, 255, 255, 0.16);
+  --dz4-line: rgba(255, 255, 255, 0.16);
+  --dz0-accent: var(--accent);
+  --dz1-accent: var(--accent);
+  --dz2-accent: var(--accent);
+  --dz3-accent: var(--accent);
+  --dz4-accent: var(--accent);
+  --dz0-muted: var(--muted);
+  --dz1-muted: var(--muted);
+  --dz2-muted: var(--muted);
+  --dz3-muted: var(--muted);
+  --dz4-muted: var(--muted);
+
+  /* font stacks */
+  --font-display: 'Bricolage Grotesque', 'Instrument Sans', sans-serif;
+  --font-body: 'Instrument Sans', 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --font-pixel: 'Bitcount Grid Single', monospace;
+  --font-mono: 'Space Mono', 'Courier New', monospace;
+
+  /* fluid type scale — root + clamps */
+  --text-root: clamp(13px, 12.4px + 0.2vw, 16px);
+  --text-2xs: clamp(0.625rem, 0.6rem + 0.1vw, 0.6875rem);
+  --text-xs: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);
+  --text-sm: clamp(0.75rem, 0.72rem + 0.2vw, 0.875rem);
+  --text-base: clamp(0.875rem, 0.82rem + 0.25vw, 1rem);
+  --text-md: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  --display-xs: clamp(2rem, 1.6rem + 1.8vw, 3.125rem);
+  --display-sm: clamp(2.8rem, 2.2rem + 2.8vw, 4.8rem);
+  --display-md: clamp(3rem, 2.4rem + 3vw, 5rem);
+  --display-lg: clamp(4rem, 2.6rem + 6.8vw, 11.5rem);
+  --display-xl: clamp(5.5rem, 3.2rem + 11vw, 13rem);
+  --display-watermark: clamp(10rem, 6rem + 19vw, 22rem);
+
+  /* easings */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-morph: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-snap: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-inout: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* geometry */
+  --pill-radius: 6px;
+  --side-pad: clamp(18px, 6vw, 28px);
+}
+
+/* depth zones: sections paint their own band solid; transitions between
+ * zones happen in dedicated short "dive band" elements (.zone-dive) or, for
+ * long dark-to-dark scrub sections, a full-length gradient (.zone-grad). */
+.zone {
+  --z-bg: var(--dz0-bg);
+  --z-ink: var(--dz0-ink);
+  --z-line: var(--dz0-line);
+  --z-accent: var(--dz0-accent);
+  --z-muted: var(--dz0-muted);
+  --z-next-bg: var(--z-bg);
+  background: var(--z-bg);
+  color: var(--z-ink);
+}
+.zone-grad {
+  background: linear-gradient(180deg, var(--z-bg) 0%, var(--z-next-bg) 100%);
+}
+.zone-dive {
+  height: 38vh;
+  background: linear-gradient(180deg, var(--z-bg) 0%, var(--z-next-bg) 100%);
+}
+@media (max-width: 767px) {
+  .zone-dive {
+    height: 24vh;
+  }
+}
+.zone-z0 { --z-bg: var(--dz0-bg); --z-ink: var(--dz0-ink); --z-line: var(--dz0-line); --z-accent: var(--dz0-accent); --z-muted: var(--dz0-muted); }
+.zone-z1 { --z-bg: var(--dz1-bg); --z-ink: var(--dz1-ink); --z-line: var(--dz1-line); --z-accent: var(--dz1-accent); --z-muted: var(--dz1-muted); }
+.zone-z2 { --z-bg: var(--dz2-bg); --z-ink: var(--dz2-ink); --z-line: var(--dz2-line); --z-accent: var(--dz2-accent); --z-muted: var(--dz2-muted); }
+.zone-z3 { --z-bg: var(--dz3-bg); --z-ink: var(--dz3-ink); --z-line: var(--dz3-line); --z-accent: var(--dz3-accent); --z-muted: var(--dz3-muted); }
+.zone-z4 { --z-bg: var(--dz4-bg); --z-ink: var(--dz4-ink); --z-line: var(--dz4-line); --z-accent: var(--dz4-accent); --z-muted: var(--dz4-muted); }
+.zone-next-z0 { --z-next-bg: var(--dz0-bg); }
+.zone-next-z1 { --z-next-bg: var(--dz1-bg); }
+.zone-next-z2 { --z-next-bg: var(--dz2-bg); }
+.zone-next-z3 { --z-next-bg: var(--dz3-bg); }
+.zone-next-z4 { --z-next-bg: var(--dz4-bg); }
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: var(--text-root);
+  -webkit-text-size-adjust: 100%;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+body {
+  margin: 0;
+  background: var(--dz4-bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body.menu-locked {
+  overflow: hidden;
+}
+
+img,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.menu-surface :focus-visible {
+  outline-color: var(--menu-ink);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+::selection {
+  background: var(--accent);
+  color: #000;
+}
+
+/* skip link */
+.skip-link {
+  position: fixed;
+  top: -60px;
+  left: 16px;
+  z-index: 100001;
+  padding: 10px 18px;
+  background: var(--ink);
+  color: #000;
+  font-size: 13px;
+  transition: top 0.3s var(--ease-out);
+}
+
+.skip-link:focus-visible {
+  top: 12px;
+}
+
+/* config error surface */
+.config-error {
+  margin: 20vh auto;
+  max-width: 720px;
+  padding: 32px;
+  border: 1px solid #e08a8a;
+  color: #e08a8a;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* data-reveal scroll-enter (initReveals adds .is-revealed once) */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.9s var(--ease-out),
+    transform 0.9s var(--ease-out);
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
