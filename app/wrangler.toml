@@ -1,0 +1,11 @@
+name = "agyion"
+compatibility_date = "2026-09-20"
+
+routes = [
+  { pattern = "agyionlabs.dev", custom_domain = true },
+  { pattern = "www.agyionlabs.dev", custom_domain = true },
+]
+
+[assets]
+directory = "./out"
+not_found_handling = "404-page"

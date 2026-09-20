@@ -6,6 +6,21 @@ Agyion is a conditional-payments application on Stellar (Soroban). One kernel co
 
 ---
 
+## Live deployment (testnet)
+
+| Artifact | Value |
+| --- | --- |
+| **App (live demo)** | https://agyionlabs.dev · https://agyion.jasurbek-rustamov.workers.dev |
+| **Kernel contract** | `CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5` ([Stellar Lab](https://lab.stellar.org/r/testnet/contract/CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5) · [Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5)) |
+| **Network** | Stellar testnet (`Test SDF Network ; September 2015`), RPC `https://soroban-testnet.stellar.org` |
+| **Ramp asset** | USDC testnet — issuer `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` |
+| **Anchor** | Official hackathon TR mock anchor (SEP-6/10/12/38): `https://tr-mock-anchor.fly.dev` |
+| **On-chain proof** | Pod lock 1 XLM → [tx d193a85b…](https://stellar.expert/explorer/testnet/tx/d193a85b854aa89806bad61b4247db0dd663ce75e28daaa0833e2240822a80ae) · preimage claim → [tx f466151d…](https://stellar.expert/explorer/testnet/tx/f466151d901b7befd3a1ab24cc41b82df321c71ff20bdb8e181ee2193db5c150) |
+
+The app talks to the deployed contract directly (soroban mode, no mock) and signs with the user's wallet (Freighter via Stellar Wallets Kit).
+
+---
+
 ## The problem
 
 Every day, value dies at the boundary between the physical and the digital because money has no native "if":
