@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { getClient, mockClient, SECONDS_PER_LEDGER } from "../../lib/client";
+import { humanizeError } from "../../lib/errors";
 import { sha256Hex, POD_STATE, type Pod } from "../../lib/hakClient";
 import { useLedger } from "../../lib/useLedger";
 import { formatMinor, formatRemaining, parseMinor, shortAddress, shortHex } from "../../lib/format";
@@ -148,7 +149,7 @@ function CreatePod({
       setNotice(`Pod #${id} buried. Save the preimage — only its hash is on-chain.`);
       onCreated();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanizeError(e));
     } finally {
       setBusy(false);
     }
@@ -200,7 +201,7 @@ function LoadPod({ onLoaded }: { onLoaded: (p: Pod) => void }) {
           getClient()
             .get_pod(BigInt(id.trim()))
             .then((p) => (p ? onLoaded(p) : setErr("not found")))
-            .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
+            .catch((e) => setErr(humanizeError(e)));
         }}
       >
         Load
@@ -255,7 +256,7 @@ function PodCard({
       setNotice(`Pod #${pod.id} opened — ${formatMinor(pod.amount)} ${CONFIG.assetCode} released.`);
       onChanged();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanizeError(e));
     } finally {
       setBusy(false);
     }

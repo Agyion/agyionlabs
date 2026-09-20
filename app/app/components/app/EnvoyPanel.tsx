@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { getClient, mockClient, SECONDS_PER_LEDGER } from "../../lib/client";
+import { humanizeError } from "../../lib/errors";
 import {
   AgyionError,
   AgyionErrorCode,
@@ -210,7 +211,7 @@ function CreateMandate({
       setNotice(`Mandate #${id} granted. The agent can act until ledger ${validUntil}.`);
       onCreated(id);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanizeError(e));
     } finally {
       setBusy(false);
     }
@@ -227,14 +228,14 @@ function CreateMandate({
           </div>
         </Field>
         <div className="grid grid-cols-2 gap-4">
-          <Field label={`Max per tx (${CONFIG.assetCode})`}>
+          <Field label={`Max per tx (${CONFIG.assetCode})`} hint="One claim can never exceed this">
             <TextInput value={maxPerTx} onChange={(e) => setMaxPerTx(e.target.value)} inputMode="decimal" />
           </Field>
-          <Field label={`Daily cap (${CONFIG.assetCode})`}>
+          <Field label={`Daily cap (${CONFIG.assetCode})`} hint="Total per day — binds when a mandate lives for days">
             <TextInput value={dailyCap} onChange={(e) => setDailyCap(e.target.value)} inputMode="decimal" />
           </Field>
         </div>
-        <Field label="Valid for (minutes)" hint="Converted to an expiry ledger">
+        <Field label="Valid for (minutes)" hint="When the mandate dies — after this the agent key is inert, whatever the caps say">
           <TextInput value={minutes} onChange={(e) => setMinutes(e.target.value)} inputMode="numeric" />
         </Field>
       </div>
@@ -263,7 +264,7 @@ function LoadMandate({ onLoaded }: { onLoaded: (m: Mandate) => void }) {
     getClient()
       .get_mandate(BigInt(t))
       .then((m) => (m ? onLoaded(m) : setErr("not found")))
-      .catch((e) => setErr(e instanceof Error ? e.message : String(e)))
+      .catch((e) => setErr(humanizeError(e)))
       .finally(() => setBusy(false));
   };
 
@@ -408,7 +409,7 @@ function MandateCard({
           kind: "rejected",
           note: cap
             ? `${e.message}`
-            : `rejected: ${e instanceof Error ? e.message : String(e)}`,
+            : `rejected: ${humanizeError(e)}`,
         });
         logEntry({
           ledger: cur,
@@ -417,7 +418,7 @@ function MandateCard({
           refId: `${mandate.id}→${fade.id}`,
           amount: price.toString(),
           status: "rejected",
-          detail: e instanceof Error ? e.message : String(e),
+          detail: humanizeError(e),
           txHash: null,
         });
         if (kind === "auto") stop();
@@ -469,7 +470,7 @@ function MandateCard({
       });
       push({ ts: now(), kind: "watch", note: `demo fade #${id} listed at ${formatMinor(start)} — decaying toward the threshold` });
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanizeError(e));
     }
   };
 
@@ -498,7 +499,7 @@ function MandateCard({
         onChanged({ ...mandate, revoked: true });
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanizeError(e));
     } finally {
       setBusy(false);
     }

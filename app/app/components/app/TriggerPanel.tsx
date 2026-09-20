@@ -15,6 +15,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { getClient, mockClient, SECONDS_PER_LEDGER } from "../../lib/client";
+import { humanizeError } from "../../lib/errors";
 import { TRIGGER_STATE, type Trigger } from "../../lib/hakClient";
 import { useLedger } from "../../lib/useLedger";
 import { formatMinor, formatRemaining, parseMinor, shortAddress, shortHex } from "../../lib/format";
@@ -185,7 +186,7 @@ function CreateTrigger({
       setNotice(`Trigger #${id} locked. The attester key can now decide its fate.`);
       onCreated();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanizeError(e));
     } finally {
       setBusy(false);
     }
@@ -330,9 +331,9 @@ function TriggerActions({
         ts: new Date().toISOString(),
         source: "attester",
         status: "failed",
-        note: e instanceof Error ? e.message : String(e),
+        note: humanizeError(e),
       });
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanizeError(e));
     } finally {
       setBusy(null);
     }
@@ -362,7 +363,7 @@ function TriggerActions({
       setNotice(`Escrow #${trigger.id} refunded to the funder.`);
       onChanged();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanizeError(e));
     } finally {
       setBusy(null);
     }

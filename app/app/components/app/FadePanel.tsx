@@ -13,8 +13,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { getClient, mockClient, SECONDS_PER_LEDGER } from "../../lib/client";
+import { humanizeError } from "../../lib/errors";
 import {
-  AgyionError,
   FADE_STATE,
   priceAtLedger,
   type Fade,
@@ -58,7 +58,7 @@ export default function FadePanel({ wallet }: { wallet: WalletState }) {
       try {
         await fn();
       } catch (e) {
-        setError(e instanceof AgyionError ? e.message : e instanceof Error ? e.message : String(e));
+        setError(humanizeError(e));
       }
     },
     [],
@@ -182,7 +182,7 @@ function SellerForm({
       const f = IS_MOCK ? await mockClient()?.getLatestFade() : await client.get_fade(id);
       if (f) onCreated(f);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanizeError(e));
     } finally {
       setBusy(false);
     }
@@ -195,7 +195,7 @@ function SellerForm({
       if (!f) throw new Error(`Fade #${loadId} not found`);
       onLoad(f);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(humanizeError(e));
     }
   };
 
@@ -623,7 +623,7 @@ function FadeActions({
       setSigTs(ts);
       setSig(s);
     } catch (e) {
-      setLocalErr(e instanceof Error ? e.message : String(e));
+      setLocalErr(humanizeError(e));
     }
   };
 
