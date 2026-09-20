@@ -35,10 +35,14 @@ export function resetClient(): void {
   single = null;
 }
 
-/** Mock-only helpers (demo buttons in the UI) */
+/** Mock-only helpers (demo buttons in the UI) — safe when no wallet is connected */
 export function mockClient(): MockAgyionClient | null {
-  const c = getClient();
-  return c instanceof MockAgyionClient ? c : null;
+  try {
+    const c = getClient();
+    return c instanceof MockAgyionClient ? c : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Seconds per ledger: mock demo tempo 1s; testnet ~5s */
