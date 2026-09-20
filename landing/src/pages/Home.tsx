@@ -2,6 +2,7 @@
  * 3D cube scrub, statement field, core capabilities, s3 scroll gallery. */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { Link } from 'react-router'
 import { config } from '../config'
 import type { HomeHeroFluid } from '../types'
 import { gsap, ScrollTrigger, getLenis } from '../lib/smoothScroll'
@@ -647,6 +648,14 @@ export default function Home() {
               const card = home.gallery.cards?.[i]
               return (
                 <figure className="scroll-gallery__card" key={i}>
+                  {card ? (
+                    <Link
+                      to={`/${card.tag.toLowerCase()}`}
+                      className="scroll-gallery__hit"
+                      aria-label={card.tag}
+                      style={{ position: 'absolute', inset: 0, zIndex: 2 }}
+                    />
+                  ) : null}
                   <img src={img.src} alt={img.alt} loading="lazy" decoding="async" />
                   {card ? (
                     <figcaption className="scroll-gallery__info">

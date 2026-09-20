@@ -78,6 +78,20 @@ export const config: SiteConfig = {
         href: '/#instruments',
         thumbs: [img('/media/agyion-envoy.png', 'ENVOY instrument still'), img('/media/agyion-fade.png', 'FADE instrument still')],
       },
+      {
+        id: 'ramp',
+        label: 'ON/OFF RAMP',
+        subLabel: '( TRY ↔ USDC )',
+        href: '/ramp',
+        thumbs: [img('/media/agyion-rule.png', 'Rule etching'), img('/media/agyion-ink.png', 'Ink field visual')],
+      },
+      {
+        id: 'ledger',
+        label: 'LEDGER',
+        subLabel: '( PROOF PACK )',
+        href: '/ledger',
+        thumbs: [img('/media/agyion-pod.png', 'POD instrument still'), img('/media/agyion-trigger.png', 'TRIGGER instrument still')],
+      },
     ],
   },
 
@@ -112,7 +126,7 @@ export const config: SiteConfig = {
     video: { src: '/media/agyion-loop.mp4' },
     videoTag: 'RULE ENGINE — LOOP 01',
     /* abyss footer CTA */
-    cta: { label: 'Open the app', href: '/app' },
+    cta: { label: 'Open the app', href: 'https://app.agyionlabs.com' },
     ctaKicker: 'THE RULE IS THE COUNTERPARTY',
   },
 
@@ -125,7 +139,7 @@ export const config: SiteConfig = {
       brandWordOutline: 'labs',
       subLine: 'Conditional money: it locks, it executes itself when proven, and it returns when not.',
       ctas: [
-        { label: 'Open the app', href: '/app', primary: true },
+        { label: 'Open the app', href: 'https://app.agyionlabs.com', primary: true },
         { label: 'How it works', href: '#how-it-works' },
       ],
       /* descent ledger — data strip, weight-contrast

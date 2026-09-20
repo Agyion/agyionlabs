@@ -12,4 +12,6 @@ compatibility_date = "2026-09-20"
 
 [assets]
 directory = "./site"
-not_found_handling = "404-page"
+# SPA fallback: the Vite landing owns client-side routes (/fade, /pod, ...).
+# /app still wins because app.html exists as a real asset.
+not_found_handling = "single-page-application"

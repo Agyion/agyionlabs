@@ -10,6 +10,9 @@ import ScrollProgress from './components/ScrollProgress'
 import DepthGauge from './components/DepthGauge'
 import NavPill from './components/NavPill'
 import Home from './pages/Home'
+import Instrument from './pages/Instrument'
+import Ramp from './pages/Ramp'
+import Ledger from './pages/Ledger'
 import NotFound from './pages/NotFound'
 
 export default function App() {
@@ -111,6 +114,12 @@ export default function App() {
       <main id="main">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/fade" element={<Instrument slug="fade" />} />
+          <Route path="/pod" element={<Instrument slug="pod" />} />
+          <Route path="/trigger" element={<Instrument slug="trigger" />} />
+          <Route path="/envoy" element={<Instrument slug="envoy" />} />
+          <Route path="/ramp" element={<Ramp />} />
+          <Route path="/ledger" element={<Ledger />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
