@@ -77,6 +77,16 @@ Full logs, screenshots and videos are local ignored artifacts beneath
 evidence. `live-release/`, `deploy-final.log` and `deployments-after.json` identify
 the publication and read-only verification.
 
+Source changes were pushed to `codex/orbital-redesign-security` through commit
+`0868671` (preceded by dependency selection `e721a2a` and modal fix `75935c8`).
+GitHub's push response still reports **33 alerts on the default branch**: two
+critical, 11 high, 17 moderate and three low. This branch was not merged into
+`main`; a fresh remote read still resolves `main` to
+`08e0311550948114e1fc0f117ac217fc7a1433b6`. Zero application npm advisories on the published branch must not be
+reported as zero repository/default-branch alerts; the older review separately
+records that distinction. This checkpoint does not recalculate every default-
+branch alert or claim they were closed by this push.
+
 The private ZK/threshold profile remains a separate experimental SDK/pool. It is
 not integrated into this production app. No native-GPU performance, installed
 wallet signing, real-phone testing, bug-free guarantee or user aesthetic approval
