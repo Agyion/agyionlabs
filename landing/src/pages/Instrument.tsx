@@ -26,23 +26,23 @@ const DETAILS: Record<CoreInstrument, InstrumentDetail> = {
   },
   pod: {
     name: 'Pod',
-    promise: 'Time and a secret hold the key.',
+    promise: 'Your key. Its own time.',
     steps: [
-      { label: 'Lock', text: 'Save a fresh secret, then lock funds with its hash and an unlock ledger.' },
-      { label: 'Commit', text: 'Bind a hidden claim commitment to your recipient wallet.' },
-      { label: 'Reveal', text: 'After unlock and a later confirmed ledger, reveal the secret to submit the opening.' },
+      { label: 'Save the key', text: 'Keep a fresh claim key before locking funds. The contract records its public key.' },
+      { label: 'Set the time', text: 'Choose the unlock ledger. The capsule cannot open before it arrives.' },
+      { label: 'Sign to open', text: 'The claim key signs for your recipient wallet locally. Submit the signature to claim after unlock.' },
     ],
-    caveat: 'Save the secret before locking; the reveal becomes public.',
+    caveat: 'Keep your claim key. A lost key cannot be recreated.',
     notes: [
-      'A lost secret cannot be recreated; never reuse a revealed secret for another Pod.',
+      'The key stays on your device. The public key, amounts and wallet addresses remain visible on-chain.',
       'The unlock condition uses ledger time; a displayed countdown is an estimate.',
       'Long locks may need storage extension or restoration; there is no automatic keeper.',
-      'The separate proof-verifier experiment is not part of Pod claims.',
+      'The separate experimental privacy pool is not active in this app.',
     ],
   },
   trigger: {
     name: 'Trigger',
-    promise: 'An attester’s proof releases escrow.',
+    promise: 'Proof arrives. Escrow moves.',
     steps: [
       { label: 'Define', text: 'Set the escrow amount, beneficiary, attester key and deadline.' },
       { label: 'Sign', text: 'The configured attester signs the proof for this payment.' },
@@ -56,7 +56,7 @@ const DETAILS: Record<CoreInstrument, InstrumentDetail> = {
   },
   envoy: {
     name: 'Envoy',
-    promise: 'Let an agent claim within your limits.',
+    promise: 'Give permission. Keep control.',
     steps: [
       { label: 'Authorize', text: 'Choose an agent key and expiry for up to 50 zero or negative-price Fade claims.' },
       { label: 'Claim', text: 'The agent claims for the mandate owner; it cannot buy positive-price Fades or choose another recipient.' },

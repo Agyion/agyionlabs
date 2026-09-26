@@ -12,7 +12,7 @@ const api=await request.newContext({userAgent});
 let browser;
 const hash=b=>createHash('sha256').update(b).digest('hex');
 try{
- const routes=[['/','index.html'],['/app/','app/index.html'],...['fade','pod','trigger','envoy','ramp','ledger'].map(x=>[`/${x}`,`${x}.html`]),['/app-assets.json','app-assets.json']];
+ const routes=[['/','index.html'],['/app/','app/index.html'],...['instruments','fade','pod','trigger','envoy','ramp','ledger'].map(x=>[`/${x}`,`${x}.html`]),['/app-assets.json','app-assets.json']];
  const manifest=JSON.parse(await readFile('app/site/app-assets.json','utf8'));
  for(const entry of manifest.assets)routes.push([entry.href,entry.href.slice(1)]);
  const landing=await readFile('app/site/index.html','utf8');

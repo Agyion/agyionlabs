@@ -53,12 +53,14 @@ function OrbitalFallback() {
 
 type ExhibitId = 'fade' | 'pod' | 'trigger' | 'envoy'
 
-export default function OrbitalScene({ initialExhibit, initialExhibitView = false, exhibitStage, exhibitLinks = false, showExhibits = true }: {
+export default function OrbitalScene({ initialExhibit, initialExhibitView = false, exhibitStage, exhibitLinks = false, showExhibits = true, flightOnly = false }: {
   initialExhibit?: ExhibitId
   initialExhibitView?: boolean
   exhibitStage?: 0 | 1 | 2
   exhibitLinks?: boolean
   showExhibits?: boolean
+  /** Product pages keep the world hidden and paused until a launch. */
+  flightOnly?: boolean
 } = {}) {
   const mountRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<OrbitalSceneHandle | null>(null)
@@ -86,6 +88,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
     let handle: OrbitalSceneHandle | null = null
     let rendererReady = false
     let rendererFailed = false
+    let sceneRequested = false
     let launching = false
     let flightStarted = false
     let navigationCommitted = false
@@ -109,13 +112,15 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
     }
     const setDeparting = (departing: boolean) => {
       document.documentElement.classList.toggle('is-launching', departing)
-      document.querySelectorAll<HTMLElement>('.orbital-home--immersive, .detail-world, .orbital-nav').forEach(element => { element.inert = departing })
+      document.querySelectorAll<HTMLElement>('.orbital-home--immersive, .detail-world, .product-page__body, .orbital-nav').forEach(element => { element.inert = departing })
     }
-    const updatePause = () => handle?.setPaused((!launching && !inViewRef.current) || document.hidden)
+    // A hidden flight-only world still draws its initial frame to compile and
+    // report readiness. Pausing before that frame would deadlock early launches.
+    const updatePause = () => handle?.setPaused((!launching && (flightOnly ? rendererReady : !inViewRef.current)) || document.hidden)
     const updateProgress = () => {
       scrollFrame = 0
       const hero = mount.closest('section')
-      if (hero && !launching) {
+      if (hero && !launching && !flightOnly) {
         handle?.setProgress(Math.min(1, Math.max(0, -hero.getBoundingClientRect().top / hero.offsetHeight)))
       }
     }
@@ -136,7 +141,11 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
       const destination = new URL(anchor.href, window.location.href)
       return destination.origin === window.location.origin && /^\/app\/?$/.test(destination.pathname) ? anchor : null
     }
-    const onIntent = (event: Event) => { if (appLink(event)) prefetchApp() }
+    const onIntent = (event: Event) => {
+      if (!appLink(event)) return
+      prefetchApp()
+      if (flightOnly && !reducedMotion) prepareScene()
+    }
     const completeNavigation = () => {
       if (cancelled || navigationCommitted || !launching || !launchDestination.current) return
       navigationCommitted = true
@@ -177,6 +186,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
       // An early click waits for the existing scene, including an explicit tab.
       // A failed or stalled renderer still leaves the chosen workspace reachable.
       launchTimeout = window.setTimeout(completeNavigation, 3000)
+      prepareScene()
       startFlight()
     }
     const onRestore = (event: PageTransitionEvent) => {
@@ -205,38 +215,46 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('pageshow', onRestore)
 
-    void import('../../../shared/space-scene').then(({ createOrbitalScene }) => {
-      if (cancelled) return
-      handle = createOrbitalScene(mount, {
-        mode: 'landing',
-        reducedMotion,
-        interactive: true,
-        showExhibits,
-        onExhibitSelect: id => {
-          if (exhibitLinks) {
-            if (selectedExhibit.current !== id) navigate(`/${id}`)
-          } else window.dispatchEvent(new CustomEvent('agyion:exhibit-select', { detail: { id } }))
-        },
-        onSelect: id => {
-          if (['fade', 'pod', 'trigger', 'envoy', 'ramp', 'ledger'].includes(id)) navigate(`/${id}`)
-        },
-        onReady: () => { if (!cancelled) { rendererReady = true; rendererFailed = false; setReadyForMotion(reducedMotion); startFlight() } },
-        onError: () => { if (!cancelled) { rendererReady = false; rendererFailed = true; setReadyForMotion(null); completeNavigation() } },
+    function prepareScene() {
+      if (!mount || sceneRequested || cancelled) return
+      sceneRequested = true
+      void import('../../../shared/space-scene').then(({ createOrbitalScene }) => {
+        if (cancelled) return
+        handle = createOrbitalScene(mount, {
+          mode: 'landing',
+          reducedMotion,
+          interactive: !flightOnly,
+          showExhibits,
+          onExhibitSelect: id => {
+            if (exhibitLinks) {
+              if (selectedExhibit.current !== id) navigate(`/${id}`)
+            } else window.dispatchEvent(new CustomEvent('agyion:exhibit-select', { detail: { id } }))
+          },
+          onSelect: id => {
+            if (['fade', 'pod', 'trigger', 'envoy', 'ramp', 'ledger'].includes(id)) navigate(`/${id}`)
+          },
+          onReady: () => { if (!cancelled) { rendererReady = true; rendererFailed = false; setReadyForMotion(reducedMotion); startFlight(); updatePause() } },
+          onError: () => { if (!cancelled) { rendererReady = false; rendererFailed = true; setReadyForMotion(null); completeNavigation() } },
+        })
+        if (cancelled) { handle.dispose(); return }
+        sceneRef.current = handle
+        handle.setExhibit(selectedExhibit.current)
+        handle.setExhibitView(exhibitView.current)
+        handle.setExhibitStage(stageRef.current ?? null)
+        updatePause()
+        updateProgress()
+        startFlight()
+      }).catch(() => {
+        if (!cancelled) { rendererReady = false; rendererFailed = true; setReadyForMotion(null); completeNavigation() }
       })
-      if (cancelled) { handle.dispose(); return }
-      sceneRef.current = handle
-      handle.setExhibit(selectedExhibit.current)
-      handle.setExhibitView(exhibitView.current)
-      handle.setExhibitStage(stageRef.current ?? null)
-      updatePause()
-      updateProgress()
-      startFlight()
-    }).catch(() => {
-      if (!cancelled) { rendererReady = false; rendererFailed = true; setReadyForMotion(null); completeNavigation() }
-    })
+    }
+    if (!flightOnly) prepareScene()
 
     return () => {
       cancelled = true
+      // Lazy product scenes may stay unmounted across preference changes. A
+      // previous renderer's ready flag must not hide the next launch fallback.
+      setReadyForMotion(null)
       observer.disconnect()
       document.removeEventListener('visibilitychange', updatePause)
       document.removeEventListener('click', onNavigate, true)
@@ -253,7 +271,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
       handle?.dispose()
       sceneRef.current = null
     }
-  }, [reducedMotion, navigate, exhibitLinks, showExhibits])
+  }, [reducedMotion, navigate, exhibitLinks, showExhibits, flightOnly])
 
   useEffect(() => {
     stageRef.current = exhibitStage

@@ -4,8 +4,8 @@ import '../styles/pod-trial.css'
 
 const CONDITIONS: { id: PodCondition; label: string; detail: string }[] = [
   { id: 'timeReached', label: 'Unlock time reached', detail: 'At or after the unlock ledger' },
-  { id: 'secretPresent', label: 'Secret available', detail: 'Matches this capsule’s stored hash' },
-  { id: 'commitmentReady', label: 'Recipient commitment ready', detail: 'Confirmed in an earlier ledger' },
+  { id: 'keyAvailable', label: 'Claim key available', detail: 'Matches this capsule’s public key' },
+  { id: 'recipientSigned', label: 'Recipient signature ready', detail: 'Authorizes this recipient wallet locally' },
 ]
 
 /** A local teaching example: it never connects a wallet or submits a transaction. */

@@ -17,11 +17,12 @@ if (!Number.isFinite(appDelayMs) || appDelayMs < 0) throw new Error('JOURNEY_APP
 const only = process.env.JOURNEY_CASES?.split(',');
 if (!['all', 'real', 'matrix', 'fallbacks'].includes(scope)) throw new Error('JOURNEY_SCOPE must be all, real, matrix or fallbacks');
 const viewport = mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 };
-const realCases = new Set(['landing-pod', 'landing-fade', 'detail-fade', 'detail-pod']);
+const realCases = new Set(['landing-pod', 'landing-fade', 'detail-fade', 'detail-pod', 'directory-generic']);
 const cases = [
   ...['fade', 'pod', 'trigger', 'envoy'].map(id => ({ name: `landing-${id}`, route: '/', id })),
   ...['fade', 'pod', 'trigger', 'envoy', 'ramp', 'ledger'].map(id => ({ name: `detail-${id}`, route: `/${id}`, id })),
   { name: 'detail-generic', route: '/ledger', id: null },
+  { name: 'directory-generic', route: '/instruments', id: null },
 ].filter(test => !only || only.includes(test.name));
 await mkdir(output, { recursive: true });
 const report = { at: new Date().toISOString(), base, viewport, scope, appScriptDelayMs: appDelayMs, status: 'running', cases: [], fallbacks: [], failures: [], consoleErrors: [], pageErrors: [], requestFailures: [], rawConsoleErrors: [], rawRequestFailures: [], expectedInjectedDiagnostics: [], csp: [], note: 'Real recordings establish observed flow and timing, not smooth/native GPU performance. Accelerated matrix results establish routing/lifecycle only. All network diagnostics are retained and gated.' };
@@ -121,8 +122,7 @@ async function openSource(page, test) {
   }
   // Detail scenes may be created on departure; loading a detail must not need a
   // hidden WebGL renderer before its native CTA becomes available.
-  if (test.id === 'pod') await openPodExample(page);
-  return test.id ? page.locator(`.detail-world__launch[href="/app/?tab=${test.id}"]`).first() : page.locator('.orbital-nav__launch').first();
+  return test.id ? page.locator(`.product-launch[href="/app/?tab=${test.id}"]`).first() : page.locator('.orbital-nav__launch').first();
 }
 
 async function openPodExample(page) {

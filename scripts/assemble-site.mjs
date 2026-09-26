@@ -17,7 +17,7 @@ await writeFile(path.join(site, 'app-assets.json'), `${JSON.stringify(appAssets)
 await mkdir(path.join(site,'fonts'),{recursive:true});
 await cp(path.join(root,'app/out/fonts'),path.join(site,'fonts'),{recursive:true});
 // Explicit document routes keep missing scripts/assets as 404s, never landing HTML.
-for(const route of ['fade','pod','trigger','envoy','ramp','ledger']) await cp(path.join(site,'index.html'),path.join(site,`${route}.html`));
+for(const route of ['instruments','fade','pod','trigger','envoy','ramp','ledger']) await cp(path.join(site,'index.html'),path.join(site,`${route}.html`));
 const hashes=new Set();
 for(const file of ['index.html','app/index.html','404.html']) {
  const html=await readFile(path.join(site,file),'utf8');

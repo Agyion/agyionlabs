@@ -6,6 +6,7 @@ import { initReveals } from './lib/reveal'
 import NavPill from './components/NavPill'
 import Home from './pages/Home'
 import Instrument from './pages/Instrument'
+import Instruments from './pages/Instruments'
 import Ramp from './pages/Ramp'
 import Ledger from './pages/Ledger'
 import NotFound from './pages/NotFound'
@@ -110,6 +111,7 @@ export default function App() {
       <main id="main" className="orbital-route" key={location.pathname} tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/instruments" element={<Instruments />} />
           <Route path="/fade" element={<Instrument slug="fade" />} />
           <Route path="/pod" element={<Instrument slug="pod" />} />
           <Route path="/trigger" element={<Instrument slug="trigger" />} />

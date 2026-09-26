@@ -66,12 +66,13 @@ export default function NavPill() {
   const visitSection = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
     closeMenu()
-    if (id === 'instruments' && location.pathname === '/' && location.hash === '#instruments') {
+    if (id === 'instruments' && location.pathname === '/instruments') {
       event.preventDefault()
-      window.dispatchEvent(new CustomEvent('agyion:exhibit-focus'))
+      document.getElementById('directory-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
     }
   }
-  const currentSection = (id: string) => location.pathname === '/' && active === id ? 'location' as const : undefined
+  const sectionHref = (id: string) => id === 'instruments' ? '/instruments' : `/#${id}`
+  const currentSection = (id: string) => id === 'instruments' && /^\/(instruments|fade|pod|trigger|envoy|ramp|ledger)$/.test(location.pathname) ? 'page' as const : location.pathname === '/' && active === id ? 'location' as const : undefined
 
   return (
     <header className="orbital-nav" data-surface={location.pathname === '/' ? 'home' : 'detail'} ref={headerRef}>
@@ -80,13 +81,13 @@ export default function NavPill() {
         <span>agyion<span className="orbital-brand__suffix">labs</span></span>
       </Link>
       <nav className="orbital-nav__desktop" aria-label="Main navigation">
-        {sections.map(section => <Link key={section.id} to={`/#${section.id}`} aria-current={currentSection(section.id)} aria-haspopup={section.id === 'how-it-works' ? 'dialog' : undefined} aria-controls={section.id === 'how-it-works' ? 'how-it-works-dialog' : undefined} onClick={event => visitSection(event, section.id)}>{section.label}</Link>)}
+        {sections.map(section => <Link key={section.id} to={sectionHref(section.id)} aria-current={currentSection(section.id)} aria-haspopup={section.id === 'how-it-works' ? 'dialog' : undefined} aria-controls={section.id === 'how-it-works' ? 'how-it-works-dialog' : undefined} onClick={event => visitSection(event, section.id)}>{section.label}</Link>)}
       </nav>
       <div className="orbital-nav__actions"><a className="orbital-nav__launch" href="/app/">Launch app <span aria-hidden="true">↗</span></a>
         <button className="orbital-nav__toggle" ref={buttonRef} type="button" aria-expanded={open} aria-controls="orbital-mobile-menu" aria-label={open ? 'Close navigation menu' : 'Open navigation menu'} onClick={() => setOpen(value => !value)}>Menu <span aria-hidden="true">{open ? '−' : '+'}</span></button>
       </div>
       <nav className="orbital-nav__mobile" id="orbital-mobile-menu" aria-label="Mobile navigation" hidden={!open}>
-        {sections.map(section => <Link key={section.id} to={`/#${section.id}`} aria-current={currentSection(section.id)} aria-haspopup={section.id === 'how-it-works' ? 'dialog' : undefined} aria-controls={section.id === 'how-it-works' ? 'how-it-works-dialog' : undefined} onClick={event => visitSection(event, section.id)}>{section.label}<span aria-hidden="true">↘</span></Link>)}
+        {sections.map(section => <Link key={section.id} to={sectionHref(section.id)} aria-current={currentSection(section.id)} aria-haspopup={section.id === 'how-it-works' ? 'dialog' : undefined} aria-controls={section.id === 'how-it-works' ? 'how-it-works-dialog' : undefined} onClick={event => visitSection(event, section.id)}>{section.label}<span aria-hidden="true">↘</span></Link>)}
         <Link to="/ramp" aria-current={location.pathname === '/ramp' ? 'page' : undefined} onClick={closeMenu}>Ramp <span aria-hidden="true">↗</span></Link>
         <Link to="/ledger" aria-current={location.pathname === '/ledger' ? 'page' : undefined} onClick={closeMenu}>Ledger <span aria-hidden="true">↗</span></Link>
       </nav>

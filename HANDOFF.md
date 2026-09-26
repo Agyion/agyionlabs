@@ -27,13 +27,23 @@ committee or audit evidence. See `privacy/EXECUTION_V2.md`,
 Historical counts/statuses below describe their named checkpoints only.
 
 **Current frontend:** published to `https://agyionlabs.dev/` as Cloudflare version
-`90ff8d23-8b7a-4cc6-b4e3-bf66aebca29a` on 2026-09-26. Real testnet configuration;
-V3-required writes remain closed against the old kernel. Final local checks:
-467 app + 70 landing + 19 privacy + 6 tooling tests, 49 kernel and 11 standalone
-verifier tests including compiled WASM, 14 browser tests, and 37 mock UI checks
-passed. Live 28 artifact/HTTP + 14 UI checks passed, but the strict live run is
-**failed** because 4 Cloudflare CSP events and 2 RPC network-change failures remain.
-See the current report for exact coverage, limits, deployment and rollback IDs.
+`ff3d5bf7-a79a-49f3-bed9-cbfe9ce8ee47` on 2026-09-26 at 19:35 UTC.
+The new `/instruments` directory and six black/orange product pages restore the
+FA/DE, P/OD split-word identity and use continuous interactive SVG mechanisms.
+Product pages have opaque backgrounds and create a hidden, paused flight renderer
+only after intent to launch. Homepage/app worlds and the full launch are preserved.
+The nine application dependency advisories are resolved; both full and production
+npm audits are zero. The selected Wallets Kit package has 85 unchanged upstream
+files and one documented modal readiness fix, with reproducible provenance.
+Fresh checks: 477 app + 77 landing + 6 tooling tests; type/lint/build checks passed.
+The actual wallet chooser opens/closes at 1440/390/320 with no local diagnostics.
+Live 29 artifact/HTTP + 14 app/home UI checks passed; the strict run remains
+**failed** on 4 pre-existing Cloudflare CSP events (including 2 blocked beacon
+requests), with no application exception or RPC failure in that run.
+V3-required writes remain closed against the old testnet kernel; the separate
+private profile is still not integrated or deployed. No wallet signing or chain
+transaction occurred. See `docs/verification/2026-09-26-product-release.md` and
+`docs/design/2026-09-26-product-page-verification.md` for exact evidence and limits.
 
 ## User brief and implementation constraints
 
@@ -131,7 +141,14 @@ not resolved by the passing interaction tests.
 
 ## Source of truth
 
-The latest Open-link and spatial-detail correction is documented in
+The current detail-page layout supersedes the earlier spatial/manual-stage
+design below. See `docs/design/2026-09-26-instrument-revision.md` and the current
+release report above. The homepage's physical mechanisms remain; the Instruments
+navigation now opens an actual directory. New detail examples are illustrations,
+not transactions or privacy guarantees. Pod copy describes the V3 local signing
+key, not the obsolete public preimage. Technical checks are not aesthetic approval.
+
+The preceding Open-link and spatial-detail correction is documented in
 `docs/verification/2026-09-25-instrument-journeys.md`. It supersedes the earlier
 explicit-tab bypass and static document-style details. Core details now keep
 the physical scene and expose three manual condition stages; their actual

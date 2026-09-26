@@ -10,7 +10,7 @@ routes = [
 
 [assets]
 directory = "./site"
-# Both products and the six landing details are real generated HTML assets.
+# The app, instrument directory and six detail routes are real HTML assets.
 # Missing asset paths must remain 404 instead of receiving the landing document.
 html_handling = "auto-trailing-slash"
 not_found_handling = "404-page"

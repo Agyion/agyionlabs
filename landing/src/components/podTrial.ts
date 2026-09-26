@@ -1,16 +1,16 @@
-export type PodCondition = 'timeReached' | 'secretPresent' | 'commitmentReady'
+export type PodCondition = 'timeReached' | 'keyAvailable' | 'recipientSigned'
 export type PodTrialState = Record<PodCondition, boolean> & { opened: boolean }
 export type PodTrialAction = { type: 'toggle'; condition: PodCondition } | { type: 'open' } | { type: 'reset' }
 
 export const INITIAL_POD_TRIAL: PodTrialState = {
   timeReached: false,
-  secretPresent: false,
-  commitmentReady: false,
+  keyAvailable: false,
+  recipientSigned: false,
   opened: false,
 }
 
 export function podTrialStage(state: PodTrialState): 0 | 1 | 2 {
-  if (!state.timeReached || !state.secretPresent || !state.commitmentReady) return 0
+  if (!state.timeReached || !state.keyAvailable || !state.recipientSigned) return 0
   return state.opened ? 2 : 1
 }
 

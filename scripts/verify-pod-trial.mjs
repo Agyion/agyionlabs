@@ -12,7 +12,8 @@ try {
     page.on('pageerror', e => report.errors.push({ width, kind: 'page', message: e.message }));
     page.on('console', e => { if (e.type() === 'error') report.errors.push({ width, kind: 'console', message: e.text() }); });
     page.on('requestfailed', r => report.errors.push({ width, kind: 'network', url: r.url(), message: r.failure()?.errorText }));
-    for (const source of ['home', 'detail']) {
+    // The detail page has its separate mechanism checks in verify-product-pages.mjs.
+    for (const source of ['home']) {
       await page.goto(`http://127.0.0.1:4192/${source === 'detail' ? 'pod' : '#instruments'}`);
       await expect(page.locator('.orbital-scene')).toHaveClass(/is-ready/, { timeout: 60000 });
       if (source === 'home') await page.locator('#exhibit-pod').click();
