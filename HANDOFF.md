@@ -1,6 +1,6 @@
 # Agyion — current local handoff
 
-Updated 2026-09-26. Working branch: `codex/orbital-redesign-security`.
+Updated 2026-09-27 (Europe/Istanbul). Working branch: `codex/orbital-redesign-security`.
 The original handoff is preserved in `docs/archive/HANDOFF-before-orbital-revision.md`.
 Its mint landing, missing `/mnt/agents/output/app` source, frontend-only mock,
 8-second docking sequence and live-verification claims describe the earlier
@@ -27,23 +27,45 @@ committee or audit evidence. See `privacy/EXECUTION_V2.md`,
 Historical counts/statuses below describe their named checkpoints only.
 
 **Current frontend:** published to `https://agyionlabs.dev/` as Cloudflare version
-`ff3d5bf7-a79a-49f3-bed9-cbfe9ce8ee47` on 2026-09-26 at 19:35 UTC.
-The new `/instruments` directory and six black/orange product pages restore the
-FA/DE, P/OD split-word identity and use continuous interactive SVG mechanisms.
-Product pages have opaque backgrounds and create a hidden, paused flight renderer
-only after intent to launch. Homepage/app worlds and the full launch are preserved.
-The nine application dependency advisories are resolved; both full and production
-npm audits are zero. The selected Wallets Kit package has 85 unchanged upstream
-files and one documented modal readiness fix, with reproducible provenance.
-Fresh checks: 477 app + 77 landing + 6 tooling tests; type/lint/build checks passed.
-The actual wallet chooser opens/closes at 1440/390/320 with no local diagnostics.
-Live 29 artifact/HTTP + 14 app/home UI checks passed; the strict run remains
-**failed** on 4 pre-existing Cloudflare CSP events (including 2 blocked beacon
-requests), with no application exception or RPC failure in that run.
-V3-required writes remain closed against the old testnet kernel; the separate
-private profile is still not integrated or deployed. No wallet signing or chain
-transaction occurred. See `docs/verification/2026-09-26-product-release.md` and
-`docs/design/2026-09-26-product-page-verification.md` for exact evidence and limits.
+`b661f1df-bf19-4515-88d9-efbc17151440`, deployment
+`bc49f6e4-9e84-45cd-9506-eae982f4a5d9`, at 2026-09-26 21:11 UTC
+(27 September 00:11 in Istanbul). Runtime source is commit `4dcd48a`, pushed on
+`codex/orbital-redesign-security`. Previous rollback version:
+`ff3d5bf7-a79a-49f3-bed9-cbfe9ce8ee47`.
+
+The homepage now separates the unobstructed space hero from an opaque black/orange
+instrument gallery. Natural scrolling and the real `/#instruments` anchor lead
+to four split-word selectors and one continuous illustrative mechanism. Details
+reuse the selected title in a progressive native transition. History restores
+selection, position and focus; a fast reduced-motion Back race was reproduced
+and fixed by cleaning up old route listeners before the new layout commits.
+Launch from any gallery scroll depth preserves the existing renderer, viewport,
+9.8-second flight and requested app tab. Same-document Back cancels a pending
+flight safely. The existing directory, six product pages and application remain.
+
+Fresh checks: 477 app + 89 landing + six tooling tests; both builds/type checks
+and landing lint passed.
+The full gallery matrix retained two failures (94/96), both the subsequently
+fixed history race. Final route-only verification passed 57/57 across four widths
+and both motion preferences; the general landing matrix passed 54/54; focused
+Pod/Envoy detail checks passed 16/16. Three actual app journeys passed functional
+checks with delayed scripts and no second approach. The desktop strict run retains
+two external RPC network-change failures; mobile was clean.
+Live artifact/HTTP checks passed 29/29, home/app UI checks 14/14, and the
+separate live gallery check 15/15. Strict live
+verification is **failed** on four existing Cloudflare-injected CSP events and
+two external testnet RPC network-change failures. There is no application page
+exception. Network unavailability correctly keeps transaction actions disabled.
+See `docs/verification/2026-09-26-home-gallery.md` for evidence and release limits.
+
+The prior wallet dependency remediation remains documented in
+`docs/security/2026-09-26/dependency-remediation.md`; this homepage revision adds
+no dependency. GitHub's push still reports 33 alerts on the default branch, which
+was not merged. This publication does not claim those alerts are resolved or an
+independent security audit is complete. V3 writes remain closed against the old
+kernel; the separate private profile is not integrated/deployed. No signing or
+chain transaction occurred. The older release record remains at
+`docs/verification/2026-09-26-product-release.md`.
 
 ## User brief and implementation constraints
 
@@ -68,10 +90,11 @@ transaction occurred. See `docs/verification/2026-09-26-product-release.md` and
 - Fine mouse movement adds a small damped camera response in the free world;
   drag and zoom ease that offset away without a recoil. Dock hover/focus lights
   the corresponding bays without selecting them or opening a workspace.
-- Landing now uses one immersive world with a large Agyion wordmark and four
-  physical, selectable mechanisms around the black hole. Fixed HTML controls
-  remain accessible; descriptions appear on selection. A native centered dialog
-  replaces the separate process section. Mobile uses a compact inline wordmark.
+- Landing uses a large Agyion wordmark above an unobstructed space hero, followed
+  by a separate opaque black/orange instrument gallery. Product meshes are not
+  created over the black hole. Four accessible selectors choose one animated
+  example; detailed controls remain on the product pages. A native centered
+  dialog explains the process. Mobile uses a compact inline wordmark.
 - Instrument forms separate editable inputs, actual draft summaries and existing
   records. The six public detail pages share the landing typography and palette.
   The workspace follows the actual header height and scrolls as a whole on short

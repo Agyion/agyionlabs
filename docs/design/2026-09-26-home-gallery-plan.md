@@ -24,7 +24,7 @@ No scroll lock, decorative numbered cards or new dependency.
   9.8-second flight, explicit tab and paired frame bridge.
 - [x] Verify 1440/768/390/320 layouts, scroll, direct old #instruments, previews,
   rapid selection/replay, reduced motion, dialog, detail Back and scrolled flight.
-- [ ] Build combined artifact, inspect, publish authorized static frontend,
+- [x] Build combined artifact, inspect, publish authorized static frontend,
   verify live bytes/flows, document retained failures, commit and push.
 
 Failure focus: viewport promotion before flight; duplicate transition names;

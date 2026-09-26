@@ -1,4 +1,11 @@
-# Separate homepage hero and instrument gallery
+# Separate homepage hero and instrument gallery — published
+
+Published to [agyionlabs.dev](https://agyionlabs.dev/#instruments) at
+2026-09-26 21:11 UTC (27 September 00:11 in Istanbul). Worker `agyion`, version
+`b661f1df-bf19-4515-88d9-efbc17151440`, deployment
+`bc49f6e4-9e84-45cd-9506-eae982f4a5d9`, 100% traffic. Runtime source `4dcd48a`
+was pushed to `codex/orbital-redesign-security` before publication. Previous
+rollback version: `ff3d5bf7-a79a-49f3-bed9-cbfe9ce8ee47`.
 
 The user approved moving product illustrations away from the black hole. The
 opening now keeps the existing space world and Endurance, followed by a separate
@@ -79,8 +86,7 @@ Evidence is retained under local ignored `artifacts/verification/home-gallery/`:
 `first-look/`, `layout-polish/`, `preview-idempotence/`, `hash-scroll-before/`,
 `hash-scroll-after/`, `hash-scroll-final/`, `quick-back-before/`,
 `quick-back-after/`, `final-matrix-3/`, `routes-final/`, `landing-matrix-final/`,
-`real-app-desktop/` and `real-app-mobile/`. Publication identifiers and live
-diagnostics will be recorded below after they run.
+`real-app-desktop/`, `real-app-mobile/` and `detail-regression/`.
 The first two production matrices are retained as failed/interrupted attempts,
 including the initial probe's null-document-element error, native-link failures
 and explicit browser-closure consequences. They are not counted as clean runs.
@@ -93,3 +99,31 @@ move no funds. No wallet signing, chain deployment, private-profile integration,
 independent security audit or bug-free guarantee is part of this frontend change.
 The previous release's Cloudflare-injected CSP errors remain a separate known
 issue; strict live verification must retain them rather than relax the policy.
+
+## Live publication
+
+**29/29 artifact/HTTP and 14/14 home/application UI checks passed. The strict
+live run is failed.** Served application bytes match the reviewed artifact under
+the existing narrowly validated Cloudflare injection comparison. Missing scripts
+and environment-file paths return 404; all six workspaces fit desktop/mobile.
+
+Four existing CSP events from Cloudflare JavaScript Detections and Web Analytics
+remain, with two blocked beacon requests. Two external Soroban testnet requests
+also reported `ERR_NETWORK_CHANGED`; the application correctly displayed network
+unavailability and left its transaction action disabled. No page exception was
+recorded. These errors were not suppressed, and neither CSP nor bot protection
+was weakened. See `live-release/results.json` and the existing
+[Cloudflare follow-up](../security/2026-09-26/cloudflare-csp-followup.md).
+
+The separate live gallery run passed **15/15** source/UI groups at 1440/390 in
+reduced motion, including the repaired immediate-Back path. Its strict status is
+also failed on four Cloudflare CSP events and two blocked beacon requests; it
+has no page exception, HTTP error or other failed request. The live gallery
+screenshot was inspected. The versioned
+[compact evidence](2026-09-26-home-gallery-evidence.json) records deployment IDs,
+artifact hashes, local results and all retained live diagnostics. Raw captures
+remain in local ignored `artifacts/verification/home-gallery/`.
+
+GitHub's source push still reports 33 vulnerabilities on the default branch
+(two critical, 11 high, 17 moderate, three low). This branch was not merged into
+the default branch; a frontend publication is not evidence those alerts closed.

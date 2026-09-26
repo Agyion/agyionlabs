@@ -2,6 +2,10 @@
 
 27 Eylül 2026, Europe/Istanbul. Aşağıdaki kayıtlar `http://127.0.0.1:4192` üzerindeki derlenmiş adaylara aittir; canlı yayın veya gerçek telefon/GPU performansı kanıtı değildir. Chromium/SwiftShader kullanıldı. Cüzdan imzası ya da zincir işlemi yapılmadı.
 
+Ham raporlar ve görseller yerel, Git tarafından yok sayılan `artifacts/` dizinindedir;
+aşağıdaki bağlantılar bu çalışma alanında açılır. Yayın kimlikleri ve taşınabilir
+özet kanıtı `docs/verification/2026-09-26-home-gallery-evidence.json` dosyasındadır.
+
 ## Kapsam ve sonuç
 
 | Kayıt | Aday | Sonuç |
