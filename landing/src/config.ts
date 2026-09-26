@@ -73,7 +73,7 @@ export const config: SiteConfig = {
         id: 'instruments',
         label: 'INSTRUMENTS',
         subLabel: '( FOUR PRODUCTS )',
-        href: '/#instruments',
+        href: '/instruments',
         thumbs: [img('/media/agyion-envoy.png', 'ENVOY instrument still'), img('/media/agyion-fade.png', 'FADE instrument still')],
       },
       {

@@ -6,10 +6,24 @@ Its mint landing, missing `/mnt/agents/output/app` source, frontend-only mock,
 8-second docking sequence and live-verification claims describe the earlier
 production bundle. They are not instructions or evidence for this revision.
 
-**Current task (27 September):** the user has closed the design phase. Work now
-focuses on backend correctness, contracts, fund safety and the separate private
-profile. Do not resume visual changes without new direction. The latest local
-continuation fixes Fade's frozen-price display, foreign-token mislabelling,
+**Latest bounded follow-up (27 September):** the user requested a simpler home
+leading to the preferred `/instruments` directory and realistic Fade economics
+and allocation analysis. Home's second catalog is removed; all Instruments links
+use `/instruments`, and old `/#instruments` links replace to that URL. The
+space scene and launch remain. Browser QA also fixed cross-page How scroll.
+Fade history now uses the actual confirmed claim ledger and survives missing or
+consumed receipts and wallet changes without hashless duplicate entries.
+Ten-claimant native/WASM tests verify one winner; this is not network fairness.
+Fresh checks: 582 app, 89 landing, 55 HAK native-plus-WASM and 102 browser checks;
+both builds and relevant static checks passed. Local preview: port 4292, **not
+published**. See `docs/verification/2026-09-27-canonical-instruments-and-fade.md`
+and `docs/product/2026-09-27-fade-use-cases-and-allocation.md`.
+Free reservation/no-show and fair allocation remain explicit protocol design
+work; no new deposit, slashing or batch-selection rule was introduced.
+
+Backend correctness, contracts, fund safety and the separate private profile
+remain the main focus; this catalog request does not reopen general redesign.
+The preceding local continuation fixes Fade's frozen-price display, foreign-token mislabelling,
 duplicate creation after a confirmed result loses its record ID, invalid mode
 configuration, and false trustline success. The full app suite passed 560 tests;
 HAK native-plus-WASM passed 53, including second-transfer rollback/reserve tests.
@@ -45,7 +59,7 @@ committee or audit evidence. See `privacy/EXECUTION_V2.md`,
 `docs/security/2026-09-26/REVIEW.md` for their respective scopes and release gates.
 Historical counts/statuses below describe their named checkpoints only.
 
-**Current frontend:** published to `https://agyionlabs.dev/` as Cloudflare version
+**Currently published frontend — differs from local source:** `https://agyionlabs.dev/`, Cloudflare version
 `b661f1df-bf19-4515-88d9-efbc17151440`, deployment
 `bc49f6e4-9e84-45cd-9506-eae982f4a5d9`, at 2026-09-26 21:11 UTC
 (27 September 00:11 in Istanbul). Runtime source is commit `4dcd48a`, pushed on

@@ -2255,3 +2255,163 @@ fn wasm_fade_second_transfer_failure_preserves_all_reserves_and_frozen_price() {
         assert_fade_second_transfer_rollback(&env, &contract, positive);
     }
 }
+
+/// Ten independent requests sharing one ledger still execute in some order.
+/// This models that serialization; it is not a concurrent RPC/consensus test
+/// and makes no claim that execution order equals browser click order.
+/// A broken state guard, overwritten claimant, or live-price settlement would
+/// change the hand-checked record and token balances asserted below.
+fn assert_fade_ten_serialized_claimants(
+    env: &Env,
+    contract: &Address,
+    positive: bool,
+    first: usize,
+) {
+    use soroban_sdk::{
+        testutils::{MockAuth, MockAuthInvoke},
+        IntoVal,
+    };
+
+    env.mock_all_auths_allowing_non_root_auth();
+    let seller = Address::generate(env);
+    let asset = env.register_stellar_asset_contract_v2(seller.clone()).address();
+    let token = token::Client::new(env, &asset);
+    let admin = token::StellarAssetClient::new(env, &asset);
+    let client = AgyionClient::new(env, contract);
+    admin.mint(&seller, &200);
+    let claimants: std::vec::Vec<Address> = (0..10).map(|_| Address::generate(env)).collect();
+    for claimant in &claimants {
+        admin.mint(claimant, &50);
+    }
+    let start = env.ledger().sequence();
+    let id = client.create_fade(
+        &seller, &asset, &100, &25, &-25, &1, &1, &100, &20, &venue_pubkey(env),
+    );
+    let claimed_at = start + if positive { 10 } else { 40 };
+    env.ledger().set_sequence_number(claimed_at);
+    assert_eq!(client.fade_price(&id), if positive { 15 } else { -15 });
+
+    // An unauthorized earlier request must not consume the available listing.
+    env.set_auths(&[]);
+    assert!(client.try_claim(&id, &claimants[(first + 9) % 10]).is_err());
+    assert_eq!(client.get_fade(&id).state, 0);
+
+    let winner = &claimants[first];
+    let mut successes = 0;
+    for offset in 0..10 {
+        let claimant = &claimants[(first + offset) % 10];
+        // Scope each authorization to this exact claimant, method and Fade.
+        // Other claimants are not silently authorized by a global auth mock.
+        env.mock_auths(&[MockAuth {
+            address: claimant,
+            invoke: &MockAuthInvoke {
+                contract,
+                fn_name: "claim",
+                args: (id, claimant.clone()).into_val(env),
+                sub_invokes: &[],
+            },
+        }]);
+        let result = client.try_claim(&id, claimant);
+        if offset == 0 {
+            assert_eq!(result, Ok(Ok(())));
+            successes += 1;
+        } else {
+            assert_eq!(result, Err(Ok(Error::InvalidState)));
+        }
+        let record = client.get_fade(&id);
+        assert_eq!(record.state, 1);
+        assert_eq!(record.claimant.as_ref(), Some(winner));
+        assert_eq!(record.claimed_at, Some(claimed_at));
+        assert_eq!(token.balance(&seller), 100);
+        assert_eq!(token.balance(contract), 100);
+        for address in &claimants {
+            assert_eq!(token.balance(address), 50);
+        }
+    }
+    assert_eq!(successes, 1);
+
+    // Even the winner cannot claim twice. A later ledger must not restart the
+    // handoff clock or change the original allocation/settlement price.
+    env.ledger().set_sequence_number(claimed_at + 5);
+    env.mock_auths(&[MockAuth {
+        address: winner,
+        invoke: &MockAuthInvoke {
+            contract,
+            fn_name: "claim",
+            args: (id, winner.clone()).into_val(env),
+            sub_invokes: &[],
+        },
+    }]);
+    assert_eq!(client.try_claim(&id, winner), Err(Ok(Error::InvalidState)));
+    assert_eq!(client.fade_price(&id), if positive { 10 } else { -20 });
+    assert_eq!(client.get_fade(&id).claimed_at, Some(claimed_at));
+
+    // A venue signature addressed to a losing claimant cannot redirect funds.
+    env.set_auths(&[]);
+    let loser = &claimants[(first + 1) % 10];
+    let wrong_recipient_sig = sign_handoff(env, contract, id, loser, 7);
+    assert!(client.try_confirm_handoff(&id, &7, &wrong_recipient_sig).is_err());
+    assert_eq!(client.get_fade(&id).state, 1);
+    assert_eq!(token.balance(contract), 100);
+    assert_eq!(token.balance(loser), 50);
+
+    let signature = sign_handoff(env, contract, id, winner, 7);
+    if positive {
+        // Claim approval did not authorize a future positive payment.
+        assert!(client.try_confirm_handoff(&id, &7, &signature).is_err());
+        assert_eq!(client.get_fade(&id).state, 1);
+        assert_eq!(token.balance(winner), 50);
+        env.mock_auths(&[MockAuth {
+            address: winner,
+            invoke: &MockAuthInvoke {
+                contract: &asset,
+                fn_name: "transfer",
+                args: (winner.clone(), seller.clone(), 15_i128).into_val(env),
+                sub_invokes: &[],
+            },
+        }]);
+    }
+    client.confirm_handoff(&id, &7, &signature);
+    assert_eq!(client.get_fade(&id).state, 2);
+    assert_eq!(client.get_fade(&id).claimant.as_ref(), Some(winner));
+    assert_eq!(client.get_fade(&id).claimed_at, Some(claimed_at));
+    assert_eq!(token.balance(&seller), if positive { 215 } else { 185 });
+    assert_eq!(token.balance(contract), 0);
+    for (index, claimant) in claimants.iter().enumerate() {
+        let expected = if index == first {
+            if positive { 35 } else { 65 }
+        } else {
+            50
+        };
+        assert_eq!(token.balance(claimant), expected);
+    }
+    assert_eq!(
+        client.try_confirm_handoff(&id, &7, &signature),
+        Err(Ok(Error::InvalidState)),
+    );
+    assert_eq!(client.try_refund(&id), Err(Ok(Error::DeadlinePassed)));
+}
+
+#[test]
+fn fade_ten_claimants_same_ledger_only_first_valid_execution_wins() {
+    for positive in [true, false] {
+        for first in [0, 7] {
+            let env = Env::default();
+            let contract = env.register(Agyion, ());
+            assert_fade_ten_serialized_claimants(&env, &contract, positive, first);
+        }
+    }
+}
+
+#[test]
+#[cfg(feature = "wasm-tests")]
+fn wasm_fade_ten_claimants_same_ledger_only_first_valid_execution_wins() {
+    const WASM: &[u8] = include_bytes!("../target/wasm32v1-none/release/hak.wasm");
+    for positive in [true, false] {
+        for first in [0, 7] {
+            let env = Env::default();
+            let contract = env.register(WASM, ());
+            assert_fade_ten_serialized_claimants(&env, &contract, positive, first);
+        }
+    }
+}

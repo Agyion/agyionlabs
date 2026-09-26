@@ -1,19 +1,35 @@
-/** Hero plus product-gallery UX matrix. Use one isolated browser/GPU slot. */
+/** Canonical directory and hero UX matrix. Use one isolated browser/GPU slot.
+ * The retired home-gallery selection/scroll assertions intentionally live nowhere:
+ * /instruments owns the six product links; /#instruments is a replace-only alias.
+ * Run against the final built preview, with same-origin app arrival fixtures.
+ */
 import fs from 'node:fs'
 import path from 'node:path'
+import { createHash } from 'node:crypto'
+import { fileURLToPath } from 'node:url'
 import { chromium, expect } from '@playwright/test'
 
-const BASE = process.env.BASE_URL || 'http://127.0.0.1:4173'
-const OUTPUT = process.env.QA_OUTPUT_DIR || '/tmp/agyion-landing-qa'
+const BASE = (process.env.BASE_URL || 'http://127.0.0.1:4173').replace(/\/$/, '')
+const OUTPUT = path.resolve(process.env.QA_OUTPUT_DIR || '/tmp/agyion-landing-qa')
+const WIDTHS = (process.env.QA_WIDTHS || '1440,768,390,320').split(',').map(Number)
+const MOTIONS = (process.env.QA_MOTIONS || 'no-preference,reduce').split(',')
+const SCOPE = process.env.QA_SCOPE || 'full'
+const PRODUCTS = ['fade', 'pod', 'trigger', 'envoy', 'ramp', 'ledger']
+if (WIDTHS.some(width => !Number.isInteger(width) || width < 280) || MOTIONS.some(motion => !['no-preference', 'reduce'].includes(motion))) throw new Error('Invalid width or motion configuration')
+if (!['full', 'routes'].includes(SCOPE)) throw new Error('Invalid QA scope; use full or routes')
 const candidates = [process.env.CHROMIUM_PATH, chromium.executablePath(), '/opt/google/chrome/chrome', '/snap/bin/chromium', '/usr/bin/chromium'].filter(Boolean)
 const executablePath = candidates.find(candidate => fs.existsSync(candidate))
 if (!executablePath) throw new Error('Chromium is required. Set CHROMIUM_PATH or install the Playwright browser.')
 fs.mkdirSync(OUTPUT, { recursive: true })
-const report = { base: BASE, status: 'running', startedAt: new Date().toISOString(), checks: [], pages: [], screenshots: [], failure: null,
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
+const SOURCES = ['landing/tests/e2e/matrix.mjs', 'landing/src/App.tsx', 'landing/src/pages/Home.tsx', 'landing/src/pages/Instruments.tsx', 'landing/src/components/NavPill.tsx', 'landing/src/components/Footer.tsx', 'landing/src/components/HowItWorksDialog.tsx', 'landing/src/components/OrbitalScene.tsx', 'landing/src/styles/home-gateway.css', 'landing/src/styles/orbital.css']
+const sourceHashes = () => SOURCES.map(file => ({ file, sha256: createHash('sha256').update(fs.readFileSync(path.join(ROOT, file))).digest('hex') }))
+const report = { version: 3, base: BASE, scope: SCOPE, widths: WIDTHS, motions: MOTIONS, sourcesAtStart: sourceHashes(), status: 'running', startedAt: new Date().toISOString(), checks: [], skippedChecks: [], pages: [], screenshots: [], failure: null,
   limits: 'SwiftShader checks interaction correctness and saved appearance, not native GPU performance. The flight destination is an isolated same-origin fixture; app behavior has its own suite.' }
 const persist = () => fs.writeFileSync(path.join(OUTPUT, 'results.json'), JSON.stringify(report, null, 2))
 const browser = await chromium.launch({ executablePath, headless: true, args: ['--no-sandbox', '--enable-webgl', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
 let currentDiagnostic
+let currentPage
 async function check(name, action) {
   const result = { name, pass: false }
   report.checks.push(result)
@@ -24,7 +40,8 @@ async function check(name, action) {
 }
 async function trackedPage(context, label, expectedNoWebGL = false) {
   const page = await context.newPage()
-  const diagnostic = { label, phase: 'setup', consoleErrors: [], pageErrors: [], requestFailures: [], httpErrors: [] }
+  currentPage = page
+  const diagnostic = { label, phase: 'setup', consoleErrors: [], pageErrors: [], requestFailures: [], httpErrors: [], csp: [] }
   report.pages.push(diagnostic); currentDiagnostic = diagnostic
   page.on('pageerror', error => diagnostic.pageErrors.push({ phase: diagnostic.phase, message: error.message, stack: error.stack }))
   page.on('console', message => {
@@ -32,6 +49,8 @@ async function trackedPage(context, label, expectedNoWebGL = false) {
   })
   page.on('requestfailed', request => diagnostic.requestFailures.push({ phase: diagnostic.phase, url: request.url(), method: request.method(), error: request.failure()?.errorText }))
   page.on('response', response => { if (response.status() >= 400) diagnostic.httpErrors.push({ phase: diagnostic.phase, url: response.url(), status: response.status() }) })
+  await page.exposeBinding('__landingCsp', (_source, violation) => diagnostic.csp.push({ phase: diagnostic.phase, ...violation }))
+  await page.addInitScript(() => document.addEventListener('securitypolicyviolation', event => window.__landingCsp({ directive: event.violatedDirective, blockedURI: event.blockedURI })))
   return { page, diagnostic }
 }
 function clean(diagnostic) {
@@ -39,15 +58,15 @@ function clean(diagnostic) {
   expect(diagnostic.consoleErrors.filter(error => !error.expected), 'Unexpected console errors').toEqual([])
   expect(diagnostic.requestFailures, 'Failed requests remain visible in the report').toEqual([])
   expect(diagnostic.httpErrors, 'HTTP errors remain visible in the report').toEqual([])
+  expect(diagnostic.csp, 'Content security policy violations remain visible in the report').toEqual([])
 }
 async function capture(page, filename) {
   const output = path.join(OUTPUT, filename)
   await page.screenshot({ path: output, fullPage: true, animations: 'disabled', timeout: 60000 })
   report.screenshots.push(output)
 }
-const world = page => page.locator('.orbital-home--gallery')
-const controls = page => page.getByRole('group', { name: 'Choose an instrument', exact: true })
-const exhibit = (page, slug) => page.locator(`#exhibit-${slug}`)
+const world = page => page.locator('.orbital-home')
+const gateway = page => page.locator('.home-horizon__explore')
 const launch = page => page.locator('.immersive-launch')
 async function noOverflow(page) {
   const dimensions = await page.evaluate(() => ({ width: innerWidth, scrollWidth: document.documentElement.scrollWidth, height: innerHeight, scrollHeight: document.documentElement.scrollHeight, scrollY }))
@@ -69,13 +88,69 @@ async function navigationLink(page, name) {
   if (!await mobile.isVisible()) await page.getByRole('button', { name: 'Open navigation menu', exact: true }).click()
   return mobile.getByRole('link', { name, exact: true })
 }
-async function focusReturned(page, opener) {
-  if (await opener.isVisible()) await expect(opener).toBeFocused()
-  else await expect.poll(() => page.evaluate(() => {
+async function visibleFocus(page) {
+  await expect.poll(() => page.evaluate(() => {
     const active = document.activeElement
     return active instanceof HTMLElement && active !== document.body && active.getClientRects().length > 0
-      && (active.id === 'instruments' || active.id === 'instrument-stage' || active.matches('.orbital-nav__toggle') || !!active.closest('.home-gallery__selector'))
-  }), { message: 'Closing a mobile dialog must restore a visible navigation/instrument target, not a hidden menu link or body' }).toBe(true)
+      && getComputedStyle(active).visibility !== 'hidden' && !active.closest('[inert]')
+  }), { message: 'Navigation must leave focus on a visible, usable target rather than body or a hidden menu' }).toBe(true)
+}
+async function focusReturned(page, opener) {
+  if (await opener.isVisible()) await expect(opener).toBeFocused()
+  else {
+    await visibleFocus(page)
+    await expect.poll(() => page.evaluate(() => {
+      const active = document.activeElement
+      return active?.id === 'home' || active?.id === 'main' || active?.matches('.orbital-nav__toggle')
+    })).toBe(true)
+  }
+}
+async function canonicalLinks(page, active = false) {
+  await expect(page.locator('a[href="/#instruments"], a[href="#instruments"]')).toHaveCount(0)
+  const links = page.locator('.orbital-nav a[href="/instruments"]')
+  await expect(links).toHaveCount(2)
+  for (const link of await links.all()) {
+    if (active) await expect(link).toHaveAttribute('aria-current', 'page')
+    else await expect(link).not.toHaveAttribute('aria-current', 'page')
+  }
+}
+async function directoryReady(page) {
+  await expect(page).toHaveURL(/\/instruments$/)
+  await expect(page.locator('.instrument-directory')).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Money, with conditions.')
+  const directory = page.getByRole('navigation', { name: 'Choose an instrument', exact: true })
+  await expect(directory).toHaveCount(1)
+  await expect(directory.getByRole('link')).toHaveCount(6)
+  expect(await directory.getByRole('link').evaluateAll(links => links.map(link => link.getAttribute('href')))).toEqual(PRODUCTS.map(slug => `/${slug}`))
+  await expect(world(page)).toHaveCount(0)
+  await expect(page.locator('.orbital-scene canvas')).toHaveCount(0)
+  await canonicalLinks(page, true)
+  await noOverflow(page)
+}
+async function nativeModifiers(link, plainAnchor = false) {
+  // Observe at document bubble, after React's delegated Link handler and the
+  // document capture flight handler. Cancel only the browser's final default.
+  // React Router reads target from its rendered props; mutating that DOM
+  // attribute does not create a genuine new-tab Link fixture. Plain app anchors
+  // are handled by the flight listener, which intentionally reads the live DOM.
+  const evidence = await link.evaluate((anchor, isPlainAnchor) => {
+    const originalTarget = anchor.getAttribute('target')
+    const results = []
+    for (const mode of ['ctrl', 'meta', 'shift', 'alt', 'middle', ...(isPlainAnchor ? ['blank'] : [])]) {
+      if (mode === 'blank') anchor.target = '_blank'
+      document.addEventListener('click', event => {
+        results.push({ mode, native: !event.defaultPrevented })
+        event.preventDefault()
+      }, { once: true })
+      anchor.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: mode === 'middle' ? 1 : 0, ctrlKey: mode === 'ctrl', metaKey: mode === 'meta', shiftKey: mode === 'shift', altKey: mode === 'alt' }))
+      if (originalTarget === null) anchor.removeAttribute('target')
+      else anchor.setAttribute('target', originalTarget)
+    }
+    return results
+  }, plainAnchor)
+  expect(evidence).toHaveLength(plainAnchor ? 6 : 5)
+  expect(evidence.every(item => item.native), JSON.stringify(evidence)).toBe(true)
+  return evidence
 }
 // Capture existing GL submissions and fixed-star camera basis, without changing
 // time, uniforms or animation. This separates explicit input from ambient motion.
@@ -104,98 +179,134 @@ async function installCameraProbe(page) {
 const basisChange = (a, b) => Math.max(...[0, 1, 2, 4, 5, 6, 8, 9, 10].map(index => Math.abs(a[index] - b[index])))
 
 try {
-  for (const width of [1440, 768, 360, 320]) {
-    const context = await browser.newContext({ viewport: { width, height: width <= 360 ? 800 : 1000 } })
-    const { page, diagnostic } = await trackedPage(context, `${width}px normal`)
+  for (const width of WIDTHS) for (const motion of MOTIONS) {
+    const context = await browser.newContext({ viewport: { width, height: width <= 390 ? 800 : 1000 }, reducedMotion: motion })
+    const label = `${width}px ${motion}`
+    const { page, diagnostic } = await trackedPage(context, label)
     await page.goto(BASE, { waitUntil: 'domcontentloaded' })
-    await check(`${width}px: one hero world, separate product gallery and no overflow`, async () => {
+    await check(`${label}: one hero, compact footer, canonical gateway and no duplicate gallery`, async () => {
       await homeReady(page)
-      await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'fade')
-      await expect(controls(page).getByRole('button')).toHaveCount(4)
-      await expect(controls(page).locator('[aria-pressed=true]')).toHaveCount(1)
+      await expect(page.locator('#home')).toHaveCount(1)
+      await expect(page.locator('#instruments, .home-gallery, #instrument-stage, .instrument-mechanism')).toHaveCount(0)
+      await expect(page.getByRole('group', { name: 'Choose an instrument', exact: true })).toHaveCount(0)
       await expect(page.locator('vite-error-overlay')).toHaveCount(0)
       await expect(page.getByRole('button', { name: /pause.*motion|resume.*motion/i })).toHaveCount(0)
+      await expect(gateway(page)).toHaveAttribute('href', '/instruments')
+      await expect(gateway(page)).toBeVisible()
+      await expect(launch(page)).toHaveAttribute('href', '/app/')
+      await expect(launch(page)).toBeVisible()
+      await expect(page.locator('.home-colophon')).toHaveCount(1)
+      const support = page.getByRole('navigation', { name: 'Supporting tools', exact: true })
+      for (const slug of ['ramp', 'ledger']) await expect(support.locator(`a[href='/${slug}']`)).toBeVisible()
+      await canonicalLinks(page)
       const dimensions = await noOverflow(page)
-      expect(dimensions.scrollHeight, 'The product gallery has its own natural document section').toBeGreaterThan(dimensions.height * 1.6)
-      expect(await page.locator('#instruments').evaluate(element => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(dimensions.height * .85)
+      expect(dimensions.scrollHeight, 'Home should remain a hero with a small supporting footer').toBeLessThan(dimensions.height * 1.8)
+      const hero = await page.locator('#home').boundingBox()
+      expect(hero.height).toBeGreaterThanOrEqual(dimensions.height * .85)
+      await capture(page, `landing-${width}-${motion}.png`)
       clean(diagnostic)
-      return dimensions
+      return { ...dimensions, assets: await page.locator('script[src], link[rel=stylesheet]').evaluateAll(elements => elements.map(element => element.getAttribute('src') || element.getAttribute('href'))) }
     })
-    await check(`${width}px: clear world accepts input while native launch and supporting links remain reachable`, async () => {
+    await check(`${label}: clear canvas remains interactive behind the hero copy`, async () => {
       const canvas = page.locator('.orbital-scene canvas')
       await expect(canvas).toHaveAttribute('tabindex', '0')
       const surface = await page.evaluate(() => {
         const header = document.querySelector('.orbital-nav').getBoundingClientRect()
-        const dock = document.querySelector('#instruments').getBoundingClientRect()
+        const horizon = document.querySelector('.home-horizon').getBoundingClientRect()
         let hits = 0
         for (const fx of [.2, .35, .5, .65, .8, .9]) for (const fy of [.2, .4, .6, .8]) {
-          const x = innerWidth * fx, y = header.bottom + (Math.min(dock.top, innerHeight) - header.bottom) * fy
+          const x = innerWidth * fx, y = header.bottom + (Math.min(horizon.top, innerHeight) - header.bottom) * fy
           if (document.elementFromPoint(x, y)?.tagName === 'CANVAS') hits++
         }
         return { hits, samples: 24 }
       })
       expect(surface.hits, 'Content wrappers must leave a substantial canvas area hittable').toBeGreaterThanOrEqual(10)
-      await expect(launch(page)).toHaveAttribute('href', '/app/')
-      await expect(launch(page)).toBeVisible()
-      for (const slug of ['ramp', 'ledger']) await expect(page.getByRole('navigation', { name: 'Supporting tools' }).locator(`a[href='/${slug}']`)).toBeVisible()
       await expect(page.locator('.orbital-nav')).toHaveCSS('position', 'fixed')
       return surface
     })
-    if (width <= 768) await check(`${width}px: mobile menu Escape returns focus`, async () => {
+    if (width <= 768) await check(`${label}: mobile menu Escape restores its toggle`, async () => {
       const toggle = page.getByRole('button', { name: 'Open navigation menu', exact: true })
       await toggle.click()
-      await expect(page.getByRole('navigation', { name: 'Mobile navigation' })).toBeVisible()
+      await expect(page.getByRole('navigation', { name: 'Mobile navigation', exact: true })).toBeVisible()
       await page.keyboard.press('Escape')
       await expect(toggle).toBeFocused()
-      await expect(page.getByRole('navigation', { name: 'Mobile navigation' })).toBeHidden()
+      await expect(page.getByRole('navigation', { name: 'Mobile navigation', exact: true })).toBeHidden()
     })
-    await check(`${width}px: Instruments scrolls to the gallery and Home retains the chosen product`, async () => {
-      await (await navigationLink(page, 'Instruments')).click()
-      await expect(page).toHaveURL(/\/#instruments$/)
-      await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(300)
-      await exhibit(page, 'pod').click()
-      await expect(page.locator('#instrument-stage .instrument-mechanism')).toHaveAttribute('data-mechanism', 'pod')
-      await (await navigationLink(page, 'Home')).click()
-      await expect(page).toHaveURL(/#home$/)
+    await check(`${label}: gateway and navigation preserve native modifiers`, async () => {
+      const before = page.url()
+      const gatewayModes = await nativeModifiers(gateway(page))
+      const navigationModes = await nativeModifiers(await navigationLink(page, 'Instruments'))
+      await expect(page).toHaveURL(before)
+      await expect(page.locator('html')).not.toHaveClass(/is-launching/)
+      if (await page.getByRole('navigation', { name: 'Mobile navigation', exact: true }).isVisible()) await page.keyboard.press('Escape')
+      return { gatewayModes, navigationModes }
+    })
+    await check(`${label}: keyboard gateway opens the six-link directory; Back and Forward preserve route`, async () => {
+      await gateway(page).focus()
+      await expect(gateway(page)).toBeFocused()
+      const canvas = await page.locator('.orbital-scene canvas').elementHandle()
+      await page.keyboard.press('Enter')
+      await directoryReady(page)
+      await visibleFocus(page)
+      await expect.poll(() => canvas.evaluate(element => element.isConnected)).toBe(false)
+      await canvas.dispose()
+      await expect(page.getByRole('navigation', { name: 'Mobile navigation', exact: true })).toBeHidden()
+      await page.goBack()
+      await expect(page).toHaveURL(`${BASE}/`)
       await homeReady(page)
-      await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'pod')
-      await expect(controls(page).locator('[aria-pressed=true]')).toHaveCount(1)
-      await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
+      await page.goForward()
+      await directoryReady(page)
+      await capture(page, `directory-${width}-${motion}.png`)
     })
-    await check(`${width}px: four pressed controls expose matching native detail and workspace links`, async () => {
+    await check(`${label}: directory link, native detail route and immediate Back restore directory position`, async () => {
+      const detailLink = page.locator('.directory-item[href="/pod"]')
+      const native = await nativeModifiers(detailLink)
+      await detailLink.focus()
+      await detailLink.scrollIntoViewIfNeeded()
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+      const before = await page.evaluate(() => scrollY)
+      await page.keyboard.press('Enter')
+      await expect(page.locator('.product-page[data-instrument="pod"]')).toBeVisible()
+      await canonicalLinks(page, true)
+      await expect(page.locator('.product-launch')).toHaveAttribute('href', '/app/?tab=pod')
+      await page.goBack()
+      await directoryReady(page)
+      await expect.poll(() => page.evaluate(y => Math.abs(scrollY - y), before)).toBeLessThan(3)
+      await visibleFocus(page)
+      await page.goForward()
+      await expect(page.locator('.product-page[data-instrument="pod"]')).toBeVisible()
+      await page.getByRole('link', { name: '← All instruments', exact: true }).click()
+      await directoryReady(page)
+      return { native, directoryScroll: before }
+    })
+    await check(`${label}: Home and Instruments navigation share the canonical directory`, async () => {
+      await (await navigationLink(page, 'Home')).click()
+      await homeReady(page)
+      await expect(page).toHaveURL(/\/#home$/)
       await (await navigationLink(page, 'Instruments')).click()
-      for (const [slug, name] of [['fade', 'Fade'], ['pod', 'Pod'], ['trigger', 'Trigger'], ['envoy', 'Envoy']]) {
-        await exhibit(page, slug).click()
-        await expect(exhibit(page, slug)).toHaveAttribute('aria-pressed', 'true')
-        await expect(controls(page).locator('[aria-pressed=true]')).toHaveCount(1)
-        await expect(page.locator('#instruments')).toHaveAttribute('data-selected', slug)
-        await expect(page.locator('#instrument-stage')).toHaveAccessibleName(`${name} illustration`)
-        await expect(page.locator('#instrument-stage')).toBeVisible()
-        await expect(page.locator('#instrument-stage').getByRole('link', { name: 'Details', exact: true })).toHaveAttribute('href', `/${slug}`)
-        await expect(page.locator(`#instrument-stage a[href='/app/?tab=${slug}']`)).toBeVisible()
-        await noOverflow(page)
-      }
+      await directoryReady(page)
+      await expect(page.getByRole('navigation', { name: 'Mobile navigation', exact: true })).toBeHidden()
+      await (await navigationLink(page, 'Instruments')).click()
+      await expect(page.locator('#directory-title')).toBeFocused()
+      await expect(page.getByRole('navigation', { name: 'Mobile navigation', exact: true })).toBeHidden()
+      await directoryReady(page)
     })
-    await check(`${width}px: arrows, wrapping, Home and End select; hover preserves keyboard context`, async () => {
-      await exhibit(page, 'envoy').focus()
-      for (const [key, slug] of [['ArrowRight', 'fade'], ['ArrowLeft', 'envoy'], ['ArrowLeft', 'trigger'], ['Home', 'fade'], ['End', 'envoy']]) {
-        await page.keyboard.press(key)
-        await expect(exhibit(page, slug)).toBeFocused()
-        await expect(exhibit(page, slug)).toHaveAttribute('aria-pressed', 'true')
-      }
-      const details = page.locator('#instrument-stage').getByRole('link', { name: 'Details', exact: true })
-      await details.focus()
-      await exhibit(page, 'pod').hover()
-      await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'envoy')
-      await expect(details).toBeFocused()
-      await expect(details).toHaveAttribute('href', '/envoy')
-    })
-    await check(`${width}px: native How dialog closes with Escape and Close, returning focus and selection`, async () => {
-      await exhibit(page, 'pod').click()
+    await check(`${label}: How returns to Home with Escape and Close, trapping and restoring focus`, async () => {
+      // How is still hosted by Home when opened from the standalone directory.
+      await (await navigationLink(page, 'How it works')).click()
+      await expect(page.getByRole('dialog', { name: 'How it works', exact: true })).toBeVisible()
+      await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
+      await page.keyboard.press('Escape')
+      await expect(page).toHaveURL(/\/#home$/)
+      await homeReady(page)
+      await visibleFocus(page)
+      await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
+      await (await navigationLink(page, 'Home')).click()
+      await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
       for (const method of ['Escape', 'Close']) {
         const opener = await navigationLink(page, 'How it works')
         await opener.click()
-        await expect(page).toHaveURL(/#how-it-works$/)
+        await expect(page).toHaveURL(/\/#how-it-works$/)
         const dialog = page.getByRole('dialog', { name: 'How it works', exact: true })
         await expect(dialog).toBeVisible()
         expect(await dialog.evaluate(element => element.matches(':modal'))).toBe(true)
@@ -211,32 +322,38 @@ try {
         if (method === 'Escape') await page.keyboard.press('Escape')
         else await close.click()
         await expect(dialog).toBeHidden()
-        await expect(page).toHaveURL(/#instruments$/)
-        await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'pod')
+        await expect(page).toHaveURL(/\/#home$/)
         await focusReturned(page, opener)
-        await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(300)
+        await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
       }
-    })
-    await check(`${width}px: browser Back from explanation preserves the chosen instrument`, async () => {
-      await (await navigationLink(page, 'Home')).click()
-      await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'pod')
-      await (await navigationLink(page, 'Instruments')).click()
-      await exhibit(page, 'pod').click()
       await (await navigationLink(page, 'How it works')).click()
       await expect(page.getByRole('dialog')).toBeVisible()
       await page.goBack()
-      await expect(page).toHaveURL(/#instruments$/)
+      await expect(page).toHaveURL(/\/#home$/)
       await expect(page.getByRole('dialog')).toBeHidden()
-      await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'pod')
+      await visibleFocus(page)
     })
-    await (await navigationLink(page, 'Home')).click()
-    await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'pod')
-    await capture(page, `landing-${width}.png`)
-    await exhibit(page, 'fade').click()
-    await capture(page, `landing-${width}-fade.png`)
-    await check(`${width}px: no runtime or asset errors`, async () => clean(diagnostic))
+    await check(`${label}: legacy hash replaces its history entry with the canonical catalog`, async () => {
+      await page.goto(`${BASE}/fade`, { waitUntil: 'domcontentloaded' })
+      await expect(page.locator('.product-page[data-instrument="fade"]')).toBeVisible()
+      // A real document navigation models an old bookmark or external link.
+      await page.goto(`${BASE}/#instruments`, { waitUntil: 'domcontentloaded' })
+      await directoryReady(page)
+      await expect(page.locator('#instruments, .home-gallery')).toHaveCount(0)
+      await page.goBack()
+      await expect(page).toHaveURL(/\/fade$/)
+      await expect(page.locator('.product-page[data-instrument="fade"]')).toBeVisible()
+      await page.goForward()
+      await directoryReady(page)
+      return { alias: '/#instruments', destination: '/instruments', back: '/fade' }
+    })
+    await check(`${label}: no runtime, CSP or asset errors`, async () => clean(diagnostic))
     await context.close()
   }
+
+  if (SCOPE === 'routes') {
+    report.skippedChecks.push({ name: 'Dedicated reduced-motion orbit, six detail mechanism controls, app flights, motion-change and no-WebGL fixtures', reason: 'Outside focused route/history scope' })
+  } else {
 
   const reduced = await browser.newContext({ viewport: { width: 360, height: 800 }, reducedMotion: 'reduce' })
   const { page, diagnostic } = await trackedPage(reduced, 'Reduced motion and routes')
@@ -269,12 +386,16 @@ try {
     await page.keyboard.press('Enter')
     await expect(page.locator('#main')).toBeFocused()
   })
-  for (const slug of ['fade', 'pod', 'trigger', 'envoy', 'ramp', 'ledger']) await check(`/${slug}: product mechanism, native destination, keyboard controls and scene teardown`, async () => {
-    await page.goto(`${BASE}/${slug}`, { waitUntil: 'domcontentloaded' })
+  for (const slug of PRODUCTS) await check(`/${slug}: product mechanism, native destination, keyboard controls and scene teardown`, async () => {
+    await page.goto(`${BASE}/instruments`, { waitUntil: 'domcontentloaded' })
+    await directoryReady(page)
+    await page.locator(`.directory-item[href='/${slug}']`).focus()
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(new RegExp(`/${slug}$`))
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     const detail = page.locator(`.product-page[data-instrument='${slug}']`)
     await expect(detail).toBeVisible()
-    for (const link of await page.locator('.orbital-nav a[href="/instruments"]').all()) await expect(link).toHaveAttribute('aria-current', 'page')
+    await canonicalLinks(page, true)
     await expect(page.locator('.orbital-scene canvas')).toHaveCount(0)
     await expect(detail.locator('.product-launch')).toHaveAttribute('href', `/app/?tab=${slug}`)
     const mechanism = detail.locator(`.instrument-mechanism[data-mechanism='${slug}']`)
@@ -303,7 +424,7 @@ try {
   await check('Directory and next-product links support keyboard, route history and distinct mechanism scenes', async () => {
     await page.setViewportSize({ width: 1440, height: 1000 })
     await page.goto(`${BASE}/instruments`, { waitUntil: 'domcontentloaded' })
-    await expect(page.locator('.directory-item')).toHaveCount(6)
+    await directoryReady(page)
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
     await page.locator('.directory-item[href="/fade"]').focus()
     await expect(page.locator('.directory-item[href="/fade"]')).toBeFocused()
@@ -341,82 +462,87 @@ try {
     await expect.poll(() => opener.evaluate(element => element === document.activeElement && element.isConnected && element.getClientRects().length > 0)).toBe(true)
     await opener.dispose()
   })
-  const directContext = await browser.newContext({ viewport: { width: 360, height: 800 }, reducedMotion: 'reduce' })
-  const { page: directPage, diagnostic: directDiagnostic } = await trackedPage(directContext, 'Fresh direct How URL')
-  await check('Fresh direct How URL focuses Close and returns to visible mobile navigation', async () => {
-    await directPage.goto(`${BASE}/#how-it-works`, { waitUntil: 'networkidle' })
-    const dialog = directPage.getByRole('dialog', { name: 'How it works', exact: true })
-    await expect(dialog).toBeVisible()
-    expect(await dialog.evaluate(element => element.matches(':modal'))).toBe(true)
-    await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeFocused()
-    await expect.poll(() => directPage.evaluate(() => scrollY)).toBeLessThan(3)
-    await directPage.keyboard.press('Escape')
-    await expect(dialog).toBeHidden()
-    await expect(directPage).toHaveURL(/#home$/)
-    await expect(directPage.getByRole('button', { name: 'Open navigation menu', exact: true })).toBeFocused()
-    clean(directDiagnostic)
-  })
-  await directContext.close()
+  for (const directWidth of [1440, 360]) {
+    const directContext = await browser.newContext({ viewport: { width: directWidth, height: 800 }, reducedMotion: 'reduce' })
+    const { page: directPage, diagnostic: directDiagnostic } = await trackedPage(directContext, `${directWidth}px fresh direct How URL`)
+    await check(`${directWidth}px: fresh direct How URL focuses Close and restores visible Home navigation`, async () => {
+      await directPage.goto(`${BASE}/#how-it-works`, { waitUntil: 'networkidle' })
+      const dialog = directPage.getByRole('dialog', { name: 'How it works', exact: true })
+      await expect(dialog).toBeVisible()
+      expect(await dialog.evaluate(element => element.matches(':modal'))).toBe(true)
+      await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeFocused()
+      await expect.poll(() => directPage.evaluate(() => scrollY)).toBeLessThan(3)
+      await directPage.keyboard.press('Escape')
+      await expect(dialog).toBeHidden()
+      await expect(directPage).toHaveURL(/#home$/)
+      if (directWidth === 1440) await expect(directPage.locator('#home')).toBeFocused()
+      else await expect(directPage.getByRole('button', { name: 'Open navigation menu', exact: true })).toBeFocused()
+      clean(directDiagnostic)
+    })
+    await directContext.close()
+  }
   currentDiagnostic = diagnostic
-  await check('Reduced motion retains instrument selection and native direct workspace navigation', async () => {
-    await exhibit(page, 'pod').click()
-    await expect(exhibit(page, 'pod')).toHaveAttribute('aria-pressed', 'true')
-    await expect(page.locator('#instrument-stage .instrument-mechanism')).toHaveAttribute('data-running', 'false')
-    await page.route('**/app/?tab=pod', route => route.fulfill({ contentType: 'text/html', body: '<title>Direct Pod fixture</title>' }))
-    await page.locator('#instrument-stage a[href="/app/?tab=pod"]').click()
-    await page.waitForURL('**/app/?tab=pod', { timeout: 2500 })
-    await expect(page).toHaveTitle('Direct Pod fixture')
+  currentPage = page
+  for (const [source, destination, selector, name] of [['/', '/app/', '.immersive-launch', 'Hero'], ['/pod', '/app/?tab=pod', '.product-launch', 'Pod']]) await check(`Reduced motion: ${name} navigates directly to its own workspace without a flight marker`, async () => {
+    await page.goto(`${BASE}${source}`, { waitUntil: 'domcontentloaded' })
+    await page.route(`**${destination}`, route => route.fulfill({ contentType: 'text/html', body: `<title>Direct ${name} fixture</title>` }))
+    await page.locator(selector).click()
+    await page.waitForURL(`${BASE}${destination}`, { timeout: 4000 })
+    await expect(page).toHaveTitle(`Direct ${name} fixture`)
     expect(await page.evaluate(() => sessionStorage.getItem('agyion:arrival'))).toBeNull()
   })
   await check('Reduced motion and detail routes have no runtime or asset errors', async () => clean(diagnostic))
   await reduced.close()
 
-  const flightContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } })
-  const { page: flight, diagnostic: flightDiagnostic } = await trackedPage(flightContext, 'Normal launch')
-  await flight.route('**/app/?tab=pod', route => route.fulfill({ contentType: 'text/html', body: '<title>Station arrival fixture</title><main>Station</main>' }))
-  await flight.goto(BASE, { waitUntil: 'domcontentloaded' })
-  await homeReady(flight)
-  await check('Modified, middle-click and new-tab links preserve native behavior', async () => {
-    const native = await launch(flight).evaluate(anchor => {
-      const results = []
-      for (const mode of ['ctrl', 'meta', 'shift', 'alt', 'middle', 'blank']) {
-        if (mode === 'blank') anchor.target = '_blank'
-        anchor.addEventListener('click', event => { results.push({ mode, native: !event.defaultPrevented }); event.preventDefault() }, { once: true })
-        anchor.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: mode === 'middle' ? 1 : 0, ctrlKey: mode === 'ctrl', metaKey: mode === 'meta', shiftKey: mode === 'shift', altKey: mode === 'alt' }))
-        anchor.removeAttribute('target'); anchor.href = '/app/'
-      }
-      return results
+  for (const [source, destination, selector, name] of [['/', '/app/', '.immersive-launch', 'Hero'], ['/pod', '/app/?tab=pod', '.product-launch', 'Pod detail']]) {
+    const flightContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } })
+    const { page: flight, diagnostic: flightDiagnostic } = await trackedPage(flightContext, `${name} normal launch`)
+    await flight.route(`**${destination}`, route => route.fulfill({ contentType: 'text/html', body: `<title>${name} arrival fixture</title><main>Station</main>` }))
+    await flight.goto(`${BASE}${source}`, { waitUntil: 'domcontentloaded' })
+    if (source === '/') await homeReady(flight)
+    else await expect(flight.locator('.product-page[data-instrument="pod"]')).toBeVisible()
+    const departure = flight.locator(selector)
+    await check(`${name}: modified, middle-click and new-tab launch preserve native behavior`, async () => {
+      const native = await nativeModifiers(departure, true)
+      await expect(flight.locator('html')).not.toHaveClass(/is-launching/)
+      await expect(departure).toHaveAttribute('href', destination)
+      return native
     })
-    expect(native.every(item => item.native)).toBe(true)
-    await expect(flight.locator('html')).not.toHaveClass(/is-launching/)
-    return native
-  })
-  await check('Open Pod preserves its destination through the complete 9.8-second flight and settled handoff', async () => {
-    await (await navigationLink(flight, 'Instruments')).click()
-    await exhibit(flight, 'pod').click()
-    await expect(flight).toHaveURL(/#instruments$/)
-    await expect.poll(() => flight.evaluate(() => scrollY)).toBeGreaterThan(300)
-    const openPod = flight.locator('#instrument-stage a[href="/app/?tab=pod"]')
-    await expect(openPod).toBeVisible()
-    const started = Date.now()
-    await openPod.click()
-    await expect(flight.locator('html')).toHaveClass(/is-launching/)
-    await expect(flight.locator('.orbital-scene__canvas')).toHaveAttribute('data-flight-phase', 'launching')
-    await flight.waitForURL('**/app/?tab=pod', { timeout: 15000 })
-    const duration = Date.now() - started
-    expect(duration).toBeGreaterThan(9500)
-    expect(duration).toBeLessThan(15000)
-    await expect(flight).toHaveTitle('Station arrival fixture')
-    const handoff = await flight.evaluate(() => ({ marker: JSON.parse(sessionStorage.getItem('agyion:arrival') || 'null'), frame: JSON.parse(sessionStorage.getItem('agyion:flight-frame') || 'null') }))
-    expect(Date.now() - handoff.marker.at).toBeLessThan(5000)
-    expect(handoff.marker.settled).toBe(true)
-    expect(handoff.frame.id).toBe(handoff.marker.id)
-    expect(handoff.frame.at).toBe(handoff.marker.at)
-    for (const key of ['elapsed', 'ringFocus', 'yaw', 'pitch', 'zoom']) expect(Number.isFinite(handoff.frame.pose[key])).toBe(true)
-    return { duration, marker: handoff.marker, pose: handoff.frame.pose }
-  })
-  await check('Launch has no runtime or asset errors', async () => clean(flightDiagnostic))
-  await flightContext.close()
+    await check(`${name}: destination survives the complete 9.8-second flight and settled handoff`, async () => {
+      // Focus warms a detail's on-demand renderer before timing the actual flight.
+      await departure.focus()
+      await expect(flight.locator('.orbital-scene')).toHaveClass(/is-ready/, { timeout: 30000 })
+      await flight.waitForLoadState('networkidle')
+      const canvas = await flight.locator('.orbital-scene canvas').elementHandle()
+      const started = Date.now()
+      await departure.click()
+      await expect(flight.locator('html')).toHaveClass(/is-launching/)
+      await expect(flight.locator('.orbital-scene__canvas')).toHaveAttribute('data-flight-phase', 'launching')
+      expect(await canvas.evaluate(element => element.isConnected && element === document.querySelector('.orbital-scene canvas'))).toBe(true)
+      const geometry = await flight.locator('.orbital-scene canvas').boundingBox()
+      expect(Math.abs(geometry.x)).toBeLessThan(1)
+      expect(Math.abs(geometry.y)).toBeLessThan(1)
+      expect(geometry.width).toBe(1440)
+      expect(geometry.height).toBe(1000)
+      await canvas.dispose()
+      await flight.waitForURL(`${BASE}${destination}`, { timeout: 17000 })
+      const duration = Date.now() - started
+      expect(duration).toBeGreaterThan(9500)
+      expect(duration).toBeLessThan(18000)
+      await expect(flight).toHaveTitle(`${name} arrival fixture`)
+      const handoff = await flight.evaluate(() => ({ marker: JSON.parse(sessionStorage.getItem('agyion:arrival') || 'null'), frame: JSON.parse(sessionStorage.getItem('agyion:flight-frame') || 'null') }))
+      expect(handoff.marker).not.toBeNull()
+      expect(handoff.frame).not.toBeNull()
+      expect(Date.now() - handoff.marker.at).toBeLessThan(5000)
+      expect(handoff.marker.settled).toBe(true)
+      expect(handoff.frame.id).toBe(handoff.marker.id)
+      expect(handoff.frame.at).toBe(handoff.marker.at)
+      for (const key of ['elapsed', 'ringFocus', 'yaw', 'pitch', 'zoom']) expect(Number.isFinite(handoff.frame.pose[key])).toBe(true)
+      return { duration, destination, geometry, marker: handoff.marker, pose: handoff.frame.pose }
+    })
+    await check(`${name}: no runtime or asset errors`, async () => clean(flightDiagnostic))
+    await flightContext.close()
+  }
 
   const preferenceContext = await browser.newContext({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'no-preference' })
   const { page: preferencePage, diagnostic: preferenceDiagnostic } = await trackedPage(preferenceContext, 'Motion change during launch')
@@ -441,27 +567,41 @@ try {
   const { page: fallbackPage, diagnostic: fallbackDiagnostic } = await trackedPage(fallback, 'Expected WebGL-unavailable fixture', true)
   await fallbackPage.route('**/app/', route => route.fulfill({ contentType: 'text/html', body: '<title>Fallback arrival fixture</title>' }))
   await fallbackPage.goto(BASE, { waitUntil: 'domcontentloaded' })
-  await check('Without WebGL, content, four controls, native details and direct launch remain usable', async () => {
+  await check('Without WebGL, the hero, canonical directory, product details and direct launch remain usable', async () => {
     await expect(fallbackPage.locator('.orbital-fallback')).toBeVisible()
     await expect(fallbackPage.getByRole('heading', { level: 1 })).toHaveText(/^agyion\s*labs$/i)
     await expect(fallbackPage.getByRole('button', { name: /pause.*motion|resume.*motion|static space/i })).toHaveCount(0)
-    await expect(controls(fallbackPage).getByRole('button')).toHaveCount(4)
-    await exhibit(fallbackPage, 'trigger').click()
-    await expect(fallbackPage.getByRole('link', { name: 'Open Trigger', exact: true })).toHaveAttribute('href', '/app/?tab=trigger')
-    await expect(fallbackPage.locator('#instrument-stage').getByRole('link', { name: 'Details', exact: true })).toHaveAttribute('href', '/trigger')
+    await expect(fallbackPage.locator('.home-gallery, #instruments, .instrument-mechanism')).toHaveCount(0)
+    await expect(gateway(fallbackPage)).toHaveAttribute('href', '/instruments')
     await noOverflow(fallbackPage)
     await capture(fallbackPage, 'landing-fallback.png')
-    await fallbackPage.locator('.orbital-nav__launch').click()
-    await fallbackPage.waitForURL('**/app/', { timeout: 2500 })
+    await gateway(fallbackPage).focus()
+    await fallbackPage.keyboard.press('Enter')
+    await directoryReady(fallbackPage)
+    await fallbackPage.locator('.directory-item[href="/trigger"]').click()
+    await expect(fallbackPage.locator('.product-page[data-instrument="trigger"]')).toBeVisible()
+    await expect(fallbackPage.locator('.product-launch')).toHaveAttribute('href', '/app/?tab=trigger')
+    await canonicalLinks(fallbackPage, true)
+    await fallbackPage.getByRole('link', { name: 'Agyion Labs home', exact: true }).first().click()
+    await expect(fallbackPage.locator('.orbital-fallback')).toBeVisible()
+    await launch(fallbackPage).click()
+    await fallbackPage.waitForURL('**/app/', { timeout: 4000 })
     await expect(fallbackPage).toHaveTitle('Fallback arrival fixture')
+    expect(await fallbackPage.evaluate(() => sessionStorage.getItem('agyion:arrival'))).toBeNull()
   })
   await check('No-WebGL fixture has only the expected context-creation diagnostic', async () => clean(fallbackDiagnostic))
   await fallback.close()
+  }
+  for (const diagnostic of report.pages) clean(diagnostic)
   report.status = 'passed'
   console.log(`\n${report.checks.length} checks passed. Screenshots: ${OUTPUT}`)
 } catch (error) {
-  report.status = 'failed'; report.failure = { message: error.message, stack: error.stack }; throw error
+  report.status = 'failed'; report.failure = { message: error.message, stack: error.stack }
+  if (currentPage && !currentPage.isClosed()) await capture(currentPage, 'failure.png').catch(() => {})
+  throw error
 } finally {
+  report.finishedAt = new Date().toISOString()
+  report.sourcesAtEnd = sourceHashes()
   persist()
   await browser.close()
 }

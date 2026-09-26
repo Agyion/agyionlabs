@@ -78,7 +78,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
   useEffect(() => {
     const mount = mountRef.current
     if (!mount) return
-    const galleryHome = Boolean(mount.closest('.orbital-home--gallery'))
+    const standaloneHome = Boolean(mount.closest('.orbital-home--gateway'))
     // A motion preference change can replace the renderer during departure.
     // Keep the user's navigation intent while honoring the new preference.
     if (launchDestination.current) {
@@ -113,7 +113,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
     }
     const setDeparting = (departing: boolean) => {
       document.documentElement.classList.toggle('is-launching', departing)
-      document.querySelectorAll<HTMLElement>('.orbital-home--immersive, .orbital-home--gallery, .detail-world, .product-page__body, .orbital-nav').forEach(element => { element.inert = departing })
+      document.querySelectorAll<HTMLElement>('.orbital-home--immersive, .detail-world, .product-page__body, .orbital-nav').forEach(element => { element.inert = departing })
     }
     // A hidden flight-only world still draws its initial frame to compile and
     // report readiness. Pausing before that frame would deadlock early launches.
@@ -122,12 +122,12 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
       scrollFrame = 0
       const hero = mount.closest('section')
       if (hero && !launching && !flightOnly) {
-        // The gallery is a separate reading surface, not a scroll-driven camera
-        // approach. Keep the hero's original flight starting point intact.
-        handle?.setProgress(galleryHome ? 0 : Math.min(1, Math.max(0, -hero.getBoundingClientRect().top / hero.offsetHeight)))
+        // Scrolling to the footer does not advance the camera. The standalone
+        // hero keeps its original flight starting point intact.
+        handle?.setProgress(standaloneHome ? 0 : Math.min(1, Math.max(0, -hero.getBoundingClientRect().top / hero.offsetHeight)))
       }
     }
-    const onScroll = () => { if (!galleryHome && !scrollFrame) scrollFrame = window.requestAnimationFrame(updateProgress) }
+    const onScroll = () => { if (!standaloneHome && !scrollFrame) scrollFrame = window.requestAnimationFrame(updateProgress) }
     const prefetchApp = () => {
       warmAppAssets()
       if (prefetch) return
@@ -163,7 +163,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
       // without waiting for a possibly throttled ResizeObserver/animation frame.
       try {
         handle.setPaused(true)
-        if (galleryHome) handle.setMode('landing')
+        if (standaloneHome) handle.setMode('landing')
         handle.refreshLayout()
       } catch {
         rendererFailed = true
@@ -245,7 +245,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
     const observer = new IntersectionObserver(([entry]) => {
       inViewRef.current = entry.isIntersecting
       updatePause()
-    }, { rootMargin: galleryHome ? '0px' : '80px', threshold: 0 })
+    }, { rootMargin: standaloneHome ? '0px' : '80px', threshold: 0 })
     observer.observe(mount)
     document.addEventListener('visibilitychange', updatePause)
     document.addEventListener('click', onNavigate, true)

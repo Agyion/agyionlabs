@@ -27,7 +27,7 @@ export default function HowItWorksDialog({ open, onDismiss }: { open: boolean; o
       const menuToggle = document.querySelector<HTMLButtonElement>('.orbital-nav__toggle')
       if (previous?.isConnected && previous !== document.body && previous.getClientRects().length && getComputedStyle(previous).visibility !== 'hidden') previous.focus({ preventScroll: true })
       else if (menuToggle?.getClientRects().length) menuToggle.focus({ preventScroll: true })
-      else document.getElementById('instruments')?.focus({ preventScroll: true })
+      else document.getElementById('home')?.focus({ preventScroll: true })
     }
   }, [open])
 

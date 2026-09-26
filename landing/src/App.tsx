@@ -18,6 +18,7 @@ export default function App() {
   const location = useLocation()
   const navigationType = useNavigationType()
   const previousLocationKey = useRef(location.key)
+  const previousPathname = useRef(location.pathname)
   const previousHash = useRef(location.hash)
   const scrollPositions = useRef(new Map<string, { x: number; y: number; product?: string }>())
 
@@ -28,8 +29,10 @@ export default function App() {
   useLayoutEffect(() => {
     cancelProductTransitionForRoute(location.pathname)
     const navigated = previousLocationKey.current !== location.key
+    const samePage = previousPathname.current === location.pathname
     const leavingExplanation = previousHash.current === '#how-it-works' && location.hash !== '#how-it-works'
     previousLocationKey.current = location.key
+    previousPathname.current = location.pathname
     previousHash.current = location.hash
     const offReveals = initReveals()
     const positions = scrollPositions.current
@@ -45,8 +48,9 @@ export default function App() {
     const frame = window.requestAnimationFrame(() => {
       const anchor = location.hash ? document.getElementById(location.hash.slice(1)) : null
       // The dialog owns focus restoration; opening/closing it must not move
-      // the real gallery scroll position under the modal.
+      // the page's scroll position under the modal.
       if (location.pathname === '/' && (location.hash === '#how-it-works' || leavingExplanation) && document.querySelector('.orbital-home--immersive')) {
+        if (!samePage) window.scrollTo({ top: 0, behavior: 'instant' })
         rememberPosition()
         return
       }
@@ -55,7 +59,7 @@ export default function App() {
         const product = restored.product && /^(fade|pod|trigger|envoy)$/.test(restored.product) ? document.querySelector<HTMLElement>(`[data-product-route-link="${restored.product}"]`) : null
         ;(product ?? anchor ?? document.getElementById('main'))?.focus({ preventScroll: true })
       } else if (anchor) {
-        const immersive = Boolean(anchor.closest('.orbital-home--immersive:not(.orbital-home--gallery)'))
+        const immersive = Boolean(anchor.closest('.orbital-home--immersive'))
         anchor.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: immersive ? 'nearest' : 'start' })
         anchor.focus({ preventScroll: true })
       } else {

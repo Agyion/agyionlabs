@@ -1,0 +1,32 @@
+/* One space hero leads to the standalone instrument directory. */
+.orbital-nav[data-surface="home"].is-scrolled { background: #0c0d10; border: 1px solid #39342e; padding: 9px 17px; }
+.orbital-home--gateway .immersive-world { min-height: max(650px, 100svh); }
+.orbital-home--gateway .orbital-scene { position: absolute; inset: 0; width: 100%; height: 100svh; }
+.orbital-home--gateway .orbital-scene__scrim { background: linear-gradient(90deg, #05060936, transparent 46%), linear-gradient(0deg, #050609 0%, transparent 22%); }
+.home-horizon { padding-bottom: 38px; }
+.home-horizon__explore { display: inline-flex; gap: 35px; align-items: center; min-height: 48px; color: #f1eee7; font: 14px/1.4 var(--font-body); }
+.home-horizon__explore i { font-style: normal; color: #ed9850; font-size: 26px; transition: transform .45s; }
+.home-horizon__explore:hover i { transform: translate(4px, -4px); }
+.home-horizon__network { color: #aba69d; font: 10px/1.5 var(--font-mono); }
+.home-colophon { position: relative; z-index: 2; background: #050609; color: #aba69d; display: flex; gap: 28px; flex-wrap: wrap; align-items: center; border-top: 1px solid #39342e; padding: 24px var(--orbital-gutter); font-size: 11px; transition: opacity .65s cubic-bezier(.22,1,.36,1); }
+.home-colophon__brand { font: 500 24px/1 var(--font-display); letter-spacing: -.04em; color: #f1eee7; }
+.home-colophon nav { display: flex; flex-wrap: wrap; gap: 26px; margin-left: auto; }
+.home-colophon nav a { display: inline-flex; align-items: center; min-height: 44px; }
+.home-colophon a:hover { color: #ed9850; }
+.is-launching .orbital-home--gateway .orbital-scene { position: fixed; inset: 0; z-index: 35; width: 100vw; height: 100dvh; }
+.is-launching .orbital-home--gateway :is(.immersive-intro, .home-horizon, .home-colophon) { opacity: 0; pointer-events: none; }
+@media (max-width: 800px) {
+  .orbital-nav[data-surface="home"].is-scrolled { padding: 8px 0; border-width: 1px 0; box-shadow: 0 0 0 12px #0c0d10; }
+}
+@media (max-width: 600px) {
+  .orbital-home--gateway .orbital-scene__scrim { background: linear-gradient(180deg, #05060933, transparent 35%), linear-gradient(0deg, #050609, transparent 22%); }
+  .home-horizon { align-items: flex-end; padding-bottom: 25px; }
+  .home-horizon__explore { gap: 16px; font-size: 12px; }
+  .home-horizon__network { max-width: 95px; text-align: right; font-size: 9px; }
+  .home-colophon { gap: 16px; padding-block: 18px; }
+  .home-colophon nav { gap: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-horizon__explore i, .home-colophon { transition: none; }
+  .home-horizon__explore:hover i { transform: none; }
+}

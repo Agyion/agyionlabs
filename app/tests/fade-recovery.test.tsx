@@ -6,11 +6,10 @@ import type { Fade } from '../app/lib/hakClient';
 import type { WalletState } from '../app/lib/useWallet';
 
 const boundary = vi.hoisted(() => ({ getClient: vi.fn(), mockClient: vi.fn(), generation: 0, fresh: true, ledger: 1000 as number | null }));
-vi.mock('../app/lib/config', () => ({ IS_MOCK: false, CONFIG: { mode: 'soroban', decimals: 7, assetCode: 'USDC', assetContractId: 'contract' } }));
+vi.mock('../app/lib/config', () => ({ IS_MOCK: false, CONFIG: { mode: 'soroban', decimals: 7, assetCode: 'USDC', assetContractId: 'contract', networkPassphrase: 'Test SDF Network ; September 2015', contractId: `C${'A'.repeat(55)}` } }));
 vi.mock('../app/lib/client', () => ({ getClient: boundary.getClient, mockClient: boundary.mockClient, SECONDS_PER_LEDGER: 5 }));
 vi.mock('../app/lib/useLedger', () => ({ useLedger: () => boundary.fresh ? boundary.ledger : null, useLedgerStatus: () => ({ ledger: boundary.ledger, fresh: boundary.fresh, status: boundary.fresh ? 'fresh' : 'stale', refresh: vi.fn() }) }));
-vi.mock('../app/lib/wallet', () => ({ demoAddress: () => 'GDEMO', onWalletSessionChange: () => () => {} }));
-vi.mock('../app/lib/ledgerLog', () => ({ logEntry: vi.fn() }));
+vi.mock('../app/lib/wallet', () => ({ demoAddress: () => 'GDEMO', onWalletSessionChange: () => () => {}, storedTestSigner: () => null }));
 // Crypto is an external boundary here: jsdom/native typed-array realms differ.
 // Each generation is distinct so silent form-driven identity changes are visible.
 vi.mock('../app/lib/signers', async (original) => ({
@@ -20,13 +19,15 @@ vi.mock('../app/lib/signers', async (original) => ({
   signHandoff: () => 'ab'.repeat(64),
 }));
 import FadePanel from '../app/components/app/FadePanel';
+import { listEntries, recoverTransactionEntries } from '../app/lib/ledgerLog';
+import { consumeReceipt, listTransactionAttempts, rememberReceipt, rememberTransactionAttempt, updateTransactionAttempt } from '../app/lib/transactionReceipts';
 
-const wallet: WalletState = { address: 'GCONNECTED', label: 'Fixture wallet, no signer', demo: false, connecting: false, error: null, connectKit: async () => {}, useTestSecret: () => {}, disconnect: async () => {} };
+const wallet: WalletState = { address: `G${'A'.repeat(55)}`, label: 'Fixture wallet, no signer', demo: false, connecting: false, error: null, connectKit: async () => {}, useTestSecret: () => {}, disconnect: async () => {} };
 const fade: Fade = { id: 3n, seller: 'GCONNECTED', asset: 'contract', pot: 10000000000n, start_price: 1000000000n, floor_price: -100000000n, start_ledger: 900, deadline_ledger: 1100, handoff_window: 50, slope_num: 10000000n, slope_den: 1n, venue_pubkey: '1'.padStart(64, '0'), state: 0, claimant: null, claimed_at: null };
 const claimed: Fade = { ...fade, state: 1, claimant: 'GCLAIMANT', claimed_at: 990 };
 let client: { get_fade: ReturnType<typeof vi.fn>; claim: ReturnType<typeof vi.fn>; refund: ReturnType<typeof vi.fn>; confirm_handoff: ReturnType<typeof vi.fn> };
 beforeEach(() => {
-  sessionStorage.clear(); boundary.generation = 0; boundary.fresh = true; boundary.ledger = 1000;
+  sessionStorage.clear(); localStorage.clear(); consumeReceipt('claim', '3'); boundary.generation = 0; boundary.fresh = true; boundary.ledger = 1000;
   history.replaceState(null, '', '/');
   Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({ matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }) });
   client = { get_fade: vi.fn().mockResolvedValue(fade), claim: vi.fn().mockRejectedValue(new Error('User rejected')), refund: vi.fn().mockRejectedValue(new Error('User rejected')), confirm_handoff: vi.fn().mockRejectedValue(new Error('User rejected')) };
@@ -42,6 +43,148 @@ async function load(record = fade) {
   await screen.findByRole('button', { name: /^New fade$/i });
   return view;
 }
+
+const claimHash = 'ab'.repeat(32);
+const claimScope = { account: wallet.address!, network: 'Test SDF Network ; September 2015', contractId: `C${'A'.repeat(55)}` };
+function confirmClaimAt(ledger: number) {
+  // The RPC submission boundary supplies confirmation evidence, exactly as
+  // SorobanClient.submit does. UI history and durable recovery remain real.
+  rememberTransactionAttempt({ ...claimScope, action: 'claim', refId: '3', hash: claimHash });
+  updateTransactionAttempt(claimHash, claimScope, { status: 'success', ledger });
+  rememberReceipt('claim', '3', { ...claimScope, hash: claimHash, ledger });
+}
+
+it.each([1, 2, 3] as const)('records the confirmed claim ledger price instead of the pre-submit quote (returned state %s)', async (state) => {
+  boundary.ledger = 990; // Display is +10 USDC; the eventual claim at 1005 is -5.
+  await load();
+  const initialClaimLabel = screen.getByRole('button', { name: /^Claim at 10 USDC/ }).textContent;
+  let finishRead!: (value: Fade) => void;
+  client.get_fade.mockImplementationOnce(() => new Promise<Fade>(resolve => { finishRead = resolve; }));
+  client.claim.mockImplementationOnce(async () => { confirmClaimAt(1005); });
+  fireEvent.click(screen.getByRole('button', { name: /^Claim at/ }));
+  await waitFor(() => expect(client.get_fade).toHaveBeenCalledTimes(2));
+  expect(listEntries()).toEqual([expect.objectContaining({ amount: null, txHash: claimHash })]);
+  finishRead({ ...fade, state, claimant: wallet.address, claimed_at: 1005 });
+  await waitFor(() => expect(listEntries()).toEqual([expect.objectContaining({
+    amount: '-50000000', ledger: 1005, txHash: claimHash, account: wallet.address,
+    detail: expect.stringContaining('-5 USDC'),
+  })]));
+  expect(client.claim).toHaveBeenCalledTimes(1);
+  expect(initialClaimLabel).toContain('estimate');
+});
+
+it.each([
+  { name: 'still-open record', patch: { state: 0, claimant: null, claimed_at: null } },
+  { name: 'another claimant', patch: { claimant: 'GOTHER' } },
+  { name: 'another listing', patch: { id: 4n } },
+  { name: 'missing claim ledger', patch: { claimed_at: null } },
+  { name: 'claim before listing', patch: { claimed_at: 899 } },
+  { name: 'claim after deadline', patch: { claimed_at: 1101 } },
+  { name: 'claim ledger inconsistent with confirmation', patch: { claimed_at: 1004 } },
+  { name: 'unknown state', patch: { state: 9 } },
+])('keeps confirmed evidence but no invented amount for $name', async ({ patch }) => {
+  await load();
+  client.claim.mockImplementationOnce(async () => { confirmClaimAt(1005); });
+  client.get_fade.mockResolvedValueOnce({ ...fade, state: 1, claimant: wallet.address, claimed_at: 1005, ...patch });
+  fireEvent.click(screen.getByRole('button', { name: /^Claim at/ }));
+  await screen.findByRole('alert');
+  expect(listEntries()).toEqual([expect.objectContaining({ amount: null, txHash: claimHash })]);
+  expect(listTransactionAttempts(claimScope)).toEqual([expect.objectContaining({ status: 'success', hash: claimHash })]);
+  expect((screen.getByRole('button', { name: /^Claim at/ }) as HTMLButtonElement).disabled).toBe(true);
+  client.get_fade.mockResolvedValueOnce({ ...fade, state: 1, claimant: wallet.address, claimed_at: 1005 });
+  fireEvent.click(screen.getByRole('button', { name: /^Refresh record$/ }));
+  await waitFor(() => expect(listEntries()[0].amount).toBe('-50000000'));
+  expect(listEntries()).toHaveLength(1);
+  expect(client.claim).toHaveBeenCalledTimes(1);
+});
+
+it('keeps the original claimant and receipt when the connected wallet changes during read recovery', async () => {
+  const view = await load();
+  client.claim.mockImplementationOnce(async () => { confirmClaimAt(1005); });
+  client.get_fade.mockRejectedValueOnce(new Error('RPC unavailable'));
+  fireEvent.click(screen.getByRole('button', { name: /^Claim at/ }));
+  await screen.findByRole('alert');
+  view.rerender(<FadePanel wallet={{ ...wallet, address: `G${'B'.repeat(55)}` }} />);
+  client.get_fade.mockResolvedValueOnce({ ...fade, state: 1, claimant: wallet.address, claimed_at: 1005 });
+  fireEvent.click(screen.getByRole('button', { name: /^Refresh record$/ }));
+  await waitFor(() => expect(listEntries()).toEqual([expect.objectContaining({
+    account: wallet.address, amount: '-50000000', txHash: claimHash,
+  })]));
+  expect(client.claim).toHaveBeenCalledTimes(1);
+});
+
+it('preserves confirmed evidence if the wallet changes before submission returns', async () => {
+  const view = await load();
+  let finishClaim!: () => void;
+  client.claim.mockImplementationOnce(() => new Promise<void>(resolve => { finishClaim = resolve; }));
+  fireEvent.click(screen.getByRole('button', { name: /^Claim at/ }));
+  await waitFor(() => expect(client.claim).toHaveBeenCalledTimes(1));
+  view.rerender(<FadePanel wallet={{ ...wallet, address: `G${'B'.repeat(55)}` }} />);
+  // submit records durable success but skips the in-memory receipt when the
+  // signer session changed while its transaction awaited confirmation.
+  rememberTransactionAttempt({ ...claimScope, action: 'claim', refId: '3', hash: claimHash });
+  updateTransactionAttempt(claimHash, claimScope, { status: 'success', ledger: 1005 });
+  client.get_fade.mockResolvedValue({ ...fade, state: 1, claimant: wallet.address, claimed_at: 1005 });
+  finishClaim();
+  await waitFor(() => expect(listEntries()).toEqual([expect.objectContaining({
+    amount: '-50000000', ledger: 1005, txHash: claimHash, ...claimScope,
+  })]));
+  expect(client.claim).toHaveBeenCalledTimes(1);
+});
+
+it('enriches the same hash when generic recovery consumed the in-memory receipt first', async () => {
+  await load();
+  client.claim.mockImplementationOnce(async () => {
+    confirmClaimAt(1005);
+    recoverTransactionEntries(claimScope);
+  });
+  client.get_fade.mockResolvedValue({ ...fade, state: 1, claimant: wallet.address, claimed_at: 1005 });
+  fireEvent.click(screen.getByRole('button', { name: /^Claim at/ }));
+  await waitFor(() => expect(listEntries()).toEqual([expect.objectContaining({
+    amount: '-50000000', ledger: 1005, txHash: claimHash, ...claimScope,
+  })]));
+});
+
+it.each([
+  { name: 'another account', patch: { account: `G${'B'.repeat(55)}` }, status: 'success' as const },
+  { name: 'another network', patch: { network: 'Public Global Stellar Network ; September 2015' }, status: 'success' as const },
+  { name: 'another contract', patch: { contractId: `C${'B'.repeat(55)}` }, status: 'success' as const },
+  { name: 'another action', patch: { action: 'refund' }, status: 'success' as const },
+  { name: 'another record', patch: { refId: '4' }, status: 'success' as const },
+  { name: 'unconfirmed transaction', patch: {}, status: 'unknown' as const },
+  { name: 'failed transaction', patch: {}, status: 'failed' as const },
+])('does not substitute $name for missing confirmation evidence', async ({ patch, status }) => {
+  await load();
+  client.claim.mockImplementationOnce(async () => {
+    const unrelated = { ...claimScope, action: 'claim', refId: '3', hash: 'cd'.repeat(32), ...patch };
+    rememberTransactionAttempt(unrelated);
+    updateTransactionAttempt(unrelated.hash, unrelated, { status, ledger: 1005 });
+  });
+  client.get_fade.mockResolvedValue({ ...fade, state: 1, claimant: wallet.address, claimed_at: 1005 });
+  fireEvent.click(screen.getByRole('button', { name: /^Claim at/ }));
+  await screen.findByRole('alert');
+  expect(listEntries()).toHaveLength(0);
+  expect((screen.getByRole('button', { name: /^Claim at/ }) as HTMLButtonElement).disabled).toBe(true);
+  confirmClaimAt(1005);
+  fireEvent.click(screen.getByRole('button', { name: /^Refresh record$/ }));
+  await waitFor(() => expect(listEntries()).toEqual([expect.objectContaining({ amount: '-50000000', txHash: claimHash, ...claimScope })]));
+  expect(client.claim).toHaveBeenCalledTimes(1);
+});
+
+it('does not choose an arbitrary hash when exact-scope confirmation evidence is ambiguous', async () => {
+  await load();
+  client.claim.mockImplementationOnce(async () => {
+    confirmClaimAt(1005);
+    const ambiguous = { ...claimScope, action: 'claim', refId: '3', hash: 'cd'.repeat(32) };
+    rememberTransactionAttempt(ambiguous);
+    updateTransactionAttempt(ambiguous.hash, ambiguous, { status: 'success', ledger: 1005 });
+  });
+  client.get_fade.mockResolvedValue({ ...fade, state: 1, claimant: wallet.address, claimed_at: 1005 });
+  fireEvent.click(screen.getByRole('button', { name: /^Claim at/ }));
+  await screen.findByRole('alert');
+  expect(listEntries()).toHaveLength(0);
+  expect(client.claim).toHaveBeenCalledTimes(1);
+});
 
 it.each([
   { method: 'claim' as const, label: /^Claim at/, record: fade },
@@ -85,14 +228,19 @@ it('keeps a prepared handoff signature through a stale ledger and disables all w
 });
 
 it.each(['error', 'missing'])('does not resubmit a confirmed claim if its record refresh returns %s', async (failure) => {
-  await load(); client.claim.mockResolvedValue(undefined);
+  await load(); client.claim.mockImplementationOnce(async () => { confirmClaimAt(1005); });
   if (failure === 'error') client.get_fade.mockRejectedValueOnce(new Error('RPC unavailable'));
   else client.get_fade.mockResolvedValueOnce(null);
   fireEvent.click(screen.getByRole('button', { name: /^Claim at/ }));
   await screen.findByRole('alert');
+  expect(listEntries()).toEqual([expect.objectContaining({ amount: null, txHash: claimHash })]);
+  expect(listTransactionAttempts(claimScope)[0].status).toBe('success');
   expect((screen.getByRole('button', { name: /^Claim at/ }) as HTMLButtonElement).disabled).toBe(true);
+  client.get_fade.mockResolvedValueOnce({ ...fade, state: 1, claimant: wallet.address, claimed_at: 1005 });
   fireEvent.click(screen.getByRole('button', { name: /^Refresh record$/ }));
   await waitFor(() => expect(client.get_fade).toHaveBeenCalledTimes(3));
+  await waitFor(() => expect(listEntries()[0]).toMatchObject({ amount: '-50000000', txHash: claimHash }));
+  expect(listEntries()).toHaveLength(1);
   expect(client.claim).toHaveBeenCalledTimes(1);
 });
 

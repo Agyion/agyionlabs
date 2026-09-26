@@ -14,6 +14,7 @@ import {
 import { useLedgerStatus } from "../../lib/useLedger";
 import { formatMinor, formatRemaining, parseMinor, shortAddress, shortHex } from "../../lib/format";
 import { logEntry } from "../../lib/ledgerLog";
+import { listTransactionAttempts, rememberReceipt, type TransactionIntent, type TransactionReceipt } from "../../lib/transactionReceipts";
 import { signHandoff, publicKeyHex } from "../../lib/signers";
 import { findVenueIdentity, getOrCreateVenueIdentity } from "../../lib/venueIdentity";
 import { demoAddress } from "../../lib/wallet";
@@ -23,6 +24,8 @@ import { ErrorNote, Field, FilledButton, GhostButton, OkNote, StateChip, TextInp
 import { WalletPrerequisite } from "./panelControls";
 import { durationLedgers, ledgerDeadline } from "./panelValidation";
 import { DraftSummary, draftAmount, draftDelay, formatDraftMinor } from "./instrumentPresentation";
+
+type ClaimConfirmation = { claimant: string; ledger: number | null };
 
 export default function FadePanel({ wallet }: { wallet: WalletState }) {
   const [fade, setFade] = useState<(Fade & { settlement?: { price: bigint; claimantPaid: bigint; claimantReceived: bigint; sellerReceived: bigint } }) | null>(null);
@@ -69,13 +72,19 @@ export default function FadePanel({ wallet }: { wallet: WalletState }) {
     return () => { live = false; request++; window.removeEventListener("agyion:open-record", onRecord); };
   }, [client]);
 
-  const reload = useCallback(async () => {
-    if (!client || !fade) return;
-    const fresh = IS_MOCK
-      ? await mockClient()?.getLatestFade()
-      : await client.get_fade(fade.id);
-    if (!fresh) throw new Error(`Fade #${fade.id} is not available yet. Refresh its record before taking another action.`);
+  const reload = useCallback(async (claim?: ClaimConfirmation) => {
+    if (!client || !fade) throw new Error("The Fade record is not available. Refresh it before taking another action.");
+    const fresh = await client.get_fade(fade.id);
+    if (!fresh || fresh.id !== fade.id) throw new Error(`Fade #${fade.id} is not available yet. Refresh its record before taking another action.`);
+    if (claim && (fresh.claimant !== claim.claimant ||
+      (fresh.state !== FADE_STATE.Claimed && fresh.state !== FADE_STATE.Settled && fresh.state !== FADE_STATE.Refunded) ||
+      fresh.claimed_at == null || !Number.isSafeInteger(fresh.claimed_at) ||
+      fresh.claimed_at < fresh.start_ledger || fresh.claimed_at > fresh.deadline_ledger ||
+      (claim.ledger != null && fresh.claimed_at !== claim.ledger))) {
+      throw new Error("The returned Fade does not yet match your confirmed claim. Refresh the record; do not submit another claim.");
+    }
     setFade(fresh as typeof fade);
+    return fresh;
   }, [client, fade]);
 
   const run = useCallback(
@@ -355,7 +364,7 @@ function FadeStage({
   ledgerFresh: boolean;
   wallet: WalletState;
   run: (fn: () => Promise<void>) => Promise<void>;
-  onChanged: () => Promise<void>;
+  onChanged: (claim?: ClaimConfirmation) => Promise<Fade>;
   onReset: () => void;
 }) {
   const reduced = useReducedMotion();
@@ -368,7 +377,7 @@ function FadeStage({
   const shownPrice = priceAtLedger(fade, shownLedger);
   const priceLabel = fade.claimed_at != null
     ? fade.state === FADE_STATE.Settled ? "Settled price" : "Frozen at claim"
-    : ledgerFresh ? "Live price" : "Last confirmed price";
+    : ledgerFresh ? "Estimated price" : "Last price estimate";
 
   const stateLabel =
     fade.state === FADE_STATE.Open
@@ -432,7 +441,7 @@ function FadeStage({
                     className="mt-2 font-mono text-[11px] uppercase tracking-[0.16em]"
                     style={{ color: "var(--ember)" }}
                   >
-                    Below zero — the pot now pays the claimant
+                    Below zero — the pot pays at confirmed handoff
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -689,13 +698,14 @@ function FadeActions({
   ledgerFresh: boolean;
   wallet: WalletState;
   run: (fn: () => Promise<void>) => Promise<void>;
-  onChanged: () => Promise<void>;
+  onChanged: (claim?: ClaimConfirmation) => Promise<Fade>;
 }) {
   const [venueSecret, setVenueSecret] = useState("");
   const [sig, setSig] = useState("");
   const [sigTs, setSigTs] = useState<bigint | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const actionBusy = useRef(false);
+  const pendingClaim = useRef<{ claimant: string; intent: TransactionIntent | null; receipt: TransactionReceipt | null } | null>(null);
   const [confirmedAction, setConfirmedAction] = useState<string | null>(null);
   const [localErr, setLocalErr] = useState<string | null>(null);
 
@@ -704,8 +714,58 @@ function FadeActions({
     setSig("");
     setSigTs(null);
     setConfirmedAction(null);
+    pendingClaim.current = null;
     setLocalErr(null);
   }, [fade.id, fade.venue_pubkey]);
+
+  const refreshConfirmedRecord = async () => {
+    const pending = pendingClaim.current;
+    if (pending?.intent && !pending.receipt) {
+      // submit persists this exact scope even when a changed wallet session
+      // prevents an in-memory receipt. Never substitute another account/chain,
+      // or choose an arbitrary hash from ambiguous local recovery evidence.
+      const intent = pending.intent;
+      const confirmations = listTransactionAttempts(intent).filter(attempt =>
+        attempt.action === intent.action && attempt.refId === intent.refId && attempt.status === "success");
+      if (confirmations.length !== 1) {
+        throw new Error("Your claim's confirmation receipt is unavailable or ambiguous. Check transaction activity and refresh; do not submit another claim.");
+      }
+      const confirmation = confirmations[0];
+      pending.receipt = {
+        hash: confirmation.hash, ledger: confirmation.ledger,
+        account: intent.account, network: intent.network, contractId: intent.contractId,
+      };
+      // logEntry consumes the matching in-memory receipt. Supply the verified
+      // original scope explicitly even if generic recovery consumed it first.
+      rememberReceipt("claim", intent.refId!, pending.receipt);
+      logEntry({
+        ...pending.receipt,
+        template: "fade", action: "claim", refId: intent.refId!,
+        amount: null, status: "recorded",
+        detail: "Claim confirmed. Refresh the record to verify its frozen price.",
+        txHash: pending.receipt.hash,
+      });
+    }
+    const fresh = await onChanged(pending ? { claimant: pending.claimant, ledger: pending.receipt?.ledger ?? null } : undefined);
+    if (pending) {
+      // reload validates the claimant, state and execution ledger first.
+      // Preserve the same confirmed hash while enriching the unknown amount.
+      const price = priceAtLedger(fresh, fresh.claimed_at!);
+      if (pending.receipt) rememberReceipt("claim", fresh.id.toString(), pending.receipt);
+      logEntry({
+        ...pending.receipt,
+        ledger: fresh.claimed_at,
+        template: "fade",
+        action: "claim",
+        refId: fresh.id.toString(),
+        amount: price.toString(),
+        status: "locked",
+        detail: `claimed at ${formatMinor(price)} ${CONFIG.assetCode}; frozen at ledger ${fresh.claimed_at}`,
+        txHash: pending.receipt?.hash ?? null,
+      });
+      pendingClaim.current = null;
+    }
+  };
 
   const disabled = busy !== null || confirmedAction !== null || !ledgerFresh || (!IS_MOCK && !wallet.address);
   const perform = (action: string, send: () => Promise<void>, record: () => void) => run(async () => {
@@ -717,7 +777,7 @@ function FadeActions({
       // A subsequent read failure must offer a read retry, never a second send.
       setConfirmedAction(action);
       record();
-      await onChanged();
+      await refreshConfirmedRecord();
       setConfirmedAction(null);
     } finally {
       actionBusy.current = false;
@@ -728,7 +788,7 @@ function FadeActions({
     if (actionBusy.current) return;
     actionBusy.current = true;
     setBusy("refresh");
-    try { await onChanged(); setConfirmedAction(null); }
+    try { await refreshConfirmedRecord(); setConfirmedAction(null); }
     finally { actionBusy.current = false; setBusy(null); }
   });
 
@@ -739,19 +799,17 @@ function FadeActions({
       fade.claimed_at != null &&
       ledger > fade.claimed_at + fade.handoff_window);
 
-  const doClaim = () =>
-    perform("claim", () => getClient().claim(fade.id, wallet.address ?? demoAddress()), () => {
-      logEntry({
-        ledger,
-        template: "fade",
-        action: "claim",
-        refId: fade.id.toString(),
-        amount: priceAtLedger(fade, ledger).toString(),
-        status: "locked",
-        detail: `claimed at ${formatMinor(priceAtLedger(fade, ledger))} ${CONFIG.assetCode}`,
-        txHash: null,
-      });
+  const doClaim = () => {
+    const claimant = wallet.address ?? demoAddress();
+    // Capture the submission identity before awaiting wallet/network work.
+    const intent: TransactionIntent | null = IS_MOCK ? null : {
+      account: claimant, network: CONFIG.networkPassphrase, contractId: CONFIG.contractId,
+      action: "claim", refId: fade.id.toString(),
+    };
+    return perform("claim", () => getClient().claim(fade.id, claimant), () => {
+      pendingClaim.current = { claimant, intent, receipt: null };
     });
+  };
 
   const produceSig = () => {
     if (!ledgerFresh || actionBusy.current || confirmedAction) return;
@@ -816,13 +874,13 @@ function FadeActions({
       {fade.state === FADE_STATE.Open && (
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="max-w-[52ch] text-[14px] leading-relaxed text-muted">
-            Claiming freezes the price at this ledger and starts the handoff
-            window. The claimant pays the frozen price; if it is negative, the
-            pot pays the claimant.
+            The first valid on-chain claim wins and fixes the price at its execution
+            ledger. A no-show lets the seller recover the pot after the window;
+            the listing stays closed.
           </p>
           {claimable ? (
             <FilledButton transaction onClick={() => void doClaim()} disabled={disabled}>
-              {busy === "claim" ? "Claiming…" : `Claim at ${formatMinor(priceAtLedger(fade, ledger))} ${CONFIG.assetCode}`}
+              {busy === "claim" ? "Claiming…" : `Claim at ${formatMinor(priceAtLedger(fade, ledger))} ${CONFIG.assetCode} (estimate)`}
             </FilledButton>
           ) : (
             <span className="text-[13px] text-muted">claim closed — deadline passed</span>
