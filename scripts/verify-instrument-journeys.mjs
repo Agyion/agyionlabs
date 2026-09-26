@@ -17,7 +17,7 @@ if (!Number.isFinite(appDelayMs) || appDelayMs < 0) throw new Error('JOURNEY_APP
 const only = process.env.JOURNEY_CASES?.split(',');
 if (!['all', 'real', 'matrix', 'fallbacks'].includes(scope)) throw new Error('JOURNEY_SCOPE must be all, real, matrix or fallbacks');
 const viewport = mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 };
-const realCases = new Set(['landing-pod', 'landing-fade', 'detail-fade', 'detail-pod', 'directory-generic']);
+const realCases = new Set(['landing-pod', 'landing-fade', 'landing-envoy', 'detail-fade', 'detail-pod', 'directory-generic']);
 const cases = [
   ...['fade', 'pod', 'trigger', 'envoy'].map(id => ({ name: `landing-${id}`, route: '/', id })),
   ...['fade', 'pod', 'trigger', 'envoy', 'ramp', 'ledger'].map(id => ({ name: `detail-${id}`, route: `/${id}`, id })),
@@ -114,30 +114,17 @@ async function openSource(page, test) {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   if (test.route === '/') {
     await expect(page.locator('.orbital-scene')).toHaveClass(/is-ready/, { timeout: 60000 });
+    await expect(page.locator('.orbital-home--gallery')).toBeVisible();
+    await page.locator('#instruments').scrollIntoViewIfNeeded();
     await page.locator(`#exhibit-${test.id}`).click();
     await expect(page.locator(`#exhibit-${test.id}`)).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#instrument-stage')).toBeVisible();
-    if (test.id === 'pod') await openPodExample(page);
+    await expect(page.locator('#instrument-stage .instrument-mechanism')).toHaveAttribute('data-mechanism', test.id);
     return page.locator(`#instrument-stage a[href="/app/?tab=${test.id}"]`);
   }
   // Detail scenes may be created on departure; loading a detail must not need a
   // hidden WebGL renderer before its native CTA becomes available.
   return test.id ? page.locator(`.product-launch[href="/app/?tab=${test.id}"]`).first() : page.locator('.orbital-nav__launch').first();
-}
-
-async function openPodExample(page) {
-  const trial = page.getByRole('region', { name: 'Pod interactive example' });
-  const conditions = trial.getByRole('checkbox');
-  // .all() does not wait: a fast reduced-motion tab switch can otherwise return
-  // an empty list before React mounts the selected instrument's controls.
-  await expect(conditions).toHaveCount(3);
-  for (let index = 0; index < 3; index++) {
-    await conditions.nth(index).check();
-    await expect(conditions.nth(index)).toBeChecked();
-  }
-  await expect(trial).toHaveAttribute('data-stage', '1');
-  await trial.getByRole('button', { name: 'Open capsule', exact: true }).click();
-  await expect(trial).toHaveAttribute('data-stage', '2');
 }
 
 async function nativeGuards(anchor) {

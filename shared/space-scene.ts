@@ -41,6 +41,8 @@ export interface OrbitalScene {
   previewInstrument: (id: string | null) => void;
   emitTransfer: () => void;
   setPaused: (paused: boolean) => void;
+  /** Re-measure the existing host after an explicit layout change. */
+  refreshLayout: () => void;
   launch: () => Promise<void>;
   explore: () => void;
   setProgress: (progress: number) => void;
@@ -1222,6 +1224,7 @@ export function createOrbitalScene(
       paused = nextPaused;
       if (paused) stop(); else resume();
     },
+    refreshLayout: resize,
     launch() {
       if (disposed || reducedMotion || renderFailed || contextLost) return Promise.resolve();
       if (launchPromise) return launchPromise;

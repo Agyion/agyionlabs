@@ -218,17 +218,34 @@ function animateRun(root: HTMLElement, run: Run, complete: () => void) {
   return timeline
 }
 
-function MechanismExhibit({ kind }: { kind: DetailInstrument }) {
-  const [input, setInput] = useState<MechanismInputs>({ ...INITIAL_MECHANISM_INPUTS })
-  const [run, setRun] = useState<Run | null>(null)
-  const [busy, setBusy] = useState(false)
-  const root = useRef<HTMLElement>(null), serial = useRef(0), id = useId()
+function previewInput(): MechanismInputs {
+  return { ...INITIAL_MECHANISM_INPUTS, mature: true, signed: true, granted: true }
+}
+function previewAction(kind: DetailInstrument): MechanismAction {
+  return ({ fade: 'claim', pod: 'open', trigger: 'submit', envoy: 'request', ramp: 'bridge', ledger: 'bundle' } as const)[kind]
+}
+
+function MechanismExhibit({ kind, preview }: { kind: DetailInstrument; preview: boolean }) {
+  const [input, setInput] = useState<MechanismInputs>(() => preview ? previewInput() : { ...INITIAL_MECHANISM_INPUTS })
+  const [run, setRun] = useState<Run | null>(() => preview ? { id: 0, input: previewInput(), result: mechanismResult(kind, previewAction(kind), previewInput()), replay: false } : null)
+  const [busy, setBusy] = useState(preview)
+  const root = useRef<HTMLElement>(null), serial = useRef(0), completedRun = useRef<number | null>(null), id = useId()
   const [title, subtitle, dimension] = TITLES[kind]
   useEffect(() => {
     if (!run || !root.current) return
     const element = root.current, media = window.matchMedia('(prefers-reduced-motion: reduce)')
     let visible = false, disposed = false, finished = false
-    const done = () => { if (disposed || finished || run.id !== serial.current) return; finished = true; if (!run.replay) setInput(previous => completeMechanism(previous, run.result)); setBusy(false) }
+    const done = () => {
+      if (disposed || finished || run.id !== serial.current) return
+      finished = true
+      // Reduced-motion previews complete during mount. StrictMode may replay
+      // that effect; a completed illustrative claim still counts only once.
+      if (completedRun.current !== run.id) {
+        completedRun.current = run.id
+        if (!run.replay) setInput(previous => completeMechanism(previous, run.result))
+      }
+      setBusy(false)
+    }
     let timeline: gsap.core.Timeline
     const context = gsap.context(() => { timeline = animateRun(element, run, done) }, element)
     const sync = () => {
@@ -257,15 +274,15 @@ function MechanismExhibit({ kind }: { kind: DetailInstrument }) {
   const change = <K extends keyof MechanismInputs>(key: K, value: MechanismInputs[K]) => { ++serial.current; setRun(null); setInput(previous => ({ ...previous, [key]: value })) }
   const toggle = (key: 'mature' | 'signed' | 'expired' | 'positivePrice' | 'altered', label: string, disabled = busy) => <label className="im-toggle"><input type="checkbox" checked={input[key]} disabled={disabled} onChange={event => change(key, event.target.checked)} /><span className="im-toggle__mark" aria-hidden="true" /><span>{label}</span></label>
   const action = (name: MechanismAction, label: string, secondary = false, disabled = busy) => <button className={secondary ? 'im-button im-button--secondary' : 'im-button'} type="button" data-action={name} disabled={disabled} onClick={() => start(name)}>{label}<span aria-hidden="true">{name === 'revoke' ? '×' : '↗'}</span></button>
-  return <section ref={root} className={`instrument-mechanism instrument-mechanism--${kind}`} data-mechanism={kind} data-running={busy} data-outcome={!busy ? run?.result.code ?? 'ready' : 'running'} aria-labelledby={`${id}-heading`}>
+  return <section ref={root} className={`instrument-mechanism instrument-mechanism--${kind}${preview ? ' instrument-mechanism--preview' : ''}`} data-mechanism={kind} data-running={busy} data-outcome={!busy ? run?.result.code ?? 'ready' : 'running'} aria-labelledby={`${id}-heading`}>
     <header className="im-heading"><div><p className="im-eyebrow">Inside the mechanism <span aria-hidden="true">/</span> {dimension}</p><h2 id={`${id}-heading`}>{title}</h2><p className="im-subtitle">{subtitle}</p></div><span className="im-simulation"><i aria-hidden="true" />Illustration · no funds move</span></header>
-    <div className="im-stage"><svg viewBox="0 0 1000 520" fill="none" role="img" aria-labelledby={`${id}-diagram-title`} preserveAspectRatio="xMidYMid meet"><title id={`${id}-diagram-title`}>{title} {subtitle} Use the controls below to run this local example.</title>
+    <div className="im-stage"><svg viewBox="0 0 1000 520" fill="none" role="img" aria-labelledby={`${id}-diagram-title`} preserveAspectRatio="xMidYMid meet"><title id={`${id}-diagram-title`}>{title} {subtitle} {preview ? 'Illustrative example. Explore the product for the full controls.' : 'Use the controls below to run this local example.'}</title>
       <defs><pattern id={`${id}-grid`} width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#f3efe6" strokeOpacity=".035" strokeWidth="1" /></pattern></defs>
       <rect width="1000" height="520" fill={`url(#${id}-grid)`} /><path className="im-corner" d="M28 68V30H66M934 30H972V68M28 452V490H66M934 490H972V452" />
       <path className="im-crosshairs" d="M493 30H507M500 23V37M28 253V267M21 260H35M972 253V267M965 260H979" />
       {kind === 'fade' && <FadeScene input={input} />}{kind === 'pod' && <PodScene input={input} />}{kind === 'trigger' && <TriggerScene />}{kind === 'envoy' && <EnvoyScene input={input} />}{kind === 'ramp' && <RampScene input={input} />}{kind === 'ledger' && <LedgerScene input={input} />}
     </svg></div>
-    <div className="im-console">
+    {!preview && <div className="im-console">
       <fieldset className="im-inputs" disabled={false}><legend>Change the conditions</legend>
         {kind === 'fade' && <label className="im-range"><span>Elapsed time <output>{input.time}%</output></span><input aria-label="Elapsed time" type="range" min="0" max="100" value={input.time} disabled={busy} onChange={e => change('time', Number(e.target.value))} /><span className="im-range__ends"><span>+80 start</span><span>−40 floor</span></span></label>}
         {kind === 'pod' && <>{toggle('mature', 'Unlock ledger reached')}{toggle('signed', 'Recipient signature valid')}</>}
@@ -279,9 +296,9 @@ function MechanismExhibit({ kind }: { kind: DetailInstrument }) {
         {kind === 'envoy' && <>{action('grant', input.revoked ? 'Grant a new mandate' : 'Grant mandate', true, busy || input.granted && !input.revoked)}{action('request', 'Request a claim')}{action('revoke', 'Revoke', true, !input.granted || input.revoked)}</>}
         {kind === 'ramp' && action('bridge', 'Run mock route')}{kind === 'ledger' && action('bundle', 'Build the bundle')}
       </div>
-    </div>
-    <footer className="im-result"><span className="im-announcement" role="status" aria-live="polite" aria-atomic="true">{!busy && run ? `${run.result.title} ${run.result.detail}` : ''}</span><div className="im-result__copy"><span className={`im-result__light${run && !busy && !run.result.ok ? ' im-result__light--blocked' : ''}`} aria-hidden="true" /><div><p className="im-result__title">{busy ? 'Following the mechanism…' : run?.result.title ?? 'Your move.'}</p><p className="im-result__detail">{busy ? 'Trace the highlighted route through the same rule.' : run?.result.detail ?? 'Set the conditions above, then run the example.'}</p></div></div><div className="im-playback"><button type="button" onClick={replay} disabled={!run || busy} data-action="replay"><span aria-hidden="true">↻</span> Replay</button><button type="button" onClick={reset} data-action="reset">Reset</button></div></footer>
+    </div>}
+    <footer className="im-result"><span className="im-announcement" role="status" aria-live={preview ? 'off' : 'polite'} aria-atomic="true">{!busy && run ? `${run.result.title} ${run.result.detail}` : ''}</span><div className="im-result__copy"><span className={`im-result__light${run && !busy && !run.result.ok ? ' im-result__light--blocked' : ''}`} aria-hidden="true" /><div><p className="im-result__title">{busy ? 'Following the mechanism…' : run?.result.title ?? 'Your move.'}</p><p className="im-result__detail">{busy ? 'Trace the highlighted route through the same rule.' : run?.result.detail ?? 'Set the conditions above, then run the example.'}</p></div></div><div className="im-playback"><button type="button" onClick={replay} disabled={!run || busy} data-action="replay"><span aria-hidden="true">↻</span> Replay</button>{!preview && <button type="button" onClick={reset} data-action="reset">Reset</button>}</div></footer>
   </section>
 }
 
-export default function InstrumentMechanism({ kind }: { kind: DetailInstrument }) { return <MechanismExhibit key={kind} kind={kind} /> }
+export default function InstrumentMechanism({ kind, preview = false }: { kind: DetailInstrument; preview?: boolean }) { return <MechanismExhibit key={`${kind}-${preview}`} kind={kind} preview={preview} /> }

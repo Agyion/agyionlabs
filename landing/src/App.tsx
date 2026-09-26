@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { Route, Routes, useLocation } from 'react-router'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { Route, Routes, useLocation, useNavigationType } from 'react-router'
 import { config } from './config'
 import { validateConfig } from './lib/validateConfig'
 import { initReveals } from './lib/reveal'
+import { routeScrollKey } from './lib/routeScroll'
 import NavPill from './components/NavPill'
 import Home from './pages/Home'
 import Instrument from './pages/Instrument'
@@ -10,39 +11,70 @@ import Instruments from './pages/Instruments'
 import Ramp from './pages/Ramp'
 import Ledger from './pages/Ledger'
 import NotFound from './pages/NotFound'
+import { cancelProductTransitionForRoute, finishProductRouteCommit } from './components/productRouteTransition'
 
 export default function App() {
   const errors = useMemo(() => validateConfig(config), [])
   const location = useLocation()
+  const navigationType = useNavigationType()
   const previousLocationKey = useRef(location.key)
   const previousHash = useRef(location.hash)
+  const scrollPositions = useRef(new Map<string, { x: number; y: number; product?: string }>())
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    finishProductRouteCommit(location.pathname)
+  }, [location.pathname, location.key])
+
+  useLayoutEffect(() => {
+    cancelProductTransitionForRoute(location.pathname)
     const navigated = previousLocationKey.current !== location.key
     const leavingExplanation = previousHash.current === '#how-it-works' && location.hash !== '#how-it-works'
     previousLocationKey.current = location.key
     previousHash.current = location.hash
     const offReveals = initReveals()
+    const positions = scrollPositions.current
+    const positionKey = routeScrollKey({ key: location.key, pathname: location.pathname, search: location.search, hash: location.hash })
+    const restored = navigationType === 'POP' && window.history.state !== null ? positions.get(positionKey) : undefined
+    const rememberPosition = () => {
+      const product = document.activeElement instanceof Element ? document.activeElement.closest<HTMLElement>('[data-product-route-link]')?.dataset.productRouteLink : undefined
+      positions.set(positionKey, { x: window.scrollX, y: window.scrollY, product: product ?? positions.get(positionKey)?.product })
+      if (positions.size > 40) positions.delete(positions.keys().next().value!)
+    }
+    window.addEventListener('scroll', rememberPosition, { passive: true })
+    document.addEventListener('focusin', rememberPosition)
     const frame = window.requestAnimationFrame(() => {
-      const anchor = location.pathname === '/' && location.hash === '#instruments'
-        ? document.getElementById('instrument-stage') ?? document.getElementById('instruments')
-        : location.hash ? document.getElementById(location.hash.slice(1)) : null
-      // The immersive homepage owns its dialog focus and keeps one spatial view.
-      if (location.pathname === '/' && (location.hash === '#how-it-works' || leavingExplanation) && document.querySelector('.orbital-home--immersive')) return
-      if (anchor) {
-        const immersive = Boolean(anchor.closest('.orbital-home--immersive'))
+      const anchor = location.hash ? document.getElementById(location.hash.slice(1)) : null
+      // The dialog owns focus restoration; opening/closing it must not move
+      // the real gallery scroll position under the modal.
+      if (location.pathname === '/' && (location.hash === '#how-it-works' || leavingExplanation) && document.querySelector('.orbital-home--immersive')) {
+        rememberPosition()
+        return
+      }
+      if (restored) {
+        window.scrollTo({ top: restored.y, left: restored.x, behavior: 'instant' })
+        const product = restored.product && /^(fade|pod|trigger|envoy)$/.test(restored.product) ? document.querySelector<HTMLElement>(`[data-product-route-link="${restored.product}"]`) : null
+        ;(product ?? anchor ?? document.getElementById('main'))?.focus({ preventScroll: true })
+      } else if (anchor) {
+        const immersive = Boolean(anchor.closest('.orbital-home--immersive:not(.orbital-home--gallery)'))
         anchor.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: immersive ? 'nearest' : 'start' })
         anchor.focus({ preventScroll: true })
       } else {
         window.scrollTo({ top: 0, behavior: 'instant' })
         if (navigated) document.getElementById('main')?.focus({ preventScroll: true })
       }
+      rememberPosition()
     })
     return () => {
+      // The route's DOM has already changed at cleanup. Keep the position
+      // observed while it was mounted, before a shorter page can clamp scroll.
+      // Layout cleanup also detaches this route's listeners before the new
+      // destination's acknowledged commit can scroll or focus its contents.
+      window.removeEventListener('scroll', rememberPosition)
+      document.removeEventListener('focusin', rememberPosition)
       window.cancelAnimationFrame(frame)
       offReveals()
     }
-  }, [location.pathname, location.hash, location.key])
+  }, [location.pathname, location.search, location.hash, location.key, navigationType])
 
   /* theme tokens from config */
   useEffect(() => {
@@ -108,7 +140,7 @@ export default function App() {
         {config.copy.ui.skipLink}
       </a>
       <NavPill />
-      <main id="main" className="orbital-route" key={location.pathname} tabIndex={-1}>
+      <main id="main" className="orbital-route" data-product-entry={location.state?.productEntry === true ? 'shared' : undefined} key={location.pathname} tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/instruments" element={<Instruments />} />

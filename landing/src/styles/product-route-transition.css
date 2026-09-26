@@ -1,0 +1,22 @@
+/* Only the selected gallery title and its destination receive a shared name. */
+html[data-product-route-transition="fade"] [data-product-transition-title="fade"],
+html[data-product-route-transition="pod"] [data-product-transition-title="pod"],
+html[data-product-route-transition="trigger"] [data-product-transition-title="trigger"],
+html[data-product-route-transition="envoy"] [data-product-transition-title="envoy"] { view-transition-name: product-title; }
+html[data-product-route-stage][data-product-route-transition="fade"] [data-product-transition-stage="fade"],
+html[data-product-route-stage][data-product-route-transition="pod"] [data-product-transition-stage="pod"],
+html[data-product-route-stage][data-product-route-transition="trigger"] [data-product-transition-stage="trigger"],
+html[data-product-route-stage][data-product-route-transition="envoy"] [data-product-transition-stage="envoy"] { view-transition-name: product-stage; }
+html[data-product-route-transition]::view-transition-group(product-title) { animation-duration: .58s; animation-timing-function: cubic-bezier(.22,1,.36,1); }
+html[data-product-route-transition]::view-transition-group(product-stage) { animation-duration: .44s; animation-timing-function: cubic-bezier(.22,1,.36,1); }
+html[data-product-route-transition]::view-transition-old(root),
+html[data-product-route-transition]::view-transition-new(root) { animation-duration: .26s; }
+html[data-product-route-transition]::view-transition-image-pair(product-title) { isolation: isolate; }
+/* Do not restart the detail's entrance animation when snapshot names clear. */
+.orbital-route[data-product-entry="shared"],
+.product-page[data-product-entry="shared"] .product-wordmark > span,
+.product-page[data-product-entry="shared"] .product-hero__aside { animation: none; }
+html:has(.orbital-home--gallery .immersive-how[open]) { overflow: hidden; }
+@media(prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation-duration: 0s !important; }
+}

@@ -20,7 +20,7 @@ export default function NavPill() {
       frame = 0
       const threshold = (headerRef.current?.getBoundingClientRect().bottom ?? 90) + Math.min(window.innerHeight * .18, 150)
       let current = 'home'
-      const immersive = location.pathname === '/' && Boolean(document.querySelector('.orbital-home--immersive'))
+      const immersive = location.pathname === '/' && Boolean(document.querySelector('.orbital-home--immersive:not(.orbital-home--gallery)'))
       if (immersive) {
         current = sections.some(section => `#${section.id}` === location.hash) ? location.hash.slice(1) : 'home'
       } else {
@@ -28,6 +28,7 @@ export default function NavPill() {
           if ((document.getElementById(section.id)?.getBoundingClientRect().top ?? Infinity) <= threshold) current = section.id
         }
         if (window.scrollY > 0 && window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2 && document.getElementById('how-it-works')) current = 'how-it-works'
+        if (location.pathname === '/' && location.hash === '#how-it-works') current = 'how-it-works'
       }
       setActive(current)
       headerRef.current?.classList.toggle('is-scrolled', window.scrollY > 40)
@@ -71,7 +72,7 @@ export default function NavPill() {
       document.getElementById('directory-title')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
     }
   }
-  const sectionHref = (id: string) => id === 'instruments' ? '/instruments' : `/#${id}`
+  const sectionHref = (id: string) => id === 'instruments' && location.pathname !== '/' ? '/instruments' : `/#${id}`
   const currentSection = (id: string) => id === 'instruments' && /^\/(instruments|fade|pod|trigger|envoy|ramp|ledger)$/.test(location.pathname) ? 'page' as const : location.pathname === '/' && active === id ? 'location' as const : undefined
 
   return (

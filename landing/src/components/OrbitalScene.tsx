@@ -78,6 +78,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
   useEffect(() => {
     const mount = mountRef.current
     if (!mount) return
+    const galleryHome = Boolean(mount.closest('.orbital-home--gallery'))
     // A motion preference change can replace the renderer during departure.
     // Keep the user's navigation intent while honoring the new preference.
     if (launchDestination.current) {
@@ -112,7 +113,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
     }
     const setDeparting = (departing: boolean) => {
       document.documentElement.classList.toggle('is-launching', departing)
-      document.querySelectorAll<HTMLElement>('.orbital-home--immersive, .detail-world, .product-page__body, .orbital-nav').forEach(element => { element.inert = departing })
+      document.querySelectorAll<HTMLElement>('.orbital-home--immersive, .orbital-home--gallery, .detail-world, .product-page__body, .orbital-nav').forEach(element => { element.inert = departing })
     }
     // A hidden flight-only world still draws its initial frame to compile and
     // report readiness. Pausing before that frame would deadlock early launches.
@@ -121,10 +122,12 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
       scrollFrame = 0
       const hero = mount.closest('section')
       if (hero && !launching && !flightOnly) {
-        handle?.setProgress(Math.min(1, Math.max(0, -hero.getBoundingClientRect().top / hero.offsetHeight)))
+        // The gallery is a separate reading surface, not a scroll-driven camera
+        // approach. Keep the hero's original flight starting point intact.
+        handle?.setProgress(galleryHome ? 0 : Math.min(1, Math.max(0, -hero.getBoundingClientRect().top / hero.offsetHeight)))
       }
     }
-    const onScroll = () => { if (!scrollFrame) scrollFrame = window.requestAnimationFrame(updateProgress) }
+    const onScroll = () => { if (!galleryHome && !scrollFrame) scrollFrame = window.requestAnimationFrame(updateProgress) }
     const prefetchApp = () => {
       warmAppAssets()
       if (prefetch) return
@@ -155,12 +158,28 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
     const startFlight = () => {
       if (!launching || flightStarted || !rendererReady || !handle) return
       flightStarted = true
+      // The departure class has already lifted this same canvas from the hero
+      // into the viewport. Refresh its measured size and camera before launching,
+      // without waiting for a possibly throttled ResizeObserver/animation frame.
+      try {
+        handle.setPaused(true)
+        if (galleryHome) handle.setMode('landing')
+        handle.refreshLayout()
+      } catch {
+        rendererFailed = true
+        setReadyForMotion(null)
+        completeNavigation()
+        return
+      }
+      if (navigationCommitted || rendererFailed) return
       window.clearTimeout(launchTimeout)
       updatePause()
       const generation = launchGeneration
       const maxDuration = new Promise<void>(resolve => { launchTimeout = window.setTimeout(resolve, LAUNCH_DURATION_MS + 650) })
       const activeScene = handle
-      void Promise.race([Promise.resolve().then(() => activeScene.launch()), maxDuration]).catch(() => {}).then(() => {
+      void Promise.race([Promise.resolve().then(() => {
+        if (!cancelled && launching && generation === launchGeneration) return activeScene.launch()
+      }), maxDuration]).catch(() => {}).then(() => {
         if (generation === launchGeneration) completeNavigation()
       })
     }
@@ -189,22 +208,44 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
       prepareScene()
       startFlight()
     }
-    const onRestore = (event: PageTransitionEvent) => {
-      if (!event.persisted) return
-      handle?.setMode('landing')
+    const resetDeparture = () => {
+      // setMode resolves the renderer's old launch promise synchronously. Retire
+      // that intent first, including callbacks from a renderer error during reset.
+      launchGeneration += 1
       window.clearTimeout(launchTimeout)
       launching = false
       flightStarted = false
       navigationCommitted = false
-      launchGeneration += 1
       launchDestination.current = null
+      try {
+        handle?.setPaused(true)
+        handle?.setMode('landing')
+      } catch {
+        rendererFailed = true
+        setReadyForMotion(null)
+      }
+      // Resetting a live renderer completes its old frame bridge. A cancelled
+      // departure must not leave that synthetic completion for the next page.
+      try { clearFlightHandoff(sessionStorage) } catch { /* Storage is optional. */ }
       setDeparting(false)
+      try { handle?.refreshLayout() } catch {
+        rendererFailed = true
+        setReadyForMotion(null)
+      }
       updatePause()
+    }
+    const onRestore = (event: PageTransitionEvent) => {
+      if (event.persisted) resetDeparture()
+    }
+    const onHistoryNavigation = () => {
+      // Same-path history changes keep this component mounted. Back/Forward is
+      // newer navigation intent, even when only the homepage hash changes.
+      if (launching) resetDeparture()
     }
     const observer = new IntersectionObserver(([entry]) => {
       inViewRef.current = entry.isIntersecting
       updatePause()
-    }, { rootMargin: '80px', threshold: 0 })
+    }, { rootMargin: galleryHome ? '0px' : '80px', threshold: 0 })
     observer.observe(mount)
     document.addEventListener('visibilitychange', updatePause)
     document.addEventListener('click', onNavigate, true)
@@ -214,6 +255,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
     window.addEventListener('agyion:exhibit-view', onExhibitView)
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('pageshow', onRestore)
+    window.addEventListener('popstate', onHistoryNavigation)
 
     function prepareScene() {
       if (!mount || sceneRequested || cancelled) return
@@ -264,6 +306,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
       window.removeEventListener('agyion:exhibit-view', onExhibitView)
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('pageshow', onRestore)
+      window.removeEventListener('popstate', onHistoryNavigation)
       window.cancelAnimationFrame(scrollFrame)
       window.clearTimeout(launchTimeout)
       setDeparting(false)

@@ -1,8 +1,9 @@
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import OrbitalScene from './OrbitalScene'
 import InstrumentMechanism from './InstrumentMechanism'
 import { PRODUCT_NAV } from './productNavigation'
 import '../styles/product-pages.css'
+import '../styles/product-route-transition.css'
 
 export type CoreInstrument = 'fade' | 'pod' | 'trigger' | 'envoy'
 export type DetailInstrument = CoreInstrument | 'ramp' | 'ledger'
@@ -21,18 +22,19 @@ type DetailWorldProps = {
 
 /** Product explanations have their own surface. The space renderer only appears at departure. */
 export default function DetailWorld({ id, name, promise, steps, caveat, notes, environment }: DetailWorldProps) {
+  const location = useLocation()
   const index = PRODUCT_NAV.findIndex(item => item.id === id)
   const product = PRODUCT_NAV[index]
   const next = PRODUCT_NAV[(index + 1) % PRODUCT_NAV.length]
   const previous = PRODUCT_NAV[(index + PRODUCT_NAV.length - 1) % PRODUCT_NAV.length]
   return (
-    <article className={`product-page product-page--${id}`} data-instrument={id} aria-labelledby={`product-${id}-title`}>
+    <article className={`product-page product-page--${id}`} data-instrument={id} data-product-entry={location.state?.productEntry === true ? 'shared' : undefined} aria-labelledby={`product-${id}-title`}>
       <OrbitalScene flightOnly showExhibits={false} />
       <div className="product-page__body">
         <header className="product-hero">
           <div className="product-hero__strip"><Link to="/instruments">← All instruments</Link><span>{product.category}</span><span>{environment ?? 'Stellar testnet'}</span></div>
           <div className="product-hero__composition">
-            <h1 id={`product-${id}-title`} className="product-wordmark" aria-label={name}>
+            <h1 id={`product-${id}-title`} className="product-wordmark" data-product-transition-title={id} aria-label={name}>
               <span aria-hidden="true">{product.split[0]}</span><span className="product-wordmark__outline" aria-hidden="true">{product.split[1]}<i className="product-wordmark__point" /></span>
             </h1>
             <div className="product-hero__aside">
@@ -44,7 +46,7 @@ export default function DetailWorld({ id, name, promise, steps, caveat, notes, e
           <div className="product-hero__bottom"><span>{String(index + 1).padStart(2, '0')} / 06</span><span>Agyion instruments</span><span aria-hidden="true">↓</span></div>
         </header>
 
-        <section className="product-experiment" id="mechanism" aria-label={`${name} interactive mechanism`} tabIndex={-1}>
+        <section className="product-experiment" id="mechanism" data-product-transition-stage={id} aria-label={`${name} interactive mechanism`} tabIndex={-1}>
           <InstrumentMechanism kind={id} />
         </section>
 

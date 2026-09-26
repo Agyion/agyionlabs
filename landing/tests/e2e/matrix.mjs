@@ -1,4 +1,4 @@
-/** Immersive landing UX matrix. Use one isolated browser/GPU slot. */
+/** Hero plus product-gallery UX matrix. Use one isolated browser/GPU slot. */
 import fs from 'node:fs'
 import path from 'node:path'
 import { chromium, expect } from '@playwright/test'
@@ -45,8 +45,8 @@ async function capture(page, filename) {
   await page.screenshot({ path: output, fullPage: true, animations: 'disabled', timeout: 60000 })
   report.screenshots.push(output)
 }
-const world = page => page.locator('.orbital-home--immersive')
-const controls = page => page.getByRole('group', { name: 'Instruments', exact: true })
+const world = page => page.locator('.orbital-home--gallery')
+const controls = page => page.getByRole('group', { name: 'Choose an instrument', exact: true })
 const exhibit = (page, slug) => page.locator(`#exhibit-${slug}`)
 const launch = page => page.locator('.immersive-launch')
 async function noOverflow(page) {
@@ -74,7 +74,7 @@ async function focusReturned(page, opener) {
   else await expect.poll(() => page.evaluate(() => {
     const active = document.activeElement
     return active instanceof HTMLElement && active !== document.body && active.getClientRects().length > 0
-      && (active.id === 'instruments' || active.id === 'instrument-stage' || active.matches('.orbital-nav__toggle') || !!active.closest('.immersive-instruments'))
+      && (active.id === 'instruments' || active.id === 'instrument-stage' || active.matches('.orbital-nav__toggle') || !!active.closest('.home-gallery__selector'))
   }), { message: 'Closing a mobile dialog must restore a visible navigation/instrument target, not a hidden menu link or body' }).toBe(true)
 }
 // Capture existing GL submissions and fixed-star camera basis, without changing
@@ -108,15 +108,16 @@ try {
     const context = await browser.newContext({ viewport: { width, height: width <= 360 ? 800 : 1000 } })
     const { page, diagnostic } = await trackedPage(context, `${width}px normal`)
     await page.goto(BASE, { waitUntil: 'domcontentloaded' })
-    await check(`${width}px: one immersive world, readable identity and no overflow`, async () => {
+    await check(`${width}px: one hero world, separate product gallery and no overflow`, async () => {
       await homeReady(page)
-      await expect(world(page)).toHaveAttribute('data-selected', 'none')
+      await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'fade')
       await expect(controls(page).getByRole('button')).toHaveCount(4)
-      await expect(controls(page).locator('[aria-pressed=true]')).toHaveCount(0)
+      await expect(controls(page).locator('[aria-pressed=true]')).toHaveCount(1)
       await expect(page.locator('vite-error-overlay')).toHaveCount(0)
       await expect(page.getByRole('button', { name: /pause.*motion|resume.*motion/i })).toHaveCount(0)
       const dimensions = await noOverflow(page)
-      expect(dimensions.scrollHeight - dimensions.height, 'Home stays a single viewport rather than a long scrolling landing').toBeLessThanOrEqual(80)
+      expect(dimensions.scrollHeight, 'The product gallery has its own natural document section').toBeGreaterThan(dimensions.height * 1.6)
+      expect(await page.locator('#instruments').evaluate(element => element.getBoundingClientRect().top)).toBeGreaterThanOrEqual(dimensions.height * .85)
       clean(diagnostic)
       return dimensions
     })
@@ -148,28 +149,28 @@ try {
       await expect(toggle).toBeFocused()
       await expect(page.getByRole('navigation', { name: 'Mobile navigation' })).toBeHidden()
     })
-    await check(`${width}px: Instruments opens the directory and Home returns to the unselected world`, async () => {
+    await check(`${width}px: Instruments scrolls to the gallery and Home retains the chosen product`, async () => {
       await (await navigationLink(page, 'Instruments')).click()
-      await expect(page).toHaveURL(/\/instruments$/)
-      await expect(page.locator('.directory-item')).toHaveCount(6)
-      for (const slug of ['fade', 'pod', 'trigger', 'envoy', 'ramp', 'ledger']) await expect(page.locator(`.directory-item[href='/${slug}']`)).toBeVisible()
-      await page.locator('.directory-item[href="/pod"]').click()
-      await expect(page.locator('.product-page')).toHaveAttribute('data-instrument', 'pod')
+      await expect(page).toHaveURL(/\/#instruments$/)
+      await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(300)
+      await exhibit(page, 'pod').click()
+      await expect(page.locator('#instrument-stage .instrument-mechanism')).toHaveAttribute('data-mechanism', 'pod')
       await (await navigationLink(page, 'Home')).click()
       await expect(page).toHaveURL(/#home$/)
       await homeReady(page)
-      await expect(world(page)).toHaveAttribute('data-selected', 'none')
-      await expect(controls(page).locator('[aria-pressed=true]')).toHaveCount(0)
+      await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'pod')
+      await expect(controls(page).locator('[aria-pressed=true]')).toHaveCount(1)
       await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
     })
     await check(`${width}px: four pressed controls expose matching native detail and workspace links`, async () => {
+      await (await navigationLink(page, 'Instruments')).click()
       for (const [slug, name] of [['fade', 'Fade'], ['pod', 'Pod'], ['trigger', 'Trigger'], ['envoy', 'Envoy']]) {
         await exhibit(page, slug).click()
         await expect(exhibit(page, slug)).toHaveAttribute('aria-pressed', 'true')
         await expect(controls(page).locator('[aria-pressed=true]')).toHaveCount(1)
-        await expect(world(page)).toHaveAttribute('data-selected', slug)
-        await expect(page.locator('#exhibit-title')).toContainText(name)
-        await expect(page.locator('#exhibit-title')).toBeVisible()
+        await expect(page.locator('#instruments')).toHaveAttribute('data-selected', slug)
+        await expect(page.locator('#instrument-stage')).toHaveAccessibleName(`${name} illustration`)
+        await expect(page.locator('#instrument-stage')).toBeVisible()
         await expect(page.locator('#instrument-stage').getByRole('link', { name: 'Details', exact: true })).toHaveAttribute('href', `/${slug}`)
         await expect(page.locator(`#instrument-stage a[href='/app/?tab=${slug}']`)).toBeVisible()
         await noOverflow(page)
@@ -185,7 +186,7 @@ try {
       const details = page.locator('#instrument-stage').getByRole('link', { name: 'Details', exact: true })
       await details.focus()
       await exhibit(page, 'pod').hover()
-      await expect(world(page)).toHaveAttribute('data-selected', 'envoy')
+      await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'envoy')
       await expect(details).toBeFocused()
       await expect(details).toHaveAttribute('href', '/envoy')
     })
@@ -211,24 +212,25 @@ try {
         else await close.click()
         await expect(dialog).toBeHidden()
         await expect(page).toHaveURL(/#instruments$/)
-        await expect(world(page)).toHaveAttribute('data-selected', 'pod')
+        await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'pod')
         await focusReturned(page, opener)
-        await expect(world(page)).toHaveAttribute('data-view', 'instruments')
+        await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(300)
       }
     })
     await check(`${width}px: browser Back from explanation preserves the chosen instrument`, async () => {
       await (await navigationLink(page, 'Home')).click()
-      await expect(world(page)).toHaveAttribute('data-selected', 'none')
+      await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'pod')
+      await (await navigationLink(page, 'Instruments')).click()
       await exhibit(page, 'pod').click()
       await (await navigationLink(page, 'How it works')).click()
       await expect(page.getByRole('dialog')).toBeVisible()
       await page.goBack()
       await expect(page).toHaveURL(/#instruments$/)
       await expect(page.getByRole('dialog')).toBeHidden()
-      await expect(world(page)).toHaveAttribute('data-selected', 'pod')
+      await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'pod')
     })
     await (await navigationLink(page, 'Home')).click()
-    await expect(world(page)).toHaveAttribute('data-selected', 'none')
+    await expect(page.locator('#instruments')).toHaveAttribute('data-selected', 'pod')
     await capture(page, `landing-${width}.png`)
     await exhibit(page, 'fade').click()
     await capture(page, `landing-${width}-fade.png`)
@@ -359,7 +361,7 @@ try {
   await check('Reduced motion retains instrument selection and native direct workspace navigation', async () => {
     await exhibit(page, 'pod').click()
     await expect(exhibit(page, 'pod')).toHaveAttribute('aria-pressed', 'true')
-    await expect(page.locator('.immersive-exhibit__story')).toHaveCSS('animation-name', 'none')
+    await expect(page.locator('#instrument-stage .instrument-mechanism')).toHaveAttribute('data-running', 'false')
     await page.route('**/app/?tab=pod', route => route.fulfill({ contentType: 'text/html', body: '<title>Direct Pod fixture</title>' }))
     await page.locator('#instrument-stage a[href="/app/?tab=pod"]').click()
     await page.waitForURL('**/app/?tab=pod', { timeout: 2500 })
@@ -390,9 +392,10 @@ try {
     return native
   })
   await check('Open Pod preserves its destination through the complete 9.8-second flight and settled handoff', async () => {
+    await (await navigationLink(flight, 'Instruments')).click()
     await exhibit(flight, 'pod').click()
     await expect(flight).toHaveURL(/#instruments$/)
-    await expect(world(flight)).toHaveAttribute('data-view', 'instruments')
+    await expect.poll(() => flight.evaluate(() => scrollY)).toBeGreaterThan(300)
     const openPod = flight.locator('#instrument-stage a[href="/app/?tab=pod"]')
     await expect(openPod).toBeVisible()
     const started = Date.now()
