@@ -81,6 +81,12 @@ ledger deadline and handoff window bound validity. Trigger currently trusts
 the fixed owner, at most 50 claims; its monetary caps do not authorize spending.
 Neither attestation nor disclosure M-of-N is implemented in this kernel.
 
+Trigger creation rejects the kernel's own address as beneficiary, before the
+token deposit or record allocation. A self-transfer would otherwise leave the
+reserve in the kernel while marking the escrow executed, with no later withdrawal
+path. This check uses the existing `InvalidInput` error and leaves the V3 ABI
+unchanged. It does not repair existing records or deploy the revised code.
+
 ## Arithmetic, assets and storage
 
 Fade uses an I256 intermediate for rational price decline. Creation rejects
@@ -106,5 +112,8 @@ cargo test --manifest-path contracts/hak/Cargo.toml --locked --features wasm-tes
 never a usable funded credential. The suite covers recipient substitution after
 delay, wrong key/proof, altered funding terms, network/deployment/Pod/action
 binding, account authorization, repeated claims and failed asset settlement.
+Native and compiled-WASM destination regressions also require a rejected Trigger
+to preserve the funder's balance and next ID, followed by a normal successful
+attested payment.
 Passing local tests does not certify absence of bugs, audited cryptography,
 target-network compatibility or migration of already deployed funds.

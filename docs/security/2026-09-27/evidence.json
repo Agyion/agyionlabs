@@ -1,0 +1,152 @@
+{
+  "schema": "agyion-backend-checkpoint-v1",
+  "checkedAt": "2026-09-26T21:37:28.577Z",
+  "baseCommit": "c0d009bcb90380752635602ac5ff19b6ecfd9272",
+  "status": "bounded-checks-passed-review-incomplete",
+  "boundary": "Local HAK input-validation regression and private-client checks. No deployment, migration, external submission, complete repository audit, independent cryptographic review or new proof generation.",
+  "checks": [
+    {
+      "name": "prior-source-regression",
+      "status": "expected-failure",
+      "exitCode": 101,
+      "passed": 0,
+      "failed": 1,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/hak/baseline-regression.log",
+        "sha256": "b53b9af24c046efe59c3156fdd56853a171ee5b5082926d4890673a0cc4d8e97"
+      }
+    },
+    {
+      "name": "initial-shared-cache-native-run",
+      "status": "failed-not-used-as-final-evidence",
+      "exitCode": 101,
+      "passed": 48,
+      "failed": 1,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/hak/native-tests.log",
+        "sha256": "a5ce7319ec1189afb116935cc95c2b6890f2fb64f20ab8c57bc5b987e4f2a0df"
+      },
+      "resolution": "Cleared only the HAK package build cache; rebuilt current source before the following successful checks."
+    },
+    {
+      "name": "clean-package-cache",
+      "status": "passed",
+      "exitCode": 0,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/hak/clean-package-cache.log",
+        "sha256": "d720f7867e1088ea11f285e77b10984bf9a455e1c15189a3a476d4d2030adf40"
+      }
+    },
+    {
+      "name": "clean-hak-native",
+      "status": "passed",
+      "exitCode": 0,
+      "passed": 49,
+      "failed": 0,
+      "ignored": 0,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/hak/native-tests-clean.log",
+        "sha256": "39bc756ab7ceeb3aef115eafa0b433d517091076d7cb4b923e174278a7695cbb"
+      }
+    },
+    {
+      "name": "hak-wasm-build",
+      "status": "passed",
+      "exitCode": 0,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/hak/build.log",
+        "sha256": "8fdd3df63455ca723df2400d07131140b2f1cd1ddde1528474eb3f7164331c73"
+      }
+    },
+    {
+      "name": "hak-native-and-wasm",
+      "status": "passed",
+      "exitCode": 0,
+      "passed": 51,
+      "failed": 0,
+      "ignored": 0,
+      "includesNativeTests": true,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/hak/native-wasm-tests.log",
+        "sha256": "e262892f2d0af79c4c2d6b24c0f88d77e9a830f424ae84884c695672e8a0afe9"
+      }
+    },
+    {
+      "name": "hak-clippy-all-targets-all-features-deny-warnings",
+      "status": "passed",
+      "exitCode": 0,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/hak/clippy.log",
+        "sha256": "900007a552a221ec7870ed89b9bc8278025fb01f3ab40f6eb4cb30b3e37c2268"
+      }
+    },
+    {
+      "name": "private-client-default-types-and-tests",
+      "status": "passed-with-opt-in-skip",
+      "exitCode": 0,
+      "passed": 29,
+      "failed": 0,
+      "skipped": 1,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/client/client-tests-baseline.log",
+        "sha256": "ff08f3cae74da41847b43c2e5519451eea08c98c5d116e90a2eaac0e973089a4"
+      }
+    },
+    {
+      "name": "private-client-browser-enabled-types-and-tests",
+      "status": "passed",
+      "exitCode": 0,
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0,
+      "browser": "Actual local Chromium IndexedDB/Web Locks; no external request or transaction submission.",
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/client/client-tests-browser.log",
+        "sha256": "05b0f6c1de041e1334adeab375af35d5fb086ffbab86c4805afe4b24886abd8a"
+      }
+    },
+    {
+      "name": "hak-existing-app-binding-parity",
+      "status": "passed",
+      "boundary": "Local ABI parity only; no deployment or chain compatibility assertion",
+      "wasm": {
+        "path": "contracts/hak/target/wasm32v1-none/release/hak.wasm",
+        "bytes": 19909,
+        "sha256": "d06ada3ec51a6d4a47e599a1997a345e9316a717f3259b09bbdc1aa28e69f841"
+      },
+      "spec": {
+        "entries": 23,
+        "bytes": 5776,
+        "sha256": "4333c461fc2ae63fb4fc0a56b8cf7e651b1893f8c4cf6c075600c7afcb1ec443"
+      },
+      "binding": "app/lib/hak-bindings/src/index.ts",
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/hak/abi-parity.json",
+        "sha256": "540bee54641d85d65e535116dd1dea707ac4be42c14c319dae55742d3c948b44"
+      }
+    }
+  ],
+  "sourceHashes": {
+    "contracts/hak/src/lib.rs": "ce4bbfc73d84fd2b2c8e4b3aa5a331a5c54581a38f88770343bc6880426ee8b5",
+    "contracts/hak/src/trigger.rs": "4fc87d77a1eb580eba2f1ec6027b5596c577ba71dcc84e5fc1d0e9c09c080c88",
+    "contracts/hak/src/test.rs": "3a78a331b8cc278f9c3a87294256862d3396ad897e031f6d798178c4904a2712",
+    "contracts/hak/Cargo.lock": "497d7644c8519a741a50b648b464d6c655f5c8efb0460d761416ea90e796d7a4",
+    "app/lib/hak-bindings/src/index.ts": "16f4276e3a77c0949c63d750675f483ffd0ebc2c909bfecd15acbde24651c508",
+    "contracts/private-pool/client/adapter.ts": "bd59110adcac6483ac397b88b0c244775d8f09315fd23fed185d7114e69beae4",
+    "contracts/private-pool/client/release.ts": "d7ac7af221798c5727e2cb0347af3b28dda5ee797b65d989a3d8be6c0a399146",
+    "contracts/private-pool/client/reader.ts": "1abf57da5f376176f7806d587d2f2e4f6efd4c1bae9f184e18b53d5792b424e3",
+    "contracts/private-pool/client/submission.ts": "28911d7d91a597b4625f6e76088b9195f36a993677edaab4ac584bcfe85ef38a",
+    "contracts/private-pool/client/journal.ts": "83fda4955a483f545c2038af22c9b831f0eb23de982423b441eb23f45714473e",
+    "contracts/private-pool/client/adapter.test.ts": "d7c93027731e2aa3eafd38674659a55b6c0c194a7fbd811908b705a086843c5a",
+    "contracts/private-pool/client/reader.test.ts": "b5d3552090266354272bb95de9e3265481ed083205ec601eef9b03697c92a76c",
+    "contracts/private-pool/client/submission.test.ts": "48bfe8eb62c0df126b1b74af282431589671ecd89b86234665b8ed27473fe6fd",
+    "contracts/private-pool/client/journal.test.ts": "c36d8cfd7775ca05a64180069763a147cda1a43eca9cdce2736dbec6524adb62",
+    "contracts/private-pool/client/package-lock.json": "0e989c9a588863cd4b61bc23c7e0516e967695731f2affd09bce437a9942f2d2"
+  },
+  "interruptedReviews": [
+    "HAK broader contract review",
+    "Private-pool contract review",
+    "Privacy cryptography review"
+  ],
+  "interruptionReason": "Tool automatic filter: possible cybersecurity risk. Interrupted tasks not resubmitted."
+}

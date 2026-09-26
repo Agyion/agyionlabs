@@ -2112,3 +2112,62 @@ fn pod_failed_asset_payment_preserves_claim_and_reserve() {
     assert_eq!(token.balance(&recipient), 100);
     assert_eq!(client.get_pod(&id).state, 1);
 }
+
+fn assert_trigger_destination_validation(env: &Env, contract: &Address) {
+    env.mock_all_auths_allowing_non_root_auth();
+    let client = AgyionClient::new(env, contract);
+    let funder = Address::generate(env);
+    let beneficiary = Address::generate(env);
+    let asset = env.register_stellar_asset_contract_v2(funder.clone()).address();
+    let token = token::Client::new(env, &asset);
+    token::StellarAssetClient::new(env, &asset).mint(&funder, &100);
+    assert_eq!(
+        client.try_create_trigger(
+            &funder,
+            &asset,
+            &100,
+            contract,
+            &attester_pubkey(env),
+            &100,
+        ),
+        Err(Ok(Error::InvalidInput)),
+    );
+    assert_eq!(token.balance(&funder), 100);
+    assert_eq!(token.balance(contract), 0);
+    assert!(matches!(client.try_get_trigger(&1), Err(Ok(Error::NotFound))));
+
+    // A rejected destination must not consume an ID or impede a later payment.
+    let id = client.create_trigger(
+        &funder,
+        &asset,
+        &100,
+        &beneficiary,
+        &attester_pubkey(env),
+        &100,
+    );
+    assert_eq!(id, 1);
+    assert_eq!(token.balance(&funder), 0);
+    assert_eq!(token.balance(contract), 100);
+    let sig = sign_attest(env, contract, id, &beneficiary, 7);
+    env.set_auths(&[]);
+    client.attest(&id, &7, &sig);
+    assert_eq!(client.get_trigger(&id).state, 1);
+    assert_eq!(token.balance(&beneficiary), 100);
+    assert_eq!(token.balance(contract), 0);
+}
+
+#[test]
+fn security_trigger_rejects_kernel_as_beneficiary_before_funding() {
+    let env = Env::default();
+    let contract = env.register(Agyion, ());
+    assert_trigger_destination_validation(&env, &contract);
+}
+
+#[test]
+#[cfg(feature = "wasm-tests")]
+fn security_wasm_trigger_rejects_kernel_as_beneficiary_before_funding() {
+    const WASM: &[u8] = include_bytes!("../target/wasm32v1-none/release/hak.wasm");
+    let env = Env::default();
+    let contract = env.register(WASM, ());
+    assert_trigger_destination_validation(&env, &contract);
+}

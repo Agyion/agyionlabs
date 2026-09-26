@@ -6,6 +6,18 @@ Its mint landing, missing `/mnt/agents/output/app` source, frontend-only mock,
 8-second docking sequence and live-verification claims describe the earlier
 production bundle. They are not instructions or evidence for this revision.
 
+**Current task (27 September):** the user has closed the design phase. Work now
+focuses on backend correctness, contracts, fund safety and the separate private
+profile. Do not resume visual changes without new direction. The first backend
+checkpoint rejects a Trigger beneficiary equal to the kernel address before any
+deposit. Fresh checks passed 49 native / 51 native-plus-WASM HAK tests and all 30
+private-client tests, including the opt-in actual-browser journal check. The
+compiled HAK ABI matches the existing application bindings. See
+`docs/security/2026-09-27/BACKEND_REVIEW.md` for exact evidence and coverage.
+The broad HAK, private-pool and cryptography agent reviews were interrupted by
+the tool's automatic cybersecurity filter; those reviews are **incomplete**.
+This checkpoint is not a whole-repository audit or a contract deployment.
+
 **Current security status:** the local kernel/client are now protocol **V3**.
 Pod uses a locally held Ed25519 seed and recipient-bound signatures, not the
 historical preimage/commit flow below. The configured old testnet kernel remains
@@ -234,7 +246,7 @@ app/site/                 generated deployment candidate (ignored)
 
 The original working tree contained uncommitted user changes; they were retained.
 A pre-revision tracked diff was saved outside the repository at
-`/tmp/agyion-pre-orbit-changes.patch`. No commit was made.
+`/tmp/agyion-pre-orbit-changes.patch`. No commit was made at that initial checkpoint.
 
 ## Run and verify
 
@@ -342,7 +354,8 @@ do not guess. Readiness distinguishes checking, ready, incompatible and unavaila
 while keeping reads and preparation accessible. A read-only simulation confirmed
 that the configured old testnet kernel lacks `protocol_version`; its explicit
 missing-function diagnostic correctly shows incompatible, not a network outage.
-A new v2 deployment is still required, with no automatic migration of old funds.
+At that checkpoint a new HAK deployment was required, with no automatic migration
+of old funds. The current HAK requirement is V3; see the current status above.
 
 Ramp quotes retain their amount, direction and timestamp, and become stale when
 the draft changes. Registered withdrawal terms remain fixed. Envoy leads with
@@ -401,7 +414,8 @@ checkpoint. The reviewed frontend is now live at `https://agyionlabs.dev/`, vers
 `docs/verification/2026-09-26-cloudflare-release.md` for live checks, retained CSP
 and network diagnostics, previous rollback version and current limitations.
 
-The active task is now every-authored-file security review and remediation.
+At this checkpoint the authorized scope became every-authored-file security
+review and remediation; this sentence does not claim that review was completed.
 The user additionally reported a white flash after launch and requested maximal
 ZK/encrypted-token-style privacy for Pod, Trigger and Envoy, while keeping Fade
 public. Confidentiality must support authorized selective disclosure with an
@@ -431,6 +445,8 @@ errors; blocked-CSS/JS desktop/mobile screenshots are uniformly `#07090d`.
 The document/WebGL replacement and software-renderer startup hold still exist.
 Read `docs/security/2026-09-26/flight-flash.md` for exact scope and evidence.
 
+The remainder of this section is the historical parser-only v1 checkpoint,
+superseded by the private-v2 implementation recorded in `privacy/EXECUTION_V2.md`.
 M-of-N in the original docs was a proposal, not implemented threshold disclosure.
 The new design distinguishes single-attester Trigger authorization from a
 disclosure committee and states the colluding-quorum limit. No existing record

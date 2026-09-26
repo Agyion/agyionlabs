@@ -60,6 +60,12 @@ pub fn create_trigger(
     if amount <= 0 {
         return Err(Error::InvalidAmount);
     }
+    // A token self-transfer leaves the reserve in this contract while attest
+    // marks the escrow executed. There is no beneficiary withdrawal entrypoint,
+    // so reject this destination before the funder deposits anything.
+    if beneficiary == env.current_contract_address() {
+        return Err(Error::InvalidInput);
+    }
     // A deadline in the past (or the current ledger) would birth a
     // refund-only escrow; rejected at create time, consistent with
     // create_mandate's valid_until check (audit v2 finding 4).
