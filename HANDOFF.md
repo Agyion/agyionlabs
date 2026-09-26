@@ -6,6 +6,21 @@ Its mint landing, missing `/mnt/agents/output/app` source, frontend-only mock,
 8-second docking sequence and live-verification claims describe the earlier
 production bundle. They are not instructions or evidence for this revision.
 
+**Current website release (27 September, 02:23:30 Istanbul):** the user explicitly
+requested publication of the pending changes and keeping the app logo on both
+surfaces. Runtime source `04b5647` is now published to `https://agyionlabs.dev/`,
+Cloudflare Worker `agyion`, version `8b79160d-6429-447f-ba82-1075598dfca2`, deployment
+`ab0a455b-5659-4f41-a78e-4c7a587de750`, at 100% traffic. Rollback version:
+`b661f1df-bf19-4515-88d9-efbc17151440`. Landing navigation now uses the unchanged
+app logo's ring/circle geometry, type and responsive sizing; favicon matches too.
+The narrow 320px header clipping found in visual QA was fixed without shrinking
+the logo. This website package includes the previously unpublished canonical
+directory and client correctness/recovery changes. It does not deploy contracts
+or integrate the separate private profile. Local tests/builds and live artifact/
+UI checks passed; strict live diagnostics still fail on the existing Cloudflare
+CSP conflicts and external testnet network errors. See
+`docs/verification/2026-09-27-logo-and-pending-release.md` for boundaries/evidence.
+
 **Latest bounded follow-up (27 September):** the user requested a simpler home
 leading to the preferred `/instruments` directory and realistic Fade economics
 and allocation analysis. Home's second catalog is removed; all Instruments links
@@ -15,8 +30,9 @@ Fade history now uses the actual confirmed claim ledger and survives missing or
 consumed receipts and wallet changes without hashless duplicate entries.
 Ten-claimant native/WASM tests verify one winner; this is not network fairness.
 Fresh checks: 582 app, 89 landing, 55 HAK native-plus-WASM and 102 browser checks;
-both builds and relevant static checks passed. Local preview: port 4292, **not
-published**. See `docs/verification/2026-09-27-canonical-instruments-and-fade.md`
+both builds and relevant static checks passed. Initially verified at local port
+4292; the website changes are now included in the release above. See the original
+checkpoint `docs/verification/2026-09-27-canonical-instruments-and-fade.md`
 and `docs/product/2026-09-27-fade-use-cases-and-allocation.md`.
 Free reservation/no-show and fair allocation remain explicit protocol design
 work; no new deposit, slashing or batch-selection rule was introduced.
@@ -28,7 +44,8 @@ duplicate creation after a confirmed result loses its record ID, invalid mode
 configuration, and false trustline success. The full app suite passed 560 tests;
 HAK native-plus-WASM passed 53, including second-transfer rollback/reserve tests.
 See `docs/security/2026-09-27/CLIENT_FADE_REVIEW.md` for the verification record,
-review boundaries and remaining gates. These changes are not live deployments.
+review boundaries and remaining gates. That checkpoint performed no deployment;
+its client changes are now included in the website release above.
 
 The preceding backend checkpoint rejects a Trigger beneficiary equal to the
 kernel address before any deposit. Its checks passed 49 native / 51
@@ -59,7 +76,7 @@ committee or audit evidence. See `privacy/EXECUTION_V2.md`,
 `docs/security/2026-09-26/REVIEW.md` for their respective scopes and release gates.
 Historical counts/statuses below describe their named checkpoints only.
 
-**Currently published frontend — differs from local source:** `https://agyionlabs.dev/`, Cloudflare version
+**Previous published frontend — historical:** `https://agyionlabs.dev/`, Cloudflare version
 `b661f1df-bf19-4515-88d9-efbc17151440`, deployment
 `bc49f6e4-9e84-45cd-9506-eae982f4a5d9`, at 2026-09-26 21:11 UTC
 (27 September 00:11 in Istanbul). Runtime source is commit `4dcd48a`, pushed on
