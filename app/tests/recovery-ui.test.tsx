@@ -51,3 +51,17 @@ it('keeps an older unresolved hash visible behind more than20 completed attempts
  await waitFor(()=>expect(screen.getByText('1'.padStart(64,'0'))).toBeTruthy());
  expect(screen.getByText(/1 unresolved/)).toBeTruthy();
 });
+it('keeps an older confirmed creation awaiting its ID visible with a retry guard notice',async()=>{
+ const {updateTransactionAttempt}=await import('../app/lib/transactionReceipts');
+ for(let n=1;n<=22;n++){
+  const hash=n.toString(16).padStart(64,'0');
+  rememberTransactionAttempt({account,network,contractId,action:n===1?'create_pod':'claim',refId:n===1?null:String(n),hash});
+  updateTransactionAttempt(hash,{account,network,contractId},{status:'success',ledger:20+n});
+ }
+ vi.spyOn(rpc.Server.prototype,'getTransaction').mockResolvedValue({status:'NOT_FOUND'} as any);
+ render(<TransactionActivity wallet={{address:account}}/>);
+ await waitFor(()=>expect(screen.getByText('1'.padStart(64,'0'))).toBeTruthy());
+ expect(screen.getByText(/create pod · Confirmed/)).toBeTruthy();
+ expect(screen.getByText(/1 unresolved/)).toBeTruthy();
+ expect(screen.getByText(/record ID.*recovered.*do not create|do not create.*record ID/i)).toBeTruthy();
+});

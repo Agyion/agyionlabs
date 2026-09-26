@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Networks, rpc } from "@stellar/stellar-sdk";
 import { CONFIG, IS_MOCK } from "../../lib/config";
 import type { WalletState } from "../../lib/useWallet";
-import { listTransactionAttempts, reconcileTransactionAttempts, type TransactionAttempt } from "../../lib/transactionReceipts";
+import { listTransactionAttempts, reconcileTransactionAttempts, requiresTransactionRecovery, type TransactionAttempt } from "../../lib/transactionReceipts";
 import { recordHref, recoverTransactionEntries, transactionTemplate } from "../../lib/ledgerLog";
 import { GhostButton } from "../ui";
 
@@ -31,7 +31,7 @@ export default function TransactionActivity({ wallet }: { wallet: Pick<WalletSta
       if (current === generation.current) {
         setAttempts(matching());
         setStorageUnavailable(false);
-        setNotice("Status checked. Unknown results remain blocked from resubmission.");
+        setNotice("Status checked. Unknown outcomes and confirmed creations awaiting their record ID remain blocked from resubmission.");
       }
     } catch { if (current === generation.current) {
       try { matching(); }
@@ -54,9 +54,9 @@ export default function TransactionActivity({ wallet }: { wallet: Pick<WalletSta
     return () => { invalidate(); window.removeEventListener("agyion:transactions", sync); window.removeEventListener("storage", sync); };
   }, [matching, refresh, invalidate]);
   if ((!attempts.length && !storageUnavailable) || IS_MOCK) return null;
-  const pending = attempts.filter(a => a.status === "pending" || a.status === "unknown");
+  const pending = attempts.filter(requiresTransactionRecovery);
   const unresolved = pending.length;
-  const visible = [...pending, ...attempts.filter(a => a.status === "success" || a.status === "failed").slice(0, 20)];
+  const visible = [...pending, ...attempts.filter(a => !requiresTransactionRecovery(a)).slice(0, 20)];
   return <details className="instrument-technical transaction-activity" open={unresolved > 0 || storageUnavailable || undefined}>
     <summary>Transaction activity{unresolved ? ` · ${unresolved} unresolved` : ""}</summary>
     <div className="instrument-section">
@@ -72,6 +72,7 @@ export default function TransactionActivity({ wallet }: { wallet: Pick<WalletSta
           <p style={{ overflowWrap: "anywhere" }}>{attempt.hash}</p>
           <div className="instrument-actions">{explorer && <a href={explorer} target="_blank" rel="noopener noreferrer">View transaction ↗</a>}{href && <Link href={href}>Open record →</Link>}</div>
           {(attempt.status === "pending" || attempt.status === "unknown") && <p>Check this hash before retrying. A missing RPC result does not prove the transaction failed.</p>}
+          {attempt.status === "success" && requiresTransactionRecovery(attempt) && <p>This creation is confirmed. Check transaction status until its record ID is recovered; do not create it again.</p>}
         </article>;
       })}
     </div>

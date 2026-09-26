@@ -2171,3 +2171,87 @@ fn security_wasm_trigger_rejects_kernel_as_beneficiary_before_funding() {
     let contract = env.register(WASM, ());
     assert_trigger_destination_validation(&env, &contract);
 }
+
+/// A settlement's second transfer can fail after its first transfer succeeds.
+/// Exercise actual SAC authorization freezes so neither partial payment nor a
+/// terminal Fade state can survive; a later retry must settle the frozen price.
+fn assert_fade_second_transfer_rollback(env: &Env, contract: &Address, positive: bool) {
+    env.mock_all_auths_allowing_non_root_auth();
+    let seller = Address::generate(env);
+    let claimant = Address::generate(env);
+    let issuer = Address::generate(env);
+    let sac = env.register_stellar_asset_contract_v2(issuer);
+    sac.issuer()
+        .set_flag(soroban_sdk::testutils::IssuerFlags::RevocableFlag);
+    let asset = sac.address();
+    let token = token::Client::new(env, &asset);
+    let admin = token::StellarAssetClient::new(env, &asset);
+    let client = AgyionClient::new(env, contract);
+    admin.mint(&seller, &300);
+    admin.mint(&claimant, &50);
+    let start = env.ledger().sequence();
+    let pod = client.create_pod(
+        &seller, &asset, &100, &start, &pod_pubkey(env),
+        &pod_create_proof(env, contract, &seller, &asset, 100, start),
+    );
+    let fade = client.create_fade(
+        &seller, &asset, &100, &25, &-25, &1, &1, &100, &50, &venue_pubkey(env),
+    );
+    let claimed_at = start + if positive { 10 } else { 40 };
+    env.ledger().set_sequence_number(claimed_at);
+    client.claim(&fade, &claimant);
+    let signature = sign_handoff(env, contract, fade, &claimant, 7);
+
+    // Positive: buyer->seller works, but returning the pot from the frozen
+    // kernel fails. Negative: compensation works, but the seller cannot receive
+    // the remainder. Mock authorization cannot bypass either asset freeze.
+    let blocked = if positive { contract } else { &seller };
+    admin.set_authorized(blocked, &false);
+    if !positive {
+        env.set_auths(&[]); // negative settlement needs no claimant signature
+    }
+    env.ledger().set_sequence_number(claimed_at + 10);
+    assert!(client.try_confirm_handoff(&fade, &7, &signature).is_err());
+    let record = client.get_fade(&fade);
+    assert_eq!(record.state, 1);
+    assert_eq!(record.claimed_at, Some(claimed_at));
+    assert_eq!(token.balance(&seller), 100);
+    assert_eq!(token.balance(&claimant), 50);
+    assert_eq!(token.balance(contract), 200);
+    assert_eq!(client.get_pod(&pod).state, 0);
+
+    env.mock_all_auths_allowing_non_root_auth();
+    admin.set_authorized(blocked, &true);
+    if !positive {
+        env.set_auths(&[]);
+    }
+    client.confirm_handoff(&fade, &7, &signature);
+    assert_eq!(client.get_fade(&fade).state, 2);
+    assert_eq!(token.balance(&seller), if positive { 215 } else { 185 });
+    assert_eq!(token.balance(&claimant), if positive { 35 } else { 65 });
+    assert_eq!(token.balance(contract), 100); // the unrelated Pod is preserved
+    assert_eq!(client.get_pod(&pod).state, 0);
+    assert_eq!(client.try_confirm_handoff(&fade, &7, &signature), Err(Ok(Error::InvalidState)));
+    assert_eq!(client.try_refund(&fade), Err(Ok(Error::DeadlinePassed)));
+    assert_eq!(token.balance(contract), 100);
+}
+
+#[test]
+fn fade_second_transfer_failure_preserves_all_reserves_and_frozen_price() {
+    for positive in [true, false] {
+        let env = Env::default();
+        let contract = env.register(Agyion, ());
+        assert_fade_second_transfer_rollback(&env, &contract, positive);
+    }
+}
+
+#[test]
+#[cfg(feature = "wasm-tests")]
+fn wasm_fade_second_transfer_failure_preserves_all_reserves_and_frozen_price() {
+    const WASM: &[u8] = include_bytes!("../target/wasm32v1-none/release/hak.wasm");
+    for positive in [true, false] {
+        let env = Env::default();
+        let contract = env.register(WASM, ());
+        assert_fade_second_transfer_rollback(&env, &contract, positive);
+    }
+}

@@ -1,7 +1,13 @@
 # Agyion — Final Build Status (2026-09-20)
 
+> Historical checkpoint, not the current release or audit status. Read
+> [HANDOFF.md](HANDOFF.md) and the
+> [27 September review](docs/security/2026-09-27/CLIENT_FADE_REVIEW.md).
+> Complete repository and independent security reviews remain outstanding;
+> the published old kernel's V3 write path is disabled.
+
 ## Verified green (verifier/runs/)
-- Contracts: 4 templates (Fade, Pod, Trigger, Envoy) · `cargo test` **30/30 PASS** · security audit done, 4 fixes applied (refund overflow, Envoy claim cap, Trigger deadline, TTL)
+- Contracts: 4 templates (Fade, Pod, Trigger, Envoy) · `cargo test` **30/30 PASS** at this historical checkpoint · internal review with 4 fixes (refund overflow, Envoy claim cap, Trigger deadline, TTL); not a completed independent security audit
 - Frontend: English, v3 motion system — zero scroll-linked animation (no useScroll/scrub anywhere); hero is a deterministic looping code-drawn lifecycle scene (capsule + decay curve + ticking price), template cards use entrance stagger + hover layer-shift + always-on micro-motion loops, lifeline self-draws on its own clock · `npm run build` exit 0, static export in `app/out/` · Playwright visual QA pass (desktop + mobile + reduced-motion)
 - GitHub: moved to `Agyion/agyionlabs` (public, code-only; pitch/video excluded)
 - Cloudflare Worker `agyion`: deployed (API 200) · 107 assets uploaded · workers.dev subdomain enabled → `agyion.jasurbek-rustamov.workers.dev`

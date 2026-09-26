@@ -120,3 +120,51 @@ it('recovers the saved venue for an older record even when a different legacy id
   await load({ ...claimed, venue_pubkey: '7'.padStart(64, '0') });
   expect((screen.getByLabelText(/^Venue secret \(demo signer/) as HTMLInputElement).value).toBe('fixture-secret-7');
 });
+
+it.each([
+  { state: 1 as const, claimedAt: 990, amount: '10USDC', receives: false },
+  { state: 1 as const, claimedAt: 1005, amount: '-5USDC', receives: true },
+  { state: 2 as const, claimedAt: 990, amount: '10USDC', receives: false },
+])('keeps the claim price and payment direction when ledger advances: $state / $claimedAt', async ({ state, claimedAt, amount, receives }) => {
+  // The curve starts at 100 USDC at ledger 900 and falls 1 USDC per ledger.
+  // At ledger 1010 it is -10, but the claim at 990 owes 10, or at 1005 receives 5.
+  boundary.ledger = 1010;
+  const view = await load({ ...claimed, state, claimed_at: claimedAt });
+  const quote = () => view.container.querySelector('.instrument-main .tnum.display')?.textContent;
+  expect(quote()).toBe(amount);
+  expect(screen.queryByText(/Below zero/)).toBeNull();
+  expect(screen.queryByText(/Claimant receives the frozen amount/) !== null).toBe(receives);
+  expect(screen.queryByText(/Claimant pays the frozen amount/) !== null).toBe(state === 1 && !receives);
+  boundary.ledger = 1020;
+  view.rerender(<FadePanel wallet={wallet} />);
+  expect(quote()).toBe(amount);
+});
+
+it('keeps an open listing price live and identifies curve scrubbing as a preview', async () => {
+  boundary.ledger = 990;
+  const view = await load();
+  const quote = () => view.container.querySelector('.instrument-main .tnum.display')?.textContent;
+  expect(quote()).toBe('10USDC');
+  boundary.ledger = 1005;
+  view.rerender(<FadePanel wallet={wallet} />);
+  expect(quote()).toBe('-5USDC');
+  expect(screen.getByText(/Below zero/)).toBeTruthy();
+  fireEvent.keyDown(screen.getByRole('slider', { name: 'Preview ledger' }), { key: 'Home' });
+  expect(quote()).toBe('100USDC');
+  expect(screen.getByText(/Preview at dragged ledger/)).toBeTruthy();
+  fireEvent.keyDown(screen.getByRole('slider', { name: 'Preview ledger' }), { key: 'Escape' });
+  expect(quote()).toBe('-5USDC');
+});
+
+it('keeps the actual frozen amount visible while previewing another ledger', async () => {
+  boundary.ledger = 1010;
+  const view = await load(claimed);
+  fireEvent.keyDown(screen.getByRole('slider', { name: 'Preview ledger' }), { key: 'Home' });
+  expect(view.container.querySelector('.instrument-main .tnum.display')?.textContent).toBe('100USDC');
+  expect(screen.getByText('Frozen price').parentElement?.textContent).toBe('Frozen price10 USDC');
+  expect(screen.getByText(/Preview at dragged ledger/)).toBeTruthy();
+  expect(client.confirm_handoff).not.toHaveBeenCalled();
+  fireEvent.keyDown(screen.getByRole('slider', { name: 'Preview ledger' }), { key: 'Escape' });
+  expect(view.container.querySelector('.instrument-main .tnum.display')?.textContent).toBe('10USDC');
+  expect(screen.getByRole('slider', { name: 'Preview ledger' }).getAttribute('aria-valuetext')).toBe('Ledger 990. Frozen at claim');
+});

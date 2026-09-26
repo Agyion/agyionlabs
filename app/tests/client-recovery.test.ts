@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { rpc } from '@stellar/stellar-sdk';
 import { SorobanAgyionClient } from '../app/lib/hakClient';
-import { listTransactionAttempts, reconcileTransactionAttempts } from '../app/lib/transactionReceipts';
+import { listTransactionAttempts, reconcileTransactionAttempts, unresolvedTransaction } from '../app/lib/transactionReceipts';
 import { unregisterSigner } from '../app/lib/wallet';
 import { installRecoveryLocks, recoveryTransactionFixture } from './recovery-fixture';
 afterEach(()=>vi.unstubAllGlobals());
@@ -13,7 +13,8 @@ function create(send:()=>Promise<any>){
  const signer={address:async()=>account,signTransaction:vi.fn()};
  const client=new SorobanAgyionClient({rpcUrl:'https://example.com',contractId,networkPassphrase:scope.network,signer});
  const tx={signed:{hash:()=>Buffer.from(hash,'hex')},signAndSend:vi.fn(send)};
- (client as any).bindings=async()=>({protocol_version:async()=>({result:3}),claim:async()=>tx});return {client,tx};
+ (client as any).bindings=async()=>({protocol_version:async()=>({result:3}),claim:async()=>tx,
+   create_fade:async()=>tx,create_pod:async()=>tx,create_trigger:async()=>tx,create_mandate:async()=>tx});return {client,tx};
 }
 beforeEach(()=>{vi.restoreAllMocks();localStorage.clear();installRecoveryLocks()});
 it('saves hash and intent before broadcast, and an unknown outcome blocks another submission',async()=>{
@@ -165,4 +166,46 @@ it('does not claim nothing was sent when outcome storage fails after broadcast',
  const retry=create(async()=>{throw new Error('must not send')});
  await expect(retry.client.claim(7n,account)).rejects.toThrow(/unresolved/);
  expect(retry.tx.signAndSend).not.toHaveBeenCalled();
+});
+
+const creations = [
+ ['create_fade',(c:SorobanAgyionClient)=>c.create_fade(account,contractId,100n,10n,0n,1n,1n,20,10,'a'.repeat(64))],
+ ['create_pod',(c:SorobanAgyionClient)=>c.create_pod(account,contractId,100n,20,'a'.repeat(64),'b'.repeat(128))],
+ ['create_trigger',(c:SorobanAgyionClient)=>c.create_trigger(account,contractId,100n,account,'a'.repeat(64),20)],
+ ['create_mandate',(c:SorobanAgyionClient)=>c.create_mandate(account,'a'.repeat(64),100n,200n,20)],
+] as const;
+it.each(creations)('keeps a confirmed %s duplicate-blocking when the SDK cannot decode its record ID',async(action,invoke)=>{
+ const c=create(async()=>({sendTransactionResponse:{hash},getTransactionResponse:{txHash:hash,envelopeXdr,status:'SUCCESS',ledger:12},
+   get result(){throw new Error('Transaction failed! Cannot parse result.')}}));
+ let message='';try{await invoke(c.client)}catch(error){message=(error as Error).message}
+ expect(message).toMatch(/confirmed/i);expect(message).toContain(hash);expect(message).toMatch(/record ID|recovery/i);
+ expect(listTransactionAttempts(scope)[0]).toMatchObject({hash,status:'success',ledger:12,refId:null});
+ expect(unresolvedTransaction({...scope,action,refId:null})?.hash).toBe(hash);
+ const retry=create(async()=>{throw new Error('must not sign')});
+ await expect(invoke(retry.client)).rejects.toThrow(/confirmed/i);
+ expect(retry.tx.signAndSend).not.toHaveBeenCalled();
+});
+it.each([undefined,null,'17',17,0n,-1n,0x1_0000_0000_0000_0000n])('preserves confirmed creation and blocks retry for invalid decoded ID %s',async value=>{
+ const c=create(async()=>({sendTransactionResponse:{hash},getTransactionResponse:{txHash:hash,envelopeXdr,status:'SUCCESS',ledger:12},result:{unwrap:()=>value}}));
+ await expect(creations[1][1](c.client)).rejects.toThrow(/confirmed/i);
+ expect(listTransactionAttempts(scope)[0]).toMatchObject({status:'success',ledger:12,refId:null});
+ expect(unresolvedTransaction({...scope,action:'create_pod',refId:null})?.hash).toBe(hash);
+});
+it.each([1n,0xffff_ffff_ffff_ffffn])('accepts the confirmed positive u64 creation ID %s',async id=>{
+ const c=create(async()=>({sendTransactionResponse:{hash},getTransactionResponse:{txHash:hash,envelopeXdr,status:'SUCCESS',ledger:12},result:{unwrap:()=>id}}));
+ expect(await creations[1][1](c.client)).toBe(id);
+ expect(listTransactionAttempts(scope)[0]).toMatchObject({status:'success',ledger:12,refId:String(id)});
+ expect(unresolvedTransaction({...scope,action:'create_pod',refId:null})).toBeUndefined();
+});
+it('releases a definitively failed creation and leaves ordinary void successes valid',async()=>{
+ const failed=create(async()=>({sendTransactionResponse:{hash},getTransactionResponse:{txHash:hash,envelopeXdr,status:'FAILED',ledger:12},result:{unwrap:()=>{throw new Error('no result')}}}));
+ await expect(creations[1][1](failed.client)).rejects.toThrow(/failed on-chain/);
+ expect(unresolvedTransaction({...scope,action:'create_pod',refId:null})).toBeUndefined();
+ const retry=create(async()=>{throw new Error('new approval declined')});delete (retry.tx as any).signed;
+ await expect(creations[1][1](retry.client)).rejects.toThrow('new approval declined');
+ expect(retry.tx.signAndSend).toHaveBeenCalledOnce();
+ localStorage.clear();
+ const claim=create(async()=>({sendTransactionResponse:{hash},getTransactionResponse:{txHash:hash,envelopeXdr,status:'SUCCESS',ledger:12},result:{unwrap:()=>undefined}}));
+ await expect(claim.client.claim(7n,account)).resolves.toBeUndefined();
+ expect(listTransactionAttempts(scope)[0]).toMatchObject({action:'claim',status:'success',refId:'7'});
 });

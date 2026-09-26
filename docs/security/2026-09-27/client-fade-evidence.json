@@ -1,0 +1,171 @@
+{
+  "schema": "agyion-client-fade-review-v1",
+  "checkedAt": "2026-09-26T22:50:28.347466+00:00",
+  "baseCommit": "4ced15accfc55dbfbe5b6b655ae5e191b64c63b7",
+  "status": "bounded-checks-passed-review-incomplete",
+  "boundary": "Local public-client/Fade review and regression checks only. No complete repository audit, private-cryptography revalidation, real wallet submission, contract deployment, fund migration or production publication.",
+  "checks": [
+    {
+      "name": "fade-before-fix",
+      "status": "expected-failure",
+      "passed": 10,
+      "failed": 3,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/client-fade/fade-price-red.log",
+        "sha256": "20d19cc4dda32372f1d52292f09aa539d829c358f917bdb29258acd680c12227"
+      }
+    },
+    {
+      "name": "application-full-suite",
+      "status": "passed",
+      "passed": 560,
+      "failed": 0,
+      "skipped": 0,
+      "files": 35,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/client-fade/app-tests.log",
+        "sha256": "1cc795f93fcdb1d6828404781e092e8f1931f2734b9407ed282f5f9e227bcab8"
+      }
+    },
+    {
+      "name": "application-types",
+      "status": "passed",
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/client-fade/typecheck.log",
+        "sha256": "ddc959e2ef82ce08e407d630843b974d83fb4442e2215d533cfbc802ceaf07ec"
+      }
+    },
+    {
+      "name": "application-build",
+      "status": "passed-with-warning",
+      "warning": "Node Buffer() deprecation; not resolved by this checkpoint",
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/client-fade/build.log",
+        "sha256": "0c093479f11bd453446c66b7fdcc3edb8548a4ef32e65806fae74afefd0f8994"
+      }
+    },
+    {
+      "name": "hak-wasm-build",
+      "status": "passed",
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/client-fade/hak-build.log",
+        "sha256": "16bf8b2a549fe20294ed1227accfb3eaa96bdabdb9542eadabb31b93b19cebed"
+      }
+    },
+    {
+      "name": "hak-native-and-wasm",
+      "status": "passed",
+      "passed": 53,
+      "failed": 0,
+      "ignored": 0,
+      "includesNativeTests": true,
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/client-fade/hak-tests.log",
+        "sha256": "72d9ed7625c6724fdf2c9cf41fca8367b79d48cea43fbd7289f275f352098ab8"
+      }
+    },
+    {
+      "name": "hak-strict-clippy",
+      "status": "passed",
+      "evidence": {
+        "path": "artifacts/security/2026-09-27/client-fade/hak-clippy.log",
+        "sha256": "7a60b0ff745d211cd58695fd810069828215a82431e44543a1bcaab1e96b3cfb"
+      }
+    }
+  ],
+  "transcriptOnlyRegressions": [
+    {
+      "name": "asset-policy",
+      "before": {
+        "failed": 17,
+        "passed": 14
+      },
+      "after": {
+        "passed": 31
+      }
+    },
+    {
+      "name": "creation-recovery",
+      "before": {
+        "failed": 18,
+        "passed": 60
+      }
+    },
+    {
+      "name": "legacy-creation-reference",
+      "before": {
+        "failed": 3,
+        "passed": 32
+      }
+    },
+    {
+      "name": "mode-config",
+      "before": {
+        "failed": 8,
+        "passed": 3
+      },
+      "after": {
+        "passed": 11
+      }
+    },
+    {
+      "name": "trustline-confirmation",
+      "before": {
+        "failed": 12,
+        "passed": 5
+      },
+      "after": {
+        "passed": 17
+      }
+    }
+  ],
+  "transcriptOnlyRegressionBoundary": "Agent tool transcript retained results; raw log files were not saved. All final regression tests are included in the full application suite above.",
+  "deploymentHelperReview": {
+    "cliStubTestsPassed": 8,
+    "realDeployment": false,
+    "evidence": "reviewer tool transcript only"
+  },
+  "secondReview": {
+    "fadeAndRollback": "reviewed; claimed preview coverage gap addressed",
+    "clientAndRecovery": "reviewed;112 focused tests passed",
+    "accountOps": "reviewed;17 focused tests passed",
+    "independentAudit": false
+  },
+  "wasm": {
+    "path": "contracts/hak/target/wasm32v1-none/release/hak.wasm",
+    "bytes": 19909,
+    "sha256": "d06ada3ec51a6d4a47e599a1997a345e9316a717f3259b09bbdc1aa28e69f841",
+    "runtimeUnchanged": true
+  },
+  "sourceHashes": {
+    "app/.env.example": "89b7e138db23a884f2ac8c4939c46d9c795369b432f9705d7deac5220289f930",
+    "app/app/components/app/FadePanel.tsx": "ccc700903276ec85405142ec13c8e60fb8e9f6add5a1c79db4bd56d397f3aac3",
+    "app/app/components/app/TransactionActivity.tsx": "0ec73ebdddd0244e52fed78d3d39737c2bf1cb1eb6c3869177a71293bea91395",
+    "app/app/lib/accountOps.ts": "03f27a908fa275135daabc8ba081e4339310f757fcfee4aba03da4f09ed8ba51",
+    "app/app/lib/client.ts": "0fbc73815f344cc818e0bc576cf19e8bb1dd5faabe8497b6be91a31fbb3e63de",
+    "app/app/lib/config.ts": "5f8d8ec6d5e9f8b86c3777a0b067fd5dbb6d44171815a20a7ec53fb0250d85d3",
+    "app/app/lib/hakClient.ts": "3ddd61cf0864f1b6c4f3cc013cc122a34ac413653e51d781f977ceab6ff727c7",
+    "app/app/lib/transactionReceipts.ts": "9ad9d38f6d9f010b04fe10b8942688d03cea653269ade98f06289ed0cbe69828",
+    "app/lib/hak-bindings/src/index.ts": "16f4276e3a77c0949c63d750675f483ffd0ebc2c909bfecd15acbde24651c508",
+    "app/package-lock.json": "40cc5ec72f26854285e052e58622c230975ff1d65d20ac21ed8e524bb957bb5d",
+    "app/tests/client-asset-policy.test.ts": "649d52c970029352af85216737e1ce3889324d9a25ff0f51439e415c31658c6c",
+    "app/tests/client-recovery.test.ts": "7c60f24d4aa9efa4451f032c5916a50989dd616b996b7193818fc6e9b5640224",
+    "app/tests/config.test.ts": "550c4adfdac8a640e58fd2f53c6802f761c29bf460809214c5b4671ee4f6c2d8",
+    "app/tests/fade-recovery.test.tsx": "87133a46f2eb6ecc551f626be10840b08ab397b8ba9f4608bf433e7c96922123",
+    "app/tests/recovery-ui.test.tsx": "a1acf972a64f32af616988242f2acdf06673df279cc4ac448c87fe4bd0d941c7",
+    "app/tests/transaction-recovery.test.ts": "de9629b8d01ba0fd45760f6a8db58f02d688357eb6d07653e50c5bcf1c67da91",
+    "app/tests/wallet.accountOps.test.ts": "72a89651fe1734834a63d4992d3b95c24b86625b28ff7407dc48a7bb6f1cd1f0",
+    "contracts/hak/Cargo.lock": "497d7644c8519a741a50b648b464d6c655f5c8efb0460d761416ea90e796d7a4",
+    "contracts/hak/src/fade.rs": "10a87823ec193743e9f9085e562b7d8dc23c95e46e4c2cb8451fa8d2e770cb0c",
+    "contracts/hak/src/lib.rs": "ce4bbfc73d84fd2b2c8e4b3aa5a331a5c54581a38f88770343bc6880426ee8b5",
+    "contracts/hak/src/test.rs": "43fe439b4c30db841a8ca80028dffa78079e1db655300055086e01544a3f63ff",
+    "scripts/deploy_testnet.sh": "2af2d43163634e270d1f28294f4177d964f58baa46d98bb0edc6c94196660112"
+  },
+  "remainingGates": [
+    "Complete remaining contract/cryptography review",
+    "Independent security and cryptography review",
+    "Independent setup participation and trustee custody",
+    "Separate private-profile application integration",
+    "Authorized testnet deployment and actual wallet/network verification"
+  ]
+}

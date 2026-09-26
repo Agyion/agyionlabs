@@ -25,6 +25,7 @@ export function getClient(): AgyionClient {
     rpcUrl: CONFIG.rpcUrl,
     contractId: CONFIG.contractId,
     networkPassphrase: CONFIG.networkPassphrase,
+    expectedAssetContractId: CONFIG.assetContractId,
     signer: signer ?? undefined,
   });
   return single;

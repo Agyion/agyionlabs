@@ -148,3 +148,26 @@ it('rejects the installed SDK request-echo hash when raw RPC evidence contains a
  expect(listTransactionAttempts(scope)[0].status).toBe('unknown');
  expect(raw).toHaveBeenCalledTimes(2);
 });
+it.each([
+ undefined,nativeToScVal('17',{type:'string'}),nativeToScVal(17n,{type:'i128'}),nativeToScVal(0n,{type:'u64'}),
+])('keeps confirmed creation awaiting its ID duplicate-blocked through malformed recovery',async returnValue=>{
+ rememberTransactionAttempt(draft);updateTransactionAttempt(hash,scope,{status:'success',ledger:12});
+ await reconcileTransactionAttempts({getTransaction:async()=>({txHash:hash,envelopeXdr,status:'SUCCESS',ledger:12,returnValue})},scope);
+ expect(listTransactionAttempts(scope)[0]).toMatchObject({status:'success',ledger:12,refId:null});
+ expect(unresolvedTransaction({...scope,action:'create_pod',refId:null})?.hash).toBe(hash);
+});
+it.each([1n,0xffff_ffff_ffff_ffffn])('releases a confirmed creation guard only after recovering a valid u64 ID %s',async id=>{
+ rememberTransactionAttempt(draft);updateTransactionAttempt(hash,scope,{status:'success',ledger:12});
+ expect(unresolvedTransaction(draft)?.hash).toBe(hash);
+ await reconcileTransactionAttempts({getTransaction:async()=>({txHash:hash,envelopeXdr,status:'SUCCESS',ledger:12,returnValue:nativeToScVal(id,{type:'u64'})})},scope);
+ expect(listTransactionAttempts(scope)[0]).toMatchObject({status:'success',ledger:12,refId:String(id)});
+ expect(unresolvedTransaction(draft)).toBeUndefined();
+});
+it.each(['0','18446744073709551616','1→2'])('recovers an invalid previously stored creation ID %s without erasing confirmation',async refId=>{
+ localStorage.setItem('agyion.transactions.v1',JSON.stringify([{...draft,status:'success',refId,ledger:12,createdAt:1,checkedAt:2}]));
+ expect(listTransactionAttempts(scope)[0]).toMatchObject({status:'success',refId:null,ledger:12});
+ expect(unresolvedTransaction(draft)?.hash).toBe(hash);
+ await reconcileTransactionAttempts({getTransaction:async()=>({txHash:hash,envelopeXdr,status:'SUCCESS',ledger:12,returnValue:nativeToScVal(17n,{type:'u64'})})},scope);
+ expect(listTransactionAttempts(scope)[0]).toMatchObject({status:'success',refId:'17',ledger:12});
+ expect(unresolvedTransaction(draft)).toBeUndefined();
+});

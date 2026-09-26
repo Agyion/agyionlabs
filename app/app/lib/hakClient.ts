@@ -39,7 +39,7 @@ import {
 
 import { withRecoveryLock } from "./recoveryStorage";
 import { assertSignedTransactionMatches, walletSessionVersion } from "./wallet";
-import { rememberReceipt, listTransactionAttempts, rememberTransactionAttempt, updateTransactionAttempt, unresolvedTransaction, hasTerminalTransactionEvidence, type TransactionIntent, type TransactionOutcomeResponse } from "./transactionReceipts";
+import { rememberReceipt, listTransactionAttempts, rememberTransactionAttempt, updateTransactionAttempt, unresolvedTransaction, hasTerminalTransactionEvidence, creationRecordId, type TransactionIntent, type TransactionOutcomeResponse } from "./transactionReceipts";
 
 // ---------------------------------------------------------------------------
 // Types (SPEC_V2 — field names are sacred)
@@ -145,6 +145,11 @@ export class AgyionError extends Error {
 /** Known local refusal before transport; never describe it as an unknown broadcast. */
 class NotBroadcastError extends AgyionError {
   constructor(message: string) { super(AgyionErrorCode.RpcError, message); }
+}
+
+function confirmedCreationRecoveryError(hash: string): AgyionError {
+  return new AgyionError(AgyionErrorCode.RpcError,
+    `Transaction ${hash} is confirmed, but its record ID has not been recovered. Check transaction activity to recover the record; do not create it again.`);
 }
 
 // ---------------------------------------------------------------------------
@@ -757,6 +762,8 @@ export interface SorobanConfig {
   contractId: string;
   networkPassphrase: string;
   signer?: TransactionSigner;
+  /** Optional SDK policy; the single-token application always pins this address. */
+  expectedAssetContractId?: string;
 }
 
 function hexToBuffer(hex: string, expected?: number): Buffer {
@@ -843,6 +850,9 @@ export class SorobanAgyionClient implements AgyionClient {
   private intent: TransactionIntent | null = null;
 
   constructor(private cfg: SorobanConfig) {
+    if (cfg.expectedAssetContractId !== undefined && !StrKey.isValidContract(cfg.expectedAssetContractId)) {
+      throw new AgyionError(AgyionErrorCode.InvalidInput, "The supported asset must be a valid token contract address.");
+    }
     this.server = new rpc.Server(cfg.rpcUrl, {
       allowHttp: cfg.rpcUrl.startsWith("http://"),
     });
@@ -855,7 +865,8 @@ export class SorobanAgyionClient implements AgyionClient {
       const hash = transaction.hash().toString("hex");
       const competing = unresolvedTransaction(intent);
       if (competing && competing.hash !== hash) throw new NotBroadcastError(
-        `Another transaction for this action is unresolved. Check ${competing.hash} before retrying.`);
+        competing.status === "success" ? confirmedCreationRecoveryError(competing.hash).message :
+          `Another transaction for this action is unresolved. Check ${competing.hash} before retrying.`);
       // Persist BEFORE transport: a reload or lost response cannot erase a broadcast.
       try { rememberTransactionAttempt({ ...intent, hash }); }
       catch (error) { throw new NotBroadcastError(error instanceof Error ? error.message : "Could not save recovery metadata. Nothing was sent."); }
@@ -914,6 +925,20 @@ export class SorobanAgyionClient implements AgyionClient {
     if (walletSessionVersion() !== this.session) throw new Error("Wallet session changed; reconnect before continuing");
   }
 
+  private assertSupportedAsset(asset: string): void {
+    if (this.cfg.expectedAssetContractId !== undefined && asset !== this.cfg.expectedAssetContractId) {
+      throw new AgyionError(AgyionErrorCode.InvalidInput,
+        `Unsupported asset contract ${asset}. This application only supports ${this.cfg.expectedAssetContractId}.`);
+    }
+  }
+
+  /** Record asset addresses are immutable; validate even when a caller skips the record UI. */
+  private async assertSupportedRecord(kind: "fade" | "pod" | "trigger", id: bigint): Promise<void> {
+    if (this.cfg.expectedAssetContractId === undefined) return;
+    const record = kind === "fade" ? await this.get_fade(id) : kind === "pod" ? await this.get_pod(id) : await this.get_trigger(id);
+    if (!record) throw new AgyionError(AgyionErrorCode.NotFound, `${kind} not found: #${id}`);
+  }
+
   async protocolReadiness(): Promise<ProtocolReadiness> {
     try {
       const c = await this.bindings();
@@ -947,6 +972,7 @@ export class SorobanAgyionClient implements AgyionClient {
     return withRecoveryLock(JSON.stringify(["soroban",account,intent.network,intent.contractId,action,intent.refId]), async () => {
     if (this.intent) throw new Error("Another transaction is awaiting a result. Check its status before continuing.");
     const unresolved = unresolvedTransaction(intent);
+    if (unresolved?.status === "success") throw confirmedCreationRecoveryError(unresolved.hash);
     if (unresolved) throw new AgyionError(AgyionErrorCode.RpcError, `An earlier ${action.replaceAll("_", " ")} is unresolved. Check ${unresolved.hash} in transaction activity before retrying.`);
     this.intent = intent;
     try {
@@ -982,9 +1008,17 @@ export class SorobanAgyionClient implements AgyionClient {
       updateTransactionAttempt(hash, intent, { status: outcome.status === "SUCCESS" ? "success" : "failed", ledger });
       if (outcome.status !== "SUCCESS") throw new AgyionError(AgyionErrorCode.RpcError,
         `Transaction ${hash} failed on-chain. Review its result before retrying.`);
-      const result = sent.result.unwrap();
-      updateTransactionAttempt(hash, intent, { status: "success", refId: refId ?? String(result), ledger });
-      if (walletSessionVersion() === this.session) rememberReceipt(action, refId ?? String(result), { hash, ledger, account: intent.account, network: intent.network, contractId: intent.contractId });
+      const creating = action.startsWith("create_");
+      let result: T;
+      try { result = sent.result.unwrap(); }
+      catch (error) {
+        if (creating) throw confirmedCreationRecoveryError(hash);
+        throw error;
+      }
+      const confirmedRefId = creating ? creationRecordId(result) : refId ?? String(result);
+      if (confirmedRefId === null) throw confirmedCreationRecoveryError(hash);
+      updateTransactionAttempt(hash, intent, { status: "success", refId: confirmedRefId, ledger });
+      if (walletSessionVersion() === this.session) rememberReceipt(action, confirmedRefId, { hash, ledger, account: intent.account, network: intent.network, contractId: intent.contractId });
       return result;
     } finally { this.intent = null; }
     });
@@ -1009,6 +1043,7 @@ export class SorobanAgyionClient implements AgyionClient {
     handoff_window: number,
     venue_pubkey: string,
   ): Promise<bigint> {
+    this.assertSupportedAsset(asset);
     const c = await this.writable();
     const tx = await c.create_fade({
       seller,
@@ -1026,6 +1061,7 @@ export class SorobanAgyionClient implements AgyionClient {
   }
 
   async fade_price(fade_id: bigint): Promise<bigint> {
+    await this.assertSupportedRecord("fade", fade_id);
     const c = await this.bindings();
     const tx = await c.fade_price({ fade_id });
     return tx.result;
@@ -1033,18 +1069,21 @@ export class SorobanAgyionClient implements AgyionClient {
 
   async claim(fade_id: bigint, claimant: string): Promise<void> {
     const c = await this.writable();
+    await this.assertSupportedRecord("fade", fade_id);
     const tx = await c.claim({ fade_id, claimant });
     await this.submit(tx, "claim", String(fade_id));
   }
 
   async confirm_handoff(fade_id: bigint, ts: bigint, sig: string): Promise<void> {
     const c = await this.writable();
+    await this.assertSupportedRecord("fade", fade_id);
     const tx = await c.confirm_handoff({ fade_id, ts, sig: hexToBuffer(sig, 64) });
     await this.submit(tx, "confirm_handoff", String(fade_id));
   }
 
   async refund(fade_id: bigint): Promise<void> {
     const c = await this.writable();
+    await this.assertSupportedRecord("fade", fade_id);
     const tx = await c.refund({ fade_id });
     await this.submit(tx, "refund", String(fade_id));
   }
@@ -1058,7 +1097,9 @@ export class SorobanAgyionClient implements AgyionClient {
         if (error.message === "NotFound") return null;
         throw new Error(error.message);
       }
-      return fadeFromChain(fade_id, tx.result.unwrap());
+      const fade = fadeFromChain(fade_id, tx.result.unwrap());
+      this.assertSupportedAsset(fade.asset);
+      return fade;
     } catch (e) {
       if (isNotFound(e)) return null;
       throw rpcWrap("get_fade", e);
@@ -1075,6 +1116,7 @@ export class SorobanAgyionClient implements AgyionClient {
     claim_pubkey: string,
     key_proof: string,
   ): Promise<bigint> {
+    this.assertSupportedAsset(asset);
     const c = await this.writable();
     const tx = await c.create_pod({
       funder,
@@ -1089,6 +1131,7 @@ export class SorobanAgyionClient implements AgyionClient {
 
   async claim_pod(pod_id: bigint, recipient: string, signature: string): Promise<void> {
     const c = await this.writable();
+    await this.assertSupportedRecord("pod", pod_id);
     const tx = await c.claim_pod({
       pod_id,
       recipient,
@@ -1106,7 +1149,9 @@ export class SorobanAgyionClient implements AgyionClient {
         if (error.message === "NotFound") return null;
         throw new Error(error.message);
       }
-      return podFromChain(pod_id, tx.result.unwrap());
+      const pod = podFromChain(pod_id, tx.result.unwrap());
+      this.assertSupportedAsset(pod.asset);
+      return pod;
     } catch (e) {
       if (isNotFound(e)) return null;
       throw rpcWrap("get_pod", e);
@@ -1123,6 +1168,7 @@ export class SorobanAgyionClient implements AgyionClient {
     attester_pubkey: string,
     deadline_ledger: number,
   ): Promise<bigint> {
+    this.assertSupportedAsset(asset);
     const c = await this.writable();
     const tx = await c.create_trigger({
       funder,
@@ -1137,12 +1183,14 @@ export class SorobanAgyionClient implements AgyionClient {
 
   async attest(trigger_id: bigint, ts: bigint, sig: string): Promise<void> {
     const c = await this.writable();
+    await this.assertSupportedRecord("trigger", trigger_id);
     const tx = await c.attest({ trigger_id, ts, sig: hexToBuffer(sig, 64) });
     await this.submit(tx, "attest", String(trigger_id));
   }
 
   async refund_trigger(trigger_id: bigint): Promise<void> {
     const c = await this.writable();
+    await this.assertSupportedRecord("trigger", trigger_id);
     const tx = await c.refund_trigger({ trigger_id });
     await this.submit(tx, "refund_trigger", String(trigger_id));
   }
@@ -1156,7 +1204,9 @@ export class SorobanAgyionClient implements AgyionClient {
         if (error.message === "NotFound") return null;
         throw new Error(error.message);
       }
-      return triggerFromChain(trigger_id, tx.result.unwrap());
+      const trigger = triggerFromChain(trigger_id, tx.result.unwrap());
+      this.assertSupportedAsset(trigger.asset);
+      return trigger;
     } catch (e) {
       if (isNotFound(e)) return null;
       throw rpcWrap("get_trigger", e);
@@ -1185,6 +1235,7 @@ export class SorobanAgyionClient implements AgyionClient {
 
   async envoy_claim(mandate_id: bigint, fade_id: bigint, ts: bigint, agent_sig: string): Promise<void> {
     const c = await this.writable();
+    await this.assertSupportedRecord("fade", fade_id);
     const tx = await c.envoy_claim({
       mandate_id,
       fade_id,

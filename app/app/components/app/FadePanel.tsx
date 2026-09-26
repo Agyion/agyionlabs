@@ -359,11 +359,16 @@ function FadeStage({
   onReset: () => void;
 }) {
   const reduced = useReducedMotion();
-  const price = priceAtLedger(fade, ledger);
+  // Settlement uses the claim ledger, even after the live curve crosses zero.
+  const priceLedger = fade.claimed_at ?? ledger;
+  const price = priceAtLedger(fade, priceLedger);
   const belowZero = price < 0n;
   const [scrub, setScrub] = useState<number | null>(null); // dragged "now" handle
-  const shownLedger = scrub ?? ledger;
+  const shownLedger = scrub ?? priceLedger;
   const shownPrice = priceAtLedger(fade, shownLedger);
+  const priceLabel = fade.claimed_at != null
+    ? fade.state === FADE_STATE.Settled ? "Settled price" : "Frozen at claim"
+    : ledgerFresh ? "Live price" : "Last confirmed price";
 
   const stateLabel =
     fade.state === FADE_STATE.Open
@@ -408,7 +413,7 @@ function FadeStage({
           <div className="flex items-end justify-between">
             <div>
               <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
-                {scrub != null ? "Preview at dragged ledger" : ledgerFresh ? "Live price" : "Last confirmed price"}
+                {scrub != null ? "Preview at dragged ledger" : priceLabel}
               </div>
               <motion.div
                 className="tnum display text-[48px] leading-none tracking-[-0.04em] md:text-[72px]"
@@ -419,7 +424,7 @@ function FadeStage({
                 <span className="ml-3 text-[22px] text-muted">{CONFIG.assetCode}</span>
               </motion.div>
               <AnimatePresence>
-                {belowZero && scrub == null && (
+                {belowZero && scrub == null && fade.state === FADE_STATE.Open && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -431,6 +436,11 @@ function FadeStage({
                   </motion.div>
                 )}
               </AnimatePresence>
+              {scrub == null && fade.state === FADE_STATE.Claimed && (
+                <p className="mt-2 text-[13px] text-muted">
+                  {price < 0n ? "Claimant receives the frozen amount" : price > 0n ? "Claimant pays the frozen amount" : "No claimant payment at the frozen price"}
+                </p>
+              )}
             </div>
             {fade.state === FADE_STATE.Open && (
               <div className="text-right">
@@ -442,13 +452,14 @@ function FadeStage({
             )}
           </div>
 
-          <DecayCurve fade={fade} ledger={ledger} scrub={scrub} onScrub={setScrub} />
+          <DecayCurve fade={fade} ledger={priceLedger} scrub={scrub} onScrub={setScrub} frozen={fade.claimed_at != null} />
         </div>
 
         {/* right rail — parameters in mono */}
         <aside className="instrument-aside instrument-section space-y-4">
           <header><h3>Listing terms</h3></header>
           <RailRow k="Locked pot" v={`${formatMinor(fade.pot)} ${CONFIG.assetCode}`} />
+          {fade.claimed_at != null && <RailRow k="Frozen price" v={`${formatMinor(price)} ${CONFIG.assetCode}`} />}
           <RailRow
             k="Decay rate"
             v={`${formatMinor(fade.slope_num)} / ${fade.slope_den.toString()} ledgers`}
@@ -510,11 +521,13 @@ function DecayCurve({
   ledger,
   scrub,
   onScrub,
+  frozen,
 }: {
   fade: Fade;
   ledger: number;
   scrub: number | null;
   onScrub: (l: number | null) => void;
+  frozen: boolean;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -594,7 +607,7 @@ function DecayCurve({
       aria-valuemin={start}
       aria-valuemax={end}
       aria-valuenow={Math.min(end, Math.max(start, scrub ?? ledger))}
-      aria-valuetext={`Ledger ${Math.min(end, Math.max(start, scrub ?? ledger))}. ${scrub == null ? "Live" : "Preview; press Escape to return to live"}`}
+      aria-valuetext={`Ledger ${Math.min(end, Math.max(start, scrub ?? ledger))}. ${scrub == null ? frozen ? "Frozen at claim" : "Live" : frozen ? "Preview; press Escape to return to the claim price" : "Preview; press Escape to return to live"}`}
       tabIndex={0}
     >
       {/* zero line */}
@@ -655,7 +668,7 @@ function DecayCurve({
         style={{ cursor: "grab" }}
       />
       <text x={nowX} y={H - 6} fontSize="10" fill="var(--muted)" fontFamily="var(--font-mono)" textAnchor="middle">
-        {scrub != null ? `ledger ${scrub} — release or press Escape for live` : "now — drag me"}
+        {scrub != null ? `ledger ${scrub} — release or press Escape to return` : frozen ? "claim ledger — drag to preview" : "now — drag me"}
       </text>
     </svg>
   );

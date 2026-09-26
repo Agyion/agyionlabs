@@ -5,8 +5,14 @@
  * NEXT_PUBLIC_HAK_MODE=soroban  → gerçek testnet binding (kontrat ID zorunlu)
  */
 
+// Keep the direct environment reference so Next can replace it at build time.
+const mode = process.env.NEXT_PUBLIC_HAK_MODE ?? "mock";
+if (mode !== "mock" && mode !== "soroban") {
+  throw new Error('NEXT_PUBLIC_HAK_MODE must be exactly "mock" or "soroban".');
+}
+
 export const CONFIG = {
-  mode: (process.env.NEXT_PUBLIC_HAK_MODE ?? "mock") as "mock" | "soroban",
+  mode,
   rpcUrl: process.env.NEXT_PUBLIC_SOROBAN_RPC_URL ?? "https://soroban-testnet.stellar.org",
   contractId: process.env.NEXT_PUBLIC_HAK_CONTRACT_ID ?? "",
   networkPassphrase:

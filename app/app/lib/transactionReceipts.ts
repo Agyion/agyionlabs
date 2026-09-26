@@ -56,23 +56,28 @@ function validEvidence(value: unknown): value is AttemptEvidence {
 function hasTerminalLedger(ledger: number | null | undefined): boolean {
   return Number.isSafeInteger(ledger) && ledger! > 0;
 }
+function normalizeCreationReference(a: TransactionAttempt): TransactionAttempt {
+  if (a.action.startsWith('create_') && a.refId !== null &&
+    (!/^[1-9]\d{0,19}$/.test(a.refId) || creationRecordId(BigInt(a.refId)) === null)) return {...a,refId:null};
+  return a;
+}
 function normalizeLegacyOutcome(a: TransactionAttempt): TransactionAttempt {
   if ((a.status === 'success' || a.status === 'failed') && !hasTerminalLedger(a.ledger)) {
     // Older send ERROR responses were saved as failures without chain evidence.
     // Restore the creation intent as well as its guard when an old ID is unproven.
     return {...a,status:'unknown',ledger:null,refId:a.action.startsWith('create_') ? null : a.refId};
   }
-  return a;
+  return normalizeCreationReference(a);
 }
 function mergeEvidence(a: TransactionAttempt, e: AttemptEvidence): TransactionAttempt {
   const terminal = a.status === 'success' || a.status === 'failed';
   const proposed = (e.update.status === 'success' || e.update.status === 'failed') && !hasTerminalLedger(e.update.ledger)
     ? {status:'unknown' as const} : e.update;
   const update = terminal && proposed.status && proposed.status !== a.status ? {} : proposed;
-  return {...a,...update, checkedAt:Math.max(a.checkedAt ?? 0,e.checkedAt),
+  return normalizeCreationReference({...a,...update, checkedAt:Math.max(a.checkedAt ?? 0,e.checkedAt),
     refId: terminal && a.refId !== null ? a.refId : update.refId === undefined ? a.refId : update.refId,
     ledger: terminal && a.ledger !== null ? a.ledger : update.ledger === undefined ? a.ledger : update.ledger,
-    recorded:a.recorded || e.update.recorded || undefined};
+    recorded:a.recorded || e.update.recorded || undefined});
 }
 export function listTransactionAttempts(scope?: TransactionScope): TransactionAttempt[] {
   const rows = new Map<string,TransactionAttempt>();
@@ -103,8 +108,17 @@ export function updateTransactionAttempt(hash: string, scope: TransactionScope, 
   if (['status','ledger','refId','recorded'].every(key=>merged[key as keyof TransactionAttempt]===current[key as keyof TransactionAttempt])) return;
   appendRecoveryEvidence(EVIDENCE,evidence,'agyion:transactions');
 }
+/** HAK allocates positive u64 record IDs; never coerce a malformed decoded result. */
+export function creationRecordId(value: unknown): string | null {
+  return typeof value === "bigint" && value > 0n && value <= 0xffff_ffff_ffff_ffffn ? String(value) : null;
+}
+/** Confirmation and record recovery are separate: a missing ID cannot authorize a new deposit. */
+export function requiresTransactionRecovery(attempt: TransactionAttempt): boolean {
+  return attempt.status === "pending" || attempt.status === "unknown" ||
+    (attempt.status === "success" && attempt.action.startsWith("create_") && attempt.refId === null);
+}
 export function unresolvedTransaction(intent: TransactionIntent): TransactionAttempt | undefined {
-  return listTransactionAttempts(intent).find(a => a.action === intent.action && a.refId === intent.refId && (a.status === "pending" || a.status === "unknown"));
+  return listTransactionAttempts(intent).find(a => a.action === intent.action && a.refId === intent.refId && requiresTransactionRecovery(a));
 }
 export interface TransactionOutcomeResponse { txHash?: string; status: string; ledger?: number; envelopeXdr?: xdr.TransactionEnvelope; returnValue?: xdr.ScVal }
 export function hasTerminalTransactionEvidence(response: TransactionOutcomeResponse | undefined, hash: string, network: string): response is TransactionOutcomeResponse & { status: 'SUCCESS' | 'FAILED'; ledger: number } {
@@ -117,8 +131,7 @@ export function hasTerminalTransactionEvidence(response: TransactionOutcomeRespo
 }
 interface RecoveryServer { getTransaction(hash: string): Promise<TransactionOutcomeResponse> }
 export async function reconcileTransactionAttempts(server: RecoveryServer, scope: TransactionScope): Promise<void> {
-  for (const attempt of listTransactionAttempts(scope).filter(a => a.status === "pending" || a.status === "unknown" ||
-    (a.status === "success" && a.action.startsWith("create_") && a.refId === null))) {
+  for (const attempt of listTransactionAttempts(scope).filter(requiresTransactionRecovery)) {
     try {
       const response = await server.getTransaction(attempt.hash);
       const terminal = response.status === "SUCCESS" || response.status === "FAILED";
@@ -130,8 +143,7 @@ export async function reconcileTransactionAttempts(server: RecoveryServer, scope
       let refId = attempt.refId;
       if (status === "success" && refId === null && attempt.action.startsWith("create_") && response.returnValue) {
         try {
-          const value: unknown = scValToNative(response.returnValue);
-          if (typeof value === "bigint" && value >= 0n && value <= 0xffff_ffff_ffff_ffffn) refId = String(value);
+          if (response.returnValue.switch().name === "scvU64") refId = creationRecordId(scValToNative(response.returnValue));
         } catch { /* Confirmation remains true even when its return value cannot be decoded. */ }
       }
       updateTransactionAttempt(attempt.hash, scope, { status, refId, ledger: status === "success" || status === "failed" ? response.ledger ?? null : null });

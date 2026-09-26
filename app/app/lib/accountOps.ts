@@ -89,8 +89,18 @@ async function signAndSubmit(
       throw new AccountOpError(`Payment outcome could not be confirmed. Check ${hash} before retrying; do not send another payment.`);
     }
   }
-  const result = await server.submitTransaction(signed);
-  return result.hash as string;
+  const hash = signed.hash().toString("hex");
+  try {
+    const result = await server.submitTransaction(signed);
+    // Synchronous Horizon submission returns an ingested transaction with a ledger.
+    // A fulfilled HTTP response alone must not become a confirmed trustline notice.
+    if (result.hash !== hash || result.successful !== true || !Number.isSafeInteger(result.ledger) || result.ledger <= 0) {
+      throw new Error("Unconfirmed trustline response");
+    }
+    return hash;
+  } catch {
+    throw new AccountOpError(`Trustline outcome could not be confirmed. Check ${hash} and the account's current trustline before retrying; the transaction may already have been applied.`);
+  }
 }
 
 /** Create the USDC trustline on the user's account (required before deposit). */

@@ -8,12 +8,19 @@ production bundle. They are not instructions or evidence for this revision.
 
 **Current task (27 September):** the user has closed the design phase. Work now
 focuses on backend correctness, contracts, fund safety and the separate private
-profile. Do not resume visual changes without new direction. The first backend
-checkpoint rejects a Trigger beneficiary equal to the kernel address before any
-deposit. Fresh checks passed 49 native / 51 native-plus-WASM HAK tests and all 30
-private-client tests, including the opt-in actual-browser journal check. The
-compiled HAK ABI matches the existing application bindings. See
-`docs/security/2026-09-27/BACKEND_REVIEW.md` for exact evidence and coverage.
+profile. Do not resume visual changes without new direction. The latest local
+continuation fixes Fade's frozen-price display, foreign-token mislabelling,
+duplicate creation after a confirmed result loses its record ID, invalid mode
+configuration, and false trustline success. The full app suite passed 560 tests;
+HAK native-plus-WASM passed 53, including second-transfer rollback/reserve tests.
+See `docs/security/2026-09-27/CLIENT_FADE_REVIEW.md` for the verification record,
+review boundaries and remaining gates. These changes are not live deployments.
+
+The preceding backend checkpoint rejects a Trigger beneficiary equal to the
+kernel address before any deposit. Its checks passed 49 native / 51
+native-plus-WASM HAK tests and all 30 private-client tests, including the opt-in
+actual-browser journal check. Its compiled HAK ABI matches the application
+bindings. See `docs/security/2026-09-27/BACKEND_REVIEW.md` for that evidence.
 The broad HAK, private-pool and cryptography agent reviews were interrupted by
 the tool's automatic cybersecurity filter; those reviews are **incomplete**.
 This checkpoint is not a whole-repository audit or a contract deployment.
