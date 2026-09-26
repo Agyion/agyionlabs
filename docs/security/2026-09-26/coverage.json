@@ -1182,8 +1182,8 @@
     {
       "path": "docs/security/2026-09-26/REVIEW.md",
       "group": "document-or-data",
-      "sha256": "92be8922ddfec61e10ee0c4b33b7215e959f4a402da69c24a0b62e461fac3818",
-      "bytes": 14180,
+      "sha256": "3b3a8de2468d57e38704cad419761f310d3024094777f9c573506cf875fcd3db",
+      "bytes": 15038,
       "review": "Not claimed as whole-file manual review; see scoped reports."
     },
     {
@@ -1260,8 +1260,8 @@
       "path": "docs/security/2026-09-26/verification.json",
       "group": "document-or-data",
       "review": "Final result summary cross-checked against evidence logs; not a security property proof.",
-      "sha256": "db4d09df1d41a9a6036499be68fec5551697d385b6cdcca4e573bc68d45bfd3f",
-      "bytes": 7234
+      "sha256": "fe828585937407213292b7429473857c4138dd2ab0806956a074d8b871416abf",
+      "bytes": 22520
     },
     {
       "path": "docs/security/2026-09-26/zk-eerc-review.md",

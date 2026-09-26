@@ -108,6 +108,18 @@ wallet-kit downgrade blindly. Landing and circuit npm scans reported no advisori
 Both Rust scans reported no vulnerable packages and retained the unmaintained
 `paste` warning (`RUSTSEC-2024-0436`). Advisory absence is not source security proof.
 
+**GitHub default-branch distinction:** after pushing remediation commit `6e8ee6c`,
+GitHub reported **33 open alerts on `main`** (2 critical, 11 high, 17 medium,
+3 low). Its fetched head was `08e0311550948114e1fc0f117ac217fc7a1433b6`, still
+using Next 14.2.35 and Vitest 3.2.7. The published working branch uses Next
+15.5.24 and Vitest 4.1.11. Comparing exact lockfile versions against those
+33 alert ranges places 30 outside the reported ranges; `elliptic`, `uuid` and
+`stream-json` still match three low/medium alerts. This comparison does not
+close GitHub alerts or replace the full branch audit above. The remediation
+branch has been pushed, **not merged into `main`**; the old default branch must
+not be treated as the source of this release. The exact alert/range snapshot is
+recorded in `verification.json`; no alert was dismissed to hide its status.
+
 ### Final verification and publication
 
 | Check | Result and scope |
