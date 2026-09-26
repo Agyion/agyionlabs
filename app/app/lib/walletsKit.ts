@@ -23,9 +23,9 @@ import type { TransactionSigner } from "./hakClient";
 import { activeSigner, assertSignedTransactionMatches, registerSigner, unregisterSigner, walletSessionVersion } from "./wallet";
 import { CONFIG } from "./config";
 import { Networks, StrKey } from "@stellar/stellar-sdk";
-import type { ModuleInterface } from "@creit.tech/stellar-wallets-kit/types";
+import type { ModuleInterface } from "@agyion/stellar-wallets-kit/types";
 
-type KitModule = typeof import("@creit.tech/stellar-wallets-kit/sdk");
+type KitModule = typeof import("@agyion/stellar-wallets-kit/sdk");
 
 let loading: Promise<KitModule> | null = null;
 let connectionAttempt = 0;
@@ -36,12 +36,12 @@ function loadKit(): Promise<KitModule> {
   if (!loading) {
     loading = (async () => {
       const [sdk, types, freighter, xbull, lobstr, wc] = await Promise.all([
-        import("@creit.tech/stellar-wallets-kit/sdk"),
-        import("@creit.tech/stellar-wallets-kit/types"),
-        import("@creit.tech/stellar-wallets-kit/modules/freighter"),
-        import("@creit.tech/stellar-wallets-kit/modules/xbull"),
-        import("@creit.tech/stellar-wallets-kit/modules/lobstr"),
-        import("@creit.tech/stellar-wallets-kit/modules/wallet-connect"),
+        import("@agyion/stellar-wallets-kit/sdk"),
+        import("@agyion/stellar-wallets-kit/types"),
+        import("@agyion/stellar-wallets-kit/modules/freighter"),
+        import("@agyion/stellar-wallets-kit/modules/xbull"),
+        import("@agyion/stellar-wallets-kit/modules/lobstr"),
+        import("@agyion/stellar-wallets-kit/modules/wallet-connect"),
       ]);
       const modules = [
         new freighter.FreighterModule(),

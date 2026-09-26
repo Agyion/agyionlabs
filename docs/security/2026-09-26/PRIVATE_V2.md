@@ -85,6 +85,12 @@ lockfile. Its source imports selected wallet modules, but that is not a claim
 that advisory scan results disappeared or every transitive path was proven safe.
 The privacy and private-pool client locks have their own separate scan results.
 
+**Later frontend dependency update, 2026-09-26:** the nine application entries
+above were removed by selecting the unchanged, actually used wallet modules
+and removing the unused HOT dependency graph. Fresh full and production scans
+both return zero. See [the remediation, provenance and verification](dependency-remediation.md).
+This supersedes the dependency count above, not the private protocol's release boundaries.
+
 ## Remaining release boundaries
 
 The [release sequence](../../../contracts/private-pool/RELEASE.md) identifies

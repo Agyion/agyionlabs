@@ -2,12 +2,12 @@ import { Account, Asset, Keypair, Networks, Operation, Transaction, TransactionB
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const kit = vi.hoisted(() => ({ init: vi.fn(), selectedModule: null as unknown, refreshSupportedWallets: vi.fn(), authModal: vi.fn(), getAddress: vi.fn(), fetchAddress: vi.fn(), getNetwork: vi.fn(), signTransaction: vi.fn(), disconnect: vi.fn(), on: vi.fn(() => () => {}), setWallet: vi.fn() }));
-vi.mock('@creit.tech/stellar-wallets-kit/sdk', () => ({ StellarWalletsKit: kit }));
-vi.mock('@creit.tech/stellar-wallets-kit/types', () => ({ Networks: { TESTNET: 'Test SDF Network ; September 2015' }, KitEventType: { STATE_UPDATED: 'STATE_UPDATE', WALLET_SELECTED: 'WALLET_SELECTED', DISCONNECT: 'DISCONNECT' } }));
-vi.mock('@creit.tech/stellar-wallets-kit/modules/freighter', () => ({ FreighterModule: class {} }));
-vi.mock('@creit.tech/stellar-wallets-kit/modules/xbull', () => ({ xBullModule: class {} }));
-vi.mock('@creit.tech/stellar-wallets-kit/modules/lobstr', () => ({ LobstrModule: class {} }));
-vi.mock('@creit.tech/stellar-wallets-kit/modules/wallet-connect', () => ({ WalletConnectModule: class {}, WalletConnectTargetChain: { TESTNET: 'testnet' } }));
+vi.mock('@agyion/stellar-wallets-kit/sdk', () => ({ StellarWalletsKit: kit }));
+vi.mock('@agyion/stellar-wallets-kit/types', () => ({ Networks: { TESTNET: 'Test SDF Network ; September 2015' }, KitEventType: { STATE_UPDATED: 'STATE_UPDATE', WALLET_SELECTED: 'WALLET_SELECTED', DISCONNECT: 'DISCONNECT' } }));
+vi.mock('@agyion/stellar-wallets-kit/modules/freighter', () => ({ FreighterModule: class {} }));
+vi.mock('@agyion/stellar-wallets-kit/modules/xbull', () => ({ xBullModule: class {} }));
+vi.mock('@agyion/stellar-wallets-kit/modules/lobstr', () => ({ LobstrModule: class {} }));
+vi.mock('@agyion/stellar-wallets-kit/modules/wallet-connect', () => ({ WalletConnectModule: class {}, WalletConnectTargetChain: { TESTNET: 'testnet' } }));
 
 import { connectWithKit, disconnectKit } from '../app/lib/walletsKit';
 import { activeSigner, defaultSigner, unregisterSigner } from '../app/lib/wallet';
