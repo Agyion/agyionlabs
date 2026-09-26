@@ -50,7 +50,7 @@ export function InstrumentNote({ title, children }: { title: string; children: R
 export function PodSeal({ prepared, saved }: { prepared: boolean; saved: boolean }) {
   const secret = prepared ? saved ? "Marked as saved" : "Save the secret" : "Not prepared";
   return (
-    <div className="pod-seal" role="img" aria-label={`Pod draft: opening requires its unlock ledger, the saved secret and a recipient commitment confirmed in an earlier ledger. Secret: ${secret}. This diagram does not report transaction status.`}>
+    <div className="pod-seal" role="img" aria-label={`Pod draft: opening requires its unlock ledger, the saved secret signing locally, and recipient wallet authorization. Secret: ${secret}. This diagram does not report transaction status.`}>
       <svg viewBox="0 0 320 210" aria-hidden="true">
         <ellipse cx="160" cy="87" rx="107" ry="64" className="diagram-guide" />
         <path d="M66 56v62m188-62v62M44 87h43m146 0h43" className="diagram-guide" />
@@ -63,7 +63,7 @@ export function PodSeal({ prepared, saved }: { prepared: boolean; saved: boolean
         <path d="m263 87 3 3 5-6" className="diagram-line" opacity={saved ? 1 : .25} />
         <path d="M160 144v28" className="diagram-guide" /><circle cx="160" cy="185" r="12" className="diagram-node" /><path d="M155 184h10m-10 4h7m-8-11h12v16h-12Z" className="diagram-line" />
       </svg>
-      <div className="pod-seal__conditions"><span>Ledger lock<small>Set on creation</small></span><span>Secret lock<small>{secret}</small></span><span>Recipient commit<small>Earlier ledger, before opening</small></span></div>
+      <div className="pod-seal__conditions"><span>Ledger lock<small>Set on creation</small></span><span>Claim key<small>{secret}</small></span><span>Recipient signature<small>Bound to your wallet</small></span></div>
     </div>
   );
 }

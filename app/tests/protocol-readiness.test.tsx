@@ -7,7 +7,8 @@ import type { AgyionClient } from '../app/lib/hakClient';
 afterEach(cleanup);
 function client(result:()=>Promise<any>){const c=new SorobanAgyionClient({rpcUrl:'https://example.com',contractId:'C'+'A'.repeat(55),networkPassphrase:'test'});(c as any).bindings=async()=>({protocol_version:result});return c;}
 it('distinguishes an actual version mismatch from an unavailable RPC',async()=>{
- expect(await client(async()=>({result:2})).protocolReadiness()).toBe('ready');
+ expect(await client(async()=>({result:3})).protocolReadiness()).toBe('ready');
+ expect(await client(async()=>({result:2})).protocolReadiness()).toBe('incompatible');
  expect(await client(async()=>({result:1})).protocolReadiness()).toBe('incompatible');
  expect(await client(async()=>{throw new Error('offline')}).protocolReadiness()).toBe('unavailable');
 });

@@ -16,6 +16,7 @@ export function scrambleIn(el: HTMLElement, duration = 0.9): void {
     const t = Math.min(1, (performance.now() - start) / (duration * 1000))
     if (t >= 1) {
       el.textContent = target
+      window.clearInterval(timers.get(el))
       timers.delete(el)
       return
     }

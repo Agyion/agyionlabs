@@ -3,21 +3,20 @@
 /**
  * PodPanel — time capsule (§5).
  *
- * Create: amount + unlock date + hidden key generator (the preimage is shown
- * once; only its sha256 hash goes on-chain). Claim: enter the preimage after
- * the horizon. Readiness comes from the confirmed ledger and recipient commitment.
+ * Create: a saved random credential proves key possession. Claim: sign the Pod
+ * and connected recipient locally; only the public key and signatures reach RPC.
  */
 
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { InstrumentActivity } from "../../lib/instrumentActivity";
 import { getClient, mockClient, SECONDS_PER_LEDGER } from "../../lib/client";
 import { humanizeError } from "../../lib/errors";
-import { sha256Hex, POD_STATE, type Pod } from "../../lib/hakClient";
+import { POD_STATE, type Pod } from "../../lib/hakClient";
 import { useLedger } from "../../lib/useLedger";
 import { formatMinor, formatRemaining, parseMinor, shortAddress, shortHex } from "../../lib/format";
 import { logEntry } from "../../lib/ledgerLog";
-import { demoAddress } from "../../lib/wallet";
-import { podClaimCommitment } from "../../lib/signers";
+import { demoAddress, onWalletSessionChange, walletSessionVersion } from "../../lib/wallet";
+import { newPodSeed, podPublicKey, signPodCreation, signPodClaim } from "../../lib/signers";
 import type { WalletState } from "../../lib/useWallet";
 import { CONFIG, IS_MOCK } from "../../lib/config";
 import { ErrorNote, Field, FilledButton, GhostButton, OkNote, StateChip, TextInput } from "../ui";
@@ -25,13 +24,25 @@ import { RecordLoader, WalletPrerequisite } from "./panelControls";
 import { durationLedgers, ledgerDeadline } from "./panelValidation";
 import { DraftSummary, PodSeal, draftAmount, draftDelay } from "./instrumentPresentation";
 
-function randomPreimage(): string {
-  const a = new Uint8Array(16);
-  crypto.getRandomValues(a);
-  return Array.from(a, (b) => b.toString(16).padStart(2, "0")).join("");
+/** Invalidate pending local work and clear credentials on close, wallet change or unmount. */
+function usePodSecretLifetime(address: string | null, clear: () => void) {
+  const active = useContext(InstrumentActivity);
+  const generation = useRef(0);
+  const activeRef = useRef(active); activeRef.current = active;
+  useEffect(() => {
+    generation.current += 1; clear();
+    return () => { generation.current += 1; };
+  }, [active, address, clear]);
+  useEffect(() => onWalletSessionChange(() => { generation.current += 1; clear(); }), [clear]);
+  return () => {
+    const epoch = generation.current, session = walletSessionVersion();
+    return () => activeRef.current && generation.current === epoch && walletSessionVersion() === session;
+  };
 }
 
 export default function PodPanel({ wallet }: { wallet: WalletState }) {
+  const [sessionVersion, setSessionVersion] = useState(walletSessionVersion);
+  useEffect(() => onWalletSessionChange(() => setSessionVersion(walletSessionVersion())), []);
   const [pods, setPods] = useState<Pod[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -44,7 +55,7 @@ export default function PodPanel({ wallet }: { wallet: WalletState }) {
     }
     // Re-resolve the shared client when its wallet signer changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wallet.address]);
+  }, [wallet.address, sessionVersion]);
   const ledger = useLedger(client);
 
   const upsert = (pod: Pod) => setPods((cur) => [pod, ...cur.filter((item) => item.id !== pod.id)]);
@@ -116,18 +127,24 @@ function CreatePod({
 }) {
   const [amount, setAmount] = useState("500");
   const [minutes, setMinutes] = useState("5");
-  const [preimage, setPreimage] = useState<string | null>(null);
+  const [seed, setSeed] = useState<string | null>(null);
   const [secretSaved, setSecretSaved] = useState(false);
   const [replaceSaved, setReplaceSaved] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [createdId, setCreatedId] = useState<bigint | null>(null);
   const [busy, setBusy] = useState(false);
   const submissionAttempted = useRef(false);
+  const clearSecret = useCallback(() => {
+    setSeed(null); setSecretSaved(false); setReplaceSaved(false); setSubmitted(false);
+    setCreatedId(null); setBusy(false); submissionAttempted.current = false;
+  }, []);
+  const begin = usePodSecretLifetime(wallet.address, clearSecret);
+
 
   const prepare = () => {
-    if (busy || (preimage && (!submitted || !replaceSaved))) return;
+    if (busy || (seed && (!submitted || !replaceSaved))) return;
     try {
-      setPreimage(randomPreimage());
+      setSeed(newPodSeed());
       setSecretSaved(false);
       setReplaceSaved(false);
       setSubmitted(false);
@@ -141,7 +158,8 @@ function CreatePod({
   };
 
   const create = async () => {
-    if (!preimage || !secretSaved || submissionAttempted.current || busy || (!IS_MOCK && !wallet.address)) return;
+    if (!seed || !secretSaved || submissionAttempted.current || busy || (!IS_MOCK && !wallet.address)) return;
+    const current = begin();
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -149,21 +167,26 @@ function CreatePod({
       const duration = durationLedgers(minutes, "Unlock time", 10);
       const amountMinor = parseMinor(amount);
       const client = getClient();
-      const hash = await sha256Hex(preimage);
       const now = await client.currentLedger();
       const unlock = ledgerDeadline(now, duration, "Unlock time");
+      if (!current()) return;
+      const funder = wallet.address ?? demoAddress();
+      const claimPubkey = podPublicKey(seed);
+      const keyProof = signPodCreation(seed, funder, CONFIG.assetContractId, amountMinor, unlock);
       // A timeout can leave a confirmed transaction. Never silently retry this secret.
       submissionAttempted.current = true;
       setSubmitted(true);
       const id = await client.create_pod(
-        wallet.address ?? demoAddress(),
+        funder,
         CONFIG.assetContractId,
         amountMinor,
         unlock,
-        hash,
+        claimPubkey,
+        keyProof,
       );
+      if (!current()) return;
       setCreatedId(id);
-      setNotice(`Pod #${id} buried. Keep its saved preimage — only its hash is on-chain.`);
+      setNotice(`Pod #${id} buried. Keep the saved secret; its public key is on-chain.`);
       logEntry({
         ledger: now,
         template: "pod",
@@ -176,9 +199,9 @@ function CreatePod({
       });
       onCreated(id);
     } catch (e) {
-      setError(humanizeError(e));
+      if (current()) setError(humanizeError(e));
     } finally {
-      setBusy(false);
+      if (current()) setBusy(false);
     }
   };
 
@@ -186,6 +209,7 @@ function CreatePod({
     <div className="instrument-layout">
     <section className="instrument-main instrument-section">
       <header><h3>Bury a Pod</h3></header>
+      <p className="instrument-disclosure">Amounts and addresses are public. Your secret stays on this device and signs each claim.</p>
       <div className="instrument-fields">
         <Field label={`Amount (${CONFIG.assetCode})`}>
           <TextInput value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" disabled={busy || submitted} />
@@ -194,14 +218,14 @@ function CreatePod({
           <TextInput value={minutes} onChange={(e) => setMinutes(e.target.value)} inputMode="numeric" disabled={busy || submitted} />
         </Field>
       </div>
-      {preimage && (
+      {seed && (
         <div className="pod-secret-vault">
           <div className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--accent)" }}>
-            Your preimage — save before submitting
+            Your Pod secret — save before submitting
           </div>
-          <TextInput aria-label="Generated Pod secret" value={preimage} readOnly autoComplete="off" spellCheck={false} className="mt-2" />
+          <TextInput aria-label="Generated Pod secret" value={seed} readOnly autoComplete="off" spellCheck={false} className="mt-2" />
           <p className="mt-2 text-[12px] text-muted">
-            Save this secret outside the app. Reloading or changing wallets clears
+            Save this secret outside the app. Closing, reloading or changing wallets clears
             this draft. Anyone with the secret can claim after unlock; never reuse it.
           </p>
           <label className="mt-3 flex items-start gap-2 text-[12px] text-ink">
@@ -223,13 +247,13 @@ function CreatePod({
         </div>
       )}
       <div className="instrument-actions">
-        {!preimage && <GhostButton onClick={prepare}>Prepare pod secret</GhostButton>}
-        <FilledButton transaction onClick={() => void create()} disabled={busy || submitted || !secretSaved || !preimage || (!IS_MOCK && !wallet.address)}>
+        {!seed && <GhostButton onClick={prepare}>Prepare pod secret</GhostButton>}
+        <FilledButton transaction onClick={() => void create()} disabled={busy || submitted || !secretSaved || !seed || (!IS_MOCK && !wallet.address)}>
           {busy ? "Burying…" : "Bury the pod"}
         </FilledButton>
       </div>
     </section>
-    <DraftSummary title="Unlock conditions" visual={<PodSeal prepared={Boolean(preimage)} saved={secretSaved} />} rows={[
+    <DraftSummary title="Unlock conditions" visual={<PodSeal prepared={Boolean(seed)} saved={secretSaved} />} rows={[
       { label: "Amount to lock", value: draftAmount(amount) },
       { label: "Unlock after", value: draftDelay(minutes, "Unlock time", 10) },
       ...(createdId != null ? [{ label: "Created Pod", value: `#${createdId}` }] : []),
@@ -253,102 +277,37 @@ function PodCard({
   setError: (e: string | null) => void;
   setNotice: (n: string | null) => void;
 }) {
-  const active = useContext(InstrumentActivity);
-  const [preimage, setPreimage] = useState("");
-  const [busy, setBusy] = useState<"commit" | "claim" | null>(null);
-  const [commitment, setCommitment] = useState<{ commitment: string; committed_at: number } | null>(null);
-  const [confirmedLedger, setConfirmedLedger] = useState<number | null>(null);
-  const [claimError, setClaimError] = useState<string | null>(null);
-
+  const [seed, setSeed] = useState("");
+  const [busy, setBusy] = useState(false);
+  const clearSecret = useCallback(() => { setSeed(""); setBusy(false); }, []);
+  const begin = usePodSecretLifetime(wallet.address, clearSecret);
   const opened = pod.state === POD_STATE.Opened;
   const recipient = wallet.address ?? (IS_MOCK ? demoAddress() : null);
-  const expectedCommitment = useMemo(() => {
-    if (!recipient || !preimage.trim()) return null;
-    try { return podClaimCommitment(pod.id, recipient, preimage.trim()); }
-    catch { return null; }
-  }, [pod.id, recipient, preimage]);
-
-  const refreshClaimStatus = useCallback(async () => {
-    if (!recipient || opened) return;
-    try {
-      const client = getClient();
-      const [record, height] = await Promise.all([
-        client.get_pod_claim_commitment(pod.id, recipient), client.currentLedger(),
-      ]);
-      setCommitment(record);
-      setConfirmedLedger(height);
-      setClaimError(null);
-    } catch (e) {
-      setConfirmedLedger(null);
-      setClaimError(`Could not refresh claim status. ${humanizeError(e)}`);
-    }
-  }, [pod.id, recipient, opened]);
-
-  useEffect(() => {
-    setCommitment(null);
-    setConfirmedLedger(null);
-    if (!active || !recipient || opened) return;
-    void refreshClaimStatus();
-    const timer = window.setInterval(() => void refreshClaimStatus(), 5_000);
-    return () => window.clearInterval(timer);
-  }, [active, recipient, opened, refreshClaimStatus]);
-
-  const commitmentMatches = Boolean(expectedCommitment && commitment?.commitment === expectedCommitment);
-  const claimReady = commitmentMatches && confirmedLedger != null && commitment != null
-    && confirmedLedger > commitment.committed_at && confirmedLedger >= pod.unlock_ledger;
-
-  const commit = async () => {
-    if (!recipient || !expectedCommitment) return;
-    setBusy("commit");
-    setError(null);
-    setNotice(null);
-    setClaimError(null);
-    try {
-      await getClient().commit_pod_claim(pod.id, recipient, expectedCommitment);
-      setNotice(`Claim committed for Pod #${pod.id}. Keep the preimage in this input; opening requires a later confirmed ledger.`);
-      await refreshClaimStatus();
-    } catch (e) {
-      setClaimError(humanizeError(e));
-    } finally {
-      setBusy(null);
-    }
-  };
+  const matches = useMemo(() => {
+    try { return podPublicKey(seed.trim()) === pod.claim_pubkey; } catch { return false; }
+  }, [seed, pod.claim_pubkey]);
   const unlocked = ledger != null && ledger >= pod.unlock_ledger;
+  const claimReady = unlocked && matches && !!recipient;
   const secondsLeft = ledger == null ? 0 : Math.max(0, (pod.unlock_ledger - ledger) * SECONDS_PER_LEDGER);
-
   const claim = async () => {
-    setBusy("claim");
-    setError(null);
-    setNotice(null);
+    if (busy || !claimReady || !recipient) return;
+    const current = begin();
+    setBusy(true); setError(null); setNotice(null);
     try {
-      if (!recipient || !expectedCommitment) throw new Error("Enter the preimage and connect the recipient wallet first.");
       const client = getClient();
-      const [record, height] = await Promise.all([
-        client.get_pod_claim_commitment(pod.id, recipient), client.currentLedger(),
-      ]);
-      setCommitment(record);
-      setConfirmedLedger(height);
-      if (record?.commitment !== expectedCommitment) throw new Error("Commit this claim for the connected recipient before opening the capsule.");
-      if (height <= record.committed_at) throw new Error("Wait for the next confirmed ledger before opening the capsule.");
+      const height = await client.currentLedger();
+      if (!current()) return;
       if (height < pod.unlock_ledger) throw new Error("The capsule has not reached its unlock ledger yet.");
-      await client.claim_pod(pod.id, preimage.trim(), recipient);
-      logEntry({
-        ledger,
-        template: "pod",
-        action: "claim_pod",
-        refId: pod.id.toString(),
-        amount: pod.amount.toString(),
-        status: "executed",
-        detail: "preimage matched — capsule opened",
-        txHash: null,
-      });
+      const signature = signPodClaim(seed.trim(), pod.id, recipient);
+      await client.claim_pod(pod.id, recipient, signature);
+      if (!current()) return;
+      setSeed("");
+      logEntry({ ledger: height, template: "pod", action: "claim_pod", refId: pod.id.toString(),
+        amount: pod.amount.toString(), status: "executed", detail: "recipient-bound signature verified — capsule opened", txHash: null });
       setNotice(`Pod #${pod.id} opened — ${formatMinor(pod.amount)} ${CONFIG.assetCode} released.`);
       onChanged();
-    } catch (e) {
-      setError(humanizeError(e));
-    } finally {
-      setBusy(null);
-    }
+    } catch (e) { if (current()) setError(humanizeError(e)); }
+    finally { if (current()) setBusy(false); }
   };
 
   return (
@@ -361,10 +320,10 @@ function PodCard({
           <h4>{opened ? "Capsule opened" : claimReady ? "Ready to open" : "Opening conditions"}</h4>
           <ul>
             <li data-met={unlocked || opened}><span>Unlock ledger</span><strong>{opened || unlocked ? "Reached" : ledger == null ? "Checking…" : "Waiting"}</strong></li>
-            <li data-met={Boolean(preimage.trim()) || opened}><span>Secret</span><strong>{opened ? "Revealed" : preimage.trim() ? "Entered" : "Required"}</strong></li>
-            <li data-met={commitmentMatches && confirmedLedger != null && commitment != null && confirmedLedger > commitment.committed_at || opened}><span>Recipient commitment</span><strong>{opened ? "Verified" : commitmentMatches ? "Committed" : "Required"}</strong></li>
+            <li data-met={matches || opened}><span>Secret</span><strong>{opened ? "Verified" : matches ? "Matches" : "Required"}</strong></li>
+            <li data-met={!!recipient || opened}><span>Recipient wallet</span><strong>{opened ? "Verified" : recipient ? "Connected" : "Required"}</strong></li>
           </ul>
-          {!opened && <p>The contract verifies the secret when you open.</p>}
+          {!opened && <p>The contract verifies a signature bound to this Pod and recipient.</p>}
         </aside>
 
         {/* data + claim */}
@@ -382,36 +341,21 @@ function PodCard({
             <Row k="amount" v={`${formatMinor(pod.amount)} ${CONFIG.assetCode}`} />
             <Row k="unlock ledger" v={pod.unlock_ledger.toString()} />
             <Row k="remaining" v={ledger == null ? "Unavailable" : unlocked ? "Reached" : `~${formatRemaining(secondsLeft)}`} />
-            <details className="instrument-technical"><summary>Record details</summary><Row k="funder" v={shortAddress(pod.funder)} /><Row k="key hash" v={shortHex(pod.key_hash)} /></details>
+            <details className="instrument-technical"><summary>Record details</summary><Row k="funder" v={shortAddress(pod.funder)} /><Row k="claim public key" v={shortHex(pod.claim_pubkey)} /></details>
           </div>
           {!opened && (
             <div className="mt-5 space-y-3">
-              <Field label="Preimage" hint="Commit its digest first. The secret is sent only when you open the capsule.">
-                <TextInput
-                  value={preimage}
-                  onChange={(e) => setPreimage(e.target.value)}
-                  className="font-mono text-[12px]"
-                  placeholder="the 32-char hex secret"
-                  disabled={busy !== null}
-                />
+              <Field label="Pod secret" hint="The saved 64-character hex secret. It signs locally and is never sent to RPC.">
+                <TextInput type="password" value={seed} onChange={(e) => setSeed(e.target.value)} className="font-mono text-[12px]"
+                  placeholder="the saved 64-char hex secret" disabled={busy} autoComplete="off" spellCheck={false} />
               </Field>
               <div className="instrument-actions">
-                <GhostButton transaction onClick={() => void commit()} disabled={busy !== null || !expectedCommitment || commitmentMatches}>
-                  {busy === "commit" ? "Committing…" : "Commit claim"}
-                </GhostButton>
-                <FilledButton transaction onClick={() => void claim()} disabled={busy !== null || !claimReady || !recipient}>
-                  {busy === "claim" ? "Opening…" : "Open capsule"}
+                <FilledButton transaction onClick={() => void claim()} disabled={busy || !claimReady}>
+                  {busy ? "Opening…" : "Open capsule"}
                 </FilledButton>
               </div>
-              <p role="status" className="text-[12px] leading-relaxed text-muted">
-                {!commitmentMatches ? "Step 1: commit this claim for your recipient wallet without revealing the preimage."
-                  : confirmedLedger == null ? "Checking the confirmed ledger. Refresh the claim status before opening."
-                    : commitment && confirmedLedger <= commitment.committed_at ? "Claim committed. Waiting for the next confirmed ledger; status refreshes every 5 seconds."
-                      : confirmedLedger < pod.unlock_ledger ? `Claim committed. The capsule unlocks at ledger ${pod.unlock_ledger}.`
-                        : "Step 2: the claim is ready. Open the capsule with the same wallet and preimage."}
-              </p>
-              <GhostButton onClick={() => void refreshClaimStatus()} disabled={busy !== null || !recipient}>Refresh claim status</GhostButton>
-              {claimError && <ErrorNote>{claimError}</ErrorNote>}
+              {seed.trim() && !matches && <p className="text-[12px] text-muted">This secret does not match the Pod’s public key.</p>}
+
             </div>
           )}
         </div>

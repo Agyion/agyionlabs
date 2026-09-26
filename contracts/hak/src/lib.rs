@@ -1,15 +1,15 @@
 #![no_std]
 // Keep the published contract ABI; Soroban also generates matching client methods.
 #![allow(clippy::too_many_arguments)]
-//! Agyion kernel contract (v2).
+//! Agyion kernel contract (v3).
 //!
 //! Single contract, four templates:
 //! - **Fade** (was Son Saat): declining price clock + venue-signed handoff.
-//! - **Pod** (was Kapsul): time-locked + preimage-keyed fund.
+//! - **Pod** (was Kapsul): time-locked + bearer signing-key authorization.
 //! - **Trigger**: event escrow executed by an independent attester's ed25519 signature.
 //! - **Envoy**: on-chain limited mandate — an agent key may claim Fade listings for the owner.
 //!
-//! Protocol v2 adds deployment-bound signatures and recipient-bound Pod commitments.
+//! Protocol v3 replaces unsafe Pod plaintext reveals with recipient-bound signatures.
 //! See SECURITY_PROTOCOL.md for the security changes to the historical specification.
 
 use soroban_sdk::{
@@ -68,7 +68,7 @@ pub struct Fade {
     pub claimed_at: Option<u32>,
 }
 
-/// Pod: time capsule (SPEC_V2).
+/// Public Pod: time capsule with a transferable off-chain signing key.
 #[contracttype]
 #[derive(Clone, Debug)]
 pub struct Pod {
@@ -76,16 +76,8 @@ pub struct Pod {
     pub asset: Address,
     pub amount: i128,
     pub unlock_ledger: u32,
-    pub key_hash: BytesN<32>, // sha256(preimage)
-    pub state: u32,           // 0=buried 1=opened
-}
-
-/// A hidden Pod claim intent, bound to the recipient and deployment.
-#[contracttype]
-#[derive(Clone, Debug)]
-pub struct PodClaimCommitment {
-    pub commitment: BytesN<32>,
-    pub committed_at: u32,
+    pub claim_pubkey: BytesN<32>, // Ed25519 public key; the seed is never submitted
+    pub state: u32,               // 0=buried 1=opened
 }
 
 /// Trigger: event escrow (SPEC_V2). Funder locks funds for a beneficiary; an
@@ -156,7 +148,6 @@ pub enum DataKey {
     Pod(u64),
     Trigger(u64),
     Mandate(u64),
-    PodClaim(u64, Address),
     FadeCount,
     PodCount,
     TriggerCount,
@@ -176,9 +167,9 @@ pub struct Agyion;
 
 #[contractimpl]
 impl Agyion {
-    /// Clients must check this before using v2 signatures or Pod claims.
+    /// Clients must check this before using this ABI. Requires a fresh deployment.
     pub fn protocol_version() -> u32 {
-        2
+        3
     }
 
     // ---- Fade ----
@@ -248,38 +239,29 @@ impl Agyion {
         asset: Address,
         amount: i128,
         unlock_ledger: u32,
-        key_hash: BytesN<32>,
+        claim_pubkey: BytesN<32>,
+        key_proof: BytesN<64>,
     ) -> Result<u64, Error> {
-        pod::create_pod(&env, funder, asset, amount, unlock_ledger, key_hash)
+        pod::create_pod(
+            &env,
+            funder,
+            asset,
+            amount,
+            unlock_ledger,
+            claim_pubkey,
+            key_proof,
+        )
     }
 
-    /// Record a hidden claim intent before revealing a Pod's bearer secret.
-    pub fn commit_pod_claim(
-        env: Env,
-        pod_id: u64,
-        recipient: Address,
-        commitment: BytesN<32>,
-    ) -> Result<(), Error> {
-        pod::commit_pod_claim(&env, pod_id, recipient, commitment)
-    }
-
-    pub fn get_pod_claim_commitment(
-        env: Env,
-        pod_id: u64,
-        recipient: Address,
-    ) -> Option<PodClaimCommitment> {
-        pod::get_pod_claim_commitment(&env, pod_id, recipient)
-    }
-
-    /// Open after the timelock and a matching commitment from an earlier ledger.
-    /// Recipient authorization alone does not protect a public bearer preimage.
+    /// Open after the timelock with recipient auth and the claim key's signature.
+    /// Only the signature leaves the holder's device; never submit the key seed.
     pub fn claim_pod(
         env: Env,
         pod_id: u64,
-        preimage: Bytes,
         recipient: Address,
+        signature: BytesN<64>,
     ) -> Result<(), Error> {
-        pod::claim_pod(&env, pod_id, preimage, recipient)
+        pod::claim_pod(&env, pod_id, recipient, signature)
     }
 
     /// View: returns the pod record.

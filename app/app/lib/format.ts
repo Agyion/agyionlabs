@@ -20,15 +20,15 @@ export function parseMinor(input: string): bigint {
   return result;
 }
 
-/** Format minor-unit bigint compactly: 12.5 → "12.50" */
-export function formatMinor(v: bigint, maxDecimals = 2): string {
+/** Preserve every significant minor unit; pad fractional values for readability. */
+export function formatMinor(v: bigint, minimumDecimals = 2): string {
   const neg = v < 0n;
   const a = neg ? -v : v;
   const whole = a / SCALE;
   const frac = (a % SCALE).toString().padStart(CONFIG.decimals, "0").replace(/0+$/, "");
-  const fracShort = frac.slice(0, maxDecimals);
   const wholeGrouped = whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return `${neg ? "-" : ""}${wholeGrouped}${fracShort ? "." + fracShort.padEnd(maxDecimals, "0") : ""}`;
+  const precision = Math.max(0, Math.min(CONFIG.decimals, Math.trunc(minimumDecimals) || 0));
+  return `${neg ? "-" : ""}${wholeGrouped}${frac ? "." + frac.padEnd(precision, "0") : ""}`;
 }
 
 /** Signed variant with explicit + for positive values (ledger tables) */

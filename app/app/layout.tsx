@@ -8,11 +8,11 @@ export const metadata: Metadata = {
   title: "Agyion — Money with conditions",
   icons: { icon: "/favicon.svg" },
   description:
-    "Agyion locks money, proves a condition, and the money executes itself — or comes back. Four templates on Stellar: Fade, Pod, Trigger, Envoy.",
+    "Conditional payments on Stellar testnet. Explore Fade, Pod, Trigger and Envoy, with explicit transactions to settle each instrument.",
   openGraph: {
     title: "Agyion — Money with conditions",
     description:
-      "Lock money, prove a condition, and the money executes itself — or comes back.",
+      "Conditional payments on Stellar testnet: Fade, Pod, Trigger and Envoy.",
 
   },
 };
@@ -23,8 +23,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // The browser replaces the landing document before external CSS and the
+    // saved flight frame are ready. Set the canvas color in the opening tag.
+    <html lang="en" style={{ backgroundColor: "#07090d", colorScheme: "dark" }}>
       <head>
+        <meta name="color-scheme" content="dark" />
         <script id="agyion-flight-preload" dangerouslySetInnerHTML={{ __html: FLIGHT_BRIDGE_SCRIPT }} />
       </head>
       <body>

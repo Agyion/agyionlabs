@@ -1,9 +1,9 @@
 //! Pod template: the funder buries funds in the contract; after unlock_ledger
-//! has passed, a recipient who knows the correct preimage opens the fund.
+//! has passed, the bearer signing key authorizes a specific recipient.
 
 use soroban_sdk::{token, xdr::ToXdr, Address, Bytes, BytesN, Env};
 
-use crate::{DataKey, Error, Pod, PodClaimCommitment, TTL_EXTEND, TTL_THRESHOLD};
+use crate::{DataKey, Error, Pod, TTL_EXTEND, TTL_THRESHOLD};
 
 pub(crate) fn next_id(env: &Env) -> u64 {
     let key = DataKey::PodCount;
@@ -52,13 +52,27 @@ pub fn create_pod(
     asset: Address,
     amount: i128,
     unlock_ledger: u32,
-    key_hash: BytesN<32>,
+    claim_pubkey: BytesN<32>,
+    key_proof: BytesN<64>,
 ) -> Result<u64, Error> {
     funder.require_auth();
 
     if amount <= 0 {
         return Err(Error::InvalidAmount);
     }
+    if claim_pubkey == BytesN::from_array(env, &[0; 32]) {
+        return Err(Error::BadSignature);
+    }
+    // Require possession of a usable claim key before moving any funds. Bind the
+    // proof to all creation terms so a proof from another Pod is not a substitute.
+    let mut payload = crate::credential_payload(env, b"agyion:pod-create:v3\0");
+    payload.append(&funder.clone().to_xdr(env));
+    payload.append(&asset.clone().to_xdr(env));
+    payload.append(&Bytes::from_array(env, &amount.to_be_bytes()));
+    payload.append(&Bytes::from_array(env, &unlock_ledger.to_be_bytes()));
+    payload.append(&Bytes::from(claim_pubkey.clone()));
+    env.crypto()
+        .ed25519_verify(&claim_pubkey, &payload, &key_proof);
 
     // Non-custodial: funds are deposited into the contract; outside the rules
     // nobody can withdraw them.
@@ -69,7 +83,7 @@ pub fn create_pod(
         asset,
         amount,
         unlock_ledger,
-        key_hash,
+        claim_pubkey,
         state: 0,
     };
 
@@ -78,55 +92,14 @@ pub fn create_pod(
     Ok(id)
 }
 
-/// Commit to a recipient-specific claim without revealing the bearer preimage.
-/// Each replacement restarts the maturity delay; only the recipient may replace it.
-pub fn commit_pod_claim(
+pub fn claim_pod(
     env: &Env,
     pod_id: u64,
     recipient: Address,
-    commitment: BytesN<32>,
+    signature: BytesN<64>,
 ) -> Result<(), Error> {
-    recipient.require_auth();
-    let pod = read(env, pod_id)?;
-    if pod.state != 0 {
-        return Err(Error::InvalidState);
-    }
-    if env.ledger().sequence() == u32::MAX {
-        return Err(Error::InvalidInput);
-    }
-    let key = DataKey::PodClaim(pod_id, recipient);
-    let intent = PodClaimCommitment {
-        commitment,
-        committed_at: env.ledger().sequence(),
-    };
-    env.storage().persistent().set(&key, &intent);
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-    Ok(())
-}
-
-pub fn get_pod_claim_commitment(
-    env: &Env,
-    pod_id: u64,
-    recipient: Address,
-) -> Option<PodClaimCommitment> {
-    let key = DataKey::PodClaim(pod_id, recipient);
-    let intent = env.storage().persistent().get(&key);
-    if intent.is_some() {
-        env.storage()
-            .persistent()
-            .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-        env.storage()
-            .instance()
-            .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
-    }
-    intent
-}
-
-pub fn claim_pod(env: &Env, pod_id: u64, preimage: Bytes, recipient: Address) -> Result<(), Error> {
-    // Auth binds the call to the recipient; the earlier hidden commitment
-    // prevents a pending-reveal observer from choosing their own recipient.
+    // Both the destination wallet and the bearer claim key authorize this payout.
+    // Observing a signature in simulation or submission grants no other recipient.
     recipient.require_auth();
 
     let mut pod = read(env, pod_id)?;
@@ -136,25 +109,11 @@ pub fn claim_pod(env: &Env, pod_id: u64, preimage: Bytes, recipient: Address) ->
     if env.ledger().sequence() < pod.unlock_ledger {
         return Err(Error::Locked);
     }
-    let hash: BytesN<32> = env.crypto().sha256(&preimage).to_bytes();
-    if hash != pod.key_hash {
-        // A preimage is a bearer credential; a mismatch is classified as a
-        // credential failure (BadSignature), like an unverifiable signature.
-        return Err(Error::BadSignature);
-    }
-
-    let intent =
-        get_pod_claim_commitment(env, pod_id, recipient.clone()).ok_or(Error::InvalidInput)?;
-    if intent.committed_at >= env.ledger().sequence() {
-        return Err(Error::InvalidInput);
-    }
-    let mut payload = crate::credential_payload(env, b"agyion:pod-claim:v2\0");
+    let mut payload = crate::credential_payload(env, b"agyion:pod-claim:v3\0");
     payload.append(&Bytes::from_array(env, &pod_id.to_be_bytes()));
     payload.append(&recipient.clone().to_xdr(env));
-    payload.append(&preimage);
-    if env.crypto().sha256(&payload).to_bytes() != intent.commitment {
-        return Err(Error::BadSignature);
-    }
+    env.crypto()
+        .ed25519_verify(&pod.claim_pubkey, &payload, &signature);
 
     token::Client::new(env, &pod.asset).transfer(
         &env.current_contract_address(),
@@ -164,8 +123,5 @@ pub fn claim_pod(env: &Env, pod_id: u64, preimage: Bytes, recipient: Address) ->
 
     pod.state = 1;
     write(env, pod_id, &pod);
-    env.storage()
-        .persistent()
-        .remove(&DataKey::PodClaim(pod_id, recipient));
     Ok(())
 }

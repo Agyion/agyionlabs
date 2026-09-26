@@ -173,7 +173,8 @@ try {
         await select(page, 'pod');
         await page.getByRole('button', { name: 'Prepare pod secret', exact: true }).click();
         const secret = page.getByLabel('Generated Pod secret', { exact: true });
-        expect(await secret.inputValue()).toMatch(/^[a-f0-9]{32}$/);
+        expect(await secret.inputValue()).toMatch(/^[a-f0-9]{64}$/);
+        await expect(page.getByRole('checkbox', { name: 'I saved this secret outside this page.', exact: true })).not.toBeChecked();
         await expect(page.getByRole('button', { name: 'Bury the pod', exact: true })).toBeDisabled();
         await page.getByRole('checkbox', { name: 'I saved this secret outside this page.', exact: true }).check();
         await expect(page.getByRole('checkbox', { name: 'I saved this secret outside this page.', exact: true })).toBeChecked();

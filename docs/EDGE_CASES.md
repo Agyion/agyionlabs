@@ -1,23 +1,37 @@
-# Edge Cases & Real-World Contact Points (design register)
+# Edge Cases & Real-World Contact Points
 
-Permanent design rules from adversarial review + user scenarios. Every privacy/escrow claim must survive these.
+Status corrected 2026-09-26. This register separates present behavior from proposed protocol rules. It does not establish legal compliance. The current ZK module and proposed private system are documented in the [source review](security/2026-09-26/zk-eerc-review.md) and [private instrument design](security/2026-09-26/private-instruments-design.md).
 
-## EC-1 — Physical redemption breaks anonymity ("the bakery problem")
-On-chain pseudonymity ends at the physical counter. Rule: **privacy promises cover the ledger, not the bakery counter.** Fade claims are pseudonymous+physical; no ZK anonymity is promised there (CANON rule). ZK belongs to flows that can stay digital (Pod claim, Trigger attestation).
+## EC-1 — Physical redemption and public Fade
 
-## EC-2 — Dispute deadlock ("cargo scam")
-Buyer disputes forever, seller's money condemned? Structurally impossible: deadlines resolve everything; refund is rule-based, no veto exists. But disputes need a decider: **Loxias M-of-N attester set** (never a single decider), evidence window (tracking hash/photo proofs), and **mutual-consent fast path**: `resolve_mutual(trigger_id, sig_funder, sig_beneficiary, to_beneficiary)` — both sign → instant resolve, no deadline wait. (Trigger v2, first post-deploy addition; signatures unchanged, new function.)
+**Product decision:** Fade remains public. A physical counterparty may recognize the user independently of the ledger. No ZK anonymity is promised for Fade. Private Pod, Trigger and Envoy are a separate proposed subsystem, not a property of current HAK records.
 
-## EC-3 — Attribution without exposure ("visa deposit")
-Deposits need attribution, not exposure. Pattern: (a) counterparty knows the client off-chain (application #), (b) on-chain carries only a reference — muxed sub-account (CAP-27) or encrypted memo, (c) when proof is needed: ZK linkage proof ("payer owns identity attestation #12345") — selective disclosure, zkKYC pattern. The chain shows "a rule executed", never a name.
+## EC-2 — Disputes, deadlines and actual authority
 
-## EC-4 — KYA vs privacy
-Agent identity (KYA) binds the operator, never the user; the two never merge in one on-chain record. Agent-linked claims are traceable by design and the user sees this at delegation time.
+**Current:** Trigger pays its recorded beneficiary on one configured attester's valid signature before the deadline; afterwards anyone may submit a refund to the recorded funder. A transaction still needs submission and a fee; expiry alone moves no funds. This does not prove that the attester's real-world assertion is true.
 
-## EC-5 — Offline double-spend
-Cannot be prevented in software (BoE empirical). Mitigation: fixed denominations + per-note deposit + first-to-chain wins + nullifier detection. Demo shows one-hop offline claim proof only; bearer multi-hop is roadmap/regulation-gated.
+**Proposed:** Loxias M-of-N attestation, an evidence window and mutual-consent resolution. These are not implemented merely because they were named in this register. Any additional outcome branch must be committed at funding and preserve one shared spend state across payout/refund/dispute paths. A disclosure committee cannot acquire spending power by opening evidence.
 
-## EC-6 — Anonymous redemption vs lawful opening ("A locks, B redeems")
-Pod + ZK = anonymous transfer: lock from wallet A, redeem to wallet B; B stays anonymous. This is why the compliance layer exists.
-Rule: **dark by default, accountable under lawful process** — both at once. Mechanism: (a) identity at the anchor (KYC), chain pseudonymous; (b) auditor channel per transfer (view-only, cannot move funds); (c) threshold de-anonymization: auditor key split M-of-N (anchor + independent trustee + technical committee) — shares combine only under court order, revealing only that transaction (scoped, never bulk); (d) roadmap: proof-of-innocence (user proves "not from the sanctioned set" without revealing identity).
-Design line: total concealment = Tornado path (sanctioned); total exposure = CeFi. Agyion is the third way.
+## EC-3 — Attribution without unnecessary public identity
+
+**Current limit:** A muxed address or memo does not conceal public amounts, addresses or transaction links. An encrypted memo alone does not produce an anonymous payment.
+
+**Proposed:** Keep civil-identity records with their authorized provider and use narrowly scoped credentials or encrypted references when required. A proof of a credential establishes its defined statement; it does not independently validate a person's real-world identity or satisfy an unspecified legal requirement.
+
+## EC-4 — Agent authority and privacy
+
+**Current:** An Envoy mandate records an owner address and agent key, and claims public Fade listings for that owner. It is traceable and limited to nonpositive-price claims, count and expiry; it does not confer arbitrary spending authority.
+
+**Proposed:** A separate private capability can operate inside a shielded pool. Its limits, recipients and revocation must be enforced cryptographically. Using it to interact with public Fade crosses a public boundary; it cannot preserve the same counterparty privacy there.
+
+## EC-5 — Offline preparation is not final settlement
+
+An offline artifact does not establish that funds remain unspent. Final acceptance depends on current chain state and transaction inclusion. A future private system needs durable nullifiers and atomic transitions; multi-hop offline money and guaranteed offline double-spend prevention are not present capabilities. No legal eligibility is inferred from a fixed denomination or a proof file.
+
+## EC-6 — Anonymous internal transfers and scoped opening
+
+**Current:** The standalone preimage verifier does not hide Pod amounts/addresses and is not integrated into its claim path. The proposed public claim-key safety repair also does not provide anonymity. Public deposits and withdrawals remain observable even if a future internal pool transfer is private.
+
+**Proposed:** A shared shielded note pool with locally generated proofs and M-of-N selective disclosure. Trustees should issue verifiable, per-ciphertext partial decryptions without reconstructing a global private key. The request must identify records, field scope, requester and authorization policy. Decryption does not permit spending.
+
+**Trust limit:** Fewer than M trustees should not decrypt; a colluding quorum can potentially decrypt all records under an epoch key it controls. Shamir-splitting a key or adding multisig does not make bulk opening cryptographically impossible. Request policy is enforced by the committee and its operational controls; software does not autonomously establish the legal validity of a court order. No production committee, ceremony or private-asset migration is deployed by this design.

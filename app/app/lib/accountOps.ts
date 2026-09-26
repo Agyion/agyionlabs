@@ -20,6 +20,7 @@ import {
 import { CONFIG } from "./config";
 import type { TransactionSigner } from "./hakClient";
 import { assertSignedTransactionMatches, walletSessionVersion } from "./wallet";
+import { listAnchorPayments, rememberAnchorPayment, updateAnchorPayment, withAnchorPaymentLock, type AnchorPaymentIntent } from "./anchorPayments";
 
 const HORIZON_URL = "https://horizon-testnet.stellar.org";
 
@@ -50,6 +51,7 @@ async function signAndSubmit(
   address: string,
   ops: Parameters<TransactionBuilder["addOperation"]>[0][],
   memo?: Memo,
+  paymentIntent?: AnchorPaymentIntent,
 ): Promise<string> {
   const version = walletSessionVersion();
   async function assertSession(): Promise<void> {
@@ -73,6 +75,20 @@ async function signAndSubmit(
   assertSignedTransactionMatches(tx.toXDR(), signedXdr, CONFIG.networkPassphrase, address);
   await assertSession();
   const signed = new Transaction(signedXdr, CONFIG.networkPassphrase);
+  if (paymentIntent) {
+    const hash = signed.hash().toString("hex");
+    // Keep only public intent metadata, never a signed envelope or secret.
+    rememberAnchorPayment(paymentIntent, hash);
+    try {
+      const result = await server.submitTransaction(signed);
+      if (result.hash !== hash || result.successful !== true) throw new Error("Unconfirmed payment response");
+      updateAnchorPayment(hash, "success", result.ledger);
+      return hash;
+    } catch {
+      try { updateAnchorPayment(hash, "unknown", null); } catch { /* The pre-broadcast pending record still blocks a duplicate. */ }
+      throw new AccountOpError(`Payment outcome could not be confirmed. Check ${hash} before retrying; do not send another payment.`);
+    }
+  }
   const result = await server.submitTransaction(signed);
   return result.hash as string;
 }
@@ -97,6 +113,7 @@ export function sendAnchorPayment(
   amount: string,
   memoType: string,
   memoValue: string,
+  withdrawalId: string,
 ): Promise<string> {
   let memo: Memo;
   switch (memoType) {
@@ -112,7 +129,12 @@ export function sendAnchorPayment(
     default:
       throw new AccountOpError(`Unsupported memo type from anchor: ${memoType}`);
   }
-  return signAndSubmit(
+  const anchor = new URL(CONFIG.anchorUrl);
+  if (anchor.protocol !== "https:" || anchor.username || anchor.password) throw new AccountOpError("Anchor requires a trusted HTTPS origin.");
+  if (!withdrawalId || withdrawalId.length > 200) throw new AccountOpError("A registered withdrawal ID is required before payment.");
+  const intent: AnchorPaymentIntent = { account: from, network: CONFIG.networkPassphrase, anchor: anchor.origin,
+    withdrawalId, destination: to, amount, assetCode: CONFIG.assetCode, assetIssuer: CONFIG.assetAddress, memoType, memo: memoValue };
+  return withAnchorPaymentLock(intent, () => signAndSubmit(
     signer,
     from,
     [
@@ -123,5 +145,18 @@ export function sendAnchorPayment(
       }),
     ],
     memo,
-  );
+    intent,
+  ));
+}
+
+/** Read-only lookup of known hashes. NOT_FOUND never authorizes another payment. */
+export async function reconcileAnchorPayments(account: string): Promise<void> {
+  const server = horizon();
+  for (const payment of listAnchorPayments(account).filter(a => a.status === "pending" || a.status === "unknown")) {
+    try {
+      const tx = await server.transactions().transaction(payment.hash).call();
+      if (tx.hash !== payment.hash || typeof tx.successful !== "boolean") continue;
+      updateAnchorPayment(payment.hash, tx.successful ? "success" : "failed", tx.ledger_attr);
+    } catch { /* A failed lookup is uncertainty, never evidence that payment is safe to repeat. */ }
+  }
 }

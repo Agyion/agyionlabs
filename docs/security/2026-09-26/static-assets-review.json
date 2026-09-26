@@ -1,0 +1,180 @@
+{
+  "date": "2026-09-26",
+  "scope": "all authored CSS in app/app and landing/src/styles, public SVG under app/public and landing/public, and archival research-board HTML/CSS; activation categories kept separate",
+  "files": [
+    {
+      "path": "app/app/globals.css",
+      "sha256": "b5e62bf91d135e6bb3e808fd6fdef94ca1b265e36f8229c1703c735386a77c4b",
+      "bytes": 12732,
+      "lines": 547,
+      "review": "manual-full-file-static",
+      "classification": "active-production-source"
+    },
+    {
+      "path": "app/app/orbital.css",
+      "sha256": "e3c204ce6af36e4477251c1fbf269acd959bb76152f89671ddae5121821a5b20",
+      "bytes": 38742,
+      "lines": 427,
+      "review": "manual-full-file-static",
+      "classification": "active-production-source"
+    },
+    {
+      "path": "landing/src/styles/base.css",
+      "sha256": "661935cf576a480c694821f0be71f421d01c08c63a785adccb0e6afcbae5c317",
+      "bytes": 7356,
+      "lines": 286,
+      "review": "manual-full-file-static",
+      "classification": "active-production-source"
+    },
+    {
+      "path": "landing/src/styles/chrome.css",
+      "sha256": "5814e4ece59d690203bcc7a1efe762532b1c1b450c1e1dda843368805231c489",
+      "bytes": 13121,
+      "lines": 643,
+      "review": "manual-full-file-static",
+      "classification": "active-production-source"
+    },
+    {
+      "path": "landing/src/styles/pages.css",
+      "sha256": "05440781838cd97bdea0ad85a74f6c35c7e60d74e2311381a43578e215cccab9",
+      "bytes": 8491,
+      "lines": 155,
+      "review": "manual-full-file-static",
+      "classification": "active-production-source"
+    },
+    {
+      "path": "landing/src/styles/notfound.css",
+      "sha256": "ac90f4c89b3391d642c8fe3db46e84c27fc154de364bf3edcfc0162479d6e695",
+      "bytes": 4658,
+      "lines": 269,
+      "review": "manual-full-file-static",
+      "classification": "active-production-source"
+    },
+    {
+      "path": "landing/src/styles/orbital.css",
+      "sha256": "662da54e3457f4ecf0d4f119572b759ad902e46a0de5cc05e24f26e67fee0f34",
+      "bytes": 50737,
+      "lines": 589,
+      "review": "manual-full-file-static",
+      "classification": "active-production-source"
+    },
+    {
+      "path": "landing/src/styles/detail-world.css",
+      "sha256": "a89166791f3e2e351216cdb03621f00abb34f4e67d81bc7e0c65c42a69bcc2e1",
+      "bytes": 12586,
+      "lines": 144,
+      "review": "manual-full-file-static",
+      "classification": "active-production-source"
+    },
+    {
+      "path": "landing/src/styles/pod-trial.css",
+      "sha256": "9177a135a390716185055213604af1fe36521e35b97bca06a152fdcd45ff4508",
+      "bytes": 2906,
+      "lines": 30,
+      "review": "manual-full-file-static",
+      "classification": "active-production-source"
+    },
+    {
+      "path": "app/public/favicon.svg",
+      "sha256": "39f05901124d7cd5bb80ea7c82f658aff6ddd56022c0890fa298aeebc8546e35",
+      "bytes": 276,
+      "lines": 1,
+      "review": "manual-full-file-static",
+      "classification": "active-production-source"
+    },
+    {
+      "path": "landing/src/styles/about.css",
+      "sha256": "3ee582ba433c7a710f28732baad75cbaeed4e8aba2f8f5297419ffd27a512cd1",
+      "bytes": 7669,
+      "lines": 405,
+      "review": "manual-full-file-static",
+      "classification": "dormant-scaffold-not-imported"
+    },
+    {
+      "path": "landing/src/styles/blog.css",
+      "sha256": "379deed7c0d0241cb5ed40197ec529f780ff86ea52438d8e60e28adf005269e3",
+      "bytes": 5141,
+      "lines": 255,
+      "review": "manual-full-file-static",
+      "classification": "dormant-scaffold-not-imported"
+    },
+    {
+      "path": "landing/src/styles/contact.css",
+      "sha256": "bbf81e40dc7a3f2b5dd262de88489dc5bc3f0e5060dee6b202700c58fe5867a6",
+      "bytes": 5896,
+      "lines": 310,
+      "review": "manual-full-file-static",
+      "classification": "dormant-scaffold-not-imported"
+    },
+    {
+      "path": "landing/src/styles/cursor.css",
+      "sha256": "bca3ab2f0178e179e97f05dfe85f833516e37e361837c19664b81e71b9c77e71",
+      "bytes": 2603,
+      "lines": 132,
+      "review": "manual-full-file-static",
+      "classification": "dormant-scaffold-not-imported"
+    },
+    {
+      "path": "landing/src/styles/home-hero.css",
+      "sha256": "20348a082aee4dd1e9ec5bcc18f6583eaa0d0505c536c6ff48d4af39e8a9c60d",
+      "bytes": 11544,
+      "lines": 505,
+      "review": "manual-full-file-static",
+      "classification": "dormant-scaffold-not-imported"
+    },
+    {
+      "path": "landing/src/styles/home.css",
+      "sha256": "204ccfaacfb3e521c8fdcd7f0ea8226fd82020e41314474e6be38940b7eb4b29",
+      "bytes": 15579,
+      "lines": 730,
+      "review": "manual-full-file-static",
+      "classification": "dormant-scaffold-not-imported"
+    },
+    {
+      "path": "landing/src/styles/lab.css",
+      "sha256": "69126ebe1ce9af5abbd5b3b26cb3300fc64de3cca6a4f0cfc260e00b6d523dea",
+      "bytes": 7269,
+      "lines": 352,
+      "review": "manual-full-file-static",
+      "classification": "dormant-scaffold-not-imported"
+    },
+    {
+      "path": "landing/src/styles/nav.css",
+      "sha256": "ee4923c7218e86336ad8b9ec684b91cb332268a10fa1570974f5ccf7780ac7ab",
+      "bytes": 12845,
+      "lines": 590,
+      "review": "manual-full-file-static",
+      "classification": "dormant-scaffold-not-imported"
+    },
+    {
+      "path": "landing/src/styles/work.css",
+      "sha256": "503674fc58e5e72e701eaca3efe8d52760ba569bf85bf3c79c02a792f515fc13",
+      "bytes": 7304,
+      "lines": 378,
+      "review": "manual-full-file-static",
+      "classification": "dormant-scaffold-not-imported"
+    },
+    {
+      "path": "docs/research/2026-09-25-crypto-design/index.html",
+      "sha256": "e8c2d3c6213fab90984ff4bdcfaf9f423913e2ccffaf6207cfd00ea938db3d39",
+      "bytes": 5907,
+      "lines": 25,
+      "review": "manual-full-file-static",
+      "classification": "archival-research-board-not-deployed"
+    },
+    {
+      "path": "docs/research/2026-09-25-crypto-design/board.css",
+      "sha256": "027d2c8a867736982f672f93bb6263bb9ba9d81919b4f825f4938b3d4cb87caf",
+      "bytes": 10385,
+      "lines": 7,
+      "review": "manual-full-file-static",
+      "classification": "archival-research-board-not-deployed"
+    }
+  ],
+  "binary_fonts_images_excluded": true,
+  "runtime_browser_or_network_checks": false,
+  "separate_parent_review": "docs/research/2026-09-25-crypto-design/board.js; not included in this manual review count",
+  "total_files": 21,
+  "total_lines": 6780,
+  "total_bytes": 243747
+}

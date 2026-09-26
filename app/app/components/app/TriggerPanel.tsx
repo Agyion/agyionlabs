@@ -407,7 +407,7 @@ function TriggerActions({
       </div>
       <div className="mt-4 space-y-3">
         <Field label="Attester secret (demo signer)" hint="S… or 64-hex seed">
-          <TextInput value={secret} onChange={(e) => setSecret(e.target.value)} className="font-mono text-[12px]" placeholder="S…" />
+          <TextInput type="password" autoComplete="off" spellCheck={false} value={secret} onChange={(e) => setSecret(e.target.value)} className="font-mono text-[12px]" placeholder="S…" />
         </Field>
         <div className="instrument-actions">
           {!expired ? (

@@ -12,8 +12,8 @@ const ROWS: [string, string, string][] = [
   ["Rule parameters", "visible", "amounts, deadlines, caps, curve"],
   ["State transitions", "visible", "lock → claim → execute / return"],
   ["Signatures", "visible", "ed25519 proofs, verifiable by anyone"],
-  ["Counterparty identity", "sealed", "addresses only; KYC hooks at the edges"],
-  ["Pod preimage", "sealed", "sha256 hash on-chain; the secret never is"],
+  ["Wallet addresses", "visible", "public transfers can be linked to people"],
+  ["Pod v3 claim key", "local", "public key and recipient-bound signature on-chain"],
   ["Agent scope", "visible", "mandate limits are public by design"],
 ];
 
@@ -35,14 +35,14 @@ export default function Compliance() {
               conditions on-chain.
             </p>
             <p>
-              Identity stays at the edges. KYC hooks and jurisdictional gates
-              belong to the on-ramps and venues that touch fiat — the contract
-              itself sees addresses and signatures, nothing more.
+              Addresses and transfer amounts are public. A wallet address can
+              be linked to its owner; the current instruments do not provide
+              anonymous or encrypted balances.
             </p>
             <p>
-              Secrets stay secret by construction. A Pod stores only the hash
-              of its key; the preimage that opens it never touches the chain
-              until the moment of opening.
+              Protocol v3 signs Pod claims locally and submits a recipient-bound
+              signature. The saved bearer key remains private. A separate ZK
+              system with threshold disclosure is under development.
             </p>
           </div>
         </div>

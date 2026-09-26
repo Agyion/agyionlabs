@@ -2,7 +2,8 @@
 # HAK MVP — Anchor Platform assets.yaml (TESTNET)
 # =============================================================================
 # Temsili TRY token'ı: tTRY
-# - Issuer: bizim testnet hesabımız (SPEC §2 — USDC bağımlılığı YOK, clawback KAPALI)
+# - Issuer/distribution: tarihsel örnek public adresler; canlı sahiplik/varlık doğrulanmadı.
+# - Bu YAML clawback veya issuer izinlerini ayarlamaz ya da kapalı olduklarını kanıtlamaz.
 # - SEP-24 deposit/withdraw AÇIK (hosted/interactive akış)
 # - SEP-6/SEP-31 kapalı (MVP kapsamı dışı)
 # - SEP-38 açık: tTRY <-> iso4217:TRY kote edilebilir (1:1 temsili)
@@ -11,10 +12,11 @@
 #   service-runner/src/main/resources/config/assets.yaml (varsayılan örnek)
 #   https://developers.stellar.org/platforms/anchor-platform
 #
-# NOT: Aşağıdaki issuer/distribution adresleri ÖRNEKTİR (bu repo için üretilmiş
-# testnet keypair'in PUBLIC anahtarı). Secret asla bu dosyaya yazılmaz; deploy
-# sırasında `scripts/deploy_testnet.sh` üretir/yönetir. Kendi ortamınızda
-# adresleri kendi testnet hesaplarınızla değiştirin.
+# NOT: Aşağıdaki issuer/distribution adresleri ÖRNEKTİR.
+# Bu dosyada secret bulunmaz; örnek public adresler anahtar sahipliği kanıtı değildir.
+# Bu eski örnek mevcut USDC/SEP-6 hackathon anchor'ına bağlı değildir;
+# scripts/deploy_testnet.sh yalnız yeni kernel deploy eder, issuer üretmez.
+# Ayrı Anchor Platform kurulumunda adresleri kendi testnet hesaplarınızla değiştirin.
 # =============================================================================
 items:
   # --- Stellar varlığı: tTRY (temsili Türk Lirası) ---

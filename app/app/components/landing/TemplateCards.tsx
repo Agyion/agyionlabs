@@ -25,7 +25,7 @@ const CARDS = [
     id: "pod",
     name: "Pod",
     tag: "Time capsule",
-    body: "Money buried until a ledger height, opened only by a secret preimage. Savings that cannot be spent early, gifts that arrive on a date, escrow with a horizon.",
+    body: "Money locked until a ledger height. A saved claim key signs locally for the recipient; the key itself is never submitted in protocol v3.",
     media: "pod.png",
     alt: "Capsule buried in layered sand strata",
   },

@@ -1,6 +1,6 @@
 # zk-preimage — Groth16 Preimage-Knowledge Verifier (BN254)
 
-A working zero-knowledge proof layer for Agyion: a Soroban contract that
+An independent experimental proof verifier, not Agyion payment privacy: a Soroban contract that
 verifies **Groth16 proofs over BN254** for the statement
 
 > *"I know a `preimage` such that `Poseidon(preimage) == hash`"*
@@ -62,7 +62,7 @@ L = IC[0] + Σ_i public[i] · IC[i+1]          (single g1_msm + g1_add)
 evaluated as one host pairing product:
 `e(A,B) · e(−alpha,beta) · e(−L,gamma) · e(−C,delta) == 1`.
 
-## Measured cost (test host budget, equivalent to simulateTransaction metering)
+## Historical measured cost (local test host budget)
 
 | Metric | Value |
 |---|---|
@@ -73,8 +73,11 @@ evaluated as one host pairing product:
 | Verifying key size | 576 bytes (4 points + 2 IC points) |
 | Contract WASM | ~5.2 KB |
 
-~26M instructions ≈ 26% of the classic 100M/tx budget (and ~7% of the
-newer 400M limit) — a single transaction has ample headroom.
+These measurements describe the earlier isolated verifier fixture, not a current
+network limit or an integrated private payment. Re-measure the exact WASM,
+target host/protocol, storage footprint and complete transaction before deciding
+whether it fits. No target-network measurement was performed in the 26 September
+documentation review.
 
 ## Reproducing the artifacts
 
@@ -114,8 +117,10 @@ cd ../../circuits && npm ci --ignore-scripts && npm test
 
 ## Pod integration roadmap (bridge notes)
 
-The current Pod opens with a SHA-256 bearer preimage plus the v2 hidden
-recipient-bound commit/reveal flow. This independent circuit proves only
+Current local Pod V3 uses a random Ed25519 claim key and recipient/domain-bound
+signatures, as documented in [the security protocol](../hak/SECURITY_PROTOCOL.md).
+The earlier SHA-256 reveal and V2 commit/reveal designs are superseded; neither
+provided anonymity. This independent circuit proves only
 `Poseidon(preimage) == hash`; it does **not** bind a recipient, Pod ID, contract,
 network, or nullifier, and it does not produce an unlinkable payment protocol.
 

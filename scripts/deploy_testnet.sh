@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Agyion kernel v2 deployment helper. Default: local, read-only checks and plan.
+# Agyion kernel v3 deployment helper. Default: local, read-only checks and plan.
 # ./scripts/deploy_testnet.sh              # no build, key creation, funding or RPC
 # DRY_RUN=0 ./scripts/deploy_testnet.sh    # explicit operator-run testnet deployment
 # DEPLOYER_ALIAS may name an existing CLI identity. Only the dedicated default
@@ -85,10 +85,10 @@ if [[ "$DRY_RUN" == '1' ]]; then
     say '3. Reuse the selected identity; it must already have enough testnet XLM for fees.'
   fi
   say '4. Deploy the new kernel on the pinned testnet network; preserve existing contract aliases.'
-  say '5. Read protocol_version with --send no; require 2 before printing app configuration.'
+  say '5. Read protocol_version with --send no; require 3 before printing app configuration.'
   say 'No issuer, trustline or asset-transfer steps are needed; the app uses Circle testnet USDC.'
   say 'Configuration template (replace the placeholder only after successful deployment):'
-  print_config '<new-v2-testnet-contract-id>'
+  print_config '<new-v3-testnet-contract-id>'
   say 'To execute this plan explicitly: DRY_RUN=0 ./scripts/deploy_testnet.sh'
   exit 0
 fi
@@ -123,7 +123,7 @@ if ! PROTOCOL_VERSION="$(stellar_cmd contract invoke --id "$CONTRACT_ID" \
   die "Deployment $CONTRACT_ID exists, but protocol readback failed. Do not configure the app with it until verified."
 fi
 PROTOCOL_VERSION="$(printf '%s' "$PROTOCOL_VERSION" | tr -d '[:space:]')"
-[[ "$PROTOCOL_VERSION" == '2' ]] || die "Deployment $CONTRACT_ID did not report protocol version 2. App configuration was not emitted."
-say 'Verified protocol version 2. Rebuild the app with these public settings:'
+[[ "$PROTOCOL_VERSION" == '3' ]] || die "Deployment $CONTRACT_ID did not report protocol version 3. App configuration was not emitted."
+say 'Verified protocol version 3. Rebuild the app with these public settings:'
 print_config "$CONTRACT_ID"
 say 'Existing contracts and locked funds remain unchanged; this is a new testnet deployment.'

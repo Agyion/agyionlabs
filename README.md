@@ -4,19 +4,15 @@
 
 Agyion is a conditional-payments application on Stellar (Soroban). One kernel contract, four condition templates, a sandbox fiat-rail integration on one side and a local proof ledger on the other. This repository is the Genesis Track MVP of the Rise In × Stellar Pro Hackathon (Istanbul, 19–20 September 2026): kernel contract + four templates + testnet + live demo.
 
-## Current local revision — 24 September 2026
+## Current source and release boundary — 26 September 2026
 
-The orbital interface and security protocol v2 are implemented and verified
-**locally**. This revision has not been deployed to testnet or published to the
-websites below. The current app defaults to mock mode; its Soroban client
-requires `protocol_version() == 2` and refuses protected operations against the
-older kernel. A new kernel deployment, matching public configuration and an app
-rebuild are required before claiming live v2 behavior. Existing locked funds
-remain under the earlier contract; no automatic migration exists.
+The current frontend was published on 26 September as Cloudflare version `90ff8d23-8b7a-4cc6-b4e3-bf66aebca29a`. The [current security and release report](docs/security/2026-09-26/REVIEW.md) records source coverage, verification and retained live CSP/RPC failures. The source implements **kernel protocol V3**, including recipient-bound Pod signatures instead of plaintext reveal, but no V3 kernel was deployed. The frontend therefore keeps old-kernel writes closed.
+
+The source defaults to mock mode when no mode is configured. The Soroban client requires `protocol_version() == 3` and refuses protected operations against the older kernel. A fresh kernel deployment, matching public configuration and a rebuilt frontend are required before using V3 on chain. Existing locked funds remain under the earlier contract; no automatic migration exists. Amounts, wallets and transaction links remain public. No private pool or M-of-N disclosure is implemented.
 
 Start with [HANDOFF.md](HANDOFF.md), the [security protocol and migration
-notes](contracts/hak/SECURITY_PROTOCOL.md), and the [local audit evidence and
-remaining limits](docs/verification/2026-09-24-orbital-audit.md). The historical
+notes](contracts/hak/SECURITY_PROTOCOL.md), and the [current review evidence and
+remaining limits](docs/security/2026-09-26/REVIEW.md). The historical
 hackathon narrative and roadmap below should be read with those current limits.
 
 ## Historical hackathon testnet deployment — before this security revision
@@ -24,7 +20,7 @@ hackathon narrative and roadmap below should be read with those current limits.
 | Artifact | Value |
 | --- | --- |
 | **Earlier demo URLs** | [agyionlabs.dev](https://agyionlabs.dev) · [Workers demo](https://agyion.jasurbek-rustamov.workers.dev) |
-| **Earlier kernel — not protocol v2** | `CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5` ([Stellar Lab](https://lab.stellar.org/r/testnet/contract/CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5) · [Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5)) |
+| **Earlier kernel — not protocol V3** | `CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5` ([Stellar Lab](https://lab.stellar.org/r/testnet/contract/CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5) · [Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5)) |
 | **Network** | Stellar testnet (`Test SDF Network ; September 2015`), RPC `https://soroban-testnet.stellar.org` |
 | **Ramp asset** | USDC testnet — issuer `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` |
 | **Anchor** | Official hackathon TR mock anchor (SEP-6/10/12/38): `https://tr-mock-anchor.fly.dev` |
@@ -32,9 +28,9 @@ hackathon narrative and roadmap below should be read with those current limits.
 
 These addresses and transactions record the earlier hackathon demo. They do
 not establish that the current local revision is deployed or that the new
-commit/reveal and signature protections are active there. The new Soroban
+V3 signature protections are active there. The new Soroban
 client fails closed on that older kernel; kernel operations require a
-compatible, explicitly configured v2 deployment.
+compatible, explicitly configured V3 deployment.
 
 ---
 
@@ -53,7 +49,7 @@ Users are already asking for this in public. On r/toogoodtogo: *"Money is still 
 
 **Agyion is conditional money: funds lock into a contract, a submitted proof can authorize settlement, and an eligible refund transaction returns them by the recorded rule.**
 
-Agyion is not a wallet, not a stablecoin, and not a payment processor. It never touches user funds: money sits in the contract on-chain and at the regulated anchor off-chain. The merchant only ever sees fiat TRY (anchor → bank); crypto is never the payment instrument at the counter.
+The kernel holds deposited on-chain assets and enforces the implemented settlement rules; its source has no discretionary admin-withdrawal entry point. The separate ramp uses a testnet mock anchor with a simulated bank leg. This does not establish a production banking service, legal classification or real TRY settlement.
 
 ## The lifecycle
 
@@ -62,32 +58,32 @@ LOCK ──► CONDITION WINDOW ──► PROOF? ──► yes ──► EXECUTE
   │                                │
   │                                └────► no ───► refund(): submitted transaction,
   │                                               zero-discretion return to owner
-  └─ funds never pass through Agyion; they live in the contract and at the anchor
+  └─ deposited assets are held by the kernel; the separate ramp is a sandbox
 ```
 
-`refund()` is the heart of the product: anyone may submit it, it follows the recorded rule, and it pays the recorded owner. Someone must submit and pay for the transaction; expiry alone does not move funds. No autonomous keeper is included. No admin key, no support queue, no discretionary destination. (An *exceptional* compliance freeze — M-of-N + 72-hour public queue + user `contest()` veto — exists only in the compliance layer design, never in the demo path, and no single party can trigger it alone.)
+Fade and Trigger have rule-based refund transactions to their recorded seller/funder. Someone must submit and pay for the transaction; expiry alone does not move funds. No autonomous keeper is included. **Pod has no refund or admin recovery; revoking an Envoy mandate does not undo an existing Fade claim.** The historical M-of-N compliance-freeze proposal is not implemented.
 
 ## The four templates
 
-One kernel, four condition packs. On-chain they are generic (`T1..T4`); meaning lives off-chain.
+One kernel, four condition packs. Their methods and records are public; generic template labels do not conceal instrument type or participants.
 
 | Template | Mechanism | Return path | The promise |
 |---|---|---|---|
 | **Fade** ⏱ | Declining price clock; venue-signed handoff (`ed25519`) settles at the price of that ledger | `refund()` transaction on no-show / expiry — rule-based | "Proven, it pays; unproven, it returns." Price may cross zero: the campaign pool pays the claimant. |
-| **Pod** 🗝 | `sha256(preimage)` key + `unlock_ledger` timelock + recipient-bound commit/reveal | No refund path | "No one opens before 2035 — not even me." No app-admin unlock or refund path; asset issuer policies still apply. |
+| **Pod** 🗝 | Random Ed25519 claim key + `unlock_ledger`; local signatures bind creation terms and the chosen recipient | No refund path | The unlock ledger and bearer key authorize opening. Key loss has no recovery; issuer policies and storage restoration still apply. |
 | **Trigger** 📜 | Event escrow; an independent attester's `ed25519` signature executes the payout | `refund_trigger()` after deadline if unattested | Conditional execution without either party's consent at execution time. |
-| **Envoy** 🤖 | On-chain limited mandate: agent key, per-tx cap, daily cap, `valid_until`, recipient bound to owner | One-click `revoke_mandate()` (instant, owner-only) | A mandate enforced by the contract, not by the agent's goodwill. |
+| **Envoy** 🤖 | Agent key; only nonpositive-price Fade claims; at most 50 claims per mandate, expiry and owner-bound recipient | Owner-authorized `revoke_mandate()` transaction | No positive-price spending authority. Revocation takes effect when confirmed; existing claims remain. |
 
 ## Use cases — one real-world story per template
 
 - **Fade — the bakery that would rather pay you than throw food away.** A Kadıköy bakery has 8 unsold portions at closing time. It loads a Fade campaign: a compensation pot (say 400 USDC), start price 30 TRY, floor **−20 TRY**, slope a few TRY every ten minutes. At 19:40 the price is still positive — normal sale. At 20:30 the clock has crossed zero: the campaign pool now **pays the taker** to rescue the food, because the marginal cost of a wasted portion is already negative. Whoever claims taps "Produce signature" at the counter (the venue's demo key signs the handoff), and settlement happens at the price of the claim ledger — including negative. Nobody shows up? The pickup window expires and `refund()` returns the pot to the bakery — when someone submits the eligible refund transaction, by rule, without a support ticket. Existing rescue apps stop at a *positive* discount (Too Good To Go ~⅓, Fazla ~50%) or forbid money entirely (Olio); nobody lets the price fall below zero, even though waste already costs money.
-- **Pod — money that cannot move until the date, and the key you can hand to a stranger.** A parent locks an education fund that unlocks in 2035 and prints the sha256 preimage as a QR inside a letter. Until the unlock ledger passes, **no one** opens it — not the parent, not us, no admin key. After it: whoever physically holds the preimage claims it. Multi-year timelock + unknown recipient + physical discovery in one instrument.
-- **Trigger — the obligation that executes when the event is registered, not when someone feels like it.** A freelance milestone, an insurance payout on a registered flight delay, family support that must arrive when the attestation lands: the funder locks USDC for a beneficiary, an **independent attester's** ed25519 signature executes the payout — no consent needed from either party at execution time. If the deadline passes unattested, `refund_trigger()` sends it back to the funder. Deadlines resolve everything; disputes cannot deadlock (see EC-2 for the mutual-consent fast path in Trigger v2).
-- **Envoy — an AI agent that can shop, but can never run away with the money.** You grant an agent key an on-chain mandate: max per transaction, daily cap, an expiry, and a recipient hard-bound to **you**. Your agent hunts sub-zero Fade campaigns ("free food within my caps") and claims them *for* you — the contract enforces the limits, so the agent cannot exceed a cap, redirect funds, or outlive `valid_until`. One click revokes it, instantly. Worst case is bounded by the remaining daily cap — the agent's goodwill is never part of the security model.
+- **Pod — a time capsule with a transferable secret.** The funder saves a fresh 32-byte seed outside the app before locking funds. After the unlock ledger, a holder signs for a chosen recipient; only the public key and signatures reach RPC. Anyone retaining the seed, including its creator, retains this authority. Long locks need storage maintenance/restoration, and losing the seed cannot be repaired by an admin.
+- **Trigger — payment authorized by an attester.** A funder locks assets for a beneficiary. The configured attester signs an assertion; a submitted valid attestation pays the beneficiary before the deadline. Otherwise an eligible refund transaction returns funds to the funder. The demo signer is local, not an independent oracle network; the contract cannot determine whether a real-world event actually happened.
+- **Envoy — limited campaign claims.** An agent can claim up to 50 nonpositive-price Fades for the mandate owner before expiry or confirmed revocation. Per-transaction and daily monetary fields do not constitute a spending allowance: these claims consume no positive-price budget. The local runner operates only while its panel is open; it is not a hosted autonomous agent.
 
 ## Historical demo guide — the 5-minute jury run
 
-This is the earlier jury flow, preserved for context. It is not verification of the current local revision. For v2, deploy and configure the new kernel first, and use the Pod commit/reveal flow described in the security protocol.
+This is the earlier jury flow, preserved for context, **not current operating instructions or verification**. Its plaintext Pod claims and unconditional signed-export description are obsolete. For the current source, a separately authorized V3 deployment is required; use the [security protocol](contracts/hak/SECURITY_PROTOCOL.md). Proof Pack signatures are optional and do not prove settlement.
 
 **0:00 — Wallet (1 min).** Install [Freighter](https://www.freighter.app/) → open its ⚙️ menu → switch network to **Testnet**.
 
@@ -110,8 +106,8 @@ This is the earlier jury flow, preserved for context. It is not verification of 
 ```mermaid
 flowchart LR
     subgraph User side
-        APP["app/ — Next.js 14 static export<br/>Fade · Pod · Trigger · Envoy · Ledger"]
-        LEDGER["Ledger (local)<br/>export = Proof Pack<br/>(signed JSON, never on a server)"]
+        APP["app/ — Next.js 15 static export<br/>Fade · Pod · Trigger · Envoy · Ledger"]
+        LEDGER["Ledger (local)<br/>Proof Pack JSON + checksum<br/>(optional test-signer signature)"]
     end
 
     subgraph Stellar testnet
@@ -119,7 +115,7 @@ flowchart LR
         ASSET["USDC — Circle testnet issuer<br/>(SAC-compatible; issuer policies apply)"]
     end
 
-    subgraph Fiat side (regulated)
+    subgraph Fiat sandbox
         ANCHOR["tr-mock-anchor.fly.dev — official hackathon<br/>TR mock anchor: SEP-10 / SEP-6 / SEP-38,<br/>KYC (SEP-12) off-chain"]
         BANK["Merchant bank account<br/>sees TRY only"]
     end
@@ -137,21 +133,21 @@ flowchart LR
 
 Design invariants:
 
-- **Funds never touch Agyion.** On-chain in the contract, off-chain at the anchor.
-- **Identity at the ramp, privacy on-chain.** PII lives off-chain with the anchor (SEP-12); the two never meet in a single on-chain record.
-- **The merchant sees only TRY.** Conversion and settlement are separate rails; no payment intermediary in between.
+- **The kernel holds deposited assets.** Asset issuer restrictions and correct contract execution remain relevant.
+- **Ramp PII is submitted off-chain; chain activity is public.** The anchor can correlate its customer and rail records with visible wallet activity.
+- **The bank leg is simulated.** No actual TRY payment is established by this repository.
 - **The LLM/agent is off-chain and optional.** *The agent proposes, the guard disposes* — swap the model, the rules don't change.
 
 ## Repository layout
 
 | Path | Contents |
 |---|---|
-| `contracts/hak/` | Soroban kernel contract (Rust, `soroban-sdk` 28) — Fade, Pod, Trigger, Envoy + **46 native tests + 1 WASM integration test** |
-| `contracts/zk-preimage/` | Independent Groth16/BN254 preimage verifier (Protocol 25 host functions; 10 native tests + 1 WASM test) — working module, **not yet wired into Pod claims** (see [LIMITATIONS §4](docs/LIMITATIONS.md)) |
+| `contracts/hak/` | Soroban kernel contract (Rust, `soroban-sdk` 28) — Fade, Pod, Trigger, Envoy; V3 requires a fresh deployment |
+| `contracts/zk-preimage/` | Independent experimental Groth16/BN254 preimage verifier — **not integrated into Pod claims** (see [LIMITATIONS §1](docs/LIMITATIONS.md)) |
 | `circuits/` | circom Poseidon preimage circuit + snarkjs artifacts (`input/proof/public/vk`) feeding the zk-preimage verifier |
-| `app/` | Next.js 14 + TypeScript + Tailwind; mock mode (localStorage) + soroban mode via generated bindings; **On/Off-ramp tab** = SEP-10/SEP-6/SEP-38 client for the official TR mock anchor (`app/app/lib/anchor.ts`) |
+| `app/` | Next.js 15 + TypeScript + Tailwind; mock mode (localStorage) + soroban mode via generated bindings; **On/Off-ramp tab** = SEP-10/SEP-6/SEP-38 client for the official TR mock anchor (`app/app/lib/anchor.ts`) |
 | `anchor/` | *Self-host alternative* (not the demo path): Anchor Platform `assets.yaml` (tTRY, SEP-24) + quick-run notes and known traps |
-| `scripts/` | `setup.sh` (toolchain check), `deploy_testnet.sh` (read-only plan by default; explicit kernel v2 testnet deployment) |
+| `scripts/` | `setup.sh` (toolchain check), `deploy_testnet.sh` (read-only plan by default; explicit kernel V3 testnet deployment) |
 | `docs/` | [EDGE_CASES.md](docs/EDGE_CASES.md) — adversarial design register (EC-1…EC-6) · [LIMITATIONS.md](docs/LIMITATIONS.md) — honest scope · internal TR runbooks (on/off-ramp flow, wallet-connect map, deploy notes) |
 | `verifier/` | Verification run logs (`runs/`: cargo test, deploy, final) — reproducibility evidence |
 | `SPEC_V2.md` | Historical v2 build spec — naming and original API provenance; the current security protocol supersedes its signature and Pod-claim layouts |
@@ -159,7 +155,7 @@ Design invariants:
 
 ## Quickstart
 
-Prerequisites: Rust toolchain with the `wasm32v1-none` target, `stellar` CLI, Node.js 18+, Docker (optional, for the anchor).
+Prerequisites: Rust toolchain with the `wasm32v1-none` target, `stellar` CLI, Node.js 20.19+ (landing requirement), Docker (optional, for the anchor).
 
 ```bash
 # 0) Toolchain check (installs nothing; reports what is missing)
@@ -167,15 +163,15 @@ Prerequisites: Rust toolchain with the `wasm32v1-none` target, `stellar` CLI, No
 
 # 1) Contract: build + test
 cd contracts/hak
-cargo test                                    # native suite: 46 passed
+cargo test                                    # native suite; record current output
 stellar contract build                      # produces the deployable hak.wasm
-cargo test --features wasm-tests              # 47 passed, including compiled WASM
+cargo test --features wasm-tests              # includes compiled-WASM checks
 
-# 2) Review a kernel v2 testnet deployment plan (local checks only)
+# 2) Review a kernel V3 testnet deployment plan (local checks only)
 cd ../..
 ./scripts/deploy_testnet.sh                   # DRY_RUN=1 is the default; no network calls
 
-# Explicit operator action only: test, build, deploy, verify protocol_version == 2
+# Explicit operator action only: test, build, deploy, verify protocol_version == 3
 # Optional: DEPLOYER_ALIAS=<existing-funded-testnet-identity>
 DRY_RUN=0 ./scripts/deploy_testnet.sh
 
@@ -190,8 +186,8 @@ cd app && npm install && npm run dev          # http://localhost:3000
 # TR mock anchor (SEP-6). Override only if you run your own anchor:
 #   NEXT_PUBLIC_ANCHOR_URL=https://tr-mock-anchor.fly.dev   (default)
 
-# 4) Static export + deploy (Cloudflare Pages)
-npm run build                                 # output: 'export' → app/out
+# 4) Build the combined static site locally (does not publish)
+cd .. && npm run build                        # assembles landing + app into app/site
 ```
 
 **Deployment helper:** the default run only checks local tools/identity availability and prints
@@ -199,7 +195,7 @@ its plan. `DRY_RUN=0` is the explicit operator action that runs the locked kerne
 tests, builds the exact `contracts/hak/target/wasm32v1-none/release/hak.wasm`,
 deploys on the hard-pinned Stellar testnet, and reads back `protocol_version()`
 with `--send no`. It prints the real `NEXT_PUBLIC_HAK_*`, RPC and network
-passphrase settings only after confirming version 2. An existing identity is
+passphrase settings only after confirming version 3. An existing identity is
 reused and must already hold enough testnet XLM for fees; if the default identity
 is absent, only `agyion-testnet-deployer` is created and funded with Friendbot.
 Missing custom aliases are rejected. No issuer, trustline, asset issuance, or
@@ -207,20 +203,20 @@ asset-transfer steps run; the app already uses Circle testnet USDC. The helper
 does not overwrite existing contract aliases or migrate existing locked funds.
 The local security fixes still require a new deployment and an app rebuild;
 the earlier deployed kernel is not upgraded by editing this repository.
-See [the v2 protocol and migration notes](contracts/hak/SECURITY_PROTOCOL.md).
+See [the V3 protocol and migration notes](contracts/hak/SECURITY_PROTOCOL.md).
 
 **Anchor:** the app integrates the official hackathon TR mock anchor (`https://tr-mock-anchor.fly.dev`) — a SEP-6 TRY↔USDC rail with SEP-10 auth, SEP-12 KYC and SEP-38 quotes; the bank leg is simulated by the sandbox. The self-host Anchor Platform quick-run (SEP-24 flow, also simulated) remains as an alternative in [anchor/README.md](anchor/README.md).
 
 ## Test evidence
 
-The local kernel suite passes **47 tests**, including its compiled-WASM integration test (`cargo test --features wasm-tests` after `stellar contract build`). The standalone Groth16 verifier passes **11 tests** with its WASM feature enabled after building to `wasm/`. Native-only defaults run 46 and 10 tests respectively. This is local execution evidence, not deployment verification. The [audit record](docs/verification/2026-09-24-orbital-audit.md) covers the reproduced vulnerabilities, fixes, and remaining limits.
+The [24 September audit record](docs/verification/2026-09-24-orbital-audit.md) records the earlier 47-test kernel and 11-test verifier runs. Those counts are a dated snapshot, not current V3 acceptance or deployment evidence. Read the [current dated security reports](docs/security/2026-09-26) and run the suites against the exact candidate before release. Local tests do not establish the absence of vulnerabilities.
 
 | Layer | Proof | Command |
 |---|---|---|
 | Fade core | positive-price settle; negative price pays claimant from pot; pot-cap on negative floor; excessive negative floor rejected | `cargo test` |
 | Fade rules | no-show `refund()` after handoff window; refund after deadline; same-ledger double claim → first wins; zero venue key / zero window rejected | `cargo test` |
 | Venue signature | ed25519 handoff signature, byte-for-byte TS↔Rust parity test; invalid signature behavior documented (host trap) | `cargo test venue_sig_ts_parity` |
-| Pod | early claim rejected, wrong preimage rejected, timely claim pays | `cargo test pod` |
+| Pod | early claim, altered creation terms, recipient/domain substitution and repeated claim rejected; failed payment preserves reserve | `cargo test pod` |
 | Trigger | attester signature executes; bad signature rejected; refund only after deadline; early refund rejected | `cargo test trigger` |
 | Envoy | claim within cap; cap exceeded → `CapExceeded`; expired → `MandateExpired`; revoked → `Unauthorized`; recipient binding to owner | `cargo test envoy` |
 | Cross-template | a mandate claim settles into the owner's Fade claim correctly | `cargo test cross_template` |
@@ -240,35 +236,25 @@ Built with the official and community Stellar skills, per the hackathon handbook
 
 | Who | Sees | Can do | Cannot do |
 |---|---|---|---|
-| **Anchor** | KYC (off-chain, SEP-12) + rail in/out | Process fiat deposit/withdraw | See on-chain amounts per user, freeze funds, or link identity to chain records alone |
-| **Auditor (M-of-N, roadmap)** | Channel reports (amounts, balances) | Report | Move funds; de-anonymize alone (threshold Shamir split, court-attested assembly) |
-| **Kernel contract** | — | Enforce rules | Be stopped by any single party (freeze requires M-of-N + 72h public queue; the user can veto via `contest()`) |
-| **The team** | The code | Write code | Touch user funds or data; the kernel is immutable, the frontend replicable |
-| **An Envoy agent** | Its mandate parameters | Claim within caps, before expiry, only to the owner | Exceed caps, redirect recipients, survive revocation |
+| **Anchor** | Off-chain information submitted through the ramp, rail in/out, and public chain records | Process supported ramp requests; link its own customer/rail records where available | Claim that current public amounts or addresses are hidden from it |
+| **Auditor (M-of-N, proposed)** | No implemented auditor channel today | Future scoped, verifiable partial decryption under an explicit policy | Spend through disclosure authority alone; claim that a colluding quorum cannot open other records under its key |
+| **Kernel contract** | Current instrument addresses, amounts and rules are public | Enforce its implemented authorization and settlement rules | Provide the proposed private pool, threshold disclosure or compliance-freeze system today |
+| **The team** | Source code and any information voluntarily provided to its services | Develop and publish the frontend and contracts | Claim that source availability alone establishes privacy, operational independence or legal exemption |
+| **An Envoy agent** | Public mandate and Fade parameters | At most 50 nonpositive-price claims, before expiry, for the fixed owner | Buy at a positive price, redirect claim recipients or make new claims after confirmed revocation |
 
-## Legal & compliance
+## Privacy and compliance status
 
-Agyion is engineered so that the hard legal questions have structural answers, not policy promises. This section is the engineering design record (not legal advice); the live MVP is a testnet build.
+The current demo is public and uses test assets. A standalone preimage verifier does not hide instrument amounts, addresses or transaction links. Fade remains public by product decision. Pod, Trigger and a separate private Envoy path require a new shielded protocol; the existing Envoy-to-Fade path cannot hide its public settlement.
 
-**The founding principle: never touch the money.** Agyion is not a wallet, not an e-money issuer, not a payment processor, not a liquidity provider. Funds live inside the immutable kernel contract on-chain and at the regulated anchor off-chain. There is no admin key that can move user funds, no float, no company account user money ever passes through. This is not only philosophy — in Turkey, custody of others' crypto-assets (KVHS — Law 7262) is a criminal-law zone with multi-year prison exposure; non-custodial protocol design is what keeps the protocol outside it. Everything below follows from that line.
+The proposed disclosure channel uses M-of-N **per-ciphertext partial decryption**, not reconstruction of a global auditor private key. A requester receiving only authorized shares should not acquire unrelated decryption access. However, a colluding quorum can potentially open all records under an epoch key it controls. A split key or multisig does not make bulk disclosure cryptographically impossible, and software cannot determine whether an uploaded document is a legally valid court order. See the [private instrument design](docs/security/2026-09-26/private-instruments-design.md) and [actual ZK review](docs/security/2026-09-26/zk-eerc-review.md).
 
-**Turkey regulatory position (design record):**
+The isolated [privacy research foundations](privacy/README.md) currently validate data shapes and canonical encodings only. Their verifier registry is empty: proof acceptance and private-transfer activation always fail closed. No private pool, threshold committee, production ceremony or private-asset migration is deployed by that work.
 
-- **MASAK / 24/A:** self-hosted wallets sit under a *declaration* regime — not banned. The Ledger's Proof Pack export (signed, scoped evidence of your own history) is designed to make such a declaration trivial for the user: "Ne alaka? Alın size kanıt."
-- **FATF R16 (travel rule)** obligations fall on the VASP — here the anchor, where KYC already lives. The protocol carries references, not identity.
-- **Law 7262 / AMLR art. 79** binds service providers; self-custody software that never takes possession is outside that scope by construction.
-- **GENIUS-Act-style freeze-capacity expectations** are answered structurally (see below): an exceptional compliance freeze requires M-of-N signers, a 72-hour public queue, and the user can veto via `contest()` — no single party, including the team, can freeze or seize funds.
-- **Deliberately avoided territories:** multi-hop offline *bearer* instruments are the closest thing to the e-money definition and touch the TCMB payment ban — so the demo ships a single-hop offline claim proof only (prepare in airplane mode, submit when online), and multi-hop stays on the roadmap until the regulatory frame matures. Likewise we do not become a liquidity provider: holding float would break the founding principle.
+**Historical design proposals:** earlier versions of this README proposed Loxias M-of-N dispute attestation, mutual resolution, association-set proofs and an exceptional freeze with a 72-hour queue and `contest()` veto. Those proposals are not implemented capabilities or established legal requirements. The prior claims that the design automatically falls outside financial-services laws, makes Proof Packs sufficient legal evidence, or guarantees scoped opening were unsupported and are withdrawn here. Proof Pack export is not a claim of a signed legal attestation.
 
-**Identity split — KYC at the anchor, KYA at the operator, privacy for the user:**
+The mock anchor integration does not establish production banking permissions, operator accreditation or a legally sufficient identity/disclosure process. Any production asset, operator, custody, dispute or disclosure arrangement needs its own verified requirements and review. This repository makes no jurisdictional exemption or compliance certification claim.
 
-- **KYC lives at the ramp.** PII is collected by the anchor under SEP-12 and stays off-chain; on-chain records carry references, never names.
-- **KYA (Know Your Agent) binds the operator, never the user.** An agent key is registered to the *operator's* identity off-chain; the user delegates to a known, accountable operator. The two records never merge in a single on-chain record — identity at the operator, privacy at the user.
-- **Privacy–accountability balance ("dark by default, accountable under lawful process").** On-chain, amounts and counterparties stay pseudonymous; an auditor channel is *view-only* (cannot move funds); and de-anonymization is threshold-based — a Shamir-split key (anchor + independent trustee + technical committee) assembles only under court attestation, scoped to a single transaction, never bulk. Total concealment was Tornado's path (sanctioned); total exposure is CeFi. Agyion is the third way: privacy on the ledger, accountability at the ramp. See **EC-6** in [docs/EDGE_CASES.md](docs/EDGE_CASES.md).
-
-**The exceptional-compliance-freeze design (roadmap layer, never in the demo path):** M-of-N signers trigger → 72-hour public queue (anyone can inspect and object) → the affected user's `contest()` veto. Because the freeze is exceptional, threshold-gated, and contestable, rule-based `refund()` remains the only routine exit — zero discretion, ever.
-
-**Compliance-forward roadmap:** *proof-of-innocence* (Privacy Pools direction) — a user proves "my funds are not in the illicit set" without revealing identity; and **Loxias**, the staked M-of-N attester marketplace that decides disputes (with a `resolve_mutual` both-sign fast path) instead of any single party.
+**Browser credential boundary:** test-wallet signers and new Pod seeds are not persisted by their current flows. Pod seeds clear from UI state when leaving the panel or changing wallet session; this is not guaranteed JavaScript memory erasure or cancellation of an already submitted operation. Trigger/Envoy demo signer keys and saved venue identities still use `sessionStorage`; masking an input does not encrypt storage. Same-origin scripts can access them. Existing keys need an explicit backup/migration plan, not silent deletion.
 
 ## Originality evidence
 
@@ -280,16 +266,16 @@ Before building, we swept DoraHacks, ETHGlobal/Devpost, Reddit, Hacker News, Ek�
 
 ## Limitations
 
-Honest scope beats an inflated demo. Read **[docs/LIMITATIONS.md](docs/LIMITATIONS.md)**: mock attester, basic sybil quota, single-hop offline claims, ZK stub, testnet anchor simulation, and Envoy's negative-price-only restriction — each with impact and roadmap.
+Read **[docs/LIMITATIONS.md](docs/LIMITATIONS.md)** for public chain data, local signer custody, no independent attester or identity-level quota, unsupported offline finality, testnet anchor simulation and Envoy's nonpositive-price restriction.
 
 ## Roadmap
 
 - **Loxias — the attester marketplace.** Independent, staked, reputation-scored attesters for Trigger and Fade handoffs; service fees are the protocol-external revenue layer.
 - **Nostr bridge.** Signed claim/attestation announcements as kind-1 events; NIP-46 remote signing and the ed25519↔secp256k1 identity bridge. (Verified prior-art gap.)
 - **Proof-of-innocence.** "My funds are not in the illicit set" proofs without revealing identity (Privacy Pools direction) — compliance-forward privacy, not blind anonymity.
-- **Multi-hop offline value transfer.** Today: single-hop offline claim proofs (prepare in airplane mode, submit when online). Multi-hop bearer transfer returns when the regulatory frame matures.
+- **Offline workflows.** Local signature preparation does not reserve funds or establish offline finality. A supported offline or multi-hop transfer protocol remains future work.
 - **CAP-71-ready authorization** and Protocol 25 (BN254/Poseidon) native ZK claims as the network enables them.
 
 ## License
 
-MIT (see LICENSE). Kernel contract: immutable once deployed; the frontend is replicable by anyone.
+MIT (see LICENSE); dependencies have their own licenses. The current kernel source exposes no upgrade entry point. This does not make external token issuers or the hosted frontend immutable, and does not certify an arbitrary deployment's code.

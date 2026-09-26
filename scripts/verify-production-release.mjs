@@ -2,6 +2,7 @@
 import { chromium, expect, request } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { compareReleaseBody, assertReleaseCsp } from './release-integrity.mjs';
 const base='https://agyionlabs.dev';
 const output=process.env.RELEASE_OUTPUT||'artifacts/verification/2026-09-26-cloudflare-release/live';
 await mkdir(output,{recursive:true});
@@ -20,22 +21,13 @@ try{
   const response=await api.get(`${base}${route}`);expect(response.status(),route).toBe(200);
   const body=await response.body(),headers=response.headers();
   const expectedBody=await readFile(`app/site/${file}`);
-  let comparableBody=body,edgeInjection=null;
-  if(file.endsWith('.html')&&hash(body)!==hash(expectedBody)){
-   // Cloudflare's JSD can append its generated challenge bootstrap at the edge.
-   // Only remove that exact known bootstrap shape; keep any other difference fatal.
-   const html=body.toString();
-   const injected=[...html.matchAll(/<script>\(function\(\)\{function c\(\)\{var b=a\.contentDocument\|\|\(a\.contentWindow&&a\.contentWindow\.document\);[\s\S]*?\}\)\(\);<\/script>/g)];
-   if(injected.length===1&&injected[0][0].includes("/cdn-cgi/challenge-platform/scripts/jsd/main.js")){
-    edgeInjection={kind:'Cloudflare JavaScript Detection bootstrap',sha256:hash(injected[0][0])};
-    comparableBody=Buffer.from(html.replace(injected[0][0],''));
-   }
-  }
+  const evidence={route,status:response.status(),sha256:hash(body),expectedSha256:hash(expectedBody),headers:{csp:headers['content-security-policy'],cacheControl:headers['cache-control'],hsts:headers['strict-transport-security']}};
+  report.http.push(evidence);
+  const {applicationBody:comparableBody,edgeInjection}=compareReleaseBody(body,expectedBody,file.endsWith('.html'));
+  Object.assign(evidence,{applicationSha256:hash(comparableBody),edgeInjection});
   expect(hash(comparableBody),`${route}: deployed application bytes match reviewed artifact`).toBe(hash(expectedBody));
   expect(headers['x-content-type-options']).toBe('nosniff');expect(headers['x-frame-options']).toBe('DENY');
-  expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
-  expect(headers['content-security-policy']).not.toContain("script-src 'self' 'unsafe-inline'");
-  report.http.push({route,status:response.status(),sha256:hash(body),applicationSha256:hash(comparableBody),edgeInjection,headers:{csp:headers['content-security-policy'],cacheControl:headers['cache-control'],hsts:headers['strict-transport-security']}});
+  assertReleaseCsp(headers['content-security-policy']);
  }
  for(const route of ['/assets/release-check-missing.js','/_next/static/release-check-missing.js','/.env','/app/.env']){
   const response=await api.get(`${base}${route}`);expect(response.status(),route).toBe(404);report.http.push({route,status:response.status()});

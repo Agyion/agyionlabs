@@ -16,6 +16,8 @@ import { storedTestSigner } from "./wallet";
 import { consumeReceipt, listTransactionAttempts, updateTransactionAttempt, type TransactionScope } from "./transactionReceipts";
 
 const LOG_KEY = "agyion.ledger.v1";
+const RECORDS_PREFIX = "agyion.ledger.v2:entry:";
+const CLEARS_PREFIX = "agyion.ledger.v2:clear:";
 
 export type TemplateName = "fade" | "pod" | "trigger" | "envoy";
 export type EntryStatus = "locked" | "executed" | "returned" | "rejected" | "recorded";
@@ -36,7 +38,10 @@ export interface LedgerEntry {
   contractId?: string;
 }
 
-let volatileEntries: LedgerEntry[] | null = null;
+interface StoredEntry { generation: string; entry: LedgerEntry }
+interface ClearMarker { generation: string; order: number; suppressedHashes: string[] }
+interface ClearState extends ClearMarker { keys: string[] }
+const volatileEntries = new Map<string, StoredEntry>();
 const MAX_ENTRIES = 1000;
 function validEntry(value: unknown): value is LedgerEntry {
   if (!value || typeof value !== "object") return false;
@@ -52,26 +57,68 @@ function validEntry(value: unknown): value is LedgerEntry {
     (e.contractId === undefined || (typeof e.contractId === "string" && /^C[A-Z2-7]{55}$/.test(e.contractId))) &&
     (e.txHash === null || (typeof e.txHash === "string" && /^[a-f0-9]{64}$/i.test(e.txHash)));
 }
-function load(): LedgerEntry[] {
-  if (volatileEntries) return [...volatileEntries];
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(LOG_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter(validEntry).slice(-MAX_ENTRIES) : [];
-  } catch { return []; }
+function clearState(): ClearState {
+  let state: ClearMarker = { generation: "legacy", order: 0, suppressedHashes: [] };
+  const hidden = new Set<string>();
+  const keys = storageKeys(CLEARS_PREFIX);
+  for (const key of keys) {
+    const value = JSON.parse(window.localStorage.getItem(key) ?? "null") as ClearMarker;
+    if (!value || typeof value.generation !== "string" || !value.generation || !Number.isSafeInteger(value.order) || value.order <= 0 ||
+      !Array.isArray(value.suppressedHashes) || !value.suppressedHashes.every(hash => typeof hash === "string" && /^[a-f0-9]{64}$/i.test(hash))) {
+      throw new Error("Ledger clear marker is unreadable. Keep this browser's data before retrying.");
+    }
+    value.suppressedHashes.forEach(hash => hidden.add(hash.toLowerCase()));
+    if (value.order > state.order || (value.order === state.order && value.generation > state.generation)) state = value;
+  }
+  return { ...state, suppressedHashes: [...hidden], keys };
 }
 
-function save(entries: LedgerEntry[]): void {
-  const bounded = entries.slice(-MAX_ENTRIES);
-  if (typeof window === "undefined") return;
+function storageKeys(prefix: string): string[] {
+  return Array.from({ length: window.localStorage.length }, (_, index) => window.localStorage.key(index))
+    .filter((key): key is string => key !== null && key.startsWith(prefix));
+}
+
+function load(): LedgerEntry[] {
+  if (typeof window === "undefined") return [];
+  let state: ClearState;
+  try { state = clearState(); } catch { return []; }
+  const candidates = new Map(volatileEntries);
   try {
-    window.localStorage.setItem(LOG_KEY, JSON.stringify(bounded));
-    volatileEntries = null;
-  } catch {
-    // A storage failure must never turn a confirmed chain transaction into a failure.
-    volatileEntries = bounded;
+    // Existing arrays remain readable; new actions never rewrite that array.
+    const legacy: unknown = JSON.parse(window.localStorage.getItem(LOG_KEY) ?? "[]");
+    if (Array.isArray(legacy)) legacy.filter(validEntry).forEach((entry, index) => candidates.set(`legacy:${index}`, { generation: "legacy", entry }));
+  } catch { /* Invalid local history is not transaction outcome evidence. */ }
+  let keys: string[] = [];
+  try { keys = storageKeys(RECORDS_PREFIX); } catch { /* Keep any in-memory history available. */ }
+  for (const key of keys) {
+    try {
+      const record = JSON.parse(window.localStorage.getItem(key) ?? "null") as StoredEntry;
+      if (record && typeof record.generation === "string" && validEntry(record.entry)) candidates.set(key, record);
+    } catch { /* Other valid history and durable recovery remain available. */ }
   }
+  const hidden = new Set(state.suppressedHashes.map(hash => hash.toLowerCase()));
+  const unique = new Map<string, { id: string; entry: LedgerEntry }>();
+  for (const [id, record] of candidates) {
+    if (record.generation !== state.generation || (record.entry.txHash && hidden.has(record.entry.txHash.toLowerCase()))) continue;
+    const key = record.entry.txHash?.toLowerCase() ?? id;
+    const previous = unique.get(key);
+    // A concurrent generic recovery row must not erase the actual action's detail.
+    const detail = (entry: LedgerEntry) => (entry.status === "recorded" ? 0 : 2) + (entry.amount === null ? 0 : 1);
+    if (!previous || detail(record.entry) > detail(previous.entry)) unique.set(key, { id, entry: record.entry });
+  }
+  let sequence = 0;
+  return [...unique.values()].sort((a, b) => a.entry.seq - b.entry.seq || a.entry.ts.localeCompare(b.entry.ts) || a.id.localeCompare(b.id))
+    .map(({ entry }) => ({ ...entry, seq: sequence = Math.max(sequence + 1, entry.seq) })).slice(-MAX_ENTRIES);
+}
+
+function save(entry: LedgerEntry): void {
+  if (typeof window === "undefined") return;
+  let state: ClearState;
+  try { state = clearState(); } catch { return; }
+  const id = `${RECORDS_PREFIX}${crypto.randomUUID()}`;
+  const record = { generation: state.generation, entry };
+  try { window.localStorage.setItem(id, JSON.stringify(record)); }
+  catch { volatileEntries.set(id, record); } // Confirmation remains true if local history cannot persist.
 }
 
 export function listEntries(): LedgerEntry[] {
@@ -101,11 +148,10 @@ export function logEntry(
     network: confirmed?.network ?? e.network,
     contractId: confirmed?.contractId ?? e.contractId,
   };
-  if (previous) entries[entries.indexOf(previous)] = entry;
-  else entries.push(entry);
-  save(entries);
+  save(entry);
   if (entry.txHash) {
-    for (const attempt of listTransactionAttempts().filter(a => a.hash === entry.txHash)) updateTransactionAttempt(attempt.hash, attempt, { recorded: true });
+    try { for (const attempt of listTransactionAttempts().filter(a => a.hash === entry.txHash)) updateTransactionAttempt(attempt.hash, attempt, { recorded: true }); }
+    catch { /* Local recovery trouble must not erase a confirmed action. */ }
   }
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("agyion:record", { detail: entry }));
   return entry;
@@ -130,9 +176,11 @@ export function transactionTemplate(action: string): TemplateName {
 }
 /** Recovered confirmations add evidence, not guessed amounts or simulated outcomes. */
 export function recoverTransactionEntries(scope?: TransactionScope): void {
+  if (typeof window === "undefined") return;
   const entries = load();
+  const hidden = new Set(clearState().suppressedHashes.map(hash => hash.toLowerCase()));
   for (const attempt of listTransactionAttempts(scope)) {
-    if (attempt.status !== "success" || attempt.recorded || attempt.refId === null || entries.some(e => e.txHash === attempt.hash)) continue;
+    if (attempt.status !== "success" || hidden.has(attempt.hash.toLowerCase()) || attempt.refId === null || entries.some(e => e.txHash === attempt.hash)) continue;
     const entry = logEntry({ template: transactionTemplate(attempt.action), action: attempt.action, refId: attempt.refId,
       amount: null, status: "recorded", detail: "Transaction confirmed by RPC. Open the record for its current state.",
       txHash: attempt.hash, ledger: attempt.ledger, account: attempt.account, network: attempt.network, contractId: attempt.contractId });
@@ -141,9 +189,23 @@ export function recoverTransactionEntries(scope?: TransactionScope): void {
 }
 
 export function clearLog(): void {
-  volatileEntries = null;
   if (typeof window === "undefined") return;
-  try { window.localStorage.removeItem(LOG_KEY); } catch { volatileEntries = []; }
+  const state = clearState();
+  const hidden = new Set(state.suppressedHashes);
+  for (const entry of load()) if (entry.txHash) hidden.add(entry.txHash);
+  // Include prior confirmations whose local row was lost before this explicit clear.
+  for (const attempt of listTransactionAttempts()) if (attempt.status === "success") hidden.add(attempt.hash);
+  const oldKeys = storageKeys(RECORDS_PREFIX);
+  // Commit the clear first. A concurrent older write carries the old generation
+  // and stays hidden; subsequent actions read the new generation and stay visible.
+  const generation = crypto.randomUUID();
+  window.localStorage.setItem(`${CLEARS_PREFIX}${generation}`, JSON.stringify({ generation, order: state.order + 1, suppressedHashes: [...hidden] }));
+  volatileEntries.clear();
+  // The new marker contains every suppression read above. Compact only those
+  // exact markers; a concurrent clear created after that snapshot must survive.
+  for (const key of [LOG_KEY, ...oldKeys, ...state.keys]) {
+    try { window.localStorage.removeItem(key); } catch { /* The durable marker already hides these rows. */ }
+  }
 }
 
 // ---------------------------------------------------------------------------

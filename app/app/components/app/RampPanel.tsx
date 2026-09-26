@@ -31,13 +31,14 @@ import {
   createAssetTrustline,
   friendbotFund,
   sendAnchorPayment,
+  reconcileAnchorPayments,
 } from "../../lib/accountOps";
+import { listAnchorPayments, type AnchorPaymentAttempt } from "../../lib/anchorPayments";
 import { CONFIG, IS_MOCK } from "../../lib/config";
 import { shortAddress } from "../../lib/format";
 import type { WalletState } from "../../lib/useWallet";
 import { ExchangeRoute } from "./instrumentPresentation";
 import {
-  ArrowLink,
   ErrorNote,
   Field,
   FilledButton,
@@ -94,6 +95,23 @@ function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionV
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [payments, setPayments] = useState<AnchorPaymentAttempt[]>([]);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
+  const payment = payments.find(p => p.withdrawalId === withdraw?.id && p.status !== "failed");
+  const refreshPaymentRecords = useCallback(() => {
+    if (!isCurrentSession()) return;
+    try { setPayments(wallet.address ? listAnchorPayments(wallet.address) : []); setRecoveryError(null); }
+    catch (e) { setRecoveryError(e instanceof Error ? e.message : "Payment recovery is unavailable."); }
+  }, [isCurrentSession, wallet.address]);
+  useEffect(() => {
+    refreshPaymentRecords();
+    window.addEventListener("agyion:anchor-payments", refreshPaymentRecords);
+    window.addEventListener("storage", refreshPaymentRecords);
+    return () => {
+      window.removeEventListener("agyion:anchor-payments", refreshPaymentRecords);
+      window.removeEventListener("storage", refreshPaymentRecords);
+    };
+  }, [refreshPaymentRecords]);
 
   const run = useCallback(async (key: string, fn: () => Promise<void>) => {
     setBusy(key);
@@ -265,15 +283,24 @@ function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionV
         withdraw.requestedAmount,
         withdraw.memoType,
         withdraw.memo,
+        withdraw.id,
       );
       assertCurrentSession();
+      refreshPaymentRecords();
       setNotice(`USDC sent to the anchor (tx ${hash.slice(0, 12)}…). The TRY payout is simulated by the sandbox.`);
     });
+
+  const checkPayments = () => run("payment-status", async () => {
+    if (!wallet.address) return;
+    await reconcileAnchorPayments(wallet.address);
+    assertCurrentSession();
+    refreshPaymentRecords();
+  });
 
   return (
     <div className="instrument-panel panel-ramp">
       <div className="instrument-notice"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 9v5m0-9v1"/></svg><p>Sandbox only: bank transfers and TRY payouts are simulated; USDC uses Stellar testnet.{IS_MOCK ? " Separate from local instrument simulation." : ""}</p></div>
-      <div className="instrument-feedback">{error && <ErrorNote>{error}</ErrorNote>}{notice && <OkNote>{notice}</OkNote>}</div>
+      <div className="instrument-feedback">{error && <ErrorNote>{error}</ErrorNote>}{recoveryError && <ErrorNote>{recoveryError} Payment is disabled until recovery is readable.</ErrorNote>}{notice && <OkNote>{notice}</OkNote>}</div>
       <div className="instrument-layout">
         <div className="instrument-main">
           <div className="ramp-switch" role="group" aria-label="Transfer direction">
@@ -302,10 +329,17 @@ function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionV
               <Row k="Send USDC to" v={withdraw.accountId} /><Row k="Registered amount" v={`${withdraw.requestedAmount} ${CONFIG.assetCode}`} /><Row k="Destination IBAN" v={withdraw.destinationIban} /><Row k={`Memo (${withdraw.memoType})`} v={withdraw.memo} /><Row k="Transaction ID" v={withdraw.id} />
               {withdraw.message && <p className="instrument-disclosure">{withdraw.message}</p>}
               <p className="instrument-disclosure">Sign the USDC payment with the exact memo above so the anchor can match it. The TRY payout to your IBAN is simulated.</p>
-              <div className="instrument-actions"><FilledButton onClick={doSendPayment} disabled={busy !== null || !signer || !wallet.address}>{busy === "pay" ? "Sending…" : `Send ${withdraw.requestedAmount} ${CONFIG.assetCode} to the anchor`}</FilledButton></div>
-              {withdraw.paymentUri && <div className="mt-4"><ArrowLink href={withdraw.paymentUri}>Open payment URI</ArrowLink></div>}
+              <div className="instrument-actions"><FilledButton onClick={doSendPayment} disabled={busy !== null || !signer || !wallet.address || !!payment || !!recoveryError}>{busy === "pay" ? "Sending…" : payment?.status === "success" ? "Payment confirmed" : payment ? "Payment unresolved" : `Send ${withdraw.requestedAmount} ${CONFIG.assetCode} to the anchor`}</FilledButton></div>
             </div>}
           </section>
+          {payments.length > 0 && <section className="instrument-records" aria-label="Payment recovery">
+            <header><h3>Payment recovery</h3><GhostButton onClick={checkPayments} disabled={busy !== null}>{busy === "payment-status" ? "Checking…" : "Check payment status"}</GhostButton></header>
+            {payments.map(p => <details className="instrument-technical" key={p.hash} open={p.status === "pending" || p.status === "unknown"}>
+              <summary>{p.amount} {p.assetCode} · {p.status === "success" ? "confirmed" : p.status === "failed" ? "failed" : "unresolved"}</summary>
+              <Row k="Withdrawal" v={p.withdrawalId} /><Row k="Transaction" v={p.hash} />
+              {(p.status === "pending" || p.status === "unknown") && <p className="instrument-disclosure">Check this hash before retrying. An unavailable result does not mean the payment failed.</p>}
+            </details>)}
+          </section>}
           {activeTransfer && <section className="instrument-records">
             <header><h3>Transfer status</h3><GhostButton onClick={doStatus} disabled={busy === "status"}>{busy === "status" ? "Checking…" : "Refresh"}</GhostButton></header>
             {status ? <div className="ramp-receipt"><Row k="ID" v={status.id} /><Row k="Kind" v={status.kind} /><Row k="Status" v={status.status} />{status.amountIn && <Row k="In" v={status.amountIn} />}{status.amountOut && <Row k="Out" v={status.amountOut} />}{status.message && <p className="instrument-disclosure">{status.message}</p>}</div> : <p className="instrument-empty">Refresh to check this transfer with the anchor.</p>}

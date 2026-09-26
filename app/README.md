@@ -1,50 +1,44 @@
-# app/ — Agyion frontend
+# app/ — Agyion transaction interface
 
-Next.js 14 (app router) + TypeScript + Tailwind + framer-motion. Static export, deployed to Cloudflare (`wrangler.toml`; live: https://agyion.jasurbek-rustamov.workers.dev and https://agyionlabs.dev).
+Next.js 15 + TypeScript + Tailwind + framer-motion, exported as static documents. The root landing is a separate Vite application in ../landing; the combined site is assembled into app/site for the Cloudflare Worker configured in wrangler.toml.
 
-The app talks to the deployed Soroban kernel contract on Stellar testnet in **soroban mode** (default for the live build) or runs a fully local **mock mode** (localStorage) when no contract is configured.
+The [26 September release record](../docs/verification/2026-09-26-cloudflare-release.md) describes an earlier published frontend. Current source requires **kernel protocol V3** for writes; it does not upgrade the old deployed kernel or migrate locked funds. Source checks and local builds are not release evidence. See [the security protocol](../contracts/hak/SECURITY_PROTOCOL.md).
 
-## Modes
+## Modes and configuration
 
-Set via `NEXT_PUBLIC_*` env vars (see `app/lib/config.ts`; the live deployment already carries the testnet values as defaults):
+NEXT_PUBLIC_* settings are baked in at build time. Source defaults to mock; setting Soroban mode requires an explicitly configured contract. The older historical contract ID is not a compatible V3 default.
 
-| Env var | Default | Purpose |
-| --- | --- | --- |
-| `NEXT_PUBLIC_HAK_MODE` | `mock` | `mock` = localStorage demo client · `soroban` = real testnet bindings (`app/lib/hakClient.ts`) |
-| `NEXT_PUBLIC_HAK_CONTRACT_ID` | — | Kernel contract ID (soroban mode) — live: `CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5` |
-| `NEXT_PUBLIC_SOROBAN_RPC_URL` | `https://soroban-testnet.stellar.org` | Soroban RPC |
-| `NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE` | `Test SDF Network ; September 2015` | Network passphrase |
-| `NEXT_PUBLIC_HAK_ASSET_CODE` / `NEXT_PUBLIC_HAK_ASSET_ADDRESS` | `USDC` / `GBBD47…FLA5` | Ramp asset (classic issuer) |
-| `NEXT_PUBLIC_HAK_ASSET_CONTRACT_ID` | `CBIELTK6…QDAMA` | USDC SAC contract ID — the `asset` param the kernel expects |
-| `NEXT_PUBLIC_ANCHOR_URL` | `https://tr-mock-anchor.fly.dev` | Official hackathon TR mock anchor (SEP-10/6/12/38) |
-| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | — | Optional; without it the WalletConnect module is hidden from the connect modal |
+| Variable | Source default / purpose |
+| --- | --- |
+| NEXT_PUBLIC_HAK_MODE | mock: localStorage simulation; soroban: RPC client with V3 write gate |
+| NEXT_PUBLIC_HAK_CONTRACT_ID | Empty; set a verified V3 contract for writes |
+| NEXT_PUBLIC_SOROBAN_RPC_URL | https://soroban-testnet.stellar.org |
+| NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE | Test SDF Network ; September 2015 |
+| NEXT_PUBLIC_HAK_ASSET_CODE / NEXT_PUBLIC_HAK_ASSET_ADDRESS | USDC / Circle testnet issuer from app/lib/config.ts |
+| NEXT_PUBLIC_HAK_ASSET_CONTRACT_ID | Configured testnet USDC SAC address; distinct from the classic issuer |
+| NEXT_PUBLIC_ANCHOR_URL | https://tr-mock-anchor.fly.dev; separate mock-bank sandbox, including in local kernel-mock mode |
+| NEXT_PUBLIC_ANCHOR_SIGNING_KEY | Optional expected signing-key pin, checked against the HTTPS discovery response |
+| NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID | Empty; optional WalletConnect integration |
 
-## Structure
+## Current flows
 
-- `app/page.tsx` + `app/components/landing/` — animated landing page (hero lifecycle scene, template cards, why-Stellar, compliance strip).
-- `app/components/app/` — the app shell with five tabs:
-  - **Fade** — declining-price campaigns: create, live price clock (crosses zero → pool pays), claim, venue-signed handoff, rule-based refund.
-  - **Pod** — sha256-preimage + timelock capsules: create, claim with preimage after unlock ledger.
-  - **Trigger** — event escrow: create with beneficiary + attester key, attest (ed25519), deadline refund.
-  - **Envoy** — agent mandates: grant (per-tx cap, daily cap, expiry), agent claims a sub-zero Fade for the owner, one-click revoke.
-  - **On/Off-ramp** — SEP-10 auth → SEP-12 KYC fields → SEP-6 deposit/withdraw against the TR mock anchor, with SEP-38 quote display and trustline helper.
-  - **Ledger** — local record of everything you did; export = **Proof Pack** (signed JSON, never leaves your device unless you share it).
-- `app/lib/` — `config.ts` (env), `client.ts` (mode switch), `hakClient.ts` (soroban calls), `anchor.ts` (SEP client), `signers.ts` + `wallet.ts`/`walletsKit.ts`/`useWallet.ts` (Stellar Wallets Kit signing), `ledgerLog.ts`/`useLedger.ts` (local ledger), `accountOps.ts` (friendbot + trustline helpers), `format.ts`.
-- `lib/hak-bindings/` — generated Soroban TypeScript bindings for the kernel contract.
-- `public/zk/` — ZK showcase artifacts (vk/proof/public) for the stub demo path (see root `docs/LIMITATIONS.md` §4).
-- `scripts/anchor-smoke.mjs` — smoke script against the mock anchor.
+- **Fade:** create a declining-price record, claim, submit a venue-signed handoff or an eligible refund.
+- **Pod V3:** save a fresh random seed; sign exact creation terms and, after unlock, a chosen recipient. Raw seeds stay out of RPC; amount and address data remain public. No refund or key recovery.
+- **Trigger:** a configured single attester signs for a fixed beneficiary; an eligible deadline refund returns funds to the funder.
+- **Envoy:** at most 50 nonpositive-price Fade claims for the owner before expiry/revocation. Monetary fields are not positive-price spending allowances. The runner stops when its panel closes.
+- **Ramp:** SEP-10/12/6 sandbox flow plus a quote calculator and trustline helper; no real bank transfer is established.
+- **Ledger:** local records and transaction recovery. Proof Pack is JSON plus checksum with an optional test-signer signature; it is not settlement evidence by itself.
 
-## Develop
+Test-wallet keys and Pod seeds are memory-only in their current flows. Trigger/Envoy demo keys and saved venue identities still use sessionStorage; input masking does not secure their custody. See [limitations](../docs/LIMITATIONS.md). The standalone preimage verifier and public/zk fixtures do not authorize Pod payments or implement anonymity/M-of-N disclosure.
+
+## Local commands
 
 ```bash
-npm install
-npm run dev          # http://localhost:3000 (mock mode by default)
+npm ci
+npm run dev          # app dev server
+npm test
+npm run typecheck
+npm run build        # app/out only; no publication
 ```
 
-## Build & deploy
-
-```bash
-npm run build        # next build; static export (see next.config.mjs)
-```
-
-Deploys to Cloudflare via wrangler (`wrangler.toml`). All env is `NEXT_PUBLIC_*`, so a static export bakes the configuration in — set the vars above before building for a soroban-mode deployment.
+For the combined candidate, run npm run build from the repository root. Publishing or deploying a contract is a separate operation. Generated bindings in lib/hak-bindings describe the local ABI; their existence does not establish a compatible deployed contract.

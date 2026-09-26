@@ -1,14 +1,14 @@
 # anchor/ — Self-Host Anchor Alternatifi (demo yolu değil)
 
-> **Güncel durum:** Demo artık **resmî hackathon TR mock anchor'ını** kullanır: `https://tr-mock-anchor.fly.dev` — SEP-6 programatik TRY↔USDC rampası (SEP-24 **yok**), SEP-10 auth, SEP-12 KYC, SEP-38 quotes, %0.5 fee, `bank_account` funding. Uygulama entegrasyonu: `app/app/lib/anchor.ts` + On/Off-ramp sekmesi. Kendi anchor'ımızı kurduğumuz iddiası **geçerli değildir**; bu klasör yalnızca alternatif/çevrimdışı fallback olarak durur.
+> **Kaynak durumu — 26 Eylül 2026:** Uygulamanın varsayılan sağlayıcısı hackathon TR mock anchor'ıdır: `https://tr-mock-anchor.fly.dev`. İstemci SEP-6, SEP-10, SEP-12 ve SEP-38 akışlarını kullanır; güncel destek ve ücretler sağlayıcının yanıtlarından alınmalıdır. Bu incelemede sağlayıcıya bağlanılmadı. Kendi anchor'ımızı işlettiğimiz veya gerçek TRY aktardığımız iddiası yoktur. Bu klasör, kurulup doğrulanmış bir yedek servis değil, ayrı kurulum gerektiren tarihsel SEP-24 yapılandırma örneğidir.
 
-Bu klasör, HAK'nin "esnaf sadece TRY görür" (CANON kural 4) vaadinin zincir/zincir-dışı köprüsünü kendi Anchor Platform kurulumuyla (alternatif yol) ayakta tutmak için gereken yapılandırmayı ve notları içerir.
+Bu örnek, temsilî test varlıklarını ve simüle banka bacağını tarif eder. Issuer, dağıtım hesabı, varlık izinleri ve servis sürümü ayrı doğrulanmadan gerçek bir anchor kurulumu sayılmaz.
 
 ## Ne var?
 
 | Dosya | Amaç |
 |---|---|
-| `assets.yaml` | Anchor Platform varlık tanımları: **tTRY** (temsili TRY, issuer = bizim testnet hesabımız), native XLM ve `iso4217:TRY` fiat tarafı. SEP-24 deposit/withdraw açık. |
+| `assets.yaml` | Örnek public hesap adresleriyle **tTRY**, XLM ve `iso4217:TRY` tanımları. SEP-24 bayraklarının açık olması canlı servis veya varlık varlığı kanıtı değildir. |
 
 ## Quick-run (docker compose)
 
@@ -19,7 +19,7 @@ git clone https://github.com/stellar/anchor-platform.git
 cd anchor-platform
 
 # Bizim varlık tanımımızı quick-run config'ine kopyala
-cp /mnt/agents/output/project/anchor/assets.yaml quick-run/config/assets.yaml
+cp /path/to/agyion/anchor/assets.yaml quick-run/config/assets.yaml
 # (Not: quick-run içindeki config yolu sürüme göre değişebilir;
 #  repo'daki varsayılan assets.yaml'ın konumunu referans alın.)
 
@@ -43,7 +43,7 @@ Durdurmak için: `docker compose down`
 
 ## ⚠️ "Gerçek TRY" kriteri
 
-Demo anlatısında "esnafa gerçek TRY gitti" iddiası **organizatör teyidi gerektirir**. Bu MVP'de anchor tarafı testnet'te ve referans (mock) business server ile çalışır: banka bacağı **simüle edilir**, gerçek FAST/EFT hareketi **yoktur**. Jüriye/demo sırasında "gerçek TRY" ifadesini kullanmadan önce organizatörün kabul kriterini teyit edin; teyit yoksa "temsili TRY (tTRY), banka bacağı simülasyon" deyin. (CANON kural 12: dürüst sınır > şişirilmiş demo.)
+Bu MVP'nin banka bacağı **simüle edilir**; gerçek FAST/EFT hareketi veya TRY teslimi kanıtlanmaz. Organizatörün demo kriterini kabul etmesi de gerçek banka transferi yapıldığı anlamına gelmez. Gösterimde "test varlıkları, banka bacağı simülasyon" ifadesini kullanın.
 
 ## Alternatifler
 

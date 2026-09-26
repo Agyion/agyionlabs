@@ -6,15 +6,16 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import type { Fade, Mandate, Pod, Trigger } from '../app/lib/hakClient';
 import type { WalletState } from '../app/lib/useWallet';
 
-const boundary = vi.hoisted(() => ({ mock: false, signer: null as unknown, walletVersion: 0, walletListeners: new Set<() => void>(), getClient: vi.fn(), mockClient: vi.fn(), listEntries: vi.fn(), buildProofPack: vi.fn(), downloadProofPack: vi.fn(), authenticate: vi.fn(), depositTry: vi.fn(), withdrawTry: vi.fn(), transactionStatus: vi.fn(), sendAnchorPayment: vi.fn(), loadAccount: vi.fn(), tryUsdcPrice: vi.fn() }));
+const boundary = vi.hoisted(() => ({ mock: false, signer: null as unknown, walletVersion: 0, walletListeners: new Set<() => void>(), getClient: vi.fn(), mockClient: vi.fn(), listEntries: vi.fn(), buildProofPack: vi.fn(), downloadProofPack: vi.fn(), authenticate: vi.fn(), depositTry: vi.fn(), withdrawTry: vi.fn(), transactionStatus: vi.fn(), sendAnchorPayment: vi.fn(), listAnchorPayments: vi.fn(), reconcileAnchorPayments: vi.fn(), loadAccount: vi.fn(), tryUsdcPrice: vi.fn() }));
 vi.mock('../app/lib/config', () => ({ get IS_MOCK() { return boundary.mock; }, CONFIG: { decimals: 7, assetCode: 'USDC', assetContractId: 'contract', anchorUrl: 'https://anchor.invalid', assetAddress: 'issuer' } }));
 vi.mock('../app/lib/client', () => ({ getClient: boundary.getClient, mockClient: boundary.mockClient, SECONDS_PER_LEDGER: 5 }));
 vi.mock('../app/lib/useLedger', () => ({ useLedger: () => 1000, useLedgerStatus: () => ({ ledger: 1000, fresh: true, status: 'fresh', refresh: vi.fn() }) }));
 vi.mock('../app/lib/wallet', () => ({ demoAddress: () => 'GDEMO', defaultSigner: () => boundary.signer, walletSessionVersion: () => boundary.walletVersion, onWalletSessionChange: (listener: () => void) => { boundary.walletListeners.add(listener); return () => boundary.walletListeners.delete(listener); } }));
-vi.mock('../app/lib/signers', async (importOriginal) => ({ ...await importOriginal<typeof import('../app/lib/signers')>(), newKeypair: () => ({ secret: 'test-only-secret', pubkeyHex: 'ab'.repeat(32) }), publicKeyHex: () => 'ab'.repeat(32), podClaimCommitment: () => 'cd'.repeat(32), signEnvoy: () => 'ef'.repeat(64) }));
+vi.mock('../app/lib/signers', async (importOriginal) => ({ ...await importOriginal<typeof import('../app/lib/signers')>(), newKeypair: () => ({ secret: 'test-only-secret', pubkeyHex: 'ab'.repeat(32) }), publicKeyHex: () => 'ab'.repeat(32), podPublicKey: (seed:string) => { if (!/^[a-f0-9]{64}$/i.test(seed)) throw new Error('Invalid Pod secret'); return 'ab'.repeat(32); }, signPodCreation: () => 'bc'.repeat(64), signPodClaim: () => 'cd'.repeat(64), signEnvoy: () => 'ef'.repeat(64) }));
 vi.mock('../app/lib/ledgerLog', async (importOriginal) => ({ ...await importOriginal<typeof import('../app/lib/ledgerLog')>(), logEntry: vi.fn(), listEntries: boundary.listEntries, clearLog: vi.fn(), buildProofPack: boundary.buildProofPack, downloadProofPack: boundary.downloadProofPack }));
 vi.mock('../app/lib/anchor', () => ({ AnchorError: class extends Error {}, sep6Info: async () => ({}), tryUsdcPrice: boundary.tryUsdcPrice, authenticate: boundary.authenticate, depositTry: boundary.depositTry, withdrawTry: boundary.withdrawTry, transactionStatus: boundary.transactionStatus }));
-vi.mock('../app/lib/accountOps', () => ({ sendAnchorPayment: boundary.sendAnchorPayment, createAssetTrustline: vi.fn(), friendbotFund: vi.fn() }));
+vi.mock('../app/lib/anchorPayments', () => ({ listAnchorPayments: boundary.listAnchorPayments }));
+vi.mock('../app/lib/accountOps', () => ({ reconcileAnchorPayments: boundary.reconcileAnchorPayments, sendAnchorPayment: boundary.sendAnchorPayment, createAssetTrustline: vi.fn(), friendbotFund: vi.fn() }));
 vi.mock('@stellar/stellar-sdk', async (importOriginal) => { const actual = await importOriginal<typeof import('@stellar/stellar-sdk')>(); return { ...actual, Horizon: { ...actual.Horizon, Server: class { loadAccount = boundary.loadAccount; } } }; });
 
 import PodPanel from '../app/components/app/PodPanel';
@@ -23,11 +24,13 @@ import EnvoyPanel from '../app/components/app/EnvoyPanel';
 import FadePanel from '../app/components/app/FadePanel';
 import LedgerPanel from '../app/components/app/LedgerPanel';
 import RampPanel from '../app/components/app/RampPanel';
+import { InstrumentActivity } from '../app/lib/instrumentActivity';
 import { draftAmount } from '../app/components/app/instrumentPresentation';
+import { clearLog } from '../app/lib/ledgerLog';
 
 const connected: WalletState = { address: 'GCONNECTED', label: 'Wallet', demo: false, connecting: false, error: null, connectKit: async () => {}, useTestSecret: () => {}, disconnect: async () => {} };
 const disconnected = { ...connected, address: null };
-const pod: Pod = { id: 7n, funder: 'GCONNECTED', asset: 'contract', amount: 5000000000n, unlock_ledger: 900, key_hash: 'ab'.repeat(32), state: 0 };
+const pod: Pod = { id: 7n, funder: 'GCONNECTED', asset: 'contract', amount: 5000000000n, unlock_ledger: 900, claim_pubkey: 'ab'.repeat(32), state: 0 };
 const trigger: Trigger = { id: 9n, funder: 'GCONNECTED', asset: 'contract', amount: 7500000000n, beneficiary: 'GBENEFICIARY', attester_pubkey: 'ab'.repeat(32), deadline_ledger: 900, state: 0 };
 const fade: Fade = { id: 3n, seller: 'GCONNECTED', asset: 'contract', pot: 10000000000n, start_price: 1000000000n, floor_price: -100000000n, start_ledger: 900, deadline_ledger: 1100, handoff_window: 50, slope_num: 10000000n, slope_den: 1n, venue_pubkey: 'ab'.repeat(32), state: 0, claimant: null, claimed_at: null };
 const mandate: Mandate = { id: 4n, owner: 'GCONNECTED', agent_pubkey: 'ab'.repeat(32), max_per_tx: 2000000000n, daily_cap: 5000000000n, daily_used: 0n, window_start: 900, valid_until: 1500, revoked: false, claims_used: 0 };
@@ -35,7 +38,6 @@ let client: {
   currentLedger: ReturnType<typeof vi.fn>; create_pod: ReturnType<typeof vi.fn>; get_pod: ReturnType<typeof vi.fn>; claim_pod: ReturnType<typeof vi.fn>;
   create_trigger: ReturnType<typeof vi.fn>; get_trigger: ReturnType<typeof vi.fn>; refund_trigger: ReturnType<typeof vi.fn>;
   get_mandate: ReturnType<typeof vi.fn>; get_fade: ReturnType<typeof vi.fn>;
-  commit_pod_claim: ReturnType<typeof vi.fn>; get_pod_claim_commitment: ReturnType<typeof vi.fn>;
   envoy_claim: ReturnType<typeof vi.fn>;
   create_fade: ReturnType<typeof vi.fn>; create_mandate: ReturnType<typeof vi.fn>;
 };
@@ -51,7 +53,6 @@ beforeEach(() => {
     currentLedger: vi.fn().mockResolvedValue(1000), create_pod: vi.fn().mockResolvedValue(7n), get_pod: vi.fn().mockResolvedValue(pod), claim_pod: vi.fn().mockImplementation(async () => { client.get_pod.mockResolvedValue({ ...pod, state: 1 }); }),
     create_trigger: vi.fn().mockResolvedValue(9n), get_trigger: vi.fn().mockResolvedValue(trigger), refund_trigger: vi.fn().mockImplementation(async () => { client.get_trigger.mockResolvedValue({ ...trigger, state: 2 }); }),
     get_mandate: vi.fn().mockResolvedValue(null), get_fade: vi.fn().mockResolvedValue(fade),
-    commit_pod_claim: vi.fn().mockImplementation(async () => { client.get_pod_claim_commitment.mockResolvedValue({ commitment: 'cd'.repeat(32), committed_at: 1000 }); }), get_pod_claim_commitment: vi.fn().mockResolvedValue(null),
     envoy_claim: vi.fn().mockResolvedValue(undefined),
     create_fade: vi.fn().mockResolvedValue(3n), create_mandate: vi.fn().mockResolvedValue(4n),
   };
@@ -64,7 +65,9 @@ beforeEach(() => {
   boundary.withdrawTry.mockReset().mockResolvedValue({ id: 'withdrawal-a', accountId: 'GANCHOR', memoType: 'text', memo: 'MEMO-A' });
   boundary.depositTry.mockReset().mockResolvedValue({ id: 'deposit-a', bankName: 'Bank A', iban: 'TRTEST', transferMemo: 'DEP-A', how: 'Simulated transfer' });
   boundary.transactionStatus.mockReset().mockResolvedValue({ id: 'withdrawal-a', kind: 'withdrawal', status: 'pending_user_transfer_start' });
-  boundary.sendAnchorPayment.mockReset().mockResolvedValue('transaction-hash');
+  boundary.listAnchorPayments.mockReset().mockReturnValue([]);
+  boundary.reconcileAnchorPayments.mockReset().mockResolvedValue(undefined);
+  boundary.sendAnchorPayment.mockReset().mockImplementation(async () => { boundary.listAnchorPayments.mockReturnValue([{withdrawalId:'withdrawal-a',hash:'a'.repeat(64),status:'success',amount:'20',assetCode:'USDC'}]); return 'a'.repeat(64); });
   boundary.loadAccount.mockReset().mockResolvedValue({ balances: [] });
   boundary.tryUsdcPrice.mockReset().mockResolvedValue(null);
 });
@@ -189,6 +192,16 @@ describe('read-only instrument drafts', () => {
     expect(boundary.buildProofPack).not.toHaveBeenCalled();
   });
 
+  it('retains Ledger history and shows the clear error when its durable marker cannot be saved', () => {
+    boundary.listEntries.mockReturnValue([{ seq: 1, ts: '2026-09-25T00:00:00Z', ledger: 1000, template: 'fade', action: 'create_fade', refId: '3', amount: '10000000000', status: 'locked', detail: 'Local record', txHash: null }]);
+    vi.mocked(clearLog).mockImplementationOnce(() => { throw new Error('Clear marker could not be saved.'); });
+    render(<LedgerPanel wallet={connected} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Clear history' }));
+    expect(screen.getByText('Clear marker could not be saved.')).toBeTruthy();
+    expect(screen.getByLabelText('Local record summary').querySelector('dd')?.textContent).toBe('1');
+    expect(screen.getByRole('button', { name: 'Clear history' }).hasAttribute('disabled')).toBe(false);
+  });
+
   it('preserves a valid sub-cent Ramp amount in the visual and accessible draft', () => {
     render(<RampPanel wallet={disconnected} />);
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw' }));
@@ -204,6 +217,26 @@ describe('read-only instrument drafts', () => {
 });
 
 describe('Pod secret recovery', () => {
+  it('clears prepared and entered credentials when the workspace closes or wallet session changes',async()=>{
+    const view=render(<InstrumentActivity.Provider value={true}><PodPanel wallet={connected}/></InstrumentActivity.Provider>);
+    preparePod();
+    fireEvent.change(screen.getByLabelText(/load pod by id/i),{target:{value:'7'}});fireEvent.click(screen.getByRole('button',{name:/^load$/i}));
+    await screen.findByRole('heading',{name:'Pod #7'});
+    fireEvent.change(screen.getByLabelText(/^Pod secret/i),{target:{value:'11'.repeat(32)}});
+    view.rerender(<InstrumentActivity.Provider value={false}><PodPanel wallet={connected}/></InstrumentActivity.Provider>);
+    expect(screen.queryByLabelText(/generated Pod secret/i)).toBeNull();expect((screen.getByLabelText(/^Pod secret/i) as HTMLInputElement).value).toBe('');
+    view.rerender(<InstrumentActivity.Provider value={true}><PodPanel wallet={connected}/></InstrumentActivity.Provider>);preparePod();
+    act(()=>{boundary.walletVersion++;boundary.walletListeners.forEach(listener=>listener())});
+    expect(screen.queryByLabelText(/generated Pod secret/i)).toBeNull();
+  });
+  it('does not continue creation after closing while the ledger check is pending',async()=>{
+    let finish!:(ledger:number)=>void;client.currentLedger.mockImplementation(()=>new Promise<number>(r=>{finish=r}));
+    const view=render(<InstrumentActivity.Provider value={true}><PodPanel wallet={connected}/></InstrumentActivity.Provider>);
+    preparePod();fireEvent.click(screen.getByRole('button',{name:/bury the pod/i}));
+    view.rerender(<InstrumentActivity.Provider value={false}><PodPanel wallet={connected}/></InstrumentActivity.Provider>);
+    await act(async()=>{finish(1000)});expect(client.create_pod).not.toHaveBeenCalled();
+  });
+
   it('requires saving the secret before submission and retains it after an ambiguous timeout', async () => {
     let failSubmission!: (error: Error) => void;
     client.create_pod.mockImplementation(() => new Promise<bigint>((_resolve, reject) => { failSubmission = reject; }));
@@ -211,12 +244,14 @@ describe('Pod secret recovery', () => {
     expect((screen.getByRole('button', { name: /bury the pod/i }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: /prepare pod secret/i }));
     const secret = (screen.getByLabelText(/generated pod secret/i) as HTMLInputElement).value;
-    expect(secret).toMatch(/^[a-f0-9]{32}$/);
+    expect(secret).toMatch(/^[a-f0-9]{64}$/);
     expect(client.create_pod).not.toHaveBeenCalled();
     expect((screen.getByRole('button', { name: /bury the pod/i }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(screen.getByRole('checkbox', { name: /^I saved this secret outside this page/i }));
     fireEvent.click(screen.getByRole('button', { name: /bury the pod/i }));
     await waitFor(() => expect(client.create_pod).toHaveBeenCalledTimes(1));
+    expect(client.create_pod.mock.calls[0].map(String)).not.toContain(secret);
+    expect(client.create_pod.mock.calls[0].slice(4)).toEqual(['ab'.repeat(32),'bc'.repeat(64)]);
     expect((screen.getByLabelText(/generated pod secret/i) as HTMLInputElement).value).toBe(secret);
     await act(async () => { failSubmission(new Error('Submission timed out')); });
     expect((await screen.findByRole('alert')).textContent).toMatch(/network request failed|could not be confirmed/i);
@@ -350,39 +385,33 @@ describe('testnet records after actions', () => {
     preparePod();
     fireEvent.click(screen.getByRole('button', { name: /bury the pod/i }));
     expect(await screen.findByRole('heading', { name: 'Pod #7' })).toBeTruthy();
-    fireEvent.change(screen.getByLabelText(/^preimage/i), { target: { value: 'secret' } });
-    fireEvent.click(screen.getByRole('button', { name: /commit claim/i }));
-    await waitFor(() => expect(client.commit_pod_claim).toHaveBeenCalledWith(7n, 'GCONNECTED', 'cd'.repeat(32)));
-    expect((screen.getByRole('button', { name: /open capsule/i }) as HTMLButtonElement).disabled).toBe(true);
-    client.currentLedger.mockResolvedValue(1001);
-    fireEvent.click(screen.getByRole('button', { name: /refresh claim status/i }));
+    fireEvent.change(screen.getByLabelText(/^Pod secret/i), { target: { value: '11'.repeat(32) } });
     await waitFor(() => expect((screen.getByRole('button', { name: /open capsule/i }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(screen.getByRole('button', { name: /open capsule/i }));
     expect(await screen.findByText('opened')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /open capsule/i })).toBeNull();
   });
 
-  it('preserves the created Pod ID and preimage if its subsequent read fails', async () => {
+  it('preserves the created Pod ID and secret if its subsequent read fails', async () => {
     client.get_pod.mockRejectedValue(new Error('RPC unavailable'));
     render(<PodPanel wallet={connected} />);
     preparePod();
     fireEvent.click(screen.getByRole('button', { name: /bury the pod/i }));
     expect((await screen.findByRole('status')).textContent).toMatch(/Pod #7/);
-    expect(await screen.findByText(/Your preimage/)).toBeTruthy();
+    expect(await screen.findByText(/Your Pod secret/)).toBeTruthy();
     expect((await screen.findByRole('alert')).textContent).toMatch(/refresh|load|read/i);
   });
 
-  it('rechecks the commitment before revealing a Pod preimage', async () => {
-    client.get_pod_claim_commitment.mockResolvedValue({ commitment: 'cd'.repeat(32), committed_at: 999 });
+  it('rechecks the unlock ledger before sending a recipient-bound signature', async () => {
     render(<PodPanel wallet={connected} />);
     fireEvent.change(screen.getByLabelText(/load pod by id/i), { target: { value: '7' } });
     fireEvent.click(screen.getByRole('button', { name: /^load$/i }));
     await screen.findByRole('heading', { name: 'Pod #7' });
-    fireEvent.change(screen.getByLabelText(/^preimage/i), { target: { value: 'secret' } });
-    await waitFor(() => expect((screen.getByRole('button', { name: /open capsule/i }) as HTMLButtonElement).disabled).toBe(false));
-    client.get_pod_claim_commitment.mockResolvedValue(null);
+    fireEvent.change(screen.getByLabelText(/^Pod secret/i), { target: { value: '11'.repeat(32) } });
+    expect((screen.getByRole('button', { name: /open capsule/i }) as HTMLButtonElement).disabled).toBe(false);
+    client.currentLedger.mockResolvedValue(899);
     fireEvent.click(screen.getByRole('button', { name: /open capsule/i }));
-    expect((await screen.findByRole('alert')).textContent).toMatch(/commit.*before opening/i);
+    expect((await screen.findByRole('alert')).textContent).toMatch(/unlock ledger/i);
     expect(client.claim_pod).not.toHaveBeenCalled();
   });
 
@@ -517,7 +546,36 @@ describe('Ramp wallet and payment boundaries', () => {
     await screen.findByRole('button', { name: /send 20 USDC/i });
     fireEvent.change(screen.getByLabelText(/^Amount \(USDC\)/i), { target: { value: '100' } });
     fireEvent.click(screen.getByRole('button', { name: /send 20 USDC/i }));
-    await waitFor(() => expect(boundary.sendAnchorPayment).toHaveBeenCalledWith(boundary.signer, 'GCONNECTED', 'GANCHOR', '20', 'text', 'MEMO-A'));
+    await waitFor(() => expect(boundary.sendAnchorPayment).toHaveBeenCalledWith(boundary.signer, 'GCONNECTED', 'GANCHOR', '20', 'text', 'MEMO-A', 'withdrawal-a'));
+  });
+
+  it('disables a confirmed withdrawal after payment and after reopening the panel', async () => {
+    withSigner();const view=render(<RampPanel wallet={connected} />);
+    fireEvent.click(screen.getByRole('button',{name:/^withdraw$/i}));fireEvent.click(screen.getByRole('button',{name:/register withdrawal/i}));
+    fireEvent.click(await screen.findByRole('button',{name:/send 20 USDC/i}));
+    await waitFor(()=>expect((screen.getByRole('button',{name:/payment confirmed/i}) as HTMLButtonElement).disabled).toBe(true));
+    view.unmount();render(<RampPanel wallet={connected} />);
+    fireEvent.click(screen.getByRole('button',{name:/^withdraw$/i}));fireEvent.click(screen.getByRole('button',{name:/register withdrawal/i}));
+    await waitFor(()=>expect((screen.getByRole('button',{name:/payment confirmed/i}) as HTMLButtonElement).disabled).toBe(true));
+    expect(boundary.sendAnchorPayment).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps an uncertain payment blocked and offers read-only hash recovery', async () => {
+    withSigner();boundary.listAnchorPayments.mockReturnValue([{withdrawalId:'withdrawal-a',hash:'b'.repeat(64),status:'unknown',amount:'20',assetCode:'USDC'}]);
+    render(<RampPanel wallet={connected} />);
+    fireEvent.click(screen.getByRole('button',{name:/^withdraw$/i}));fireEvent.click(screen.getByRole('button',{name:/register withdrawal/i}));
+    await waitFor(()=>expect((screen.getByRole('button',{name:/payment unresolved/i}) as HTMLButtonElement).disabled).toBe(true));
+    fireEvent.click(screen.getByRole('button',{name:/check payment status/i}));
+    await waitFor(()=>expect(boundary.reconcileAnchorPayments).toHaveBeenCalledWith('GCONNECTED'));
+    expect(screen.getByText('b'.repeat(64))).toBeTruthy();expect(boundary.sendAnchorPayment).not.toHaveBeenCalled();
+  });
+
+  it('never offers a provider-controlled alternate payment link', async () => {
+    withSigner();boundary.withdrawTry.mockResolvedValue({ id:'withdrawal-a',accountId:'GANCHOR',memoType:'text',memo:'MEMO-A',paymentUri:'https://unrelated.invalid/approve' });
+    render(<RampPanel wallet={connected} />);
+    fireEvent.click(screen.getByRole('button',{name:/^withdraw$/i}));fireEvent.click(screen.getByRole('button',{name:/register withdrawal/i}));
+    await screen.findByRole('button',{name:/send 20 USDC/i});
+    expect(screen.queryByRole('link',{name:/payment URI/i})).toBeNull();
   });
 
   it('clears authenticated instructions when the wallet disconnects', async () => {

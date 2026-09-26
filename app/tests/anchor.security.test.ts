@@ -78,6 +78,13 @@ describe('SEP-10 challenge trust', () => {
 });
 
 describe('anchor session isolation', () => {
+  it('does not promote provider-controlled payment URIs into payment instructions', async () => {
+    const bearer = await authenticate(signer);
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ id: 'withdrawal-1', account_id: other.publicKey(), memo_type: 'text', memo: 'memo', extra_info: { payment_uri: 'https://unrelated.invalid/approve', message: 'sandbox' } })));
+    const instructions = await withdrawTry(bearer, '5', 'sandbox-iban');
+    expect(instructions).not.toHaveProperty('paymentUri');
+    expect(instructions).toMatchObject({id:'withdrawal-1', accountId:other.publicKey(), memo:'memo'});
+  });
   it('accepts the anchor origin as the JWT issuer, as allowed by SEP-10', async () => {
     issuedToken = `e30.${Buffer.from(JSON.stringify({ sub: client.publicKey(), exp: Math.floor(Date.now() / 1000) + 300, iss: origin })).toString('base64url')}.fixture`;
     expect(await authenticate(signer)).toBe(issuedToken);

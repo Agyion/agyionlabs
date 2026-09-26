@@ -43,12 +43,16 @@ export class ZkDisabledError extends Error {
 // ---------------------------------------------------------------------------
 
 export interface SnarkjsProof {
+  protocol: 'groth16';
+  curve: 'bn128';
   pi_a: [string, string, string];
   pi_b: [[string, string], [string, string], [string, string]];
   pi_c: [string, string, string];
 }
 
 export interface SnarkjsVk {
+  protocol: 'groth16';
+  curve: 'bn128';
   vk_alpha_1: [string, string, string];
   vk_beta_2: [[string, string], [string, string], [string, string]];
   vk_gamma_2: [[string, string], [string, string], [string, string]];
@@ -67,11 +71,19 @@ export interface ZkArtifacts {
 export async function loadZkArtifacts(
   base: string = ZK_ARTIFACTS_BASE,
 ): Promise<ZkArtifacts> {
+  const load = async (file: string) => {
+    const response = await fetch(`${base}/${file}`, { redirect: 'error' });
+    if (!response.ok) throw new Error(`ZK artifact ${file} could not be loaded (${response.status})`);
+    return response.json();
+  };
   const [vk, proof, publicSignals] = await Promise.all([
-    fetch(`${base}/vk.json`).then((r) => r.json()),
-    fetch(`${base}/proof.json`).then((r) => r.json()),
-    fetch(`${base}/public.json`).then((r) => r.json()),
+    load('vk.json'), load('proof.json'), load('public.json'),
   ]);
+  // Validate the public artifact boundary before exposing it to a caller. This
+  // checks canonical encoding, not curve membership or proof validity.
+  encodeVk(vk);
+  encodeProof(proof);
+  encodePublicInputs(publicSignals);
   return { vk, proof, publicSignals } as ZkArtifacts;
 }
 
@@ -79,21 +91,35 @@ export async function loadZkArtifacts(
 // encoders
 // ---------------------------------------------------------------------------
 
-/** Decimal string -> 32-byte big-endian buffer. */
-export function decToBe32(dec: string): Buffer {
-  let v = BigInt(dec);
-  const out = Buffer.alloc(32);
-  for (let i = 31; i >= 0; i--) {
-    out[i] = Number(v & 0xffn);
-    v >>= 8n;
+// These are different fields: public signals use Fr; point coordinates use Fq.
+const FR_MODULUS = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001n;
+const FQ_MODULUS = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47n;
+
+function fieldToBe32(dec: unknown, modulus: bigint): Buffer {
+  if (typeof dec !== 'string' || dec.length > 77 || !/^(?:0|[1-9][0-9]*)$/.test(dec)) {
+    throw new Error('Expected a canonical unsigned decimal field element');
   }
-  if (v !== 0n) throw new Error("field element overflow (> 254 bits)");
-  return out;
+  const value = BigInt(dec);
+  if (value >= modulus) throw new Error('Field element is outside the BN254 field');
+  return Buffer.from(value.toString(16).padStart(64, '0'), 'hex');
+}
+
+/** Canonical BN254 scalar (Fr) -> 32-byte big-endian buffer; never reduces. */
+export function decToBe32(dec: string): Buffer {
+  return fieldToBe32(dec, FR_MODULUS);
+}
+
+function assertPreimageFormat(value: unknown): void {
+  if (!value || typeof value !== 'object' ||
+      (value as SnarkjsProof).protocol !== 'groth16' || (value as SnarkjsProof).curve !== 'bn128') {
+    throw new Error('Expected a Groth16 BN254 snarkjs artifact');
+  }
 }
 
 /** snarkjs G1 [x, y, 1] -> 64 bytes be(X)||be(Y). */
 export function encodeG1(p: [string, string, string]): Buffer {
-  return Buffer.concat([decToBe32(p[0]), decToBe32(p[1])]);
+  if (!Array.isArray(p) || p.length !== 3 || p[2] !== '1') throw new Error('Expected an affine snarkjs G1 point');
+  return Buffer.concat([fieldToBe32(p[0], FQ_MODULUS), fieldToBe32(p[1], FQ_MODULUS)]);
 }
 
 /**
@@ -103,17 +129,20 @@ export function encodeG1(p: [string, string, string]): Buffer {
 export function encodeG2(
   p: [[string, string], [string, string], [string, string]],
 ): Buffer {
+  if (!Array.isArray(p) || p.length !== 3 || p.some(pair => !Array.isArray(pair) || pair.length !== 2) ||
+      p[2][0] !== '1' || p[2][1] !== '0') throw new Error('Expected an affine snarkjs G2 point');
   const [x, y] = p;
   return Buffer.concat([
-    decToBe32(x[1]),
-    decToBe32(x[0]),
-    decToBe32(y[1]),
-    decToBe32(y[0]),
+    fieldToBe32(x[1], FQ_MODULUS),
+    fieldToBe32(x[0], FQ_MODULUS),
+    fieldToBe32(y[1], FQ_MODULUS),
+    fieldToBe32(y[0], FQ_MODULUS),
   ]);
 }
 
 /** proof.json -> 256-byte on-chain blob: pi_a || pi_b || pi_c. */
 export function encodeProof(proof: SnarkjsProof): Buffer {
+  assertPreimageFormat(proof);
   return Buffer.concat([
     encodeG1(proof.pi_a),
     encodeG2(proof.pi_b),
@@ -123,6 +152,7 @@ export function encodeProof(proof: SnarkjsProof): Buffer {
 
 /** public.json -> one 32-byte BE buffer per public signal. */
 export function encodePublicInputs(publicSignals: string[]): Buffer[] {
+  if (!Array.isArray(publicSignals) || publicSignals.length !== 1) throw new Error('The preimage circuit requires one public input');
   return publicSignals.map(decToBe32);
 }
 
@@ -134,6 +164,8 @@ export function encodeVk(vk: SnarkjsVk): {
   deltaG2: Buffer;
   ic: Buffer[];
 } {
+  assertPreimageFormat(vk);
+  if (vk.nPublic !== 1 || !Array.isArray(vk.IC) || vk.IC.length !== 2) throw new Error('The preimage key requires one public input and two IC points');
   return {
     alphaG1: encodeG1(vk.vk_alpha_1),
     betaG2: encodeG2(vk.vk_beta_2),

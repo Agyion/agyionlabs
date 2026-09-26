@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { assertReleaseCsp } from '../scripts/release-integrity.mjs';
 
 async function readyScene(page) {
   await expect(page.locator('.orbital-backdrop')).toHaveClass(/is-ready/);
@@ -158,7 +159,7 @@ test('combined site launches the console and serves real missing-asset errors', 
   const missing=await request.get('/assets/nonexistent.js');expect(missing.status()).toBe(404);
   const headers=(await request.get('/app/')).headers();
   expect(headers['x-frame-options']).toBe('DENY');expect(headers['x-content-type-options']).toBe('nosniff');expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
-  expect(headers['content-security-policy']).not.toContain("script-src 'self' 'unsafe-inline'");
+  assertReleaseCsp(headers['content-security-policy']);
 });
 
 test('wallet selection opens without CSP or application errors', async ({page}) => {

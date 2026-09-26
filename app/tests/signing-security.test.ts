@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Keypair, StrKey, Address, hash } from '@stellar/stellar-sdk';
 import { Buffer } from 'buffer';
-import { handoffPayload, attestPayload, envoyPayload, podClaimCommitment } from '../app/lib/signers';
+import { handoffPayload, attestPayload, envoyPayload, podClaimPayload } from '../app/lib/signers';
 const recipient=Keypair.fromRawEd25519Seed(Buffer.alloc(32,1)).publicKey();
 const contractId=StrKey.encodeContract(Buffer.alloc(32,2));
 const domain={contractId,networkPassphrase:'Test SDF Network ; September 2015'};
@@ -16,11 +16,8 @@ describe('credential domain separation',()=>{
    const id=Buffer.alloc(8);id.writeBigUInt64BE(1n);const ts=Buffer.alloc(8);ts.writeBigUInt64BE(2n);
    expect(handoffPayload(1n,recipient,2n,domain)).toEqual(Buffer.concat([Buffer.from('agyion:handoff:v2\0'),hash(Buffer.from(domain.networkPassphrase)),new Address(contractId).toScVal().toXDR(),id,new Address(recipient).toScVal().toXDR(),ts]));
  });
- it('binds pod commitments to recipient and pod without publishing the secret',()=>{
-   const first=podClaimCommitment(1n,recipient,'hidden-value',domain);
-   expect(first).toMatch(/^[a-f0-9]{64}$/);
-   expect(first).not.toEqual(podClaimCommitment(2n,recipient,'hidden-value',domain));
-   expect(first).not.toEqual(podClaimCommitment(1n,Keypair.random().publicKey(),'hidden-value',domain));
+ it('keeps Pod v3 signatures separate from existing v2 credentials',()=>{
+   expect(podClaimPayload(1n,recipient,domain).subarray(0,20).toString()).toBe('agyion:pod-claim:v3\0');
    expect(envoyPayload(1n,2n,3n,domain).subarray(0,16).toString()).toContain('agyion:envoy:v2');
  });
 });

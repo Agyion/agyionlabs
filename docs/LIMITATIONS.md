@@ -1,53 +1,54 @@
-# LIMITATIONS.md — Honest Scope
+# Current limitations — 26 September 2026
 
-> An honest limitations file beats an inflated demo. This document tells the jury and future developers exactly what the MVP does **not** do. Each item: status, impact, roadmap.
+This describes the current **local source**, not an upgrade of historical deployments. The [release record](verification/2026-09-26-cloudflare-release.md) identifies the earlier published frontend; [kernel V3](../contracts/hak/SECURITY_PROTOCOL.md) requires a fresh deployment. Old funds do not migrate automatically. This review used local files, not a live provider/network check.
 
-## 1. Attester — mock
+## 1. Public chain data; no private-instrument protocol
 
-- **Status:** In Fade, the handoff proof is a venue ed25519 signature verified on-chain (`confirm_handoff`); in Trigger, execution is an attester ed25519 signature (`attest`). In the demo, both keys are ours. There is **no independent/real attester network**.
-- **Impact:** "Executes itself when proven" rests on a single signature; if the venue and the seller collude, the system cannot detect it.
-- **Roadmap:** the **Loxias** attester marketplace — staked, reputation-scored, M-of-N attestations. A real attester network is deliberately out of hackathon scope.
+Amounts, assets, funders, recipients and timing are public. Generic instrument labels do not make accounts anonymous. Fade remains public by product decision. Current Pod V3 removes raw-secret disclosure from the claim path; it does not hide payment data.
 
-## 2. Sybil quota — basic, fragile
+The independent zk-preimage module proves only knowledge of a Poseidon preimage under a pinned demo verification key. It does not bind Pod, recipient, network, contract or a spent nullifier and authorizes no kernel payment. Local fixtures do not establish setup provenance, a production ceremony, an audit or target-network costs.
 
-- **Status:** The claim path is identity-free; sybil resistance exists only at the quota/UI level (assumed limited claims per user). There is **no on-chain sybil protection**.
-- **Impact:** A determined attacker with many accounts could drain a Fade campaign pool. Known, not shown in the demo.
-- **Roadmap:** operator-side KYA registry plus rate limits; long-term, quota proofs compatible with zero-knowledge anonymity (membership/quota proof without identity).
+The isolated privacy package validates research data shapes and canonical bytes. Its installed-verifier registry is empty and all proof acceptance/activation fails closed. Shielded assets, encryption, DKG, verifiable decryption shares and M-of-N disclosure remain proposed work. A colluding threshold quorum may decrypt other records under its epoch key; a request-scope validator cannot make that impossible. See the [design](security/2026-09-26/private-instruments-design.md) and [ZK review](security/2026-09-26/zk-eerc-review.md).
 
-## 3. Offline claims — single hop
+## 2. Attesters are trusted keys, not verified real-world facts
 
-- **Status:** Offline claim proofs are **single-hop**: prepare the claim in airplane mode, submit it when back online. There is **no multi-hop hand-off**. Bearer-note/coupon-style language and mechanics are **deliberately not used** — fixed-denomination multi-hop bearer instruments sit closest to the legal definition of e-money, and we will not drift into that category by accident.
-- **Impact:** In an offline environment, chain finality only arrives on reconnection; until the claim hits the chain, double-spend protection rests on the recipient's trust.
-- **Roadmap:** offline verification of the signed evidence file (Proof Pack); multi-hop value transfer only once the regulatory frame is clear.
+Fade handoff and Trigger attestation use Ed25519 signatures. The demo generates local venue/attester keys; it has no independent attester network, M-of-N attestation, dispute adjudicator or implemented compliance freeze. The contract checks authorization, not whether food was delivered or a real-world condition occurred. A compromised/colluding signer can make a false assertion.
 
-## 4. ZK — stub / showcase
+## 3. Credential custody and Pod recovery
 
-- **Status update (zk-preimage module):** a **working** Groth16/BN254 verifier contract now exists as an independent module (`contracts/zk-preimage`, circom Poseidon preimage circuit, real snarkjs artifacts, ~26.4M CPU instructions per verify, 6 passing on-chain tests) — but it is **not yet wired into Pod claims**, so the per-claim anonymity promise below still stands for the demo flow.
-- **Status:** Zero-knowledge anonymity is a **stub** in the MVP claim flow: the Pod claim path performs no on-chain proof verification; the working verifier is a standalone module (see status update above). The design promise ("ZK anonymity for agent-less claims") is **not met** in this release.
-- **Impact:** All claims are traceable today; no privacy claim is made in the demo.
-- **Roadmap:** ZK membership/quota proofs for agent-less claims, built on Protocol 25's BN254 + Poseidon host functions; go/no-go follows a verification-cost measurement.
+New Pod seeds use browser randomness, are not persisted by the current flow, and sign locally. The user must save the seed before funding. Leaving the Pod panel or changing wallet session clears UI-held seeds. This does not guarantee memory erasure or cancel an operation already handed to the transaction client. Anyone retaining the seed, including the creator, can authorize a recipient after unlock. **There is no Pod refund, rotation or admin key recovery.**
 
-## 5. Anchor side — official mock anchor, simulated bank leg
+Test-wallet signer keys are memory-only and testnet-restricted. Other demo credentials differ: Trigger/Envoy and saved venue identities use sessionStorage. Trigger's password-style input masks its appearance; it does not encrypt the value or storage. Same-origin scripts and a compromised page can access these secrets. Do not delete existing keys silently: active records may still depend on them. Explicit backup and migration remain necessary.
 
-- **Status:** we integrate the **official hackathon TR mock anchor** (`https://tr-mock-anchor.fly.dev`): SEP-6 programmatic TRY↔USDC ramp (USDC = Circle testnet issuer), SEP-10 auth, SEP-12 KYC, SEP-38 quotes, 0.5% fee, `bank_account` funding only. We did **not** build or operate this anchor. The bank leg is **simulated by the sandbox** — no real FAST/EFT movement, no real TRY. A self-host Anchor Platform (SEP-24, tTRY) configuration remains in `anchor/` as an offline fallback, equally simulated.
-- **Impact:** "The merchant sees only TRY" is demonstrated against a real SEP rail, but with simulated money movement — conceptually honest, not literal. Any "real TRY" claim requires organizer confirmation.
-- **Roadmap:** licensed anchor partnership; the regulated first-withdrawal waiting period (72 hours — **not to be confused with** the compliance freeze queue) becomes part of the product flow.
+## 4. Claim limits are not identity or sybil protection
 
-## 6. Envoy — negative-price-only restriction
+A Fade record permits one successful claim transition; a mandate allows at most 50 successful Envoy claims. There is no identity-level uniqueness or shared quota across accounts or newly created mandates. These bounds must not be described as protection against an attacker controlling many identities.
 
-- **Status:** `envoy_claim` never calls `owner.require_auth()` — the mandate *is* the authorization. A consequence: settling a Fade claim at a **positive** price would pull funds from the owner (claimant→seller payment), which an agent-submitted transaction cannot authorize. Envoy claims are therefore restricted to fades whose current price is **≤ 0** (the "campaign hunter" case, where the pot compensates the claimant). A positive-price attempt is rejected with `InvalidInput`; cap checks still run first, so an over-cap attempt reports `CapExceeded` regardless of price sign.
-- **Impact:** Agents can hunt free/sub-zero campaigns but cannot spend the owner's own balance. This is a deliberate safety boundary, not a bug.
-- **Roadmap:** positive-price agent claims via an explicit owner-signed allowance object (smart-account / policy-signer variant), keeping recipient binding and caps intact.
+## 5. Envoy's actual authority
 
-## 7. Known technical limits
+Public Envoy only claims Fade records priced **zero or below**, for the recorded owner, before expiry and confirmed revocation. Positive-price purchases are rejected. Its monetary cap fields are checked but do not grant spending authority or measure a worst-case debit: allowed claims add zero to daily_used. The active quantity bound is 50 claims per mandate.
 
-- **TTL / archival:** records are extended on every read and write (~10-day target at 5 s/ledger), but records expected to outlive the extension window may be archived; the contract has no restore flow — restore obligations beyond ~10 days belong to the operator (documented in `lib.rs`).
-- **Signature host trap:** an invalid ed25519 signature traps the transaction atomically inside `ed25519_verify`; it cannot be mapped to an in-contract error code. The frontend pre-validates signature length and pubkey before submission.
-- **Signature `ts` freshness:** signature payloads carry `ts` but freshness is not enforced on-chain in v1; replay is closed by the state machine.
-- **Same-ledger races:** first valid transition wins; the state machine is single-direction. Covered by tests (`same_ledger_double_claim`).
-- **`refund()` is discretion-free by design** — not a limitation, but it deliberately does not cover user scenarios expecting "flexibility".
-- **Testnet resets wipe demo data**; re-run `scripts/deploy_testnet.sh` before the demo.
+The runner is a local interval while Envoy is open; leaving stops new local attempts, not the on-chain mandate. Revocation needs an owner-authorized confirmed transaction and does not reverse an existing Fade claim. No hosted AI runner or positive-price delegated purchase service is included.
 
----
+## 6. No offline settlement or automatic execution
 
-_Last updated: pre-submission freeze. Each "status" line was verified against the actual build on demo day._
+Local preparation/signing does not reserve funds or provide offline finality. Current UI actions use a ledger/RPC connection; no complete offline or multi-hop transfer protocol is established. Transactions must be submitted and confirmed. A deadline alone does not transfer assets.
+
+Fade and Trigger provide particular refund paths; Pod does not. No keeper submits maintenance, settlements or refunds automatically. Proof Packs are editable local history plus a checksum; a signature is optional and currently available only through a test-secret signer. A checksum or local signature is not proof of on-chain settlement or legal evidentiary sufficiency.
+
+## 7. Anchor sandbox and external dependencies
+
+The configured TR mock anchor integration uses SEP-6/10/12/38 against test assets. The bank leg is simulated; no real TRY or FAST/EFT movement is established. The app does not operate that provider. Supported assets, fees and availability must come from current provider responses; a historical fee is not a guaranteed quote. The SEP-24 anchor/assets.yaml is an unprovisioned self-host example with public placeholder accounts, not a running fallback.
+
+PII submitted to the anchor stays outside kernel records, but the anchor can correlate its own customer/rail records with public wallet activity. There is no verified production licensing or universal 72-hour legal rule implemented here.
+
+## 8. Contract and deployment limits
+
+- Persistent records and instance state extend TTL on **executed** reads/writes. RPC simulations do not persist extensions. Long locks need submitted maintenance or Soroban restoration; no app restore/keeper flow exists.
+- Invalid Ed25519 signatures/points can trap the host call; rejection is atomic rather than always a contract error code.
+- Fade/Trigger/Envoy sign ts as metadata, but the kernel does not enforce timestamp freshness. State, ledger deadlines and handoff windows bound acceptance. Pod V3 uses a recipient/domain-bound claim signature without a timestamp.
+- First valid competing transition wins. Retaining a bearer key means retaining claim authority; the UI cannot enforce physical uniqueness of a printed secret.
+- Token-interface compatibility does not certify backing, transfer behavior, freeze or clawback policy. No-admin kernel logic cannot override asset-issuer restrictions.
+- Testnet resets can erase demo state. A reset does not authorize redeployment; use the deployment helper's default read-only plan and separately authorize external changes.
+
+Passing tests reduces known defects; it is not an exhaustive security audit, a no-bug guarantee or proof that the current source is deployed.

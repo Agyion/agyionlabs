@@ -5,7 +5,7 @@ import { GhostButton } from "../ui";
 export default function ProtocolStatus({ readiness }: { readiness: ReturnType<typeof useProtocolReadiness> }) {
   if (readiness.status === "ready") return null;
   const message = readiness.status === "checking" ? "Checking the network…"
-    : readiness.status === "incompatible" ? "Contract v2 upgrade required. Transactions unavailable."
+    : readiness.status === "incompatible" ? "Contract v3 deployment required. Transactions unavailable."
     : "Network unavailable. Transactions paused.";
   return <div id="protocol-availability" className="instrument-feedback protocol-status" role="status" data-readiness={readiness.status}>
     <p>{message}</p>

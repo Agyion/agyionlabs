@@ -43,7 +43,7 @@ elif args[:2] == ['contract', 'build']:
 elif args[:2] == ['contract', 'deploy']:
     print('CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM')
 elif args[:2] == ['contract', 'invoke']:
-    print(os.environ.get('STUB_PROTOCOL_VERSION', '2'))
+    print(os.environ.get('STUB_PROTOCOL_VERSION', '3'))
 else:
     sys.exit(93)
 '''
@@ -84,7 +84,7 @@ class DeployHelperTests(unittest.TestCase):
         calls = [json.loads(line) for line in self.log.read_text().splitlines()] if self.log.exists() else []
         return result, calls
 
-    def test_default_is_read_only_and_prints_v2_plan(self):
+    def test_default_is_read_only_and_prints_v3_plan(self):
         result, calls = self.run_script(STUB_MISSING_ALIAS='1')
         self.assertEqual(result.returncode, 0, result.stderr)
         forbidden = [('keys', 'generate'), ('keys', 'fund'), ('contract', 'build'), ('contract', 'deploy'), ('contract', 'invoke')]

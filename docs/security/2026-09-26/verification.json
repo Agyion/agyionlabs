@@ -1,0 +1,194 @@
+{
+  "date": "2026-09-26",
+  "scope": "Authored-source defensive review and frontend release; not an independent audit, private protocol activation, chain deployment or real payment.",
+  "sourceBranch": "codex/orbital-redesign-security",
+  "sourceCheckpointBeforeRemediation": "29db661bea7a49c3e0b8291cd519d95405d3872b",
+  "localChecks": {
+    "appUnitTests": 467,
+    "landingUnitTests": 70,
+    "privacyStructuralTests": 19,
+    "toolingTests": 6,
+    "hakTestsIncludingCompiledWasm": 49,
+    "standaloneVerifierTestsIncludingCompiledWasm": 11,
+    "deploymentHelperStubTests": 8,
+    "appBrowserTests": 14,
+    "mockPanelChecks": 37,
+    "mockPodCreateUnlockClaimHistory": "passed",
+    "landingAndAppProductionBuilds": "passed",
+    "appLintTypeValidation": "passed",
+    "hakFormattingStrictLintGeneratedBindingParity": "passed",
+    "standaloneCommittedGroth16Proof": "passed",
+    "blockedExternalResourcesDocumentPaint": {
+      "cases": 4,
+      "pixelRGB": [
+        7,
+        9,
+        13
+      ],
+      "uniform": true
+    },
+    "delayedLocalNaturalFlight": {
+      "route": "landing to Pod",
+      "appScriptDelayMs": 1500,
+      "result": "passed",
+      "noFullWhiteFrameInSampledVideo": true,
+      "documentReplacementAndStartupHoldRemain": true
+    }
+  },
+  "publication": {
+    "url": "https://agyionlabs.dev/",
+    "worker": "agyion",
+    "version": "90ff8d23-8b7a-4cc6-b4e3-bf66aebca29a",
+    "deployment": "e94ff3be-7063-4af1-82a7-13771f5b6ef7",
+    "createdAt": "2026-09-26T02:21:00.466169Z",
+    "trafficPercent": 100,
+    "rollbackVersion": "dd57d7a0-9ea3-441e-9616-06d34dc89f8c",
+    "mode": "real testnet",
+    "contractDeployed": false,
+    "assetsCount": 237,
+    "artifactSHA256": {
+      "index.html": "96766e7e52abd9d6f120b5dd1d01434fea16bf8aa2075fceb5d814c50a32ef67",
+      "app/index.html": "e5e0d04a23cfa15e155b4d4ee5339223ceab806c0a04d9f1679ef8e74fc75ba0",
+      "_headers": "99e3c33a3ee84408ad07e3f0565829c342a9a57a3e1e5522c0bce42b816171f6"
+    }
+  },
+  "liveVerification": {
+    "at": "2026-09-26T02:21:33.377Z",
+    "overall": "failed",
+    "httpAndArtifactChecksPassed": 28,
+    "uiChecksPassed": 14,
+    "pageExceptions": 0,
+    "consoleErrors": 6,
+    "failedRequests": 4,
+    "cspEvents": [
+      {
+        "url": "https://agyionlabs.dev/",
+        "blockedURI": "inline",
+        "directive": "script-src-elem"
+      },
+      {
+        "url": "https://agyionlabs.dev/",
+        "blockedURI": "https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495",
+        "directive": "script-src-elem"
+      },
+      {
+        "url": "https://agyionlabs.dev/app/?tab=fade",
+        "blockedURI": "https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495",
+        "directive": "script-src-elem"
+      },
+      {
+        "url": "https://agyionlabs.dev/app/?tab=fade",
+        "blockedURI": "inline",
+        "directive": "script-src-elem"
+      }
+    ],
+    "requestFailures": [
+      {
+        "url": "https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495",
+        "error": "csp"
+      },
+      {
+        "url": "https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495",
+        "error": "csp"
+      },
+      {
+        "url": "https://soroban-testnet.stellar.org/",
+        "error": "net::ERR_NETWORK_CHANGED"
+      },
+      {
+        "url": "https://soroban-testnet.stellar.org/",
+        "error": "net::ERR_NETWORK_CHANGED"
+      }
+    ],
+    "protocolStatus": {
+      "readiness": "incompatible",
+      "message": "Contract v3 deployment required. Transactions unavailable.\n\nCheck again"
+    },
+    "artifactComparisonBoundary": "Exact hashes, except narrowly pinned observed Cloudflare JSD bootstrap with raw injection bytes recorded. This does not waive CSP errors."
+  },
+  "privacyBoundary": {
+    "fade": "public",
+    "currentPodTriggerEnvoy": "public; current old-kernel writes gated",
+    "privateCircuits": false,
+    "thresholdDKG": false,
+    "encryptionImplemented": false,
+    "proofAcceptingRegistryEntries": 0,
+    "fundMigrationPerformed": false
+  },
+  "dependencyAudit": {
+    "appNpm": {
+      "low": 4,
+      "moderate": 5,
+      "high": 0,
+      "critical": 0
+    },
+    "landingNpmAdvisories": 0,
+    "circuitsNpmAdvisories": 0,
+    "rustVulnerablePackages": 0,
+    "rustUnmaintainedAdvisory": "RUSTSEC-2024-0436 (paste)",
+    "boundary": "Snapshot advisory checks, not a complete dependency source or bundle-reachability audit."
+  },
+  "evidence": [
+    {
+      "path": "artifacts/security/2026-09-26/unit-tests-final-verified.log",
+      "sha256": "ede72c7013ef8ce723ab06b186535cb2e7fad817829ac346559f2ef466ef8376"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/hak-review/v3-wasm-final.log",
+      "sha256": "eebcbb83a3f53c6d667c9b701ca95ffc68edad65d78e891f51ebca01fc0891fa"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/zk-wasm-final.log",
+      "sha256": "d1eb42067943eb5a572f4b115b1b3b0c9b88319329629ad61f0e17d80d207a52"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/browser-tests-final.log",
+      "sha256": "ad8fd7c5c29a64e8031b9af40bf778ce9c8ff040527b2da659c19e23803f2b5f"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/mock-pod-flow-verified.log",
+      "sha256": "f6c094dc32f960bb9993cdf3d24af9bed9dfadfeb75e84c9b788ddf3362292f0"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/mock-holographic-ui.log",
+      "sha256": "23089fc1e472b2176de9facf72ae25eb8653c5bb8281b2cb0ac2674c7a5b3203"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/app-build-final.log",
+      "sha256": "fde28c69a308124ef9306f1c851e9d2fdfa85b58759c90e31c0e280a55c1205e"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/landing-build.log",
+      "sha256": "040a2d3b4b924a17d9eca1621736e7f4abae699e60958a9529e3128ca3971609"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/deploy-tests.log",
+      "sha256": "95f3511b584b7b26a00aa76889a744b449bbf958a5a8d9e9fb9609e8f76e5430"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/document-paint-final/verification.json",
+      "sha256": "87443b0624c8f39a45ceade4adc0b2ac2b570e58f58dc64a2f1fec0dc163a970"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/document-paint-final/pixels.json",
+      "sha256": "05a86a41cdaa7e84a565f085df4e1bd9ed57d005d399968c783a6e890a4a8d73"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/cloudflare-deploy.log",
+      "sha256": "1ce5b2a34d37c254c8a46f1e408d33261cf513d28d79a665cde9a6165707dd4d"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/cloudflare-after.json",
+      "sha256": "3193a2c9a30017cfecab574dfaf5aec4b7ceb0530abb42f3972ee5b96bfc2101"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/live-release/results.json",
+      "sha256": "eba7176690e94a9d80c91f69912e5b6f2b413329dd8fca851c77d49197675d59"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/site-manifest.json",
+      "sha256": "6b39748a1a95d7fcff7e1d78f3ecdbd0c9dd9a7a7c376fbeb2e490ff49fbd89c"
+    }
+  ],
+  "evidenceAvailability": "Raw logs/screenshots/videos remain local and gitignored. Tests and verification scripts are committed."
+}

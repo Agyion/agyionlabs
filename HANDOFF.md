@@ -6,6 +6,25 @@ Its mint landing, missing `/mnt/agents/output/app` source, frontend-only mock,
 8-second docking sequence and live-verification claims describe the earlier
 production bundle. They are not instructions or evidence for this revision.
 
+**Current security status:** the local kernel/client are now protocol **V3**.
+Pod uses a locally held Ed25519 seed and recipient-bound signatures, not the
+historical preimage/commit flow below. The configured old testnet kernel remains
+incompatible, and writes are closed. No funds or existing records were migrated.
+Fade stays public. Private Pod/Trigger/Envoy and M-of-N disclosure are a separate
+research design; `privacy/` is a tested structural foundation with no accepting
+verifier, DKG, decryption or asset-transfer path. See
+`docs/security/2026-09-26/REVIEW.md` for current results and open release gates.
+Historical counts/statuses below describe their named checkpoints only.
+
+**Current frontend:** published to `https://agyionlabs.dev/` as Cloudflare version
+`90ff8d23-8b7a-4cc6-b4e3-bf66aebca29a` on 2026-09-26. Real testnet configuration;
+V3-required writes remain closed against the old kernel. Final local checks:
+467 app + 70 landing + 19 privacy + 6 tooling tests, 49 kernel and 11 standalone
+verifier tests including compiled WASM, 14 browser tests, and 37 mock UI checks
+passed. Live 28 artifact/HTTP + 14 UI checks passed, but the strict live run is
+**failed** because 4 Cloudflare CSP events and 2 RPC network-change failures remain.
+See the current report for exact coverage, limits, deployment and rollback IDs.
+
 ## User brief and implementation constraints
 
 - Landing and app share a cinematic black-hole / detailed Endurance-inspired station.
@@ -39,8 +58,9 @@ production bundle. They are not instructions or evidence for this revision.
   screens; its closing/reopening preserves the mounted form draft.
 - No Pause motion button. OS reduced-motion preference and explicit interaction
   coexist; forms, keyboard access and renderer failure fallbacks remain usable.
-- User authorized source revision and testing. No production/chain deployment,
-  push, account transfer or live signing has been performed in this pass.
+- User authorized source revision, testing, frontend publication and GitHub push.
+  Frontend publication and the source checkpoint have been performed. No new
+  chain deployment, account transfer or live signing has been performed.
 
 The following paragraphs describe earlier checkpoints. On 2026-09-26 the user
 explicitly liked the current design and requested only final alignment, reduced
@@ -151,9 +171,10 @@ shared/orbit-input.ts      pointer, touch, wheel and focused keyboard input
 shared/pointer-aim.ts      damped fine-mouse offsets, separate from saved orbit
 app/app/lib/              clients, wallet/session, SEP-10, receipt history
 app/lib/hak-bindings/      regenerated from revised local kernel WASM
-contracts/hak/            kernel v2 security protocol
+contracts/hak/            local kernel v3 security protocol
 contracts/zk-preimage/    independent experimental Groth16 proof verifier
 circuits/                 demo proof fixtures; NOT integrated with Pod claims
+privacy/                  isolated statement/disclosure parser; no live privacy
 scripts/build_site.sh     reproducible install/check/build/assemble
 scripts/assemble-site.mjs  explicit documents + generated CSP hashes/_headers
 scripts/preview-site.mjs   portable local preview honoring generated headers
@@ -187,8 +208,8 @@ MOCK_BASE_URL=http://127.0.0.1:4193 node scripts/mock-pod-check.mjs
 `app/.env.local` chooses mock or Soroban at build time. Never call a mock build
 on-chain verification. Changing NEXT_PUBLIC variables requires rebuilding.
 The real-config build currently references the old live testnet kernel and
-intentionally refuses writes because that kernel lacks `protocol_version()==2`.
-Read-only queries do not require a wallet. A valid new v2 deployment is needed
+intentionally refuses writes because that kernel lacks `protocol_version()==3`.
+Read-only queries do not require a wallet. A valid new v3 deployment is needed
 before the new transaction flows can operate on chain.
 
 Local Cloudflare asset routing was additionally tested with Wrangler 4.118.0
@@ -200,11 +221,15 @@ Do not silently change the production date to work around a local runtime issue.
 
 Read `contracts/hak/SECURITY_PROTOCOL.md` before any new deployment.
 - Signed credentials now bind action + network + contract.
-- Pod opening requires a recipient commitment in an earlier confirmed ledger.
+- Pod V3 opening requires recipient authorization and a locally generated,
+  recipient/Pod/network/deployment-bound signature. No raw seed or commitment
+  endpoint is sent through the SDK.
 - Fresh Pod secrets must be saved before submitting a lock transaction.
 - Confirmed transaction results/hashes come from the sent receipt, not simulation.
 - Old locked funds remain under the old kernel. No automatic migration exists.
-- Test private keys live only in memory and can sign testnet only.
+- The test wallet key and Pod seed stay in memory. Legacy Trigger/Envoy demo
+  signer keys and generated Fade venue keys remain in session storage; they are
+  not hardened production custody. Never silently erase keys for existing records.
 - SEP-10 challenge and returned wallet transactions are verified before use.
 - Wallet session changes invalidate signers, auth and outstanding UI operations.
 - Long contract storage horizons still need maintenance/restoration; no keeper exists.
@@ -339,3 +364,26 @@ to commit then win the following ledger. Classic anchor payment lacks the durabl
 recovery used by the Soroban path and can repeat after a lost response. Evidence
 is in ignored `artifacts/security/2026-09-26/`; source fixes and full coverage are
 still in progress. Do not describe this checkpoint as a completed security audit.
+
+## 2026-09-26: V3 remediation and privacy boundary
+
+The source/publication checkpoint is `29db661` on the remote
+`codex/orbital-redesign-security` branch. Subsequent local fixes replace Pod's
+unsafe delayed commit/reveal model, add classic-payment recovery, prevent
+cross-tab journal loss and tighten confirmation evidence. Binding generation
+uses the compiled V3 WASM; the public fixture matches Rust and JavaScript bytes.
+
+The white-flash report was not reproduced as a full white frame. Both HTML roots
+now set the dark canvas before external CSS. A natural desktop launch with
+1.5 seconds of injected app-script delay passed without console/network/CSP
+errors; blocked-CSS/JS desktop/mobile screenshots are uniformly `#07090d`.
+The document/WebGL replacement and software-renderer startup hold still exist.
+Read `docs/security/2026-09-26/flight-flash.md` for exact scope and evidence.
+
+M-of-N in the original docs was a proposal, not implemented threshold disclosure.
+The new design distinguishes single-attester Trigger authorization from a
+disclosure committee and states the colluding-quorum limit. No existing record
+is anonymous. The isolated `privacy/` package accepts canonical statements and
+scoped request shapes only; proof acceptance/transfer activation always rejects.
+Real private circuits, proof/encryption consistency, DKG, independent review,
+setup provenance and chain/mobile budget measurements are outstanding.

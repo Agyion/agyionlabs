@@ -1,0 +1,280 @@
+{
+  "reviewedAt": "2026-09-26T02:04:34.952202+00:00",
+  "scope": "Remaining immediate scripts/*.mjs, *.sh, *.py; root configuration; new pure release-helper test",
+  "entries": [
+    {
+      "path": "scripts/build_site.sh",
+      "bytes": 1439,
+      "lines": 35,
+      "sha256": "0ad2c3420bdc18496331d2a6e4aa50d68ea8d8b0e78d397e3694c2a4176a0896",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/capture-revealed-landing.mjs",
+      "bytes": 4270,
+      "lines": 78,
+      "sha256": "785b72fae1bda3a06a28fd16077390ad3bfca9ba423ee1801986133ad2fa840e",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/detail-pages-check.mjs",
+      "bytes": 17160,
+      "lines": 253,
+      "sha256": "631077d930a4fc8080934413e20aa806dd1adc33ef00452c327c1b4b1c336fd8",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/flight-visual-check.mjs",
+      "bytes": 4721,
+      "lines": 81,
+      "sha256": "35e3d723a9ef6f0b534515cc123f17babbb4075d310ae616c9c8628a956a4ebc",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/inspect-flight-video.mjs",
+      "bytes": 3551,
+      "lines": 55,
+      "sha256": "da98e1c5bb47ab006ad7e3810e9027d93aaa3012e5bf9b46d7b4aef2a58965e4",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/mock-pod-check.mjs",
+      "bytes": 2711,
+      "lines": 30,
+      "sha256": "20c99049989792185c80fb2c0ae276ff851d6bb4aaff01ec7f184e100f40f114",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)",
+      "finalDeltaReview": "Parent reviewed the exact Pod-secret label selector correction and ran the complete mock Pod flow after it."
+    },
+    {
+      "path": "scripts/preview-design-research.mjs",
+      "bytes": 1768,
+      "lines": 23,
+      "sha256": "1dcb8064ae13ed9b303a69468c2ec517c4b9f9d18ab879c2118ab548044f997d",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/profile-orbital-scene.mjs",
+      "bytes": 14541,
+      "lines": 177,
+      "sha256": "e92df6d715a264d6a55f21f31e262edf064df904fe2549279f21b4a94bdff61c",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/release-integrity.mjs",
+      "bytes": 3781,
+      "lines": 44,
+      "sha256": "99e36fd90face8cff68acbafbc1cb59bbcc437d3aa5373a2a5313355cdb4202b",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/research-app-interactions.mjs",
+      "bytes": 4168,
+      "lines": 49,
+      "sha256": "22a3d0c01fe62dc6ffff6bddcd6fdf343f73d4c867482516be3a776f7ec9d5de",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/research-crypto-design.mjs",
+      "bytes": 3726,
+      "lines": 52,
+      "sha256": "3eb934f777849a208adb75d9b85365d30f2fa2d63952b007f013a525a985fd44",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/scene-study.mjs",
+      "bytes": 2167,
+      "lines": 33,
+      "sha256": "2ab42710f2370fe6f094b9b14c92f25e33fd14c2c978664d947f6e0ae389bb20",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/setup.sh",
+      "bytes": 2742,
+      "lines": 80,
+      "sha256": "f5f945742cf1c88ca1c465efceb4beaa51f66ad8c3783b6efac36b89d10d340d",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-document-paint.mjs",
+      "bytes": 3792,
+      "lines": 62,
+      "sha256": "fac0a41383af3bf9848047b316f8ba00e517a5d1c50f8ad15ffdbc33ae287b07",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-final-polish.mjs",
+      "bytes": 9333,
+      "lines": 95,
+      "sha256": "d5ae413e386f2dd983cab60a3d88716b57b5f5a1aa3ee6559e253d78659747ae",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-flight-handoff.mjs",
+      "bytes": 20003,
+      "lines": 315,
+      "sha256": "4d6794657dc227f362ffc0161f516fc26b44026dce4be7a7963824d5e9165837",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-holographic-ui.mjs",
+      "bytes": 25545,
+      "lines": 342,
+      "sha256": "db5c1765a8974c49fcfc9b130969b813aa81d66505549a113920ca7a22b9210d",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-immersive-world.mjs",
+      "bytes": 9270,
+      "lines": 102,
+      "sha256": "8beda38f38cfb60308ce9c05dea4f4986cfe3fa768fbb15469837ef5808100c4",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-instrument-journeys.mjs",
+      "bytes": 26358,
+      "lines": 386,
+      "sha256": "e2b5fc95e3738fb001cb034e7af84ba6a037a79207170670d2e3d6932dec3919",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-landing-motion.mjs",
+      "bytes": 8075,
+      "lines": 132,
+      "sha256": "e2dabeff1b8a64e4fec11f2ae6bec8339c637b12ccbbfcbdecb7719167894d51",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-orbit-sensitivity.mjs",
+      "bytes": 3993,
+      "lines": 49,
+      "sha256": "cee58be48beec53b5a8751221c623c0ddb567167e2f9f868aeee16ef65812f9a",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-pod-trial.mjs",
+      "bytes": 4098,
+      "lines": 58,
+      "sha256": "d700066f3020873082cf41eee2722d78fa65fb4c82ff2c058bc86a06d518386d",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-pointer-response.mjs",
+      "bytes": 17742,
+      "lines": 251,
+      "sha256": "60f58a2379e1636342b9f5f217a2e323619812cdad920ce1ac1d6a62a430f456",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-production-release.mjs",
+      "bytes": 6501,
+      "lines": 72,
+      "sha256": "96f89f2354c55875f65fbb405ede6363a7a26d63de5cb4cc9863685a29ba8fc0",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-workspace-layout.mjs",
+      "bytes": 12937,
+      "lines": 205,
+      "sha256": "725203f371a868ba6ec686806c04a8e0be3f22f36b8f5e3a65897e8b296d9b9e",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/verify-workspace-ui.mjs",
+      "bytes": 18168,
+      "lines": 279,
+      "sha256": "6eb8e4caa3e1ae07192376510064dc523b60df450c80d5c6de00c9af57e89382",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": "scripts/visual-check.mjs",
+      "bytes": 2360,
+      "lines": 31,
+      "sha256": "03f75b01b979911ad617a2129f96e7c7543429f10a89b58d991cbad72e905ac3",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 209,
+      "lines": 18,
+      "sha256": "845c06d35a14f936960b9473268bdbc0ee2d53a710bcc77f8679fbcc1d065f39",
+      "review": "manual complete text",
+      "category": "root metadata/configuration (not dependency code)"
+    },
+    {
+      "path": "package.json",
+      "bytes": 440,
+      "lines": 16,
+      "sha256": "ce24d5f349f77e26d31e3073c0ddb63c0860aeb7005ce14ed9121316910c7ded",
+      "review": "manual complete text",
+      "category": "root metadata/configuration (not dependency code)"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 4846,
+      "lines": 133,
+      "sha256": "95828cd72079cdde9c7b77325f1b6fa3fb7493344e638ccec07a8004f2b8888c",
+      "review": "manual complete text",
+      "category": "root metadata/configuration (not dependency code)"
+    },
+    {
+      "path": "playwright.config.mjs",
+      "bytes": 536,
+      "lines": 9,
+      "sha256": "69326365cb40f70df4b531cfd49b7ac7d34898e5107bdf250c7ca18801065f54",
+      "review": "manual complete text",
+      "category": "root metadata/configuration (not dependency code)"
+    },
+    {
+      "path": "scripts/tests/release-integrity.test.mjs",
+      "bytes": 4223,
+      "lines": 51,
+      "sha256": "cebb8ad011463fcb34b2fcd753b0d1b584f059ea4037e2a4bceaae8dd3bffa06",
+      "review": "manual complete text",
+      "category": "local QA/build/research tooling (not production runtime)"
+    }
+  ],
+  "totalFiles": 32,
+  "totalLines": 3596,
+  "priorReviewExcluded": [
+    "scripts/app-asset-manifest.mjs",
+    "scripts/assemble-site.mjs",
+    "scripts/deploy_testnet.sh",
+    "scripts/preview-site.mjs",
+    "scripts/test_deploy_testnet.py"
+  ],
+  "notClaimed": [
+    "Third-party dependencies",
+    "Every repository test file",
+    "Browser execution in this pass",
+    "Remote website state",
+    "Wallet signing or live chain state"
+  ],
+  "finalDeltaReviewedAt": "2026-09-26T02:29:53.701321+00:00"
+}

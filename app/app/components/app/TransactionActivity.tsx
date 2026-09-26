@@ -18,6 +18,7 @@ export default function TransactionActivity({ wallet }: { wallet: Pick<WalletSta
   const [attempts, setAttempts] = useState<TransactionAttempt[]>([]);
   const [checking, setChecking] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [storageUnavailable, setStorageUnavailable] = useState(false);
   const matching = useCallback(() => listTransactionAttempts().filter(a => a.network === CONFIG.networkPassphrase && a.contractId === CONFIG.contractId && (!wallet.address || a.account === wallet.address)), [wallet.address]);
   const refresh = useCallback(async () => {
     if (IS_MOCK) return;
@@ -29,28 +30,37 @@ export default function TransactionActivity({ wallet }: { wallet: Pick<WalletSta
       for (const scope of scopes.values()) { await reconcileTransactionAttempts(server, scope); recoverTransactionEntries(scope); }
       if (current === generation.current) {
         setAttempts(matching());
+        setStorageUnavailable(false);
         setNotice("Status checked. Unknown results remain blocked from resubmission.");
       }
-    } catch { if (current === generation.current) setNotice("Could not check the network. Existing outcomes remain unchanged."); }
+    } catch { if (current === generation.current) {
+      try { matching(); }
+      catch { setStorageUnavailable(true); }
+      setNotice("Could not check recovery records. Existing outcomes remain unchanged.");
+    } }
     finally { if (current === generation.current) setChecking(false); }
   }, [matching]);
   const invalidate = useCallback(() => { generation.current++; }, []);
   useEffect(() => {
     if (IS_MOCK) return;
     generation.current++;
-    const sync = () => setAttempts(matching());
+    const sync = () => {
+      try { setAttempts(matching()); setStorageUnavailable(false); }
+      catch { setStorageUnavailable(true); }
+    };
     sync(); void refresh();
     window.addEventListener("agyion:transactions", sync);
     window.addEventListener("storage", sync);
     return () => { invalidate(); window.removeEventListener("agyion:transactions", sync); window.removeEventListener("storage", sync); };
   }, [matching, refresh, invalidate]);
-  if (!attempts.length || IS_MOCK) return null;
+  if ((!attempts.length && !storageUnavailable) || IS_MOCK) return null;
   const pending = attempts.filter(a => a.status === "pending" || a.status === "unknown");
   const unresolved = pending.length;
   const visible = [...pending, ...attempts.filter(a => a.status === "success" || a.status === "failed").slice(0, 20)];
-  return <details className="instrument-technical transaction-activity" open={unresolved > 0 || undefined}>
+  return <details className="instrument-technical transaction-activity" open={unresolved > 0 || storageUnavailable || undefined}>
     <summary>Transaction activity{unresolved ? ` · ${unresolved} unresolved` : ""}</summary>
     <div className="instrument-section">
+      {storageUnavailable && <p role="alert">Recovery storage unavailable; new transactions are blocked. Keep this browser’s data and check existing transaction hashes before retrying.</p>}
       <div className="instrument-actions"><GhostButton onClick={() => void refresh()} disabled={checking}>{checking ? "Checking…" : "Check transaction status"}</GhostButton></div>
       {notice && <p role="status">{notice}</p>}
       {visible.map(attempt => {

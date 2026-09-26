@@ -28,7 +28,7 @@ const STAGES = [
     id: "prove",
     label: "Prove",
     title: "A signature is the evidence",
-    body: "A venue confirms a handoff, an attester vouches for an event, a preimage opens a capsule. ed25519 signatures, verified inside the contract — proof, not trust.",
+    body: "A venue signs a handoff, an attester approves an event, a claim key authorizes a capsule's recipient. The contract verifies each signature and its conditions.",
   },
   {
     id: "execute",

@@ -30,7 +30,7 @@ const TABS = [
 ] as const;
 const HELP = {
   fade: ["Set a falling price", "Claim at the current price", "Settle with venue proof"],
-  pod: ["Save a secret and lock funds", "Commit for your recipient wallet", "Reveal after the unlock ledger"],
+  pod: ["Save a secret and lock funds", "Reach the unlock ledger", "Sign locally for your recipient wallet"],
   trigger: ["Fund the escrow", "Attester signs its proof", "Submit proof, or refund after expiry"],
   envoy: ["Authorize one agent", "Up to 50 claims at price ≤ 0", "Payments go to the mandate owner"],
   ramp: ["Authenticate your test wallet", "Register a test deposit or withdrawal", "Follow the anchor’s transaction status"],
@@ -216,7 +216,7 @@ export default function AppShell() {
         <TransactionActivity wallet={wallet} />
         {helpOpen && <section id="instrument-help" className="station-help" aria-label={`How ${selected.label} works`}>
           <ol>{HELP[tab].map((step, index) => <li key={step}><span>0{index + 1}</span>{step}</li>)}</ol>
-          <p>{tab === "pod" ? "Keep the secret outside the app. The reveal is public; never reuse it." : tab === "ramp" ? "Test sandbox only. No real bank transfer or currency exchange." : tab === "ledger" ? "Local history is not proof of settlement. Check the network result." : "A transaction must be submitted and confirmed for funds to move."}</p>
+          <p>{tab === "pod" ? "Keep the secret outside the app; never reuse it. Only its signature is submitted. Amounts and wallet addresses remain public." : tab === "ramp" ? "Test sandbox only. No real bank transfer or currency exchange." : tab === "ledger" ? "Local history is not proof of settlement. Check the network result." : "A transaction must be submitted and confirmed for funds to move."}</p>
         </section>}
         <TransactionAvailability.Provider value={readiness.status === "ready"}><div key={deck.epoch}>
           {TABS.map(instrument => <section ref={instrument.id === tab ? consolePanel : undefined} key={instrument.id} className="station-console" role="tabpanel" id={`panel-${instrument.id}`} aria-labelledby={`tab-${instrument.id}`} tabIndex={-1} hidden={instrument.id !== tab}>

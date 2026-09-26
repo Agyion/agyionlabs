@@ -70,7 +70,11 @@ export default function LedgerPanel({ wallet }: { wallet: WalletState }) {
         <h3>Activity</h3>
         <div className="ledger-toolbar-actions">
           <GhostButton onClick={() => void exportPack()} disabled={exporting}>{exporting ? "Exporting…" : "Download Proof Pack"}</GhostButton>
-          <GhostButton onClick={() => { clearLog(); setEntries([]); }} disabled={entries.length === 0}>Clear history</GhostButton>
+          <GhostButton onClick={() => {
+            setError(null); setNotice(null);
+            try { clearLog(); setEntries([]); }
+            catch (e) { setError(humanizeError(e)); }
+          }} disabled={entries.length === 0}>Clear history</GhostButton>
         </div>
       </div>
       <div className="instrument-feedback">

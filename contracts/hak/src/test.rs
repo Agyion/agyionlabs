@@ -133,20 +133,57 @@ fn sign_envoy(env: &Env, contract: &Address, mandate_id: u64, fade_id: u64, ts: 
     BytesN::from_array(env, &sig.to_bytes())
 }
 
-fn pod_commitment(
+fn pod_key() -> SigningKey {
+    SigningKey::from_bytes(&[37; 32])
+}
+fn pod_pubkey(env: &Env) -> BytesN<32> {
+    BytesN::from_array(env, &pod_key().verifying_key().to_bytes())
+}
+fn pod_create_proof(
     env: &Env,
     contract: &Address,
-    pod_id: u64,
-    recipient: &Address,
-    preimage: &Bytes,
-) -> BytesN<32> {
-    let mut payload = Bytes::from_slice(env, b"agyion:pod-claim:v2\0");
+    funder: &Address,
+    asset: &Address,
+    amount: i128,
+    unlock: u32,
+) -> BytesN<64> {
+    let mut payload = Bytes::from_slice(env, b"agyion:pod-create:v3\0");
+    payload.append(&Bytes::from(env.ledger().network_id()));
+    payload.append(&contract.to_xdr(env));
+    payload.append(&funder.to_xdr(env));
+    payload.append(&asset.to_xdr(env));
+    payload.append(&Bytes::from_array(env, &amount.to_be_bytes()));
+    payload.append(&Bytes::from_array(env, &unlock.to_be_bytes()));
+    payload.append(&Bytes::from(pod_pubkey(env)));
+    BytesN::from_array(
+        env,
+        &pod_key()
+            .sign(&payload.iter().collect::<std::vec::Vec<u8>>())
+            .to_bytes(),
+    )
+}
+fn pod_signature(env: &Env, contract: &Address, pod_id: u64, recipient: &Address) -> BytesN<64> {
+    let mut payload = Bytes::from_slice(env, b"agyion:pod-claim:v3\0");
     payload.append(&Bytes::from(env.ledger().network_id()));
     payload.append(&contract.to_xdr(env));
     payload.append(&Bytes::from_array(env, &pod_id.to_be_bytes()));
     payload.append(&recipient.to_xdr(env));
-    payload.append(preimage);
-    env.crypto().sha256(&payload).to_bytes()
+    BytesN::from_array(
+        env,
+        &pod_key()
+            .sign(&payload.iter().collect::<std::vec::Vec<u8>>())
+            .to_bytes(),
+    )
+}
+fn create_test_pod(s: &Setup, funder: &Address, amount: i128, unlock: u32) -> u64 {
+    s.client.create_pod(
+        funder,
+        &s.asset,
+        &amount,
+        &unlock,
+        &pod_pubkey(&s.env),
+        &pod_create_proof(&s.env, &s.client.address, funder, &s.asset, amount, unlock),
+    )
 }
 
 fn start_ledger(env: &Env) -> u32 {
@@ -318,46 +355,24 @@ fn pod_early_wrong_and_timely_claim() {
     let s = setup();
     let funder = Address::generate(&s.env);
     let recipient = Address::generate(&s.env);
-
     s.token_admin.mint(&funder, &800);
-
-    let preimage = Bytes::from_slice(&s.env, b"agyion-secret-key");
-    let correct_hash: [u8; 32] = Sha256::digest(b"agyion-secret-key").into();
-    let key_hash = BytesN::from_array(&s.env, &correct_hash);
-
     let unlock = start_ledger(&s.env) + 50;
-    let id = s
-        .client
-        .create_pod(&funder, &s.asset, &800, &unlock, &key_hash);
-    assert_eq!(id, 1);
+    let id = create_test_pod(&s, &funder, 800, unlock);
+    let signature = pod_signature(&s.env, &s.client.address, id, &recipient);
     assert_eq!(s.token.balance(&funder), 0);
-
-    // Early claim rejected: unlock_ledger not reached.
     assert_eq!(
-        s.client.try_claim_pod(&id, &preimage, &recipient),
+        s.client.try_claim_pod(&id, &recipient, &signature),
         Err(Ok(Error::Locked))
     );
-
-    // Timely but wrong preimage rejected.
     s.env.ledger().set_sequence_number(unlock);
-    let wrong = Bytes::from_slice(&s.env, b"wrong-key");
-    assert_eq!(
-        s.client.try_claim_pod(&id, &wrong, &recipient),
-        Err(Ok(Error::BadSignature))
-    );
-
-    // The hidden recipient-bound claim must have matured before revealing.
-    let commitment = pod_commitment(&s.env, &s.client.address, id, &recipient, &preimage);
-    s.client.commit_pod_claim(&id, &recipient, &commitment);
-    s.env.ledger().set_sequence_number(unlock + 1);
-    // Timely + correct preimage: opens, funds go to the recipient.
-    s.client.claim_pod(&id, &preimage, &recipient);
+    let wrong = BytesN::from_array(&s.env, &[1; 64]);
+    assert!(s.client.try_claim_pod(&id, &recipient, &wrong).is_err());
+    assert_eq!(s.client.get_pod(&id).state, 0);
+    s.client.claim_pod(&id, &recipient, &signature);
     assert_eq!(s.token.balance(&recipient), 800);
     assert_eq!(s.token.balance(&s.client.address), 0);
-
-    // Cannot open twice: the state machine is single-direction.
     assert_eq!(
-        s.client.try_claim_pod(&id, &preimage, &recipient),
+        s.client.try_claim_pod(&id, &recipient, &signature),
         Err(Ok(Error::InvalidState))
     );
 }
@@ -413,19 +428,13 @@ fn get_pod_view_record_and_missing() {
     let s = setup();
     let funder = Address::generate(&s.env);
     s.token_admin.mint(&funder, &800);
-
-    let key_hash = BytesN::from_array(&s.env, &[9u8; 32]);
-    let id = s
-        .client
-        .create_pod(&funder, &s.asset, &800, &500, &key_hash);
-
+    let id = create_test_pod(&s, &funder, 800, 500);
     let p = s.client.get_pod(&id);
     assert_eq!(p.funder, funder);
     assert_eq!(p.amount, 800);
     assert_eq!(p.unlock_ledger, 500);
-    assert_eq!(p.key_hash, key_hash);
+    assert_eq!(p.claim_pubkey, pod_pubkey(&s.env));
     assert_eq!(p.state, 0);
-
     assert_eq!(s.client.try_get_pod(&999).unwrap_err(), Ok(Error::NotFound));
 }
 
@@ -1569,23 +1578,28 @@ fn security_envoy_signature_cannot_cross_contracts() {
 }
 
 #[test]
-fn security_observed_pod_preimage_is_not_sufficient_to_steal() {
+fn security_observed_pod_signature_cannot_redirect_after_delayed_submission() {
     let s = setup();
     let funder = Address::generate(&s.env);
-    let attacker = Address::generate(&s.env);
+    let recipient = Address::generate(&s.env);
+    let observer = Address::generate(&s.env);
     s.token_admin.mint(&funder, &100);
-    let secret = Bytes::from_slice(&s.env, b"observed-in-pending-transaction");
-    let hash = s.env.crypto().sha256(&secret).to_bytes();
-    let id = s
-        .client
-        .create_pod(&funder, &s.asset, &100, &start_ledger(&s.env), &hash);
-    // The attacker supplies their OWN valid account authorization, not the victim's.
-    assert!(
-        s.client.try_claim_pod(&id, &secret, &attacker).is_err(),
-        "recipient auth alone must not let a mempool observer steal the pod"
-    );
-    assert_eq!(s.token.balance(&attacker), 0);
-    assert_eq!(s.client.get_pod(&id).state, 0);
+    s.env.ledger().set_sequence_number(100);
+    let id = create_test_pod(&s, &funder, 100, 101);
+    let observed_signature = pod_signature(&s.env, &s.client.address, id, &recipient);
+    // Even after arbitrary simulation/submission delay, an observed signature
+    // authorizes only the original recipient, not the observer's own wallet.
+    for ledger in [101, 102, 120, 1000] {
+        s.env.ledger().set_sequence_number(ledger);
+        assert!(s
+            .client
+            .try_claim_pod(&id, &observer, &observed_signature)
+            .is_err());
+        assert_eq!(s.token.balance(&observer), 0);
+        assert_eq!(s.client.get_pod(&id).state, 0);
+    }
+    s.client.claim_pod(&id, &recipient, &observed_signature);
+    assert_eq!(s.token.balance(&recipient), 100);
 }
 
 #[test]
@@ -1690,73 +1704,102 @@ fn security_fade_handoff_refund_must_fit_ledger_range() {
 }
 
 #[test]
-fn security_pod_commit_reveal_blocks_same_ledger_and_copied_intent() {
+fn security_pod_funding_requires_key_possession_for_exact_terms() {
     let s = setup();
     let funder = Address::generate(&s.env);
-    let recipient = Address::generate(&s.env);
-    let attacker = Address::generate(&s.env);
-    s.token_admin.mint(&funder, &100);
-    let secret = Bytes::from_slice(&s.env, b"hidden until the next ledger");
-    let hash = s.env.crypto().sha256(&secret).to_bytes();
-    let id = s.client.create_pod(&funder, &s.asset, &100, &0, &hash);
-    let commitment = pod_commitment(&s.env, &s.client.address, id, &recipient, &secret);
-    s.client.commit_pod_claim(&id, &recipient, &commitment);
-    // An attacker can copy the opaque commitment, but it is bound to the recipient.
-    s.client.commit_pod_claim(&id, &attacker, &commitment);
+    s.token_admin.mint(&funder, &200);
+    let proof = pod_create_proof(&s.env, &s.client.address, &funder, &s.asset, 100, 50);
+    for (amount, unlock) in [(101, 50), (100, 51)] {
+        assert!(s
+            .client
+            .try_create_pod(
+                &funder,
+                &s.asset,
+                &amount,
+                &unlock,
+                &pod_pubkey(&s.env),
+                &proof
+            )
+            .is_err());
+    }
     assert_eq!(
-        s.client.try_claim_pod(&id, &secret, &recipient),
-        Err(Ok(Error::InvalidInput))
-    );
-    s.env.ledger().set_sequence_number(start_ledger(&s.env) + 1);
-    assert_eq!(
-        s.client.try_claim_pod(&id, &secret, &attacker),
+        s.client.try_create_pod(
+            &funder,
+            &s.asset,
+            &100,
+            &50,
+            &BytesN::from_array(&s.env, &[0; 32]),
+            &proof
+        ),
         Err(Ok(Error::BadSignature))
     );
-    // Even with the newly observed secret, the attacker cannot commit+reveal now.
-    let attacker_commitment = pod_commitment(&s.env, &s.client.address, id, &attacker, &secret);
-    s.client
-        .commit_pod_claim(&id, &attacker, &attacker_commitment);
+    assert!(s
+        .client
+        .try_create_pod(
+            &funder,
+            &s.asset,
+            &100,
+            &50,
+            &BytesN::from_array(&s.env, &[1; 32]),
+            &proof
+        )
+        .is_err());
+    let different_funder = Address::generate(&s.env);
+    assert!(s
+        .client
+        .try_create_pod(
+            &different_funder,
+            &s.asset,
+            &100,
+            &50,
+            &pod_pubkey(&s.env),
+            &proof
+        )
+        .is_err());
+    assert_eq!(s.token.balance(&funder), 200);
+    assert_eq!(s.token.balance(&s.client.address), 0);
     assert_eq!(
-        s.client.try_claim_pod(&id, &secret, &attacker),
-        Err(Ok(Error::InvalidInput))
-    );
-    s.client.claim_pod(&id, &secret, &recipient);
-    assert_eq!(s.token.balance(&recipient), 100);
-    assert_eq!(s.token.balance(&attacker), 0);
-    assert!(s.client.get_pod_claim_commitment(&id, &recipient).is_none());
-    assert_eq!(
-        s.client.try_commit_pod_claim(&id, &recipient, &commitment),
-        Err(Ok(Error::InvalidState))
+        s.client
+            .create_pod(&funder, &s.asset, &100, &50, &pod_pubkey(&s.env), &proof),
+        1
     );
 }
 
 #[test]
-fn security_pod_commitment_is_bound_to_pod_and_contract() {
+fn security_pod_signature_is_bound_to_pod_contract_and_network() {
     let s = setup();
     let funder = Address::generate(&s.env);
     let recipient = Address::generate(&s.env);
     s.token_admin.mint(&funder, &200);
-    let secret = Bytes::from_slice(&s.env, b"same shared secret across pods");
-    let hash = s.env.crypto().sha256(&secret).to_bytes();
-    let first = s.client.create_pod(&funder, &s.asset, &100, &0, &hash);
-    let second = s.client.create_pod(&funder, &s.asset, &100, &0, &hash);
-    let commitment = pod_commitment(&s.env, &s.client.address, first, &recipient, &secret);
-    s.client.commit_pod_claim(&second, &recipient, &commitment);
-    s.env.ledger().set_sequence_number(start_ledger(&s.env) + 1);
-    assert_eq!(
-        s.client.try_claim_pod(&second, &secret, &recipient),
-        Err(Ok(Error::BadSignature))
-    );
+    let first = create_test_pod(&s, &funder, 100, 0);
+    let second = create_test_pod(&s, &funder, 100, 0);
+    let first_signature = pod_signature(&s.env, &s.client.address, first, &recipient);
+    assert!(s
+        .client
+        .try_claim_pod(&second, &recipient, &first_signature)
+        .is_err());
     let other_contract = Address::generate(&s.env);
-    let wrong_contract = pod_commitment(&s.env, &other_contract, second, &recipient, &secret);
-    s.client
-        .commit_pod_claim(&second, &recipient, &wrong_contract);
-    s.env.ledger().set_sequence_number(start_ledger(&s.env) + 1);
-    assert_eq!(
-        s.client.try_claim_pod(&second, &secret, &recipient),
-        Err(Ok(Error::BadSignature))
-    );
+    let wrong_contract = pod_signature(&s.env, &other_contract, second, &recipient);
+    assert!(s
+        .client
+        .try_claim_pod(&second, &recipient, &wrong_contract)
+        .is_err());
+    let correct_signature = pod_signature(&s.env, &s.client.address, second, &recipient);
+    let original_network = s.env.ledger().network_id().to_array();
+    s.env.ledger().with_mut(|l| l.network_id = [42; 32]);
+    assert!(s
+        .client
+        .try_claim_pod(&second, &recipient, &correct_signature)
+        .is_err());
+    s.env.ledger().with_mut(|l| l.network_id = original_network);
+    let funding_proof = pod_create_proof(&s.env, &s.client.address, &funder, &s.asset, 100, 0);
+    assert!(s
+        .client
+        .try_claim_pod(&second, &recipient, &funding_proof)
+        .is_err());
     assert_eq!(s.token.balance(&s.client.address), 200);
+    s.client.claim_pod(&second, &recipient, &correct_signature);
+    assert_eq!(s.token.balance(&recipient), 100);
 }
 
 #[test]
@@ -1788,9 +1831,8 @@ fn security_owner_operations_reject_missing_auth() {
     let funder = Address::generate(&s.env);
     let recipient = Address::generate(&s.env);
     s.token_admin.mint(&funder, &400);
-    let secret = Bytes::from_slice(&s.env, b"secret");
-    let hash = s.env.crypto().sha256(&secret).to_bytes();
-    let pod = s.client.create_pod(&funder, &s.asset, &100, &0, &hash);
+    let pod = create_test_pod(&s, &funder, 100, 0);
+    let proof = pod_create_proof(&s.env, &s.client.address, &funder, &s.asset, 100, 0);
     let fade = s.client.create_fade(
         &funder,
         &s.asset,
@@ -1806,13 +1848,12 @@ fn security_owner_operations_reject_missing_auth() {
     let mandate = s
         .client
         .create_mandate(&funder, &agent_pubkey(&s.env), &1, &1, &100);
-    let commitment = pod_commitment(&s.env, &s.client.address, pod, &recipient, &secret);
-    s.client.commit_pod_claim(&pod, &recipient, &commitment);
+    let signature = pod_signature(&s.env, &s.client.address, pod, &recipient);
     s.env.ledger().set_sequence_number(start_ledger(&s.env) + 1);
     s.env.set_auths(&[]);
     assert!(s
         .client
-        .try_create_pod(&funder, &s.asset, &100, &0, &hash)
+        .try_create_pod(&funder, &s.asset, &100, &0, &pod_pubkey(&s.env), &proof)
         .is_err());
     assert!(s
         .client
@@ -1848,9 +1889,8 @@ fn security_owner_operations_reject_missing_auth() {
     assert!(s.client.try_revoke_mandate(&funder, &mandate).is_err());
     assert!(s
         .client
-        .try_commit_pod_claim(&pod, &recipient, &commitment)
+        .try_claim_pod(&pod, &recipient, &signature)
         .is_err());
-    assert!(s.client.try_claim_pod(&pod, &secret, &recipient).is_err());
     assert_eq!(s.token.balance(&funder), 200);
     assert_eq!(s.token.balance(&s.client.address), 200);
     assert!(!s.client.get_mandate(&mandate).revoked);
@@ -1861,13 +1901,26 @@ fn security_owner_operations_reject_missing_auth() {
 fn security_contract_balance_cannot_be_relocked_without_owner_auth() {
     let s = setup();
     let funder = Address::generate(&s.env);
-    let hash = BytesN::from_array(&s.env, &[7; 32]);
     s.token_admin.mint(&funder, &100);
-    s.client.create_pod(&funder, &s.asset, &100, &100, &hash);
+    create_test_pod(&s, &funder, 100, 100);
     s.env.set_auths(&[]);
     assert!(s
         .client
-        .try_create_pod(&s.client.address, &s.asset, &100, &0, &hash)
+        .try_create_pod(
+            &s.client.address,
+            &s.asset,
+            &100,
+            &0,
+            &pod_pubkey(&s.env),
+            &pod_create_proof(
+                &s.env,
+                &s.client.address,
+                &s.client.address,
+                &s.asset,
+                100,
+                0
+            )
+        )
         .is_err());
     assert_eq!(s.token.balance(&s.client.address), 100);
 }
@@ -1877,9 +1930,8 @@ fn security_refunds_need_no_auth_and_preserve_other_reserves() {
     let s = setup();
     let funder = Address::generate(&s.env);
     let recipient = Address::generate(&s.env);
-    let hash = BytesN::from_array(&s.env, &[7; 32]);
     s.token_admin.mint(&funder, &300);
-    s.client.create_pod(&funder, &s.asset, &100, &100, &hash);
+    create_test_pod(&s, &funder, 100, 100);
     let fade = s.client.create_fade(
         &funder,
         &s.asset,
@@ -1948,34 +2000,27 @@ fn security_failed_positive_payment_rolls_back_handoff_and_pot() {
 /// Build first with `stellar contract build`; opt in with `--features wasm-tests`.
 #[test]
 #[cfg(feature = "wasm-tests")]
-fn security_wasm_pod_commit_reveal_and_domain_bound_settlement() {
+fn security_wasm_pod_signature_and_domain_bound_settlement() {
     const WASM: &[u8] = include_bytes!("../target/wasm32v1-none/release/hak.wasm");
     let env = Env::default();
     env.mock_all_auths_allowing_non_root_auth();
     let contract_id = env.register(WASM, ());
     let client = AgyionClient::new(&env, &contract_id);
-    assert_eq!(client.protocol_version(), 2);
+    assert_eq!(client.protocol_version(), 3);
     let funder = Address::generate(&env);
     let recipient = Address::generate(&env);
     let sac = env.register_stellar_asset_contract_v2(funder.clone());
     let asset = sac.address();
     let token = token::Client::new(&env, &asset);
     token::StellarAssetClient::new(&env, &asset).mint(&funder, &300);
-    let secret = Bytes::from_slice(&env, b"wasm-pod-secret");
-    let hash = env.crypto().sha256(&secret).to_bytes();
-    let pod = client.create_pod(&funder, &asset, &100, &0, &hash);
-    let commitment = pod_commitment(&env, &contract_id, pod, &recipient, &secret);
-    assert_eq!(
-        client.try_claim_pod(&pod, &secret, &recipient),
-        Err(Ok(Error::InvalidInput))
-    );
-    client.commit_pod_claim(&pod, &recipient, &commitment);
-    assert_eq!(
-        client.try_claim_pod(&pod, &secret, &recipient),
-        Err(Ok(Error::InvalidInput))
-    );
-    env.ledger().set_sequence_number(start_ledger(&env) + 1);
-    client.claim_pod(&pod, &secret, &recipient);
+    let proof = pod_create_proof(&env, &contract_id, &funder, &asset, 100, 0);
+    let pod = client.create_pod(&funder, &asset, &100, &0, &pod_pubkey(&env), &proof);
+    let signature = pod_signature(&env, &contract_id, pod, &recipient);
+    let observer = Address::generate(&env);
+    env.ledger().set_sequence_number(100);
+    assert!(client.try_claim_pod(&pod, &observer, &signature).is_err());
+    assert_eq!(token.balance(&observer), 0);
+    client.claim_pod(&pod, &recipient, &signature);
     assert_eq!(token.balance(&recipient), 100);
     let fade = client.create_fade(
         &funder,
@@ -1991,11 +2036,79 @@ fn security_wasm_pod_commit_reveal_and_domain_bound_settlement() {
     );
     client.claim(&fade, &recipient);
     let trigger =
-        client.create_trigger(&funder, &asset, &100, &recipient, &venue_pubkey(&env), &100);
+        client.create_trigger(&funder, &asset, &100, &recipient, &venue_pubkey(&env), &200);
     let sig = sign_handoff(&env, &contract_id, fade, &recipient, 7);
     assert!(client.try_attest(&trigger, &7, &sig).is_err());
     client.confirm_handoff(&fade, &7, &sig);
     assert_eq!(token.balance(&recipient), 110);
     assert_eq!(token.balance(&funder), 90);
     assert_eq!(token.balance(&contract_id), 100);
+}
+
+// Independently generated SDK fixture: fixtures/pod-v3.json. Public test keys only.
+#[test]
+fn pod_v3_cross_language_signatures() {
+    let env = Env::default();
+    let addr = |s: &str| Address::from_string(&soroban_sdk::String::from_str(&env, s));
+    let contract = addr("CAAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQC526");
+    let funder = addr("GABAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEJXA");
+    let asset = addr("CABQGAYDAMBQGAYDAMBQGAYDAMBQGAYDAMBQGAYDAMBQGAYDAMBQGCK3");
+    let recipient = addr("GACAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAJJHP");
+    let network: [u8; 32] = Sha256::digest(b"Test SDF Network ; September 2015").into();
+    env.ledger().with_mut(|l| l.network_id = network);
+    let expected_create = BytesN::from_array(
+        &env,
+        &[
+            56, 9, 104, 116, 12, 27, 131, 36, 220, 186, 111, 225, 88, 221, 127, 89, 100, 190, 237,
+            149, 214, 192, 99, 101, 202, 17, 2, 32, 135, 155, 126, 221, 26, 185, 183, 116, 99, 107,
+            157, 68, 145, 126, 253, 61, 116, 157, 202, 73, 96, 170, 250, 97, 159, 92, 175, 168,
+            210, 9, 145, 24, 35, 251, 52, 2,
+        ],
+    );
+    let expected_claim = BytesN::from_array(
+        &env,
+        &[
+            123, 236, 59, 183, 107, 80, 251, 88, 37, 78, 102, 95, 17, 100, 33, 250, 47, 249, 239,
+            133, 110, 182, 80, 58, 39, 35, 208, 99, 201, 158, 13, 9, 179, 190, 20, 251, 140, 176,
+            105, 64, 16, 211, 34, 81, 33, 134, 109, 124, 105, 207, 22, 106, 156, 53, 174, 188, 203,
+            83, 172, 139, 75, 97, 62, 11,
+        ],
+    );
+    assert_eq!(
+        pod_create_proof(&env, &contract, &funder, &asset, 100_000_007, 654321),
+        expected_create
+    );
+    assert_eq!(
+        pod_signature(&env, &contract, 42, &recipient),
+        expected_claim
+    );
+}
+
+#[test]
+fn pod_failed_asset_payment_preserves_claim_and_reserve() {
+    let env = Env::default();
+    env.mock_all_auths_allowing_non_root_auth();
+    let funder = Address::generate(&env);
+    let recipient = Address::generate(&env);
+    let sac = env.register_stellar_asset_contract_v2(funder.clone());
+    sac.issuer()
+        .set_flag(soroban_sdk::testutils::IssuerFlags::RevocableFlag);
+    let asset = sac.address();
+    let admin = token::StellarAssetClient::new(&env, &asset);
+    let token = token::Client::new(&env, &asset);
+    admin.mint(&funder, &100);
+    let contract = env.register(Agyion, ());
+    let client = AgyionClient::new(&env, &contract);
+    let proof = pod_create_proof(&env, &contract, &funder, &asset, 100, 0);
+    let id = client.create_pod(&funder, &asset, &100, &0, &pod_pubkey(&env), &proof);
+    let signature = pod_signature(&env, &contract, id, &recipient);
+    admin.set_authorized(&recipient, &false);
+    assert!(client.try_claim_pod(&id, &recipient, &signature).is_err());
+    assert_eq!(client.get_pod(&id).state, 0);
+    assert_eq!(token.balance(&contract), 100);
+    assert_eq!(token.balance(&recipient), 0);
+    admin.set_authorized(&recipient, &true);
+    client.claim_pod(&id, &recipient, &signature);
+    assert_eq!(token.balance(&recipient), 100);
+    assert_eq!(client.get_pod(&id).state, 1);
 }

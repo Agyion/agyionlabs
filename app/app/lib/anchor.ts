@@ -80,7 +80,6 @@ export interface WithdrawInstructions {
   eta?: number;
   feePercent?: number;
   message?: string;
-  paymentUri?: string;
 }
 
 export interface TryUsdcPrice {
@@ -382,7 +381,7 @@ export async function withdrawTry(
   if (!str(body.id) || !str(body.account_id)) {
     throw new AnchorError("anchor", "Withdraw response is missing id/account_id");
   }
-  const extra = (body.extra_info ?? {}) as { message?: string; payment_uri?: string };
+  const extra = (body.extra_info ?? {}) as { message?: string };
   return {
     id: str(body.id)!,
     accountId: str(body.account_id)!,
@@ -391,7 +390,6 @@ export async function withdrawTry(
     eta: num(body.eta),
     feePercent: num(body.fee_percent),
     message: extra.message,
-    paymentUri: extra.payment_uri,
   };
 }
 
