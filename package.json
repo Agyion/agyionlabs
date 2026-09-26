@@ -4,7 +4,8 @@
   "scripts": {
     "build": "bash scripts/build_site.sh",
     "test": "npm --prefix landing test && npm --prefix app test && npm --prefix privacy test && node --test scripts/tests/*.test.mjs",
-    "preview": "node scripts/preview-site.mjs"
+    "preview": "node scripts/preview-site.mjs",
+    "check:private": "node scripts/verify-private-pool.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"

@@ -1,5 +1,13 @@
 # Security remediation and privacy status — 2026-09-26
 
+**Historical checkpoint:** this report describes the parser-only privacy phase
+and the previously published V3/frontend remediation. Later experimental v2 work
+implements actual circuits, proofs, encryption, DKG/disclosure and a separate
+pool. Read [the current execution ledger](../../../privacy/EXECUTION_V2.md) and
+[real proof/host results](../../../contracts/private-pool/RESOURCE_RESULTS.md).
+The older counts and "not implemented" statements below retain their historical
+meaning; they must not be treated as the current v2 source inventory.
+
 This is an authored-source review, local adversarial testing and remediation of
 checkpoint `29db661`, followed by another reviewer pass. It is **not an independent
 third-party audit**, a proof that no vulnerabilities remain, or certification of

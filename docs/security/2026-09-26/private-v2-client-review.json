@@ -1,0 +1,180 @@
+{
+  "schema": "agyion-private-v2-client-peer-review-v1",
+  "snapshotUtc": "2026-09-26T15:31:15.748348+00:00",
+  "scope": "Bounded client release/reader/adapter/journal peer review plus actual local Chromium IndexedDB/Web Locks fault-injection checks. Submission lifecycle receives a separate peer review; generated bindings and contract source are not claimed as fully read here.",
+  "files": [
+    {
+      "path": "contracts/private-pool/client/release.ts",
+      "sha256": "d7ac7af221798c5727e2cb0347af3b28dda5ee797b65d989a3d8be6c0a399146",
+      "lineCount": 88,
+      "reviewedLineRanges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "reviewType": "full_manual_peer_read",
+      "reviewedBoundary": "Exact accessor-free bounded snapshots; trusted manifest/roster; pinned Testnet/RPC/protocol; actual DKG transcript signatures and auditor point; network/deployment/asset identity derivation; exact PoolConfig ScVal/XDR and branded immutable release."
+    },
+    {
+      "path": "contracts/private-pool/client/reader.ts",
+      "sha256": "1abf57da5f376176f7806d587d2f2e4f6efd4c1bae9f184e18b53d5792b424e3",
+      "lineCount": 174,
+      "reviewedLineRanges": [
+        [
+          1,
+          174
+        ]
+      ],
+      "reviewType": "full_manual_peer_read",
+      "reviewedBoundary": "Returned ledger key/type/storage/durability identity, Config and WASM bytes, bounded JSON and canonical XDR, record digest/profile/window, checkpoint history and final reread, cancellation and full-Fr revocation tag."
+    },
+    {
+      "path": "contracts/private-pool/client/adapter.ts",
+      "sha256": "bd59110adcac6483ac397b88b0c244775d8f09315fd23fed185d7114e69beae4",
+      "lineCount": 74,
+      "reviewedLineRanges": [
+        [
+          1,
+          74
+        ]
+      ],
+      "reviewType": "full_manual_peer_read",
+      "reviewedBoundary": "Public-only canonical157 fields,256-byte proof transport, exact addresses, bridge/fee presence, nonce offsets and generated ABI argument mapping. No proof acceptance in encoder."
+    },
+    {
+      "path": "contracts/private-pool/client/journal.ts",
+      "sha256": "83fda4955a483f545c2038af22c9b831f0eb23de982423b441eb23f45714473e",
+      "lineCount": 163,
+      "reviewedLineRanges": [
+        [
+          1,
+          163
+        ]
+      ],
+      "reviewType": "full_manual_peer_read",
+      "reviewedBoundary": "Atomic pending records and exact source/NF/CM/record reservations; whole-store bounded consistency check; immutable terminal outcomes; explicit retry ancestry/no forks/cycles; actual two-page locking/races and corruption rejection. Final pending() uses the same complete audit before exposing only immutable pending hashes after reload."
+    },
+    {
+      "path": "contracts/private-pool/client/reader.test.ts",
+      "sha256": "b5d3552090266354272bb95de9e3265481ed083205ec601eef9b03697c92a76c",
+      "lineCount": 109,
+      "reviewedLineRanges": [
+        [
+          1,
+          109
+        ]
+      ],
+      "reviewType": "full_manual_peer_read",
+      "reviewedBoundary": "Read current SDK XDR response fixtures and identity, DKG, checkpoint, missing/expired record, cancellation and actual13-revoke-envoy full-field regression assertions. Execution after correction reported by author, not rerun in this pass."
+    },
+    {
+      "path": "scripts/verify-private-journal.mjs",
+      "sha256": "b3faadb2e8d733e97680f7ffd83a5dcb03714c1fc953b4cf255534cbc0dfc9c4",
+      "lineCount": 186,
+      "reviewedLineRanges": [
+        [
+          1,
+          186
+        ]
+      ],
+      "reviewType": "author_implemented_and_reviewed_harness",
+      "reviewedBoundary": "Author-owned independent browser harness: bundles exact reviewed source, actual two pages and IndexedDB/Web Locks, fault injection, explicit retry history and strict no-external/console/page/CSP evidence."
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/security/2026-09-26/privacy/journal-browser-before.txt",
+      "sha256": "68ce3f05b725b823dda81f87c6590654fb219d6fa64c49430c452c28a503b03f"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/journal-independent-before/report.json",
+      "sha256": "60b03e158329403fe9b116b6cbe5e836d4a81cb6a43f0dcc278a01f7ad955b38"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/journal-independent-before/source.json",
+      "sha256": "2b37237488f9b9c636ec86eeb4ac6030ca0a752b50c735bb9a7ae563060ed010"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/journal-independent-before-expanded/report.json",
+      "sha256": "2e6a2de138451a592aec828279efe2cc68896c3b6ec846951acf29b437da0427"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/journal-independent-after/report.json",
+      "sha256": "a344de744d97c06fa080cae44b6dfe39af25759cf79d3fa30e8888b5cb02e83e"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/journal-independent-final/report.json",
+      "sha256": "3f28a6b3158671b8ea9397cc43ebbcdd875e1327fbf1a74b6f10acfebaec5e81"
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/journal-independent-before-pending/report.json",
+      "sha256": "7fe4ed5e4b536cd917f825c8aa74f78b26e800a7b7e20b8a921f635cdd00a2cc",
+      "status": "historical20checks_before_pending_api"
+    }
+  ],
+  "findings": [
+    {
+      "id": "PV2-CLIENT-001",
+      "severity": "medium",
+      "status": "fixed_and_real_browser_regressed",
+      "foundBy": "landing_flight_ui",
+      "fixedBy": "flight_flash_fix",
+      "path": "contracts/private-pool/client/journal.ts",
+      "problem": "If the pending immutable attempt survived but its reservation rows were missing, conflicts/get/direct commit could accept apparently unreserved state. A different source and record could then create another pending attempt using the same nullifier. Normal atomic IDB writes should prevent partial crash commits; this was a corruption fail-closed omission, not evidence that IndexedDB broke atomicity.",
+      "redEvidence": "The preserved original source bundle passed12/17 expanded independent browser checks and failed missing-reservation conflicts/get/commit, extra reservation and lost-terminal checks.",
+      "fix": "A bounded whole-journal audit now validates all attempt/terminal/reservation relationships inside each transaction before reads/writes, with no truncation. Immutable terminal history and explicit known_not_sent retry ancestry are also validated.",
+      "greenEvidence": "Current exact source hash passed22/22 independent actual Chromium checks, including the five original failures and two-page explicit retry race. Final pending() reload discovery and corruption rejection both passed."
+    },
+    {
+      "id": "PV2-CLIENT-002",
+      "severity": "medium",
+      "status": "fixed_and_source_peer_reviewed",
+      "foundBy": "root",
+      "fixedBy": "app_flight_ui",
+      "path": "contracts/private-pool/client/reader.ts",
+      "problem": "readRevocationAt previously required the full Poseidon revocation tag to be below2^128, although only its tree index uses low128 bits. Genuine generated revocation records were rejected.",
+      "fix": "Canonical field decoder retains Fr bound; reader now requires only nonzero full-field tag. Current test uses the actual13-revoke-envoy proof tag and archive root reconstruction.",
+      "verificationBoundary": "Author reported13/13 focused adapter+reader checks and typecheck passed after correction. This reviewer read the final source/test but did not rerun that suite; comprehensive parent gate supplies separate execution evidence."
+    }
+  ],
+  "additionalUnresolvedExploitableFindingsIdentified": [],
+  "browserResults": {
+    "checks": 22,
+    "passed": 22,
+    "failed": 0,
+    "actualPages": 2,
+    "console": 0,
+    "pageErrors": 0,
+    "csp": 0,
+    "unexpectedRequests": 0,
+    "sourceSha256": "83fda4955a483f545c2038af22c9b831f0eb23de982423b441eb23f45714473e",
+    "bundleSha256": "0d8b6a3a84dabfeb3ba3a9659dfd9b052bf5f68a7d116d89a25ee7ba804c6e6a",
+    "browserClosed": true
+  },
+  "limits": [
+    "No external audit, no all-repository audit and no no-bugs guarantee. Runtime source was edited by its owner; this reviewer authored only the browser harness and review records.",
+    "Manifest and DKG roster are trusted release-channel inputs. The branded release is not evidence of deployment until the reader obtains matching code/config.",
+    "Reader authenticates configured network/contract/ABI identities against a trusted RPC. It does not verify SCP consensus or provide independent ledger-inclusion proofs.",
+    "Actual browser tests use public synthetic attempt data, real IndexedDB/Web Locks, two pages and reload. They do not test OS power loss, physical fsync guarantees, browser-process restart, quota exhaustion, multi-device conflict or hostile same-origin code.",
+    "Deliberate partial-store mutations are fault injection. Deletion/rollback of the entire browser profile can erase all local evidence and is not prevented by this journal.",
+    "Journal retains up to10000 attempts and60000 reservations; bounds fail rather than truncate. Large-history latency and real-phone memory/performance have not been benchmarked.",
+    "Unknown attempts retain reservations. Only separately authenticated terminal evidence or explicit known_not_sent retry logic can release/reuse state; browser storage alone does not establish chain success.",
+    "No live wallet signing, external RPC, transaction simulation/submission, deployment or real-funds operation was performed in this pass."
+  ],
+  "separateScope": [
+    {
+      "path": "contracts/private-pool/client/submission.ts",
+      "status": "separate_peer_review_by_app_flight_ui",
+      "note": "Earlier source read by this reviewer was not used to claim current full-file coverage after lifecycle changes."
+    },
+    {
+      "path": "contracts/private-pool/client/bindings.ts",
+      "status": "generated_abi_binding_not_line_by_line_audit_here"
+    },
+    {
+      "path": "contracts/private-pool/client/journal.test.ts",
+      "status": "original_author_browser_suite_executed_before_fix_2_of_2;current_source_not_claimed_fully_reviewed_here"
+    }
+  ]
+}

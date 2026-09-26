@@ -1,0 +1,100 @@
+{
+  "date": "2026-09-26",
+  "reviewer": "primary implementation agent; not independent audit",
+  "scope": "Complete reads of the listed authored files. Does not claim dependency review, absence of all vulnerabilities or live mainnet readiness.",
+  "findings": [
+    {
+      "status": "corrected-test-gap",
+      "description": "Native attacks/token rollback were tested while the compiled-WASM path only exercised valid chain steps. Added actual-WASM variants; four filtered tests passed including the existing successful chain."
+    },
+    {
+      "status": "documented-not-exploit",
+      "description": "Client rejects identity proof components more strictly than host pairing semantics. Protocol nonidentity requirement explicitly applies to encryption points; no pinned-VK soundness exploit identified. Runtime unchanged."
+    }
+  ],
+  "limits": [
+    "Exact allowlisted token semantics are trusted; fee-on-transfer or malicious custom tokens are unsupported.",
+    "Trusted RPC authentication is not an independent SCP inclusion proof.",
+    "Parallel append contention can stale a proof; no automatic signing/resubmission is justified.",
+    "Single-operator phase2, real trustee independence, legal authority, actual chain archival restoration and live private app integration remain separate release requirements."
+  ],
+  "files": [
+    {
+      "path": "contracts/private-pool/src/lib.rs",
+      "sha256": "e1b38a06ed1f919955e1445a71216b5a06df66ca7106a5eae5a355d9db76cb7f",
+      "bytes": 17908,
+      "lines": 562,
+      "review": "All entrypoints, immutable configuration, canonical public-vector construction, replay/commitment predicates, window/root/capacity checks, authorization before deposit, effects and atomic token calls, durable archive indices and errors."
+    },
+    {
+      "path": "contracts/private-pool/src/hash.rs",
+      "sha256": "a71ca38e9ecbc3ac371e4df2a9e4449982119dd78dd1c2f094bc6604a10510b3",
+      "bytes": 5107,
+      "lines": 151,
+      "review": "Network/contract/address domain separation, exact ScVal XDR hashing, lossless digest splitting, Poseidon parameters and asset-tree construction; constants cross-language checked by existing fixtures."
+    },
+    {
+      "path": "contracts/private-pool/src/verifier.rs",
+      "sha256": "bbf8931c745922654581c0d4d7ba11241891557dcb922fa6965e90a50476da3b",
+      "bytes": 4335,
+      "lines": 124,
+      "review": "Pinned VK hash, exact public-input length, canonical Fq/Fr boundaries, G2 order, MSM and four-pair Groth16 equation. Host handles subgroup validity; no accepting verifier substitution."
+    },
+    {
+      "path": "contracts/private-pool/src/pins.rs",
+      "sha256": "5ddbe9eb757a676341ce1ceec246d645336c9d0dc45eebcd8979a5f48456c488",
+      "bytes": 568,
+      "lines": 9,
+      "review": "Compared both byte arrays against actual generated key digests and public fixture provenance."
+    },
+    {
+      "path": "contracts/private-pool/src/tree_zeros.rs",
+      "sha256": "a907352f19f8b703e72cb21fe6ee4c06dc7cc6f5f4007b4e4f5acf992767b602",
+      "bytes": 1902,
+      "lines": 40,
+      "review": "Reviewed all committed empty-tree constants against their use in pool construction and cross-language proof chain."
+    },
+    {
+      "path": "contracts/private-pool/src/test.rs",
+      "sha256": "e22e1ee51905e724a1e357b32d019c30f6479ec82c7a47065b6bac7d4ce6a6ae",
+      "bytes": 32990,
+      "lines": 866,
+      "review": "Read all predicate/hash/address/config/storage tests and fixed synthetic SAC ledger setup. Native TTL fixture explicitly does not claim real archive restoration."
+    },
+    {
+      "path": "contracts/private-pool/src/test/integration.rs",
+      "sha256": "b0c84ec6fdf0886ba8ce3ed8a0bd7066d47f372bbddcd6c4d69c522fe7dd2572",
+      "bytes": 18354,
+      "lines": 484,
+      "review": "Read actual pinned proof loading, both native/WASM chains, real SAC failure rollback and adversarial tests. Added compiled-WASM variants for each of three formerly native-only attack/rollback paths."
+    },
+    {
+      "path": "privacy/src/prover.mjs",
+      "sha256": "ea62d9412e0d95d59b950f4ca53cd918561418c68554b38f418bb312eea158cc",
+      "bytes": 9012,
+      "lines": 149,
+      "review": "Reviewed intrinsic artifact snapshots/hashes, canonical points/scalars, subgroup restrictions, exact157/4 signals, lazy single-thread snarkjs proving and Noble pairing equation including zero aggregate IC term."
+    },
+    {
+      "path": "privacy/src/prover-worker-host.mjs",
+      "sha256": "49641a83e3bb76ebcc26c80e59ae0c73f08c5fbe7939b80a2531032200ecffe6",
+      "bytes": 1988,
+      "lines": 38,
+      "review": "Read initialization, single outstanding request, error closure, timeout, pending rejection and Worker.terminate transport. Cancellation is not physical erasure."
+    },
+    {
+      "path": "scripts/verify-private-pool.mjs",
+      "sha256": "e6fcf4adfd7e346e26ba82bbe34a05fa7dd66d523965b940988c2ea2a29f6561",
+      "bytes": 4340,
+      "lines": 68,
+      "review": "Authored/reviewed sequential local check runner, locked build, fixed committed public fixtures, failed-step report preservation and interruption handling. No live operations."
+    },
+    {
+      "path": "privacy/src/prover-worker.mjs",
+      "sha256": "460f6a512f116766610424bac43fc4e4c5ecc8aea0564621c87106697cf2d348",
+      "bytes": 1566,
+      "lines": 32,
+      "review": "Complete read: exact structured-message validation, initialized-adapter requirement, single outstanding worker operation, error responses without witness data, local-only proving/verification and dedicated-worker installation."
+    }
+  ]
+}

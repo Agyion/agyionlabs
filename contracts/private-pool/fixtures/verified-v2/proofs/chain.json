@@ -1,0 +1,140 @@
+{
+  "testOnly": true,
+  "host": {
+    "admin": "GABAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEJXA",
+    "asset": "CCUDNJKVGNROPYVWUVQEKD7E4GMR3MKCS6YKOLA6JSPK6FRJLJSP4I5Y",
+    "assetId": "11171865343997008507279457779618690642898060235770337940615480562424031544217",
+    "assetPolicyRoot": "2079765725947210774063147037901262542273222168074568597567099630613540840636",
+    "auditorTestScalar": "7",
+    "auditorX": "20092560661213339045022877747484245238324772779820628739268223482659246842641",
+    "auditorY": "12112450042127193446189577552007703839818242727902437791835414514847797088033",
+    "disclosureEpoch": 1,
+    "dkgTranscriptHash": "7777777777777777777777777777777777777777777777777777777777777777",
+    "domain": "6179241040537357444606996923319723147245067297305122395790781801996033048174",
+    "emptyNoteRoot": "21443572485391568159800782191812935835534334817699172242223315142338162256601",
+    "emptyRevocationRoot": "11359203832757037848829869947004473446103928516549121245147459777152594128506",
+    "fee": "GACQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKG7N",
+    "feeId": "18685094465971160447836497483211129640024409847131979546588437144900244270564",
+    "funder": "GABQGAYDAMBQGAYDAMBQGAYDAMBQGAYDAMBQGAYDAMBQGAYDAMBQHGPC",
+    "funderId": "19387487592502073383360180934731727311329968879346803989649866513172935844236",
+    "ledger": 1000,
+    "networkPassphrase": "Test SDF Network ; September 2015",
+    "pool": "CAAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQC526",
+    "recipient": "GACAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAJJHP",
+    "recipientId": "20088536119428737337646700427357950979448930983550881399330486705496892644472",
+    "schema": "agyion-private-pool-native-fixture-v2",
+    "testOnly": true
+  },
+  "steps": [
+    {
+      "name": "01-deposit",
+      "file": "01-deposit.json",
+      "bridgeAccount": "GABQGAYDAMBQGAYDAMBQGAYDAMBQGAYDAMBQGAYDAMBQGAYDAMBQHGPC",
+      "feeAccount": null
+    },
+    {
+      "name": "02-create-pod",
+      "file": "02-create-pod.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "03-claim-pod",
+      "file": "03-claim-pod.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "04-withdraw-pod",
+      "file": "04-withdraw-pod.json",
+      "bridgeAccount": "GACAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAJJHP",
+      "feeAccount": "GACQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKBIFAUCQKG7N"
+    },
+    {
+      "name": "05-create-trigger",
+      "file": "05-create-trigger.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "06-attest-trigger",
+      "file": "06-attest-trigger.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "07-withdraw-trigger",
+      "file": "07-withdraw-trigger.json",
+      "bridgeAccount": "GACAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAJJHP",
+      "feeAccount": null
+    },
+    {
+      "name": "08-create-envoy",
+      "file": "08-create-envoy.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "09-spend-envoy",
+      "file": "09-spend-envoy.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "10-exhaust-envoy",
+      "file": "10-exhaust-envoy.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "11-withdraw-envoy-recipient",
+      "file": "11-withdraw-envoy-recipient.json",
+      "bridgeAccount": "GACAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAJJHP",
+      "feeAccount": null
+    },
+    {
+      "name": "12-create-revocable-envoy",
+      "file": "12-create-revocable-envoy.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "13-revoke-envoy",
+      "file": "13-revoke-envoy.json",
+      "revocation": true
+    },
+    {
+      "name": "14-reclaim-revoked-envoy",
+      "file": "14-reclaim-revoked-envoy.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "15-create-expired-trigger",
+      "file": "15-create-expired-trigger.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "16-refund-trigger",
+      "file": "16-refund-trigger.json",
+      "bridgeAccount": null,
+      "feeAccount": null
+    },
+    {
+      "name": "17-withdraw-refund",
+      "file": "17-withdraw-refund.json",
+      "bridgeAccount": "GACAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAJJHP",
+      "feeAccount": null
+    }
+  ],
+  "expectedBalances": {
+    "pool": "150",
+    "recipient": "845",
+    "fee": "5",
+    "funderDelta": "-1000"
+  },
+  "finalRoot": "5629471120441428128442212959070589214382177298228308380296309020482818863788",
+  "finalIndex": "18",
+  "finalRevocationRoot": "18009524581002445206062921351912264055449051409551914153055462775919514425738"
+}

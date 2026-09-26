@@ -1,0 +1,15 @@
+{
+  "name": "@agyion/private-pool-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "tsc --noEmit && node --import ./test-register.mjs --test *.test.ts",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "16.3.0",
+    "buffer": "6.0.3"
+  },
+  "devDependencies": { "typescript": "5.9.3", "@types/node": "22.20.4" }
+}

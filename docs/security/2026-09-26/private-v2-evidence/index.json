@@ -1,0 +1,163 @@
+{
+  "schema": "agyion-private-v2-local-evidence",
+  "boundary": "Local development proofs, browser tests and read-only testnet resource comparison; not live private transfers, independent audit or independent Agyion phase2 ceremony. Original source hashes and timestamps are retained.",
+  "files": [
+    {
+      "file": "browser.json",
+      "origin": "artifacts/verification/privacy-browser-bounded-verifier/report.json",
+      "bytes": 7266,
+      "sha256": "5662e19e9e1f6ce17b8b98834c546ec590cb9d33189c50234776896de2acf66f"
+    },
+    {
+      "file": "browser-source-provenance.json",
+      "origin": "artifacts/verification/privacy-browser-bounded-verifier/provenance.json",
+      "bytes": 1568,
+      "sha256": "647ecb1363eaba81a9a777d6c3abacdddd000ec0acee789fbe1a824454f0cda3"
+    },
+    {
+      "file": "browser-memory.json",
+      "origin": "artifacts/verification/privacy-browser-bounded-verifier/desktop-rss-samples.json",
+      "bytes": 1432,
+      "sha256": "51d673ee9d931e36bb176445644a329b42138cca5686f8f07fb46bcc65909449"
+    },
+    {
+      "file": "actual-node-proofs.tap",
+      "origin": "artifacts/verification/privacy-browser-bounded-verifier/node-prover-integration.tap",
+      "bytes": 665,
+      "sha256": "b133ac2da14fa5c2a658cc34ff554280917ea225cd3265ea0c3d6a5fd4057655"
+    },
+    {
+      "file": "verifier-differential.tap",
+      "origin": "artifacts/verification/privacy-browser-bounded-verifier/verification-comparison.tap",
+      "bytes": 1509,
+      "sha256": "8acf58e6a8f3f63e53bccb42ee285bbc7a64b67dd2b0c7915de4f6217df862e2"
+    },
+    {
+      "file": "actual-selective-disclosure.tap",
+      "origin": "artifacts/security/2026-09-26/privacy/disclosure-proof-noble.txt",
+      "bytes": 537,
+      "sha256": "d20b78f86590c3af3a7607c8d3d72ccdb7f644aed9937873d3c275301b1b4cd7"
+    },
+    {
+      "file": "compiled-pool.json",
+      "origin": "artifacts/privacy-v2/pool-build.json",
+      "bytes": 1244,
+      "sha256": "f4c12941e719d2195838a7d0dd4b8b94000b6478806338a183c6b92b00f2b868"
+    },
+    {
+      "file": "pool-resource-comparison.json",
+      "origin": "artifacts/privacy-v2/pool-resource-comparison.json",
+      "bytes": 37302,
+      "sha256": "892f80152190dfd51559807eceb1f0dc05aa47631e7749cf6e399cfcdd0ad55a"
+    },
+    {
+      "file": "pool-native-costs.json",
+      "origin": "artifacts/privacy-v2/pool-native-costs.json",
+      "bytes": 8419,
+      "sha256": "d58afc3f7e09e813d17bb4fe8e8c54e1239ecc9d80c72552c06264bd664810eb"
+    },
+    {
+      "file": "pool-wasm-costs.json",
+      "origin": "artifacts/privacy-v2/pool-wasm-costs.json",
+      "bytes": 8421,
+      "sha256": "e41ce9f0c2ae43db6eeca2cbf405fd484909a3b89183281538e1dee6fe01c37d"
+    },
+    {
+      "file": "privacy-dependencies.json",
+      "origin": "artifacts/privacy-v2/privacy-npm-audit.json",
+      "bytes": 361,
+      "sha256": "c3b3fcc56e2f1ce96e5d80bc8c6894480b85b447c9c2433efa99e9d04f00fa25"
+    },
+    {
+      "file": "pool-dependencies.json",
+      "origin": "artifacts/privacy-v2/private-pool-cargo-audit.json",
+      "bytes": 1793,
+      "sha256": "35513d7614f4eeb4da5f1d8abcaf91813c60655e751b337816e515f76e5b3584"
+    },
+    {
+      "file": "core-check.json",
+      "origin": "artifacts/private-pool-check/2026-09-26T15-27-59.911Z-543946/report.json",
+      "bytes": 4071,
+      "sha256": "971eb29959c8038eba6ca2ddd3f8892d478d95382d888def5c90ce0c172d9925"
+    },
+    {
+      "file": "journal-final.json",
+      "origin": "artifacts/security/2026-09-26/privacy/journal-independent-final/report.json",
+      "bytes": 4029,
+      "sha256": "3f28a6b3158671b8ea9397cc43ebbcdd875e1327fbf1a74b6f10acfebaec5e81"
+    },
+    {
+      "file": "journal-before-expanded.json",
+      "origin": "artifacts/security/2026-09-26/privacy/journal-independent-before-expanded/report.json",
+      "bytes": 3373,
+      "sha256": "2e6a2de138451a592aec828279efe2cc68896c3b6ec846951acf29b437da0427"
+    },
+    {
+      "file": "submission-review.json",
+      "origin": "artifacts/security/2026-09-26/privacy/submission-review.json",
+      "bytes": 3374,
+      "sha256": "fa02aa471ebd062901fbd0cfba3c332c763700c2ccbc7af1bc11bbf2222c8a42"
+    },
+    {
+      "file": "submission-client-tests.tap",
+      "origin": "artifacts/security/2026-09-26/privacy/submission-client-tests.txt",
+      "bytes": 7989,
+      "sha256": "2af5653c860e59b6e6f96a8cb290067b479c539f8923a2289aaccc6f50ed5161"
+    },
+    {
+      "file": "app-dependencies.json",
+      "origin": "docs/security/2026-09-26/private-v2-evidence/app-dependencies.json",
+      "bytes": 5993,
+      "sha256": "e647cb678068eb323d7357d19a53b9dc42b94c4ef88c81306f36842cae16b889",
+      "originNote": "npm audit JSON output captured directly here during the final local source review; advisory scan, not manual dependency audit."
+    },
+    {
+      "file": "core-privacy-units.txt",
+      "origin": "artifacts/private-pool-check/2026-09-26T15-27-59.911Z-543946/privacy-units.log",
+      "bytes": 32709,
+      "sha256": "838399b5d84997670f3114b2122e30e66b0c065b8c949f6a19323d303a0fc358"
+    },
+    {
+      "file": "core-client.txt",
+      "origin": "artifacts/private-pool-check/2026-09-26T15-27-59.911Z-543946/client.log",
+      "bytes": 7990,
+      "sha256": "9b1c3815700de41173fbf47a83f20d1e94ff7f440a25e0a794a69a6ebe1b1098"
+    },
+    {
+      "file": "core-tooling.txt",
+      "origin": "artifacts/private-pool-check/2026-09-26T15-27-59.911Z-543946/tooling.log",
+      "bytes": 1789,
+      "sha256": "0654a8d142a10c9abebad816fcf5b35e5c63feda083d8b635aea3181434c00b1"
+    },
+    {
+      "file": "core-fixture-provenance.txt",
+      "origin": "artifacts/private-pool-check/2026-09-26T15-27-59.911Z-543946/fixture-provenance.log",
+      "bytes": 121,
+      "sha256": "256191b0c86af7ecf0b77ff7d013f0b10936a410f72b3f9081ac83096c68d15a"
+    },
+    {
+      "file": "core-wasm-build.txt",
+      "origin": "artifacts/private-pool-check/2026-09-26T15-27-59.911Z-543946/wasm-build.log",
+      "bytes": 3402,
+      "sha256": "dbf4ac9bae0f1c6a835aafbc0c4fcf0769f67803ee5a29d546b948b9cb1a051e"
+    },
+    {
+      "file": "core-native-and-wasm.txt",
+      "origin": "artifacts/private-pool-check/2026-09-26T15-27-59.911Z-543946/native-and-wasm.log",
+      "bytes": 2840,
+      "sha256": "dc3e03a2e273d30892be438461c9e228a77f1eed152fc4076cddd7bd89fb1d24"
+    },
+    {
+      "file": "core-rust-lints.txt",
+      "origin": "artifacts/private-pool-check/2026-09-26T15-27-59.911Z-543946/rust-lints.log",
+      "bytes": 3652,
+      "sha256": "7d4c1a04b973c70c60a738ca156bee71ee0c0dfec804de42c9b8d882d78f529d"
+    },
+    {
+      "file": "release-candidate-scan.json",
+      "origin": "artifacts/security/2026-09-26/privacy/release-candidate-scan.json",
+      "bytes": 32476,
+      "sha256": "f1c43a82c113c39a3b5c52fe5aeb4f7ab27c5515e37c329de8cb5fdc1c58ac0b"
+    }
+  ]
+}

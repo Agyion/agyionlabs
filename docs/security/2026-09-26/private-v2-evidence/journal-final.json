@@ -1,0 +1,156 @@
+{
+  "at": "2026-09-26T15:30:34.441Z",
+  "source": {
+    "path": "contracts/private-pool/client/journal.ts",
+    "sha256": "83fda4955a483f545c2038af22c9b831f0eb23de982423b441eb23f45714473e"
+  },
+  "bundleSha256": "0d8b6a3a84dabfeb3ba3a9659dfd9b052bf5f68a7d116d89a25ee7ba804c6e6a",
+  "checks": [
+    {
+      "name": "two actual pages: one winner for concurrent identical atomic commits",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "different sources cannot reserve an already pending nullifier",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "Web Locks serialize actual overlapping work from two pages",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "reload retains the pending attempt and reservations",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "reload discovers pending immutable hashes without a separate index",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "terminal history is found and cannot be replaced by an implicit new attempt",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "two actual pages permit only one explicit retry of a known-not-sent attempt",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "confirmed or failed history cannot authorize an explicit retry",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "corrupt storage fails closed: bad-digest",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "corrupt storage fails closed: delete-attempt",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "corrupt storage fails closed: orphan-terminal",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "corrupt storage fails closed: bad-reservation",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "missing reservations cannot permit a second conflicting pending attempt",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "missing reservation fails closed through direct get",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "missing reservation fails closed through direct commit",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "missing reservation fails closed through direct pending",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "unrelated extra reservation is rejected by journal consistency checks",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "a lost terminal cannot silently revive an unlocked attempt",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "missing reservation aborts terminal write atomically",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "version-change closure refuses further durable commits",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "database missing required stores fails before any commit",
+      "passed": true,
+      "result": true
+    },
+    {
+      "name": "no external requests, console/page/CSP failures",
+      "passed": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "allowed": true,
+      "path": "/"
+    },
+    {
+      "method": "GET",
+      "allowed": true,
+      "path": "/journal.js"
+    },
+    {
+      "method": "GET",
+      "allowed": true,
+      "path": "/"
+    },
+    {
+      "method": "GET",
+      "allowed": true,
+      "path": "/journal.js"
+    },
+    {
+      "method": "GET",
+      "allowed": true,
+      "path": "/"
+    },
+    {
+      "method": "GET",
+      "allowed": true,
+      "path": "/journal.js"
+    }
+  ],
+  "console": [],
+  "pageErrors": [],
+  "csp": [],
+  "status": "passed",
+  "boundary": "Actual headless Chromium IndexedDB and Web Locks across two pages. Corruption is deliberate local fault injection, not a claim that normal IDB transactions partially commit. No storage rollback resilience, physical disk flush, live signing, RPC or submission claim."
+}

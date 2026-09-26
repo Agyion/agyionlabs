@@ -1,0 +1,291 @@
+[
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 83062108,
+    "invocation": {
+      "contractEventsBytes": 672,
+      "diskReadBytes": 300,
+      "diskReadEntries": 3,
+      "instructions": 82717802,
+      "memory": 1712241,
+      "memoryReadEntries": 8,
+      "writeBytes": 21144,
+      "writeEntries": 7
+    },
+    "memory": 2148495,
+    "step": "01-deposit"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 80926211,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80612785,
+      "memory": 1495228,
+      "memoryReadEntries": 7,
+      "writeBytes": 21040,
+      "writeEntries": 6
+    },
+    "memory": 1894866,
+    "step": "02-create-pod"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 80895215,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80588832,
+      "memory": 1491909,
+      "memoryReadEntries": 6,
+      "writeBytes": 20944,
+      "writeEntries": 5
+    },
+    "memory": 1883651,
+    "step": "03-claim-pod"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 83216100,
+    "invocation": {
+      "contractEventsBytes": 912,
+      "diskReadBytes": 232,
+      "diskReadEntries": 2,
+      "instructions": 82876991,
+      "memory": 1593694,
+      "memoryReadEntries": 7,
+      "writeBytes": 21264,
+      "writeEntries": 7
+    },
+    "memory": 2023296,
+    "step": "04-withdraw-pod"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 80989770,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80674372,
+      "memory": 1510540,
+      "memoryReadEntries": 7,
+      "writeBytes": 21120,
+      "writeEntries": 6
+    },
+    "memory": 1911870,
+    "step": "05-create-trigger"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 80948558,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80640532,
+      "memory": 1504773,
+      "memoryReadEntries": 6,
+      "writeBytes": 21024,
+      "writeEntries": 5
+    },
+    "memory": 1898207,
+    "step": "06-attest-trigger"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 82103027,
+    "invocation": {
+      "contractEventsBytes": 672,
+      "diskReadBytes": 116,
+      "diskReadEntries": 1,
+      "instructions": 81766933,
+      "memory": 1552901,
+      "memoryReadEntries": 7,
+      "writeBytes": 21228,
+      "writeEntries": 6
+    },
+    "memory": 1978755,
+    "step": "07-withdraw-trigger"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 81060571,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80742639,
+      "memory": 1525852,
+      "memoryReadEntries": 7,
+      "writeBytes": 21200,
+      "writeEntries": 6
+    },
+    "memory": 1928874,
+    "step": "08-create-envoy"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 81086325,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80767824,
+      "memory": 1532352,
+      "memoryReadEntries": 7,
+      "writeBytes": 21240,
+      "writeEntries": 6
+    },
+    "memory": 1936220,
+    "step": "09-spend-envoy"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 81106257,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80787292,
+      "memory": 1538852,
+      "memoryReadEntries": 7,
+      "writeBytes": 21280,
+      "writeEntries": 6
+    },
+    "memory": 1943566,
+    "step": "10-exhaust-envoy"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 82259486,
+    "invocation": {
+      "contractEventsBytes": 672,
+      "diskReadBytes": 116,
+      "diskReadEntries": 1,
+      "instructions": 81911975,
+      "memory": 1588420,
+      "memoryReadEntries": 8,
+      "writeBytes": 21484,
+      "writeEntries": 7
+    },
+    "memory": 2025554,
+    "step": "11-withdraw-envoy-recipient"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 81143309,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80824500,
+      "memory": 1549976,
+      "memoryReadEntries": 7,
+      "writeBytes": 21320,
+      "writeEntries": 6
+    },
+    "memory": 1955536,
+    "step": "12-create-revocable-envoy"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 30156061,
+    "invocation": {
+      "contractEventsBytes": 176,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 29972740,
+      "memory": 629677,
+      "memoryReadEntries": 3,
+      "writeBytes": 14600,
+      "writeEntries": 2
+    },
+    "memory": 870445,
+    "step": "13-revoke-envoy"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 81080316,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80767950,
+      "memory": 1538837,
+      "memoryReadEntries": 6,
+      "writeBytes": 21224,
+      "writeEntries": 5
+    },
+    "memory": 1936501,
+    "step": "14-reclaim-revoked-envoy"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 81102072,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80788667,
+      "memory": 1543365,
+      "memoryReadEntries": 6,
+      "writeBytes": 21264,
+      "writeEntries": 5
+    },
+    "memory": 1941875,
+    "step": "15-create-expired-trigger"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 81118707,
+    "invocation": {
+      "contractEventsBytes": 432,
+      "diskReadBytes": 0,
+      "diskReadEntries": 0,
+      "instructions": 80804697,
+      "memory": 1547893,
+      "memoryReadEntries": 6,
+      "writeBytes": 21304,
+      "writeEntries": 5
+    },
+    "memory": 1947249,
+    "step": "16-refund-trigger"
+  },
+  {
+    "belowNativeDefault100M": true,
+    "boundary": "Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead.",
+    "cpu": 82250753,
+    "invocation": {
+      "contractEventsBytes": 672,
+      "diskReadBytes": 116,
+      "diskReadEntries": 1,
+      "instructions": 81908652,
+      "memory": 1595965,
+      "memoryReadEntries": 7,
+      "writeBytes": 21508,
+      "writeEntries": 6
+    },
+    "memory": 2027741,
+    "step": "17-withdraw-refund"
+  }
+]

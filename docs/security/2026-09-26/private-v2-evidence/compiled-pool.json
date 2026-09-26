@@ -1,0 +1,29 @@
+{
+  "schema": "agyion-private-pool-pinned-build-v2",
+  "testOnly": true,
+  "wasm": {
+    "path": "artifacts/privacy-v2/private_pool.wasm",
+    "bytes": 27648,
+    "sha256": "02fe15ab5b79a496a83e08c269d74b2ab0bdf60145d0cd9b47236f10b31b2980"
+  },
+  "pins": {
+    "transition": "23776ca5d8552a9d9e00bfd5c7fa63c2cc4bbbfea8163f898174c3845489326d",
+    "revocation": "5afe76760a371a27a6cb9823f30e94a9aac7376d99eaf3b0aaab3917b51ba375"
+  },
+  "keyManifestSha256": "f40b0cafbd4ee2c94a23b6f7d3873222659dce937106805b725246915a213ef9",
+  "sourcePinsSha256": "5ddbe9eb757a676341ce1ceec246d645336c9d0dc45eebcd8979a5f48456c488",
+  "generatedBindingsUnchanged": true,
+  "bindingsSha256": "731aa42b55575fad7a3d1d259843574aed5863c32d160d336cf33ddfc44e62b0",
+  "verification": {
+    "defaultRustTests": 19,
+    "toolingTests": 7,
+    "clientTests": 4,
+    "typescript": "passed",
+    "fullPoolProofChain": "passed native 17-step actual proof chain",
+    "fullPoolWasmExecution": "passed WASM 17-step actual proof chain",
+    "fullSuiteTests": 24,
+    "actualSacRollbackTests": "passed",
+    "resourceComparison": "pool-resource-comparison.json"
+  },
+  "setupBoundary": "Published PPoT phase1; single-operator DEVELOPMENT phase2, no independent Agyion ceremony"
+}

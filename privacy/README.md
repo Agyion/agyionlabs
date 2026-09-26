@@ -1,8 +1,57 @@
-# Privacy research foundations
+# Agyion private instruments — experimental v2
 
-This independent, dependency-free package implements **structural validation and canonical serialization only**. It is not imported by the production UI or contracts. It has no wallet, funds, network, prover, DKG, decryption or successful verifier path.
+`src/model.mjs`, `witness.mjs`, `encryption.mjs`, `threshold.mjs`,
+`authorization.mjs` and `backup.mjs` implement the new v2 protocol in
+[PROTOCOL_V2.md](PROTOCOL_V2.md). The Circom circuits bind value conservation,
+instrument authority, Merkle membership/append, revocation and all five encrypted
+envelopes. The separate [Soroban pool](../contracts/private-pool/README.md)
+verifies the exact public vector and stores full encrypted records. Fade stays
+public. The live application's historical HAK adapter is a separate protocol.
 
-Run the entire package suite with `npm --prefix privacy test`. No install is needed. The [implementation plan](IMPLEMENTATION_PLAN.md) and [protocol design](../docs/security/2026-09-26/private-instruments-design.md) explain scope and future gates.
+This is an **experimental development profile**, not an independently audited
+release or Avalanche eERC bytecode. The public PSE phase1 transcript was fully
+verified; Agyion's circuit-specific development phase2 is single-operator;
+independent ceremony, independent trustee custody, operational recovery and a
+reviewed application integration are release requirements. A test count or
+local proof must never enable real-user deposits by itself. Current work and
+verification evidence are tracked in [EXECUTION_V2.md](EXECUTION_V2.md).
+
+`npm run check:private` from the repository root rebuilds the pool and checks the
+committed real public proofs in native and WASM execution, client boundaries,
+local units, fixture provenance and strict Rust lints. It writes a dated report
+under `artifacts/private-pool-check/`. Install both `privacy/` and
+`contracts/private-pool/client/` locked Node dependencies first; Rust, the
+`wasm32v1-none` target and Stellar CLI are required. This command uses no signing
+key or network account and does not generate a setup or enable funding. Actual
+fresh proving/browser/disclosure checks have separate commands in the execution
+ledger; routine unit skips must not be mistaken for those checks.
+
+Install pinned dependencies with `npm --prefix privacy ci`, then run
+`npm --prefix privacy test`. Real full-circuit witness checks are separate:
+
+```sh
+PRIVACY_CIRCUIT_TESTS=1 node --test privacy/test/transition-circuit.test.mjs
+```
+
+That command requires already compiled current artifacts; a routine test run
+explicitly skips it. Full Groth16/contract checks are separate from witness
+assertions. See the development scripts and artifact manifests for provenance.
+Never send a private witness to RPC, a hosted prover, logs or analytics.
+
+The v2 JS modules use the root MIT license except where their dependency or
+composition requires otherwise. Circuit composition is GPL-3.0-or-later; see
+[LICENSE-CIRCUITS](LICENSE-CIRCUITS) and [DEPENDENCIES.md](DEPENDENCIES.md).
+
+## Historical v1 parser API — remains permanently closed
+
+The older `src/index.mjs` API below implements **structural validation and
+canonical serialization only**. Its recognized v1 suite remains permanently
+closed. The new v2 implementation does not relabel v1 parsing as proof acceptance.
+
+The [historical implementation plan](IMPLEMENTATION_PLAN.md) describes that
+completed parser-only checkpoint. Its old dependency-free scope does not apply
+to v2. The initial [protocol design](../docs/security/2026-09-26/private-instruments-design.md)
+is superseded by PROTOCOL_V2.md where the formats differ.
 
 ## Public API
 

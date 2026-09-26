@@ -10,10 +10,20 @@ production bundle. They are not instructions or evidence for this revision.
 Pod uses a locally held Ed25519 seed and recipient-bound signatures, not the
 historical preimage/commit flow below. The configured old testnet kernel remains
 incompatible, and writes are closed. No funds or existing records were migrated.
-Fade stays public. Private Pod/Trigger/Envoy and M-of-N disclosure are a separate
-research design; `privacy/` is a tested structural foundation with no accepting
-verifier, DKG, decryption or asset-transfer path. See
-`docs/security/2026-09-26/REVIEW.md` for current results and open release gates.
+Fade stays public. The separate experimental v2 profile now implements real
+Pod/Trigger/Envoy ZK circuits, encryption, authenticated threshold DKG/DLEQ,
+scoped disclosure, complete encrypted key recovery and a pinned testnet-only
+Soroban pool. A genuine 17-step proof chain passed native and compiled-WASM
+execution, including token rollback; actual browser proof/recovery checks passed.
+The final local check passed 131 privacy, 29 client, seven tooling and 27 native/WASM
+pool tests, with five explicit routine opt-in skips. Separate actual browser gates
+passed 45 proving/recovery checks and 22 durable-journal checks. The release reader,
+wallet lifecycle and journal are implemented as a separate SDK.
+The production app does not yet integrate/deploy that private profile. Local
+single-operator development setup and trustee tests are not independent ceremony,
+committee or audit evidence. See `privacy/EXECUTION_V2.md`,
+`contracts/private-pool/RESOURCE_RESULTS.md` and the historical
+`docs/security/2026-09-26/REVIEW.md` for their respective scopes and release gates.
 Historical counts/statuses below describe their named checkpoints only.
 
 **Current frontend:** published to `https://agyionlabs.dev/` as Cloudflare version
@@ -174,7 +184,8 @@ app/lib/hak-bindings/      regenerated from revised local kernel WASM
 contracts/hak/            local kernel v3 security protocol
 contracts/zk-preimage/    independent experimental Groth16 proof verifier
 circuits/                 demo proof fixtures; NOT integrated with Pod claims
-privacy/                  isolated statement/disclosure parser; no live privacy
+privacy/                  experimental v2 circuits, proving, DKG, disclosure and recovery; legacy v1 parser closed
+contracts/private-pool/   separate pinned experimental testnet pool and client
 scripts/build_site.sh     reproducible install/check/build/assemble
 scripts/assemble-site.mjs  explicit documents + generated CSP hashes/_headers
 scripts/preview-site.mjs   portable local preview honoring generated headers

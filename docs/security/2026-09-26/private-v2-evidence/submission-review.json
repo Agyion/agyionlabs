@@ -1,0 +1,75 @@
+{
+  "date": "2026-09-26",
+  "scope": "Testnet private-pool submission lifecycle and browser journal; local tests only; no live submission or active app integration",
+  "files": [
+    {
+      "path": "contracts/private-pool/client/submission.ts",
+      "sha256": "28911d7d91a597b4625f6e76088b9195f36a993677edaab4ac584bcfe85ef38a",
+      "lines": 229,
+      "coverage": "entire authored file"
+    },
+    {
+      "path": "contracts/private-pool/client/journal.ts",
+      "sha256": "83fda4955a483f545c2038af22c9b831f0eb23de982423b441eb23f45714473e",
+      "lines": 163,
+      "coverage": "entire authored file"
+    },
+    {
+      "path": "contracts/private-pool/client/submission.test.ts",
+      "sha256": "48bfe8eb62c0df126b1b74af282431589671ecd89b86234665b8ed27473fe6fd",
+      "lines": 186,
+      "coverage": "entire authored file"
+    },
+    {
+      "path": "contracts/private-pool/client/journal.test.ts",
+      "sha256": "c36d8cfd7775ca05a64180069763a147cda1a43eca9cdce2736dbec6524adb62",
+      "lines": 70,
+      "coverage": "entire authored file"
+    },
+    {
+      "path": "contracts/private-pool/client/SUBMISSION.md",
+      "sha256": "a14913aeccc115a7eae59b1f761fb908884f45e1c567f9725c406b2bc3362f1a",
+      "lines": 137,
+      "coverage": "entire authored file"
+    }
+  ],
+  "verification": {
+    "typecheck": "passed",
+    "clientTests": {
+      "total": 30,
+      "passed": 29,
+      "failed": 0,
+      "skipped": 1,
+      "skip": "Explicit opt-in browser storage test"
+    },
+    "proof": "Committed genuine proof02 checked with actual snarkjs Groth16 verifier and committed VK; no proof-generation or live ledger claim",
+    "sdk": "Actual16.3 transactions/signatures/getTransaction parser, including fee-bump outer envelope and inner hash lookup; synthetic transport only",
+    "log": "artifacts/security/2026-09-26/privacy/submission-client-tests.txt",
+    "logSha256": "2af5653c860e59b6e6f96a8cb290067b479c539f8923a2289aaccc6f50ed5161",
+    "positiveLifecycleFixture": "Actual internally transferred create-Pod proof02, matched release auditor7; no positive deposit-signing/live bridge claim",
+    "publicFixturePins": [
+      {
+        "path": "contracts/private-pool/fixtures/verified-v2/proofs/02-create-pod.json",
+        "sha256": "9a2040b9d58215bcc42ce95ad664873f9a9ee69725204b7f077ef53c150d3a44"
+      },
+      {
+        "path": "contracts/private-pool/fixtures/verified-v2/keys/transition-vk.json",
+        "sha256": "5ead1dc1a0ee9a0c46e653fa2495faa582f319f06c946d0f9d4a114fb5d1999d"
+      }
+    ],
+    "independentBrowser": {
+      "checks": 22,
+      "passed": 22,
+      "path": "artifacts/security/2026-09-26/privacy/journal-independent-final/report.json",
+      "sha256": "3f28a6b3158671b8ea9397cc43ebbcdd875e1327fbf1a74b6f10acfebaec5e81",
+      "journalSourceSha256": "83fda4955a483f545c2038af22c9b831f0eb23de982423b441eb23f45714473e",
+      "boundary": "Actual Chromium IndexedDB and two pages/Web Locks/reload/corruption; no power-loss or live-ledger claim"
+    }
+  },
+  "limitations": [
+    "Trusted transport/ledger provider and local verifier adapter remain explicit",
+    "Application wallet/session/UI and independently pinned live release not wired",
+    "No secrets/proof/signed XDR in journal",
+    "Same-origin IndexedDB/Web Locks do not defend deletion/rollback/hostile scripts/other devices or establish power-loss durability"
+  ]
+}

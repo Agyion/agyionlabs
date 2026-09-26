@@ -1,0 +1,32 @@
+{
+  "at": "2026-09-26T14:56:09.268Z",
+  "manifest": "artifacts/privacy-v2/prover-cases.json",
+  "manifestSha256": "c1fd4039a4cbb33db11cbb78bf6bf2344a1466645cdbc018b850779b728588ba",
+  "artifactPins": {
+    "transition": {
+      "wasmSha256": "8a66ec01524cc36aba2f865e8c3c8e72527e6f06dfa1916ab7de4713b0c0776d",
+      "zkeySha256": "b81e0d963bfee7ce50df8a70ff981f39c4cb39575ad6017b5faf86bf3fbe4ccc",
+      "verificationKeySha256": "5ead1dc1a0ee9a0c46e653fa2495faa582f319f06c946d0f9d4a114fb5d1999d"
+    },
+    "revocation": {
+      "wasmSha256": "53e8ee8e1e1695bdd9b16332d37bcb07ff7ea2dcf19df544fc8709f2a4bd7e08",
+      "zkeySha256": "3475f67f1ff258f7dcc52ec75b888af0d5a3ef6e82f1b7c474bc391d4408e124",
+      "verificationKeySha256": "9310ce15bbc093a102c4dbc2b5740a435a2b930b00ac45d626072e5a6ed36f30"
+    }
+  },
+  "executedBrowserBundles": {
+    "harness.mjs": "8300d2be77ca29ac2304f2d19f53fba33b132c144b7cfa735b2c6f5ff1cb96de",
+    "prover-worker.mjs": "98e75d6e170e5a8c82f771d854017d785fcbcfa61bb54e977c93e890452cfe8c"
+  },
+  "source": {
+    "privacy/src/prover.mjs": "ea62d9412e0d95d59b950f4ca53cd918561418c68554b38f418bb312eea158cc"
+  },
+  "evidence": {
+    "differential": "verification-comparison.tap",
+    "node": "node-prover-integration.tap",
+    "browser": "report.json",
+    "screenshot": "browser-result.png",
+    "memory": "desktop-rss-samples.json"
+  },
+  "boundary": "Actual local development proofs, vault recovery and worker cancellation; no chain submission, production privacy or independent audit claim. Cancellation is not memory-erasure evidence."
+}

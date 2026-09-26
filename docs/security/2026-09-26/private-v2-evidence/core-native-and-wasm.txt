@@ -1,0 +1,41 @@
+   Compiling private-pool v0.0.0 (/home/apo110/agyion/contracts/private-pool)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.01s
+     Running unittests src/lib.rs (contracts/private-pool/target/debug/deps/private_pool-b90fe6503605446a)
+
+running 27 tests
+test test::field_encoding_rejects_alternate_representations ... ok
+test test::full_tree_allows_complete_withdrawal_but_no_new_leaf ... ok
+test test::expired_nullifier_is_still_rejected_in_native_storage ... ok
+test test::constructor_never_accepts_mainnet_or_caller_selected_verifier ... ok
+test test::state_predicates_reject_stale_append_expiry_duplicate_and_spent_notes ... ok
+test test::canonical_cipher_and_packed_outputs_are_required ... ok
+test test::enumerable_archive_distinguishes_missing_index_from_end_of_history ... ok
+test test::native_poseidon_matches_independent_circomlib_vector ... ok
+test test::repeated_output_commitment_is_rejected_before_verification ... ok
+test test::public_vector_preserves_u64_maxima_every_cipher_field_and_config_context ... ok
+test test::ledger_window_is_inclusive_and_every_envelope_nonce_has_exact_u128_bounds ... ok
+test test::arbitrary_digest_is_split_losslessly_before_poseidon ... ok
+test test::internal_fee_asset_and_addresses_are_bound_into_the_exact_vector ... ok
+test test::deterministic_fixture_sac_can_fund_the_test_sender ... ok
+test test::typed_domain_asset_and_account_hashes_match_stellar_sdk_and_poseidon_lite ... ok
+test test::export_stable_native_host_configuration ... ok
+test test::domain_and_revocation_tag_change_across_network_deployment_and_address_roles ... ok
+test test::bridge_and_fee_require_exact_optional_accounts_and_an_allowlisted_asset ... ok
+test test::generic_pairing_verifier_uses_real_existing_proof_and_rejects_changed_statement ... ok
+test test::integration::real_wasm_deposit_failure_rolls_back_every_effect_and_can_retry ... ok
+test test::integration::real_deposit_rolls_back_every_effect_after_actual_sac_failure_and_can_retry ... ok
+test test::integration::real_fee_transfer_failure_rolls_back_prior_withdrawal_nullifier_and_archive ... ok
+test test::integration::real_wasm_fee_failure_rolls_back_prior_withdrawal_nullifier_and_archive ... ok
+test test::integration::real_proof_cannot_change_amount_recipient_ciphertext_or_replay_spent_notes ... ok
+test test::integration::real_wasm_rejects_unauthorized_funding_tampered_public_inputs_and_replays ... ok
+test test::integration::real_native_chain_moves_sac_tokens_and_checks_all_public_records ... ok
+test test::integration::real_wasm_chain_moves_sac_tokens_and_measures_full_execution ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.88s
+
+   Doc-tests private_pool
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

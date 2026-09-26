@@ -4,6 +4,27 @@
   "private": true,
   "type": "module",
   "exports": "./src/index.mjs",
-  "scripts": { "test": "node --test test/*.test.mjs" },
-  "engines": { "node": ">=20" }
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "dependencies": {
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "@zk-kit/eddsa-poseidon": "1.1.0",
+    "@zk-kit/poseidon-cipher": "0.3.2",
+    "circomlib": "2.0.5",
+    "poseidon-lite": "0.3.0",
+    "snarkjs": "0.7.6"
+  },
+  "devDependencies": {
+    "circom2": "0.2.23"
+  },
+  "overrides": {
+    "jsonpath": {
+      "underscore": "1.13.8"
+    }
+  }
 }

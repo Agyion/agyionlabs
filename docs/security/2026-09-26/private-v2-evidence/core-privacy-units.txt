@@ -1,0 +1,824 @@
+
+> @agyion/privacy-research-foundations@0.0.0 test
+> node --test test/*.test.mjs
+
+TAP version 13
+# Subtest: reconstructs exact trees and durable spent state from encrypted public records
+ok 1 - reconstructs exact trees and durable spent state from encrypted public records
+  ---
+  duration_ms: 183.571552
+  type: 'test'
+  ...
+# Subtest: gaps, reordering, forged IDs and tampering cannot be accepted as complete history
+ok 2 - gaps, reordering, forged IDs and tampering cannot be accepted as complete history
+  ---
+  duration_ms: 152.338408
+  type: 'test'
+  ...
+# Subtest: rejected records do not partly alter root, index or spent set
+ok 3 - rejected records do not partly alter root, index or spent set
+  ---
+  duration_ms: 188.630001
+  type: 'test'
+  ...
+# Subtest: revocation history is independently replayed and checked against final state
+ok 4 - revocation history is independently replayed and checked against final state
+  ---
+  duration_ms: 335.279166
+  type: 'test'
+  ...
+# Subtest: a complete exit counts as a record without increasing the append index
+ok 5 - a complete exit counts as a record without increasing the append index
+  ---
+  duration_ms: 314.227034
+  type: 'test'
+  ...
+# Subtest: a consistent new append cannot spend the same input a second time
+ok 6 - a consistent new append cannot spend the same input a second time
+  ---
+  duration_ms: 357.552187
+  type: 'test'
+  ...
+# Subtest: operator refuses a correctly signed but unavailable accepted record before replay claim
+ok 7 - operator refuses a correctly signed but unavailable accepted record before replay claim
+  ---
+  duration_ms: 123.559795
+  type: 'test'
+  ...
+# Subtest: the operator binds accepted record identity, full ciphertext and pinned domain/policy/epoch/auditor
+ok 8 - the operator binds accepted record identity, full ciphertext and pinned domain/policy/epoch/auditor
+  ---
+  duration_ms: 1358.710781
+  type: 'test'
+  ...
+# Subtest: a delayed accepted-record read rechecks disclosure expiry before consuming a replay claim
+ok 9 - a delayed accepted-record read rechecks disclosure expiry before consuming a replay claim
+  ---
+  duration_ms: 240.155845
+  type: 'test'
+  ...
+# Subtest: v2 authorities refuse a record identity different from the exact ciphertext digest
+ok 10 - v2 authorities refuse a record identity different from the exact ciphertext digest
+  ---
+  duration_ms: 2.618144
+  type: 'test'
+  ...
+# Subtest: separate authority quorum authenticates the exact one-record request
+ok 11 - separate authority quorum authenticates the exact one-record request
+  ---
+  duration_ms: 60.820204
+  type: 'test'
+  ...
+# Subtest: every authorization binding and field scope is enforced
+ok 12 - every authorization binding and field scope is enforced
+  ---
+  duration_ms: 17.667664
+  type: 'test'
+  ...
+# Subtest: operator privately returns only requested U shares; requester combines threshold replies
+ok 13 - operator privately returns only requested U shares; requester combines threshold replies
+  ---
+  duration_ms: 457.879427
+  type: 'test'
+  ...
+# Subtest: changed archive, stale authorization and unbranded requests fail before replay claim
+ok 14 - changed archive, stale authorization and unbranded requests fail before replay claim
+  ---
+  duration_ms: 58.903561
+  type: 'test'
+  ...
+# Subtest: atomic replay claim precedes work and a duplicate request is rejected
+ok 15 - atomic replay claim precedes work and a duplicate request is rejected
+  ---
+  duration_ms: 176.772644
+  type: 'test'
+  ...
+# Subtest: encrypted delivery rejects another requester, context, nonce and authentication tag
+ok 16 - encrypted delivery rejects another requester, context, nonce and authentication tag
+  ---
+  duration_ms: 336.112073
+  type: 'test'
+  ...
+# Subtest: expiry after a delayed durable claim consumes the request without producing shares
+ok 17 - expiry after a delayed durable claim consumes the request without producing shares
+  ---
+  duration_ms: 183.851625
+  type: 'test'
+  ...
+# Subtest: actual Argon2id + AES-GCM backup survives JSON and snapshots bytes before awaiting
+ok 18 - actual Argon2id + AES-GCM backup survives JSON and snapshots bytes before awaiting
+  ---
+  duration_ms: 9140.882597
+  type: 'test'
+  ...
+# Subtest: untrusted import metadata and context are rejected before expensive KDF work
+ok 19 - untrusted import metadata and context are rejected before expensive KDF work
+  ---
+  duration_ms: 1.521793
+  type: 'test'
+  ...
+# Subtest: local drafts hide the witness and return only verified, explicitly unsubmitted public data
+ok 20 - local drafts hide the witness and return only verified, explicitly unsubmitted public data
+  ---
+  duration_ms: 1092.101634
+  type: 'test'
+  ...
+# Subtest: rejects changed, reordered, aliased, missing and extra public signals before verification
+ok 21 - rejects changed, reordered, aliased, missing and extra public signals before verification
+  ---
+  duration_ms: 2533.666232
+  type: 'test'
+  ...
+# Subtest: requires exact proof response and strict verification true; callbacks cannot supply acceptance
+ok 22 - requires exact proof response and strict verification true; callbacks cannot supply acceptance
+  ---
+  duration_ms: 1662.11489
+  type: 'test'
+  ...
+# Subtest: suppresses local worker error details and refuses response accessors without invoking them
+ok 23 - suppresses local worker error details and refuses response accessors without invoking them
+  ---
+  duration_ms: 534.092141
+  type: 'test'
+  ...
+# Subtest: coalesces concurrent proving, rejects foreign handles and cancels forgotten drafts
+ok 24 - coalesces concurrent proving, rejects foreign handles and cancels forgotten drafts
+  ---
+  duration_ms: 586.266554
+  type: 'test'
+  ...
+# Subtest: archive scan binds record identity, digest and every core field before recovering a commitment-bound note
+ok 25 - archive scan binds record identity, digest and every core field before recovering a commitment-bound note
+  ---
+  duration_ms: 581.344309
+  type: 'test'
+  ...
+# Subtest: known dummy scalar1 never recovers a zero sentinel as a note
+ok 26 - known dummy scalar1 never recovers a zero sentinel as a note
+  ---
+  duration_ms: 1984.651715
+  type: 'test'
+  ...
+# Subtest: valid cipher tags cannot turn a mismatched opening or the old asset-bearing dummy into a recovered note
+ok 27 - valid cipher tags cannot turn a mismatched opening or the old asset-bearing dummy into a recovered note
+  ---
+  duration_ms: 472.767618
+  type: 'test'
+  ...
+# Subtest: draft backup is encrypted, profile-bound and restores a local draft without implying live acceptance
+ok 28 - draft backup is encrypted, profile-bound and restores a local draft without implying live acceptance
+  ---
+  duration_ms: 3741.76436
+  type: 'test'
+  ...
+# Subtest: encrypted note-opening backups restore opaque handles, not spend authority or chain status
+ok 29 - encrypted note-opening backups restore opaque handles, not spend authority or chain status
+  ---
+  duration_ms: 3560.003415
+  type: 'test'
+  ...
+# Subtest: circuit proves subgroup membership rather than accepting curve or torsion points
+ok 30 - circuit proves subgroup membership rather than accepting curve or torsion points
+  ---
+  duration_ms: 827.424482
+  type: 'test'
+  ...
+# Subtest: actual Pod-to-cash proof composes with authorized assets-only2of3 private disclosure
+ok 31 - actual Pod-to-cash proof composes with authorized assets-only2of3 private disclosure # SKIP
+  ---
+  duration_ms: 1.722821
+  type: 'test'
+  ...
+# Subtest: a scoped request remains explicitly unverified and cannot be widened after parsing
+ok 32 - a scoped request remains explicitly unverified and cannot be widened after parsing
+  ---
+  duration_ms: 3.514702
+  type: 'test'
+  ...
+# Subtest: rejects wildcard, multi-record, extra-field, empty, duplicate or reordered field scope
+ok 33 - rejects wildcard, multi-record, extra-field, empty, duplicate or reordered field scope
+  ---
+  duration_ms: 1.913199
+  type: 'test'
+  ...
+# Subtest: cannot add identity fields beyond the trusted request scope or weaken its allowed-fields list
+ok 34 - cannot add identity fields beyond the trusted request scope or weaken its allowed-fields list
+  ---
+  duration_ms: 0.929876
+  type: 'test'
+  ...
+# Subtest: rejects altered requester, record, ciphertext, policy, epoch and domain even with the same request id
+ok 35 - rejects altered requester, record, ciphertext, policy, epoch and domain even with the same request id
+  ---
+  duration_ms: 1.181602
+  type: 'test'
+  ...
+# Subtest: requires distinct ordered trustees from the trusted roster and meets its threshold
+ok 36 - requires distinct ordered trustees from the trusted roster and meets its threshold
+  ---
+  duration_ms: 2.605776
+  type: 'test'
+  ...
+# Subtest: requires a fresh bounded request with canonical identifiers and requester key shape
+ok 37 - requires a fresh bounded request with canonical identifiers and requester key shape
+  ---
+  duration_ms: 0.923697
+  type: 'test'
+  ...
+# Subtest: matches a fixed cipher vector and decrypts the exact three fields
+ok 38 - matches a fixed cipher vector and decrypts the exact three fields
+  ---
+  duration_ms: 16.407907
+  type: 'test'
+  ...
+# Subtest: round trips multiple blocks, field boundaries and a maximum nonce without mutating inputs
+ok 39 - round trips multiple blocks, field boundaries and a maximum nonce without mutating inputs
+  ---
+  duration_ms: 140.677565
+  type: 'test'
+  ...
+# Subtest: rejects every modified cipher limb, wrong key, nonce and changed plaintext length
+ok 40 - rejects every modified cipher limb, wrong key, nonce and changed plaintext length
+  ---
+  duration_ms: 21.364379
+  type: 'test'
+  ...
+# Subtest: rejects aliases and non-bigint fields instead of reducing modulo the field
+ok 41 - rejects aliases and non-bigint fields instead of reducing modulo the field
+  ---
+  duration_ms: 1.860005
+  type: 'test'
+  ...
+# Subtest: requires fixed complete blocks and exact key and cipher lengths
+ok 42 - requires fixed complete blocks and exact key and cipher lengths
+  ---
+  duration_ms: 1.020267
+  type: 'test'
+  ...
+# Subtest: rejects sparse, accessor and decorated input arrays without invoking accessors
+ok 43 - rejects sparse, accessor and decorated input arrays without invoking accessors
+  ---
+  duration_ms: 0.737521
+  type: 'test'
+  ...
+# Subtest: compiled circuit matches JS ciphertext and rejects changed witness, tag and out-of-range nonce
+ok 44 - compiled circuit matches JS ciphertext and rejects changed witness, tag and out-of-range nonce
+  ---
+  duration_ms: 2697.466083
+  type: 'test'
+  ...
+# Subtest: portable identities match independent typed Stellar address / host vectors
+ok 45 - portable identities match independent typed Stellar address / host vectors
+  ---
+  duration_ms: 11.445357
+  type: 'test'
+  ...
+# Subtest: identity helpers reject ambiguous bytes, kinds and noncanonical domains
+ok 46 - identity helpers reject ambiguous bytes, kinds and noncanonical domains
+  ---
+  duration_ms: 3.527203
+  type: 'test'
+  ...
+# Subtest: note parser rejects modulo aliases, unsafe numbers, bad point groups and unused fields
+ok 47 - note parser rejects modulo aliases, unsafe numbers, bad point groups and unused fields
+  ---
+  duration_ms: 16.266746
+  type: 'test'
+  ...
+# Subtest: dummy notes have one canonical representation and never create commitments or nullifiers
+ok 48 - dummy notes have one canonical representation and never create commitments or nullifiers
+  ---
+  duration_ms: 0.537502
+  type: 'test'
+  ...
+# Subtest: note/nullifier domains and Pod secret hashes are independently bound
+ok 49 - note/nullifier domains and Pod secret hashes are independently bound
+  ---
+  duration_ms: 185.858246
+  type: 'test'
+  ...
+# Subtest: sparse tree handles empty siblings, updates, deletion, cloning and full 128-bit indices
+ok 50 - sparse tree handles empty siblings, updates, deletion, cloning and full 128-bit indices
+  ---
+  duration_ms: 115.375037
+  type: 'test'
+  ...
+# Subtest: cash conservation rejects missing funds, wrong authority, duplicated inputs and fee asset substitution
+ok 51 - cash conservation rejects missing funds, wrong authority, duplicated inputs and fee asset substitution
+  ---
+  duration_ms: 251.935141
+  type: 'test'
+  ...
+# Subtest: Pod requires both secrets, matured interval and fixed recipient with a single cash output
+ok 52 - Pod requires both secrets, matured interval and fixed recipient with a single cash output
+  ---
+  duration_ms: 202.879703
+  type: 'test'
+  ...
+# Subtest: Trigger refund is strictly after deadline and cannot use beneficiary authority
+ok 53 - Trigger refund is strictly after deadline and cannot use beneficiary authority
+  ---
+  duration_ms: 138.87024
+  type: 'test'
+  ...
+# Subtest: Trigger attestation verifies a real circomlib-compatible signature and binds terms/recipient/deadline
+ok 54 - Trigger attestation verifies a real circomlib-compatible signature and binds terms/recipient/deadline
+  ---
+  duration_ms: 568.703526
+  type: 'test'
+  ...
+# Subtest: Envoy agent spend conserves one successor, obeys cap/count/recipient and current revocation root
+ok 55 - Envoy agent spend conserves one successor, obeys cap/count/recipient and current revocation root
+  ---
+  duration_ms: 364.348357
+  type: 'test'
+  ...
+# Subtest: Envoy final use returns unspent value to owner and cannot expand cap or redirect successor policy
+ok 56 - Envoy final use returns unspent value to owner and cannot expand cap or redirect successor policy
+  ---
+  duration_ms: 207.190076
+  type: 'test'
+  ...
+# Subtest: Envoy agent cannot divert its recipient allowance into an arbitrary public pool fee
+ok 57 - Envoy agent cannot divert its recipient allowance into an arbitrary public pool fee
+  ---
+  duration_ms: 245.596539
+  type: 'test'
+  ...
+# Subtest: deposit has no consumed notes and withdrawal is public, cash-only and exactly conserved
+ok 58 - deposit has no consumed notes and withdrawal is public, cash-only and exactly conserved
+  ---
+  duration_ms: 147.878012
+  type: 'test'
+  ...
+# Subtest: claims are0600 public digest metadata, persistent across instances and restarts
+ok 59 - claims are0600 public digest metadata, persistent across instances and restarts
+  ---
+  duration_ms: 76.543074
+  type: 'test'
+  ...
+# Subtest: concurrent independent processes can acknowledge exactly one durable claim
+ok 60 - concurrent independent processes can acknowledge exactly one durable claim
+  ---
+  duration_ms: 115.895759
+  type: 'test'
+  ...
+# Subtest: corrupt, incomplete, symlink and directory claim entries remain consumed without repair
+ok 61 - corrupt, incomplete, symlink and directory claim entries remain consumed without repair
+  ---
+  duration_ms: 19.9854
+  type: 'test'
+  ...
+# Subtest: rejects nonprivate directories, symlinks and noncanonical keys before writing
+ok 62 - rejects nonprivate directories, symlinks and noncanonical keys before writing
+  ---
+  duration_ms: 22.730497
+  type: 'test'
+  ...
+# Subtest: file fsync failure never acknowledges or removes a claim; a fresh instance still refuses it
+ok 63 - file fsync failure never acknowledges or removes a claim; a fresh instance still refuses it
+  ---
+  duration_ms: 21.937711
+  type: 'test'
+  ...
+# Subtest: directory fsync failure consumes the key and close prevents future acknowledgements
+ok 64 - directory fsync failure consumes the key and close prevents future acknowledgements
+  ---
+  duration_ms: 24.769355
+  type: 'test'
+  ...
+# Subtest: directory replacement is detected before a new claim can be issued
+ok 65 - directory replacement is detected before a new claim can be issued
+  ---
+  duration_ms: 21.253204
+  type: 'test'
+  ...
+# Subtest: rejects writable nonsticky ancestors rather than relying on private child permissions
+ok 66 - rejects writable nonsticky ancestors rather than relying on private child permissions
+  ---
+  duration_ms: 17.320476
+  type: 'test'
+  ...
+# Subtest: verify-phase1.mjs refuses unrelated bytes before transcript verification
+ok 67 - verify-phase1.mjs refuses unrelated bytes before transcript verification
+  ---
+  duration_ms: 292.025433
+  type: 'test'
+  ...
+# Subtest: verify-phase1-fast.mjs refuses unrelated bytes before transcript verification
+ok 68 - verify-phase1-fast.mjs refuses unrelated bytes before transcript verification
+  ---
+  duration_ms: 147.967774
+  type: 'test'
+  ...
+# Subtest: prepare-development-keys.mjs refuses unrelated bytes before transcript verification
+ok 69 - prepare-development-keys.mjs refuses unrelated bytes before transcript verification
+  ---
+  duration_ms: 254.96004
+  type: 'test'
+  ...
+# Subtest: only the selected exact PSE fingerprint receives its source attribution
+ok 70 - only the selected exact PSE fingerprint receives its source attribution
+  ---
+  duration_ms: 10.308764
+  type: 'test'
+  ...
+# Subtest: key preparation rejects provenance that relabels the selected transcript
+ok 71 - key preparation rejects provenance that relabels the selected transcript
+  ---
+  duration_ms: 1.273046
+  type: 'test'
+  ...
+# Subtest: matching file length cannot replace the actual selected digest
+ok 72 - matching file length cannot replace the actual selected digest
+  ---
+  duration_ms: 542.666272
+  type: 'test'
+  ...
+# Subtest: native BLAKE2b initial challenge exactly matches upstream generator byte streams
+ok 73 - native BLAKE2b initial challenge exactly matches upstream generator byte streams
+  ---
+  duration_ms: 1398.295569
+  type: 'test'
+  ...
+# Subtest: native chained SHA256 and resulting ChaCha stream exactly match upstream
+ok 74 - native chained SHA256 and resulting ChaCha stream exactly match upstream
+  ---
+  duration_ms: 1599.633409
+  type: 'test'
+  ...
+# Subtest: isolated native loader retains full prepared-ceremony checks and rejects a changed power point
+ok 75 - isolated native loader retains full prepared-ceremony checks and rejects a changed power point
+  ---
+  duration_ms: 3740.696914
+  type: 'test'
+  ...
+# Subtest: pinned real transition and revocation Groth16 roundtrips reject changed signals and valid-point proof tampering
+ok 76 - pinned real transition and revocation Groth16 roundtrips reject changed signals and valid-point proof tampering # SKIP Set PRIVACY_PROVER_TESTS=1 with a pinned artifact manifest
+  ---
+  duration_ms: 1.686878
+  type: 'test'
+  ...
+# Subtest: bounded verifier agrees with snarkjs on all17 real proofs and rejects statement/valid-point mutations
+ok 77 - bounded verifier agrees with snarkjs on all17 real proofs and rejects statement/valid-point mutations # SKIP Requires independently pinned actual development proof fixtures
+  ---
+  duration_ms: 1.26872
+  type: 'test'
+  ...
+# Subtest: worker refuses uninitialized proof requests, unknown commands and arbitrary artifact URLs without echoing witness secrets
+ok 78 - worker refuses uninitialized proof requests, unknown commands and arbitrary artifact URLs without echoing witness secrets
+  ---
+  duration_ms: 4.194751
+  type: 'test'
+  ...
+# Subtest: worker host preserves local proof payload, rejects concurrent work and terminates pending calls explicitly
+ok 79 - worker host preserves local proof payload, rejects concurrent work and terminates pending calls explicitly
+  ---
+  duration_ms: 2.965516
+  type: 'test'
+  ...
+# Subtest: proof transport is exactly256 bytes and uses imaginary-first G2 coordinates
+ok 80 - proof transport is exactly256 bytes and uses imaginary-first G2 coordinates
+  ---
+  duration_ms: 292.426384
+  type: 'test'
+  ...
+# Subtest: proof codec rejects noncanonical coordinates, identity, invalid curve points and framing aliases
+ok 81 - proof codec rejects noncanonical coordinates, identity, invalid curve points and framing aliases
+  ---
+  duration_ms: 116.104509
+  type: 'test'
+  ...
+# Subtest: verification key canonicalization binds its public count and rejects extra fields and accessors
+ok 82 - verification key canonicalization binds its public count and rejects extra fields and accessors
+  ---
+  duration_ms: 122.720324
+  type: 'test'
+  ...
+# Subtest: all artifact pins fail closed before malformed artifacts can reach the prover
+ok 83 - all artifact pins fail closed before malformed artifacts can reach the prover
+  ---
+  duration_ms: 240.862446
+  type: 'test'
+  ...
+# Subtest: artifact loading rejects filenames, shared/proxy byte views and JSON code-like fields
+ok 84 - artifact loading rejects filenames, shared/proxy byte views and JSON code-like fields
+  ---
+  duration_ms: 196.878316
+  type: 'test'
+  ...
+# Subtest: malformed proof/public vectors return false; malformed witness errors contain no private value
+ok 85 - malformed proof/public vectors return false; malformed witness errors contain no private value
+  ---
+  duration_ms: 163.104424
+  type: 'test'
+  ...
+# Subtest: verification does not create or depend on the ffjavascript global worker pool
+ok 86 - verification does not create or depend on the ffjavascript global worker pool
+  ---
+  duration_ms: 255.875581
+  type: 'test'
+  ...
+# Subtest: identity IC and zero aggregate are only neutral pairing terms, never an early success
+ok 87 - identity IC and zero aggregate are only neutral pairing terms, never an early success
+  ---
+  duration_ms: 605.671239
+  type: 'test'
+  ...
+# Subtest: a saved complete key backup recovers the sole unspent grant note after a new session
+ok 88 - a saved complete key backup recovers the sole unspent grant note after a new session
+  ---
+  duration_ms: 5329.526942
+  type: 'test'
+  ...
+# Subtest: every indexed entry is mandatory, including a zero-output exit with an unchanged tree root
+ok 89 - every indexed entry is mandatory, including a zero-output exit with an unchanged tree root
+  ---
+  duration_ms: 702.621041
+  type: 'test'
+  ...
+# Subtest: wrong identities, ciphertexts, ordering, roots and counts fail without silent skips
+ok 90 - wrong identities, ciphertexts, ordering, roots and counts fail without silent skips
+  ---
+  duration_ms: 2083.193168
+  type: 'test'
+  ...
+# Subtest: changed final state or checkpoint invalidates all new handles while preserving preexisting notes
+ok 91 - changed final state or checkpoint invalidates all new handles while preserving preexisting notes
+  ---
+  duration_ms: 1473.847918
+  type: 'test'
+  ...
+# Subtest: an abort interrupts pending reads and removes this attempt's handles without releasing partial results
+ok 92 - an abort interrupts pending reads and removes this attempt's handles without releasing partial results
+  ---
+  duration_ms: 303.076084
+  type: 'test'
+  ...
+# Subtest: all vault keys are scanned in bounded batches and each commitment is returned once
+ok 93 - all vault keys are scanned in bounded batches and each commitment is returned once
+  ---
+  duration_ms: 2448.518124
+  type: 'test'
+  ...
+# Subtest: scope mismatch, bounded workloads, malformed snapshots and failed reads reject before returning notes
+ok 94 - scope mismatch, bounded workloads, malformed snapshots and failed reads reject before returning notes
+  ---
+  duration_ms: 292.182522
+  type: 'test'
+  ...
+# Subtest: canonical bytes match the independently specified big-endian vector
+ok 95 - canonical bytes match the independently specified big-endian vector
+  ---
+  duration_ms: 5.202616
+  type: 'test'
+  ...
+# Subtest: decodes the literal vector into a parsed, not verified, immutable snapshot
+ok 96 - decodes the literal vector into a parsed, not verified, immutable snapshot
+  ---
+  duration_ms: 3.085182
+  type: 'test'
+  ...
+# Subtest: rejects unknown fields at every object boundary without invoking accessors
+ok 97 - rejects unknown fields at every object boundary without invoking accessors
+  ---
+  duration_ms: 1.754519
+  type: 'test'
+  ...
+# Subtest: accepts canonical field maximum and uint boundaries, rejects scalar alias encodings
+ok 98 - accepts canonical field maximum and uint boundaries, rejects scalar alias encodings
+  ---
+  duration_ms: 2.843282
+  type: 'test'
+  ...
+# Subtest: rejects duplicate, zero, oversized and empty real note lists
+ok 99 - rejects duplicate, zero, oversized and empty real note lists
+  ---
+  duration_ms: 0.891798
+  type: 'test'
+  ...
+# Subtest: rejects statement or trusted-context changes to domain, epoch and ciphertext
+ok 100 - rejects statement or trusted-context changes to domain, epoch and ciphertext
+  ---
+  duration_ms: 0.663724
+  type: 'test'
+  ...
+# Subtest: freshness is inclusive and bounded, including uint32 maximum without wraparound
+ok 101 - freshness is inclusive and bounded, including uint32 maximum without wraparound
+  ---
+  duration_ms: 1.000261
+  type: 'test'
+  ...
+# Subtest: bridge and fee encoding preserves uint64 values without Number conversion
+ok 102 - bridge and fee encoding preserves uint64 values without Number conversion
+  ---
+  duration_ms: 3.53998
+  type: 'test'
+  ...
+# Subtest: decoder rejects each truncated prefix, extra bytes and structural byte mutations
+ok 103 - decoder rejects each truncated prefix, extra bytes and structural byte mutations
+  ---
+  duration_ms: 20.198355
+  type: 'test'
+  ...
+# Subtest: decoder reads actual bounded bytes without invoking supplied view properties
+ok 104 - decoder reads actual bounded bytes without invoking supplied view properties
+  ---
+  duration_ms: 1.34619
+  type: 'test'
+  ...
+# Subtest: decoder rejects shared, detached, proxy and disguised non-byte views
+ok 105 - decoder rejects shared, detached, proxy and disguised non-byte views
+  ---
+  duration_ms: 0.713403
+  type: 'test'
+  ...
+# Subtest: uses canonical BabyJub B8 and strict scalar/point codecs
+ok 106 - uses canonical BabyJub B8 and strict scalar/point codecs
+  ---
+  duration_ms: 21.437287
+  type: 'test'
+  ...
+# Subtest: requires distinct ordered identities and a feasible M-of-N threshold
+ok 107 - requires distinct ordered identities and a feasible M-of-N threshold
+  ---
+  duration_ms: 2.027856
+  type: 'test'
+  ...
+# Subtest: all dealers verify addressed shares and every threshold subset combines only decryption points
+ok 108 - all dealers verify addressed shares and every threshold subset combines only decryption points
+  ---
+  duration_ms: 1425.92805
+  type: 'test'
+  ...
+# Subtest: rejects changed commitments, signed shares addressed elsewhere, and forged authentication
+ok 109 - rejects changed commitments, signed shares addressed elsewhere, and forged authentication
+  ---
+  duration_ms: 436.023728
+  type: 'test'
+  ...
+# Subtest: requires all-party agreement to the exact transcript and local share possession
+ok 110 - requires all-party agreement to the exact transcript and local share possession
+  ---
+  duration_ms: 489.120096
+  type: 'test'
+  ...
+# Subtest: rejects mixed epochs, duplicate/insufficient shares, forged DLEQ and every request binding change
+ok 111 - rejects mixed epochs, duplicate/insufficient shares, forged DLEQ and every request binding change
+  ---
+  duration_ms: 878.984492
+  type: 'test'
+  ...
+# Subtest: refuses identity and non-subgroup ephemerals before applying a secret scalar
+ok 112 - refuses identity and non-subgroup ephemerals before applying a secret scalar
+  ---
+  duration_ms: 388.421504
+  type: 'test'
+  ...
+# Subtest: checks VSS equations even when a malicious dealer signs an incorrect scalar
+ok 113 - checks VSS equations even when a malicious dealer signs an incorrect scalar
+  ---
+  duration_ms: 405.000889
+  type: 'test'
+  ...
+# Subtest: rejects authenticated zero aggregate, degree cancellation and zero trustee share
+ok 114 - rejects authenticated zero aggregate, degree cancellation and zero trustee share
+  ---
+  duration_ms: 493.09776
+  type: 'test'
+  ...
+# Subtest: does not accept agreement on a different signed polynomial transcript
+ok 115 - does not accept agreement on a different signed polynomial transcript
+  ---
+  duration_ms: 1012.732983
+  type: 'test'
+  ...
+# Subtest: round-trips the public epoch through all signature checks after serialization
+ok 116 - round-trips the public epoch through all signature checks after serialization
+  ---
+  duration_ms: 467.367826
+  type: 'test'
+  ...
+# Subtest: proves decryptions for encrypted fixed field groups without rebuilding a master scalar
+ok 117 - proves decryptions for encrypted fixed field groups without rebuilding a master scalar
+  ---
+  duration_ms: 480.21705
+  type: 'test'
+  ...
+# Subtest: uses the configured degree for every 3-of-4 subset
+ok 118 - uses the configured degree for every 3-of-4 subset
+  ---
+  duration_ms: 1367.328594
+  type: 'test'
+  ...
+# Subtest: compiled transition and revocation reject adversarial witnesses
+ok 119 - compiled transition and revocation reject adversarial witnesses # SKIP Set PRIVACY_CIRCUIT_TESTS=1 after compiling the current circuits
+  ---
+  duration_ms: 1.690935
+  type: 'test'
+  ...
+# Subtest: generates independent nonzero full key material and exposes derived public facts only
+ok 120 - generates independent nonzero full key material and exposes derived public facts only
+  ---
+  duration_ms: 92.150721
+  type: 'test'
+  ...
+# Subtest: adding a grant preserves existing complete keys and requires using a newly backed-up handle
+ok 121 - adding a grant preserves existing complete keys and requires using a newly backed-up handle
+  ---
+  duration_ms: 7.78526
+  type: 'test'
+  ...
+# Subtest: a failed random source cannot silently create zero or predictable fallback keys
+ok 122 - a failed random source cannot silently create zero or predictable fallback keys
+  ---
+  duration_ms: 6.788615
+  type: 'test'
+  ...
+# Subtest: encrypted full-material roundtrip restores spending, viewing, Pod and revocation keys and recomputes public facts
+ok 123 - encrypted full-material roundtrip restores spending, viewing, Pod and revocation keys and recomputes public facts
+  ---
+  duration_ms: 7804.25017
+  type: 'test'
+  ...
+# Subtest: wrong password, modified ciphertext and wrong network/contract/profile/epoch/owner fail closed
+ok 124 - wrong password, modified ciphertext and wrong network/contract/profile/epoch/owner fail closed
+  ---
+  duration_ms: 6318.760288
+  type: 'test'
+  ...
+# Subtest: even authenticated private payloads cannot import out-of-range secret material
+ok 125 - even authenticated private payloads cannot import out-of-range secret material
+  ---
+  duration_ms: 3150.909949
+  type: 'test'
+  ...
+# Subtest: no plausible artifact manifest, callback or proof creates an installed verifier
+ok 126 - no plausible artifact manifest, callback or proof creates an installed verifier
+  ---
+  duration_ms: 3.676443
+  type: 'test'
+  ...
+# Subtest: environment flags cannot enable proof acceptance and supplied callbacks are never evaluated
+ok 127 - environment flags cannot enable proof acceptance and supplied callbacks are never evaluated
+  ---
+  duration_ms: 0.511007
+  type: 'test'
+  ...
+# Subtest: builds exact157public inputs,134cipher fields and a recipient-decryptable actual note
+ok 128 - builds exact157public inputs,134cipher fields and a recipient-decryptable actual note
+  ---
+  duration_ms: 324.052455
+  type: 'test'
+  ...
+# Subtest: audit envelopes encrypt true asset/party/condition facts without rho or blinding
+ok 129 - audit envelopes encrypt true asset/party/condition facts without rho or blinding
+  ---
+  duration_ms: 298.042251
+  type: 'test'
+  ...
+# Subtest: public scalar1 decrypts dummy incoming envelopes to zeros, never the hidden asset
+ok 130 - public scalar1 decrypts dummy incoming envelopes to zeros, never the hidden asset
+  ---
+  duration_ms: 1394.708048
+  type: 'test'
+  ...
+# Subtest: ciphertext decryption fails for wrong key, swapped envelope, context and modified tag
+ok 131 - ciphertext decryption fails for wrong key, swapped envelope, context and modified tag
+  ---
+  duration_ms: 260.051846
+  type: 'test'
+  ...
+# Subtest: witness refuses missing input note, occupied append slot, wrong asset membership and nonce/scalar aliases
+ok 132 - witness refuses missing input note, occupied append slot, wrong asset membership and nonce/scalar aliases
+  ---
+  duration_ms: 837.716122
+  type: 'test'
+  ...
+# Subtest: fully spent withdrawal remains constructible when append tree is at capacity
+ok 133 - fully spent withdrawal remains constructible when append tree is at capacity
+  ---
+  duration_ms: 229.869823
+  type: 'test'
+  ...
+# Subtest: default generation uses fresh nonzero secrets; deterministic material is explicit
+ok 134 - default generation uses fresh nonzero secrets; deterministic material is explicit
+  ---
+  duration_ms: 393.313392
+  type: 'test'
+  ...
+# Subtest: revocation insertion binds domain, targets low128tag bits and cannot overwrite an occupied leaf
+ok 135 - revocation insertion binds domain, targets low128tag bits and cannot overwrite an occupied leaf
+  ---
+  duration_ms: 175.677089
+  type: 'test'
+  ...
+1..135
+# tests 135
+# suites 0
+# pass 131
+# fail 0
+# cancelled 0
+# skipped 4
+# todo 0
+# duration_ms 17742.546049

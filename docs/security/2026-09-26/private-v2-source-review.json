@@ -1,0 +1,1194 @@
+{
+  "schema": "agyion-private-v2-bounded-source-review-v1",
+  "snapshotUtc": "2026-09-26T15:09:19.938621+00:00",
+  "reviewer": "landing_flight_ui agent; author rereviews and peer reviews distinguished per file",
+  "scope": "All current authored privacy/src non-prover modules, privacy/circuits and privacy/scripts, plus package configuration. This is a bounded code review, not an external cryptographic audit or a claim that the entire repository was independently audited.",
+  "coverageSummary": {
+    "fullManualFiles": 37,
+    "fullManualLines": 3147,
+    "nonProverSourceFiles": 17,
+    "circuitFiles": 6,
+    "scriptFiles": 13,
+    "packageFiles": 1,
+    "excludedProverSourceFiles": 3,
+    "testFilesInventoriedSeparately": 27,
+    "generatedPublicFixtureFilesInventoried": 18
+  },
+  "findings": [
+    {
+      "id": "PV2-SOURCE-001",
+      "severity": "low",
+      "category": "provenance_attribution",
+      "status": "corrected_and_focused_tested",
+      "paths": [
+        "privacy/scripts/verify-phase1.mjs",
+        "privacy/scripts/verify-phase1-fast.mjs",
+        "privacy/scripts/prepare-development-keys.mjs"
+      ],
+      "problem": "Both scripts previously accepted an arbitrary CLI file and unconditionally attributed any successfully verified transcript to one fixed PSE URL/commit. A different valid transcript would receive false source metadata; this did not bypass full transcript verification. Key preparation also trusted arbitrary local verified/hash provenance while unconditionally describing its phase1 as Published PPoT.",
+      "correction": "Both entrypoints now require the selected exact 302083218-byte SHA256 9693220206afab749e3d88d4ab5fdf5d36120ea102e7e587ccea0e7a5208e711 before full verification and again before fixed-source provenance is written. Shared fingerprint selection does not return verified:true. Key preparation now checks the actual selected input and requires its recorded source URL/repository/commit and fingerprint to match before proceeding. Slow verification and key preparation use script-relative defaults.",
+      "verification": "Red observations: ordinary verification reached snarkjs Invalid File format for unrelated bytes; key preparation reached provenance file lookup before rejecting the input fingerprint. The corrected focused suite passes6/6: all three entrypoints reject unrelated bytes, exact fixed-source selection accepts only the selected fingerprint, altered source metadata is rejected, and a same-size different file is rejected by hashing. Actual selected artifact preflight matched. The453-second full transcript verification and key generation were not rerun; cryptographic verification logic/artifacts and historical raw provenance remain unchanged.",
+      "evidence": "artifacts/security/2026-09-26/privacy/phase1-input-tests.txt"
+    }
+  ],
+  "unresolvedExploitableFindingsIdentifiedInThisPass": [],
+  "conclusionBoundary": "No additional exploitable bypass was identified in the reviewed snapshot. This is not evidence that no bugs exist; authorship overlap, dependency assumptions and untested operational paths remain explicit.",
+  "files": [
+    {
+      "path": "privacy/circuits/poseidon-encryption.circom",
+      "sha256": "c090ce7fe7ae288cf853a143051f1de5fb90d31a16f5fc5e0af47f369510aa65",
+      "lineCount": 56,
+      "reviewedLineRanges": [
+        [
+          1,
+          56
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Correctly licensed encryption-only wrapper, fixed multiple-of-three lengths, nonce bit bound and exact ciphertext/tag outputs.",
+      "findings": [],
+      "limits": [
+        "Relies on pinned circomlib Poseidon arithmetic and the circuit-friendly cipher construction; no decryption gadget is trusted for proof equality."
+      ]
+    },
+    {
+      "path": "privacy/circuits/primitives.circom",
+      "sha256": "e328210aa86370764782d5876bc31e135bd1e023821be870295d80bced69654d",
+      "lineCount": 93,
+      "reviewedLineRanges": [
+        [
+          1,
+          93
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Canonical note forms and kinds, bit ranges, nonzero roles, 8-times subgroup certificate, nonidentity public points, scalar range and ECDH.",
+      "findings": [],
+      "limits": [
+        "Upstream BabyJub arithmetic is a dependency; no formal proof of the full composition is claimed."
+      ]
+    },
+    {
+      "path": "privacy/circuits/revocation.circom",
+      "sha256": "53c7e30f85b9152a4738afbbad40aca9abc5a41173f8a6d5777f0f9cbf055817",
+      "lineCount": 21,
+      "reviewedLineRanges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Public domain/root/tag binding and 128-level insertion of Poseidon(1005,domain) into an empty leaf.",
+      "findings": [],
+      "limits": [
+        "Authorization of the revocation key/signature is a host responsibility, not proven by this path circuit."
+      ]
+    },
+    {
+      "path": "privacy/circuits/test/poseidon-encryption-3.circom",
+      "sha256": "776526d2b9396a0b6937f861a370062bdbe82fc22b001101d4e8c300fcf9dcfe",
+      "lineCount": 18,
+      "reviewedLineRanges": [
+        [
+          1,
+          18
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Small encryption fixture exposes exact three-field gadget outputs for interoperability tests.",
+      "findings": [],
+      "limits": [
+        "Synthetic test wrapper, not the deployed transition circuit."
+      ]
+    },
+    {
+      "path": "privacy/circuits/test/subgroup.circom",
+      "sha256": "8c161fe1670a9e005b5af78d9ed634137721c91f1d9cfb80e54098fd3ae0f0c7",
+      "lineCount": 3,
+      "reviewedLineRanges": [
+        [
+          1,
+          3
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Minimal subgroup-certificate test entrypoint.",
+      "findings": [],
+      "limits": [
+        "Synthetic constraint fixture; no standalone asset-transfer function."
+      ]
+    },
+    {
+      "path": "privacy/circuits/transition.circom",
+      "sha256": "f2493373cd29535b64fb410953459de716e812566c291233dad08f47a7887bd5",
+      "lineCount": 280,
+      "reviewedLineRanges": [
+        [
+          1,
+          280
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Every authored line: public shape, asset membership, note membership/nullifiers, all six authorization branches, amounts and fees, fresh outputs, append slots, revocation, subgroup/signature checks and actual encrypted-witness equality.",
+      "findings": [],
+      "limits": [
+        "Circuit soundness assumes pinned host configuration and accepted roots; external audit, formal verification, production ceremony and independent committee remain unfulfilled."
+      ]
+    },
+    {
+      "path": "privacy/package.json",
+      "sha256": "eb7ae1dce23fe7b67adbca42e8613ad5cfe368059856343916e6a02d9924ac3f",
+      "lineCount": 30,
+      "reviewedLineRanges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Pinned direct crypto/compiler versions, private package and legacy export boundary.",
+      "findings": [],
+      "limits": [
+        "Dependency internals and transitive source are excluded from this authored-source pass; a package audit cannot prove cryptographic safety."
+      ]
+    },
+    {
+      "path": "privacy/scripts/browser-prover-entry.mjs",
+      "sha256": "cc91155979d82d073417194e2dd3d702336af1b9c4bf1d8a7f96c6e0fa3927eb",
+      "lineCount": 159,
+      "reviewedLineRanges": [
+        [
+          1,
+          159
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Browser-local random vault/actors, restored key usage, real Deposit/Pod/Trigger/Envoy proof flows, exact public bindings, changed-statement rejection, local recovery and worker termination.",
+      "findings": [],
+      "limits": [
+        "Development harness uses synthetic local trees and locally generated archive anchors. Cancellation proves termination/no result, not memory erasure or transaction cancellation."
+      ]
+    },
+    {
+      "path": "privacy/scripts/compile-circuits.mjs",
+      "sha256": "1ebc099ba7d1e3a2dfde0b1513a565d32a33a2b04e80063345b5faefce77e8cb",
+      "lineCount": 24,
+      "reviewedLineRanges": [
+        [
+          1,
+          24
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Pinned Circom package/version, O2 flags, source/dependency/artifact hashes, child exit handling.",
+      "findings": [],
+      "limits": [
+        "A local build manifest is not a signed reproducible release or independent supply-chain attestation; generated WASM/R1CS not line-by-line reviewed."
+      ]
+    },
+    {
+      "path": "privacy/scripts/generate-host-fixtures.mjs",
+      "sha256": "528bbcdb94ee5e39058efe8469cd27eee2ddc81faa75f0014f6703c83d2ef86a",
+      "lineCount": 100,
+      "reviewedLineRanges": [
+        [
+          1,
+          100
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Continuous synthetic 17-step tree, real Groth16/WASM branches, exact public-vector checks, fee/account fixtures and explicit test-only outputs.",
+      "findings": [],
+      "limits": [
+        "Known deterministic secrets and randomness must never secure funds. This generator is not the production single-worker adapter or evidence of live inclusion."
+      ]
+    },
+    {
+      "path": "privacy/scripts/phase1-input.mjs",
+      "sha256": "6ce585b21d6fba53af409778b4eebc887c3aacb3f1e2834615f496a2226768e9",
+      "lineCount": 30,
+      "reviewedLineRanges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Exact selected PSE byte count and SHA256 from actual streamed input, matching local provenance source fields, and no verified:true from fingerprint or metadata validation.",
+      "findings": [
+        "PV2-SOURCE-001"
+      ],
+      "limits": [
+        "Fingerprint selection is not transcript verification. Local file/OS integrity remains a trusted operator boundary."
+      ]
+    },
+    {
+      "path": "privacy/scripts/phase1-native-hashes.mjs",
+      "sha256": "27916a8f58585887fa285aaa562f0144dd9c0849bbb92be12a66ef7023df8689",
+      "lineCount": 40,
+      "reviewedLineRanges": [
+        [
+          1,
+          40
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Byte-identical initial BLAKE2b transcript sequence; all SHA256 beacon rounds; strict helper result, ChaCha seed byte order and bounded input dimensions.",
+      "findings": [],
+      "limits": [
+        "Native acceleration is covered by parity/full-transcript evidence, not a separate external audit. Only public setup transcript material is processed."
+      ]
+    },
+    {
+      "path": "privacy/scripts/phase1-native-loader.mjs",
+      "sha256": "cc448dc2fe67dc9caa6cc10398ebbeff11746667fab9f4a0158b6f5c4bcba8d9",
+      "lineCount": 28,
+      "reviewedLineRanges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Exact upstream file hashes and replacement boundaries; only initial challenge and beacon hashing delegated, powers/pairings/contribution checks retained.",
+      "findings": [],
+      "limits": [
+        "Version-pinned local ESM hook; any upstream source change fails closed. Compiler/OpenSSL/Node are trusted local dependencies."
+      ]
+    },
+    {
+      "path": "privacy/scripts/phase1-sha256-chain.c",
+      "sha256": "87915504897527fba9d4cd86f82965e7901cf045c4ec2831b59f77fa6f376b20",
+      "lineCount": 46,
+      "reviewedLineRanges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Public-input hex/round bounds, correct SHA256 initialization and 32-byte padding, big-endian output and all sequential rounds.",
+      "findings": [],
+      "limits": [
+        "Uses OpenSSL SHA256_CTX/Transform and local compiler. Does not handle custody keys; portability beyond the tested toolchain is unverified."
+      ]
+    },
+    {
+      "path": "privacy/scripts/prepare-development-keys.mjs",
+      "sha256": "22fa27eb230fc7df6f4fa7be6cebf33911c2d3674065da3b9f1d099115cda3fb",
+      "lineCount": 47,
+      "reviewedLineRanges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "peer_review_and_current_metadata_correction",
+      "reviewedBoundary": "Actual selected PSE input fingerprint and matching fixed-source provenance, script-relative defaults, source/artifact hash checks, in-process contribution, no-overwrite outputs, actual R1CS/phase1 zkey verification and exact public counts.",
+      "findings": [
+        "PV2-SOURCE-001"
+      ],
+      "limits": [
+        "Local unsigned provenance/build files assume a trusted operator workspace. Single-operator development phase2 is not an independent trusted setup."
+      ]
+    },
+    {
+      "path": "privacy/scripts/setup-development.mjs",
+      "sha256": "1ff135822c1b57512d12a774e88165212dc6f54e09ed40e2b4881dae72e218a4",
+      "lineCount": 28,
+      "reviewedLineRanges": [
+        [
+          1,
+          28
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "In-process contribution entropy, no-overwrite paths, full contributed phase1 verification, phase2 preparation and bounded local worker pressure.",
+      "findings": [],
+      "limits": [
+        "Local fallback development setup only. This script does not write a claim that its prepared phase2 output independently passed full verification."
+      ]
+    },
+    {
+      "path": "privacy/scripts/verify-browser-prover.mjs",
+      "sha256": "e939039abf1c3e1b5804e68b67030466a8f27466ff736b54b6a8a3d777e4fcb8",
+      "lineCount": 107,
+      "reviewedLineRanges": [
+        [
+          1,
+          107
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Actual local browser bundling/server, artifact-only allowlist, no-POST/outbound assertions, strict console/page/HTTP/CSP reporting and actual worker close evidence.",
+      "findings": [],
+      "limits": [
+        "Headless desktop Chromium evidence only; no phone benchmark. Source-reviewed reporting is not a general proof of absence of every possible side channel."
+      ]
+    },
+    {
+      "path": "privacy/scripts/verify-phase1-fast.mjs",
+      "sha256": "21fc680a511cd005856cd18dfa91f34ed20676498137b0f7b9ad1d05956c3257",
+      "lineCount": 40,
+      "reviewedLineRanges": [
+        [
+          1,
+          40
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Selected input fingerprint before full verification and before source attribution; parity preflight, pinned isolated loader, full upstream verification, truthful provenance output.",
+      "findings": [
+        "PV2-SOURCE-001"
+      ],
+      "limits": [
+        "Historical successful provenance is preserved, not rewritten as a run of the corrected script. Full long transcript verification was not repeated for metadata-only correction."
+      ]
+    },
+    {
+      "path": "privacy/scripts/verify-phase1.mjs",
+      "sha256": "e86c734d2841b42911cdb311541bba9076df8f3fe7d60c9215238f2d1e2ffb6a",
+      "lineCount": 24,
+      "reviewedLineRanges": [
+        [
+          1,
+          24
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "peer_review_and_current_metadata_correction",
+      "reviewedBoundary": "Selected input fingerprint before full upstream verification and again before fixed-source attribution; exclusive provenance write. Default input resolves relative to the script, independently of shell working directory.",
+      "findings": [
+        "PV2-SOURCE-001"
+      ],
+      "limits": [
+        "Same local-file/operator trust boundary as the accelerated entrypoint; matching digest alone never marks verified:true."
+      ]
+    },
+    {
+      "path": "privacy/scripts/write-prover-manifest.mjs",
+      "sha256": "c744ebf2502203f175e273d8012bd1add9db8d941eb04a4360d6dbbcba46df6a",
+      "lineCount": 27,
+      "reviewedLineRanges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Development schema/count gates, actual WASM/zkey/VK digest comparison and no-overwrite public-path manifest.",
+      "findings": [],
+      "limits": [
+        "Consumes a trusted local key manifest; no signed release channel or deployment activation is provided."
+      ]
+    },
+    {
+      "path": "privacy/src/archive.mjs",
+      "sha256": "0bf9841cff14173da66226a6f34321865b5f3b7bb5e13fbf3931a24bbe60c366",
+      "lineCount": 63,
+      "reviewedLineRanges": [
+        [
+          1,
+          63
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Accepted-record order, ciphertext digest, profile, append roots, root history, duplicate commitments/nullifiers, revocation reconstruction, clone-before-commit.",
+      "findings": [],
+      "limits": [
+        "Requires independently authenticated accepted records/checkpoint; consistency is not RPC authenticity. No archival retrieval implementation."
+      ]
+    },
+    {
+      "path": "privacy/src/authorization.mjs",
+      "sha256": "7e7bc6b0ef63675bd926c0cd075ec56dc9f858bd5a157fbe1685e59f0b7efc36",
+      "lineCount": 224,
+      "reviewedLineRanges": [
+        [
+          1,
+          224
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Exact signed authority quorum and branded requests; accepted-ledger record binding; field-specific audit offsets; atomic replay claim; fresh ledger; requester-private X25519/HKDF/AES-GCM replies.",
+      "findings": [],
+      "limits": [
+        "Trusted authority policy, ledger reader and durable replay callback remain outside the cryptographic helper. Trustee collusion is not prevented by request scope."
+      ]
+    },
+    {
+      "path": "privacy/src/backup.mjs",
+      "sha256": "eebf0aba9db92198f76870c08472817b05322c07f749bd5f1c57745700e44464",
+      "lineCount": 65,
+      "reviewedLineRanges": [
+        [
+          1,
+          65
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Fixed Argon2id costs, copied byte inputs, AES-GCM AAD, strict context and envelope bounds, wrong-password/tamper failures.",
+      "findings": [],
+      "limits": [
+        "Password entropy, physical memory erasure and real-phone memory constraints are not established by these helpers."
+      ]
+    },
+    {
+      "path": "privacy/src/client.mjs",
+      "sha256": "0bb9cdaa7c34d453fde1adeaa301e47a6cbc5762b0e9902434517d433fa938e1",
+      "lineCount": 213,
+      "reviewedLineRanges": [
+        [
+          1,
+          213
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Local proof/result public-vector comparison; private WeakMap handles; draft/note backup; exact record anchors; incoming decryption, commitment/view binding and zero dummy sentinel.",
+      "findings": [],
+      "limits": [
+        "Prove/verify and ledger anchors are trusted adapters. Restored drafts/notes are not current chain membership or unspent-state evidence; note backups are not complete key backups."
+      ]
+    },
+    {
+      "path": "privacy/src/disclosure.mjs",
+      "sha256": "f240976cf984ffba0d2e17d143cb9016929dbe7ac884dbbdc12156234f0ae35c",
+      "lineCount": 52,
+      "reviewedLineRanges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Legacy structural disclosure request bounds, exact domain/epoch/freshness/one-record/no-wildcard scope and distinct trustee identifiers.",
+      "findings": [],
+      "limits": [
+        "Returns UnverifiedDisclosureRequest only; its P-256-shaped recipient data is not an implemented HPKE or authorized disclosure protocol."
+      ]
+    },
+    {
+      "path": "privacy/src/encryption.mjs",
+      "sha256": "fd95008c9cb68a774aaf69edc4b5449f668b1f79cc84f70ad776e4e3f61ca666",
+      "lineCount": 49,
+      "reviewedLineRanges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Canonical field/key/ciphertext values; exact supported lengths; non-aliasing nonce bound; upstream encrypt and authenticated decrypt interoperability.",
+      "findings": [],
+      "limits": [
+        "This validates and invokes the pinned Poseidon cipher; it is not an independent cryptographic audit of that cipher or the novel composition."
+      ]
+    },
+    {
+      "path": "privacy/src/identity.mjs",
+      "sha256": "c244460a813dd97bd51c5cf087fc657fd747904365176724cc25ca53a9f2f76b",
+      "lineCount": 35,
+      "reviewedLineRanges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Tagged network/deployment/address encoding, canonical raw IDs and Poseidon conversion of SHA256 limbs; revocation-key domain binding.",
+      "findings": [],
+      "limits": [
+        "Does not authenticate a remote network or deployed contract; the caller must pin the intended scope."
+      ]
+    },
+    {
+      "path": "privacy/src/index.mjs",
+      "sha256": "ec47bf38bcf0a9f059a049f68fa558606b172786ee604e2a11d3d7e2b3f9396b",
+      "lineCount": 4,
+      "reviewedLineRanges": [
+        [
+          1,
+          4
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Explicit legacy structural exports and fail-closed suite facade.",
+      "findings": [],
+      "limits": [
+        "Local v2 cryptography uses explicit module imports; this facade does not activate a production private-transfer suite."
+      ]
+    },
+    {
+      "path": "privacy/src/model.mjs",
+      "sha256": "6e95584a8817b7d4f0c380a19c0e75c456e4a68b125b7f188602198439ac53c2",
+      "lineCount": 215,
+      "reviewedLineRanges": [
+        [
+          1,
+          215
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Strict note24/core23 encodings, subgroup points, sparse tree bounds, note-bound nullifiers, actual EdDSA-Poseidon relation and all six spend modes including Envoy fee prohibition.",
+      "findings": [],
+      "limits": [
+        "Reference evaluation is not proof verification: full path, encrypted-witness and inactive-input constraints are also enforced by the circuit. No constant-time JS guarantee."
+      ]
+    },
+    {
+      "path": "privacy/src/operator-store.mjs",
+      "sha256": "ef9ad44fd5b80d91744c720ec1297dbe943322a8ad7cf8eb491e3ddbde41f238",
+      "lineCount": 118,
+      "reviewedLineRanges": [
+        [
+          1,
+          118
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Owned directory/ancestor checks, no-follow exclusive files, single-link ownership/mode validation, atomic claims, file/directory fsync and permanent failure state.",
+      "findings": [],
+      "limits": [
+        "Durability assumes the documented local POSIX filesystem. Same-UID/root rollback, hostile filesystems and distributed quorum replication remain out of scope."
+      ]
+    },
+    {
+      "path": "privacy/src/recovery.mjs",
+      "sha256": "37ab801af9acd67b9d4f6f5b77a63532fdef2a8400f45fcdb27abf15440e9dac",
+      "lineCount": 132,
+      "reviewedLineRanges": [
+        [
+          1,
+          132
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Pinned profile/scope/vault binding, full bounded archive reconstruction, snapshot consistency, spent filtering, cancellation/yielding and cleanup of newly created handles on failure.",
+      "findings": [],
+      "limits": [
+        "Reader is an independently trusted accepted-ledger adapter. 100000-record/revocation limits fail rather than truncate; no live archive availability or ledger restoration is supplied here."
+      ]
+    },
+    {
+      "path": "privacy/src/statement.mjs",
+      "sha256": "038b5079a69238822d3fd6188ba82a809891549a794966b5d049ace6188c2b80",
+      "lineCount": 116,
+      "reviewedLineRanges": [
+        [
+          1,
+          116
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Legacy canonical codec, exact byte/integer encodings, counts and duplicates, intrinsic bounded byte snapshot, unsupported/trailing data rejection.",
+      "findings": [],
+      "limits": [
+        "ParsedStatement is structural validation only; no funds/proof acceptance is established by the legacy parser."
+      ]
+    },
+    {
+      "path": "privacy/src/threshold.mjs",
+      "sha256": "4d2e6b9a15edba906d2534b795a5d91e2d2ee688947ea14254948f1d901406cc",
+      "lineCount": 254,
+      "reviewedLineRanges": [
+        [
+          1,
+          254
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "All-roster signed abort-only Feldman DKG, VSS, aggregate/degree nonidentity, common transcript acceptance, point/subgroup checks, bound DLEQs and distinct-trustee point interpolation.",
+      "findings": [],
+      "limits": [
+        "Authenticated private share delivery and independent custody are external. Abort/restart bias/liveness are not solved; an authorized or colluding threshold can decrypt other epoch records."
+      ]
+    },
+    {
+      "path": "privacy/src/validation.mjs",
+      "sha256": "c91e4c35d902b6b18c87827dfa52088aff63568e1ca5b37d200318de3fc1ee54",
+      "lineCount": 82,
+      "reviewedLineRanges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Exact records, dense arrays, bounded canonical integers/hex, domain binding and frozen copied structures.",
+      "findings": [],
+      "limits": [
+        "Designed for data validation, not a sandbox for hostile executable objects/proxies already running in the same JS context."
+      ]
+    },
+    {
+      "path": "privacy/src/vault.mjs",
+      "sha256": "d08925c2f4c10dbf240c017708632a598e17a88bd12fc4e4bb3896d951046c7b",
+      "lineCount": 152,
+      "reviewedLineRanges": [
+        [
+          1,
+          152
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "agent_peer_review",
+      "reviewedBoundary": "Independent CSPRNG key roles, strict restored material, owner/scope/profile binding, grant extension and exact complete-backup comparison.",
+      "findings": [],
+      "limits": [
+        "Backup checking proves supplied bytes restore keys, not that a user saved a file. Old backups cannot recover later grants; forgetting a handle does not physically erase JS secrets."
+      ]
+    },
+    {
+      "path": "privacy/src/verifier.mjs",
+      "sha256": "2f7350ba8ff00a3ab7b702b2d4bbc746a244c9daa613eb99f733652498567314",
+      "lineCount": 14,
+      "reviewedLineRanges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Empty installed-suite registry and unconditional unavailable activation/proof boundary.",
+      "findings": [],
+      "limits": [
+        "This is the historical fail-closed production facade, distinct from the separately reviewed local development Groth16 adapter."
+      ]
+    },
+    {
+      "path": "privacy/src/witness.mjs",
+      "sha256": "4a7f96c1c8e77ab817f94b5a4e7601d5da592b0bcd41901d0d395f3a7d541c03",
+      "lineCount": 158,
+      "reviewedLineRanges": [
+        [
+          1,
+          158
+        ]
+      ],
+      "reviewMethod": "full_manual_source_read",
+      "reviewRelationship": "author_rereview",
+      "reviewedBoundary": "Fresh nonzero secrets/randomness, note/public/cipher ordering, membership/append paths, subgroup preimages, ECDH/KDF and encryption equality for real notes and all-zero dummy slots; domain-bound revocation witness.",
+      "findings": [],
+      "limits": [
+        "Explicit deterministic test randomness is only for synthetic fixtures. Host acceptance, freshness and deployed configuration must still be checked independently."
+      ]
+    }
+  ],
+  "excludedSourceFiles": [
+    {
+      "path": "privacy/src/prover.mjs",
+      "sha256": "ea62d9412e0d95d59b950f4ca53cd918561418c68554b38f418bb312eea158cc",
+      "lineCount": 149,
+      "status": "excluded_from_this_pass",
+      "reason": "Author-owned local prover runtime already reviewed separately by parent and another agent; not counted as an independent review here.",
+      "evidence": [
+        "artifacts/security/2026-09-26/privacy/noble-verifier-review.json",
+        "artifacts/verification/privacy-browser-bounded-verifier/provenance.json"
+      ]
+    },
+    {
+      "path": "privacy/src/prover-worker.mjs",
+      "sha256": "460f6a512f116766610424bac43fc4e4c5ecc8aea0564621c87106697cf2d348",
+      "lineCount": 32,
+      "status": "excluded_from_this_pass",
+      "reason": "Author-owned local prover runtime already reviewed separately by parent and another agent; not counted as an independent review here.",
+      "evidence": [
+        "artifacts/security/2026-09-26/privacy/noble-verifier-review.json",
+        "artifacts/verification/privacy-browser-bounded-verifier/provenance.json"
+      ]
+    },
+    {
+      "path": "privacy/src/prover-worker-host.mjs",
+      "sha256": "49641a83e3bb76ebcc26c80e59ae0c73f08c5fbe7939b80a2531032200ecffe6",
+      "lineCount": 38,
+      "status": "excluded_from_this_pass",
+      "reason": "Author-owned local prover runtime already reviewed separately by parent and another agent; not counted as an independent review here.",
+      "evidence": [
+        "artifacts/security/2026-09-26/privacy/noble-verifier-review.json",
+        "artifacts/verification/privacy-browser-bounded-verifier/provenance.json"
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "path": "privacy/test/archive.test.mjs",
+      "sha256": "c2e8a9013a3a3c7ee729406ae2573f4d13d36238041dc1a416bdb044a95f7c51",
+      "lineCount": 51,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/authorization.test.mjs",
+      "sha256": "1218101d72b5aa1c88bb0dd8e9b691b80667581ac2ad8582563d04a4cf8e8175",
+      "lineCount": 139,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/backup.test.mjs",
+      "sha256": "807db79c1d110bf2efa47d40b2ae6e2dc3bb6b413bc34b6d7d2a83c63aad3762",
+      "lineCount": 36,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/circuit-helpers.mjs",
+      "sha256": "1069c3cb35f2c42279daed6c20ff9677b619e6971d7406accb0c70fe902c08dc",
+      "lineCount": 18,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/client.test.mjs",
+      "sha256": "81b1b69dd549c17987af1a61173245e098bf16584a424c2dfc2e84545df2a57e",
+      "lineCount": 170,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/curve-circuit.test.mjs",
+      "sha256": "a656f5e101eae38e42f742f2e3842a7cf7d80520b77d5cb20d7ca6a84fa94bf6",
+      "lineCount": 23,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/disclosure-proof.test.mjs",
+      "sha256": "742c88f3b839d6e907d32a7aac06c042d70d708fb1895c28b3cdd671b305870a",
+      "lineCount": 155,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/disclosure.test.mjs",
+      "sha256": "5ed275ecc3276536ed572bdeafa62804270e741320803b1f86fdd38f2e3e16ca",
+      "lineCount": 49,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/encryption.test.mjs",
+      "sha256": "c53bdca27df837c8404d0e78d30a022262be4b9d71a1f59f4a533633236370e3",
+      "lineCount": 110,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/fixtures.mjs",
+      "sha256": "2280b192d22bcd0990fd15dad0cc7586331b002569a9d212cefc51ae0b4584da",
+      "lineCount": 29,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/identity.test.mjs",
+      "sha256": "1febd3eae19ee215f97004da5580dbd5fac9f5417a5ccceb9660d79a215d917a",
+      "lineCount": 26,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/model-fixtures.mjs",
+      "sha256": "349c3f0972907d791ae2ef0cb0638e9feea5ede4e8a7ff49f30d5f7c23977967",
+      "lineCount": 42,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/model.test.mjs",
+      "sha256": "80025679283c2a6c2555a55950f9b06ba31c24af0a639b194d5adb15602f96d5",
+      "lineCount": 165,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/operator-store.test.mjs",
+      "sha256": "8b920370438044ec15b4543c2f1f9af24e2e71545174f81edb444e79d92044cc",
+      "lineCount": 108,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/phase1-input.test.mjs",
+      "sha256": "518b1c10ccce083fd103e0d97f7c3dde11cde4ac7ea922cce3bd11c803b8029e",
+      "lineCount": 52,
+      "status": "author_read_and_focused_execution_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/phase1-native-hashes.test.mjs",
+      "sha256": "3672e1d0cc47d3703d40c2cbc9704260fce4ed9628b6696d950322aec94521cc",
+      "lineCount": 53,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/prover-integration.test.mjs",
+      "sha256": "4067aadc1dc28891e4407cb1fba98517e342ae5c20e610be88e3d8a13798169c",
+      "lineCount": 45,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/prover-verification.test.mjs",
+      "sha256": "02d7e4cd0af290be367c4e9e4799f915f8c8c41d943d9e1a4305e88af85c9e69",
+      "lineCount": 53,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/prover-worker.test.mjs",
+      "sha256": "1924b2c2486f79116db9973515b8968ca998d54ad7b38e101b94045d9f2a6161",
+      "lineCount": 34,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/prover.test.mjs",
+      "sha256": "b44bc62368c65efbaff63c8e97c9d08b5a79a2504aef24f6e573fb48c9661cab",
+      "lineCount": 98,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/recovery-flow.test.mjs",
+      "sha256": "43d150843258fc7fe0a45063326a30bbaea22cc51d1720ca070893e89e38338c",
+      "lineCount": 152,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/statement.test.mjs",
+      "sha256": "3d5ee4e17682fcb4f63d59ee7496d4c2e91367134c33b70d3a70f2ebbaab5f04",
+      "lineCount": 137,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/threshold.test.mjs",
+      "sha256": "9b7dce6ea00d922a603bb1bf68c0f5b5dd9e6f2ef3750d6ba0e74f4119829491",
+      "lineCount": 161,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/transition-circuit.test.mjs",
+      "sha256": "e0303bfc13496d762f42f8fee5705c6ed90850d770b115c6925c5e8401867fa5",
+      "lineCount": 155,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/vault.test.mjs",
+      "sha256": "fc2da70d72ebad68ac484263af7ee3f37d9f626531a8a818675ce8d80ff98afe",
+      "lineCount": 92,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/verifier.test.mjs",
+      "sha256": "d4db006230932db1f8848de8a21a303d10672103d21e714705a26f99a511f21b",
+      "lineCount": 24,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    },
+    {
+      "path": "privacy/test/witness.test.mjs",
+      "sha256": "574cabe4a0b3f59b4b9970d16f4ff7d4c294ecdb1139babf173726f68e569981",
+      "lineCount": 121,
+      "status": "inventory_only_this_pass",
+      "boundary": "Test or synthetic fixture source; not counted in full manual source coverage for this final pass. Existing executions are referenced separately."
+    }
+  ],
+  "generatedPublicFixtures": [
+    {
+      "path": "artifacts/privacy-v2/proofs/01-deposit.json",
+      "sha256": "59ed0cd3f49c16e53c619f977ec3b852a74be380c062cfc09a34749168f212ff",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/02-create-pod.json",
+      "sha256": "9a2040b9d58215bcc42ce95ad664873f9a9ee69725204b7f077ef53c150d3a44",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/03-claim-pod.json",
+      "sha256": "32337f2df09711a6790e7e512a57846bd4ed82ed97144ff6b85d4996b0f71218",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/04-withdraw-pod.json",
+      "sha256": "ef90652c918456565edccecc6f383b80ad427c30414018d364cee623bd49793e",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/05-create-trigger.json",
+      "sha256": "8557968433bae267b92af7a1a52d753c33c3d580c731d962f6a99c908f2faeea",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/06-attest-trigger.json",
+      "sha256": "d9e1361cdb1d6b5b9d7f7ef107337c027085c8846343922aa8ea60de0b89fb5e",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/07-withdraw-trigger.json",
+      "sha256": "fe20a5976c7f1576931a277356b6face1ff554dfc4565649bb535e2b150bd160",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/08-create-envoy.json",
+      "sha256": "3b7c547209c7d6981e9a0b562d3d46e83ab8446e4770ef12351ba3be4d78c06f",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/09-spend-envoy.json",
+      "sha256": "6d61976d15520222ba36a55568d6609baf742079b6f65635390cf0a233964ea5",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/10-exhaust-envoy.json",
+      "sha256": "6bf55644e45c27fde17d3548b17b5231283b10206bc0ddcbc19d477b2e2b7ff5",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/11-withdraw-envoy-recipient.json",
+      "sha256": "ebb7280637da2a0c1f142fd828a8b3db1e80aef5c975c3e6b42eb403ff087d08",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/12-create-revocable-envoy.json",
+      "sha256": "7fa6f8e1423f792b3232e575d54878a444240a7e52fab03ad1835fc6c27df2d3",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/13-revoke-envoy.json",
+      "sha256": "8f32955d72fe158fec54f02c8c543c58c6d6f81d1d6acbab1e919694847af7e0",
+      "lineCount": 40,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/14-reclaim-revoked-envoy.json",
+      "sha256": "62815855cb2ab97158ac53da99a8788233bb97c0bd421db7932da4438c7cbb75",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/15-create-expired-trigger.json",
+      "sha256": "75cc33f5ff06764cdb5a14d5a12965dc17a43c058ba963c937f3972dcaee6736",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/16-refund-trigger.json",
+      "sha256": "094d31ca142d0d97e11a60a62827fe3df0fe0d5b5ff56ebe6989554b6efd0599",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/17-withdraw-refund.json",
+      "sha256": "d9333dbf9c8c86ce002160c8f3141b5dfec82964757d5bd4bd6f2440bb6e36ec",
+      "lineCount": 195,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    },
+    {
+      "path": "artifacts/privacy-v2/proofs/chain.json",
+      "sha256": "c6829978dddd7fc2703852fa0be48c25f2f62475b3bde696e311eeeeae28d21a",
+      "lineCount": 140,
+      "status": "generated_synthetic_public_fixture_not_line_by_line_source_audit"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/security/2026-09-26/privacy/phase1-input-tests.txt",
+      "sha256": "7fb7ab643ffd012cd5b78220eb04612cbf8dc3c7c902276b0946e6baf9692846",
+      "lineCount": 46
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/noble-verifier-review.json",
+      "sha256": "7decd08fe4cf57872a4a71555fd34f5272b5579db345c7bb8d52259aa589b1e7",
+      "lineCount": 63
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/noble-verifier-independent-check.txt",
+      "sha256": "baea0a67a85a9f1f1079b8d9e7de0ef0d984ef3a4a5b29a25d0cfd268677c1ff",
+      "lineCount": 5
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/disclosure-proof-noble.txt",
+      "sha256": "d20b78f86590c3af3a7607c8d3d72ccdb7f644aed9937873d3c275301b1b4cd7",
+      "lineCount": 17
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/recovery-disclosure-coverage.json",
+      "sha256": "e712c3658b290d6f76d387f56c27f556939c7cb249fb615676f87f98f46c7d7d",
+      "lineCount": 94
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/recovery-authorization-tests.txt",
+      "sha256": "0b161735570cd2b581fb70da36aa142876b0cb6fcc597e13d891504dba0ef2e9",
+      "lineCount": 118
+    },
+    {
+      "path": "artifacts/security/2026-09-26/privacy/helper-coverage.json",
+      "sha256": "63cc129a9f4597760cf8942ba6897028b3ba6e97a6994eea816ce2bfd8b69188",
+      "lineCount": 104
+    },
+    {
+      "path": "artifacts/verification/privacy-browser-bounded-verifier/report.json",
+      "sha256": "5662e19e9e1f6ce17b8b98834c546ec590cb9d33189c50234776896de2acf66f",
+      "lineCount": 284
+    },
+    {
+      "path": "artifacts/verification/privacy-browser-bounded-verifier/provenance.json",
+      "sha256": "647ecb1363eaba81a9a777d6c3abacdddd000ec0acee789fbe1a824454f0cda3",
+      "lineCount": 32
+    },
+    {
+      "path": "artifacts/verification/privacy-browser-bounded-verifier/verification-comparison.tap",
+      "sha256": "8acf58e6a8f3f63e53bccb42ee285bbc7a64b67dd2b0c7915de4f6217df862e2",
+      "lineCount": 18
+    },
+    {
+      "path": "artifacts/verification/privacy-browser-bounded-verifier/node-prover-integration.tap",
+      "sha256": "b133ac2da14fa5c2a658cc34ff554280917ea225cd3265ea0c3d6a5fd4057655",
+      "lineCount": 30
+    },
+    {
+      "path": "artifacts/privacy-v2/ppot_0080_18.ptau.provenance.json",
+      "sha256": "53d8f6b9a06f52dc4e0c65f8863ee0535de153fce1cc5db491b9fc2bf9daf6bb",
+      "lineCount": 20
+    },
+    {
+      "path": "artifacts/privacy-v2/circuit/compile-manifest.json",
+      "sha256": "e45fd964c6001d04482f2de214e283381c1283c72964f8f06d15bb7408e58279",
+      "lineCount": 20
+    },
+    {
+      "path": "artifacts/privacy-v2/keys/manifest.json",
+      "sha256": "f40b0cafbd4ee2c94a23b6f7d3873222659dce937106805b725246915a213ef9",
+      "lineCount": 64
+    },
+    {
+      "path": "artifacts/privacy-v2/prover-cases.json",
+      "sha256": "c1fd4039a4cbb33db11cbb78bf6bf2344a1466645cdbc018b850779b728588ba",
+      "lineCount": 22
+    },
+    {
+      "path": "artifacts/privacy-v2/pool-resource-comparison.json",
+      "sha256": "892f80152190dfd51559807eceb1f0dc05aa47631e7749cf6e399cfcdd0ad55a",
+      "lineCount": 1722
+    }
+  ],
+  "evidenceInterpretation": [
+    "Existing real browser report passed37 in-browser and8 harness checks for four actual local Groth16 flows with vault/draft/note recovery, changed-public rejection and one-worker cancellation; no new browser run in this pass.",
+    "Existing independent verifier evidence covers17 genuine public fixtures, point/scalar canonicality, zero-L algebra and an actual threshold-disclosure proof composition. Prover files are excluded from this source pass.",
+    "Existing full phase1 provenance proves the recorded selected transcript was checked through all upstream powers/pairings/contributions with parity-checked native hash acceleration. The current metadata correction does not rewrite that historical evidence.",
+    "Pool resource comparison is local WASM execution against a recorded public coefficient snapshot; its own notMeasured fields retain signed-envelope, live simulation/inclusion, archival restoration and fee/contention limits.",
+    "Old helper-coverage snapshots may precede current authorization/recovery changes; their path/hash pairs are historical evidence, not automatically current-source coverage.",
+    "The browser entry and browser harness were author-rereviewed here; their paired source/runtime evidence and prover boundary also have parent/second-agent review. These reviews do not make this author-owned portion an independent external audit."
+  ],
+  "untestedOrTrustedBoundaries": [
+    "No independent external cryptographic audit, formal soundness proof, independently contributed Agyion phase2 ceremony or real independent trustee committee.",
+    "The fixed single-operator development keys do not authorize mainnet deployment or prove toxic-waste destruction. Trusted local build/provenance files are not a signed release channel.",
+    "Public bridge amounts/accounts/assets, fees, nullifiers, commitments, record timing and network metadata remain observable. Encrypted internal fields are not a blanket anonymity guarantee.",
+    "A colluding threshold can decrypt other records in the same epoch. Request scope is enforced by honest operators; it is not a cryptographic restriction on a colluding quorum.",
+    "DKG private authenticated delivery, trustee independence/custody, complaint recovery, distributed restart/rotation and real dispute authorization are not supplied by local helpers.",
+    "Archive readers and accepted-record adapters must authenticate pinned network/pool/profile and checkpoint. Missing history fails recovery; untrusted self-consistent RPC data is not sufficient.",
+    "POSIX replay claims assume the documented filesystem/owner boundary; rollback by the same OS identity/root, NFS behavior and distributed-store consensus are not tested here.",
+    "JavaScript bigint timing and physical secret erasure are not guaranteed. Browser worker cancellation proves termination/no returned proof, not erasure or cancellation of an already submitted transaction.",
+    "Desktop Chromium proof/backup performance is measured elsewhere; no real-phone resource/cancellation/backup usability evidence is claimed.",
+    "No private-pool client adapter/submission/IndexedDB implementation is covered by this privacy-directory ledger; those files are owned and reviewed separately by another agent.",
+    "No new live transaction, signing, deployment, ceremony, browser run or full test-suite run was performed in this pass. Only the bounded provenance regression6/6 and actual input fingerprint preflight ran after the correction."
+  ],
+  "excludedCategories": [
+    {
+      "paths": [
+        "privacy/node_modules/**",
+        "privacy/LICENSE-CIRCUITS"
+      ],
+      "reason": "Dependencies and license text are not authored implementation source; no dependency-wide audit or binary reverse engineering."
+    },
+    {
+      "paths": [
+        "privacy/package-lock.json"
+      ],
+      "sha256": "276ccb368a9405848e1a5032847c5b2d57392ac2032042286ad3330133b5b849",
+      "reason": "Dependency lock hash recorded; all transitive package code/metadata not manually audited."
+    },
+    {
+      "paths": [
+        "artifacts/privacy-v2/circuit/*.r1cs",
+        "artifacts/privacy-v2/circuit/*_js/**",
+        "artifacts/privacy-v2/keys/*.zkey",
+        "artifacts/privacy-v2/*.ptau",
+        "artifacts/verification/privacy-browser-bounded-verifier/harness.mjs",
+        "artifacts/verification/privacy-browser-bounded-verifier/prover-worker.mjs"
+      ],
+      "reason": "Generated binaries/bundles verified by referenced artifact manifests and actual tests, not line-by-line authored-source review."
+    },
+    {
+      "paths": [
+        "privacy/*.md"
+      ],
+      "reason": "Protocol/threshold/key-recovery context read, but this ledger does not claim a full prose-documentation audit."
+    },
+    {
+      "paths": [
+        "contracts/**",
+        "app/**",
+        "landing/**",
+        "private-pool/**",
+        "scripts/**"
+      ],
+      "reason": "Other repository scopes are not covered by this privacy-directory pass; separate reviews/evidence apply."
+    }
+  ]
+}
