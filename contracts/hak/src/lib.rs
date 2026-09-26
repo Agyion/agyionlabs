@@ -1,4 +1,6 @@
 #![no_std]
+// Keep the published contract ABI; Soroban also generates matching client methods.
+#![allow(clippy::too_many_arguments)]
 //! Agyion kernel contract (v2).
 //!
 //! Single contract, four templates:
@@ -7,9 +9,12 @@
 //! - **Trigger**: event escrow executed by an independent attester's ed25519 signature.
 //! - **Envoy**: on-chain limited mandate — an agent key may claim Fade listings for the owner.
 //!
-//! All signatures and rules are bound 1:1 to SPEC_V2.md; do not change them here.
+//! Protocol v2 adds deployment-bound signatures and recipient-bound Pod commitments.
+//! See SECURITY_PROTOCOL.md for the security changes to the historical specification.
 
-use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, Bytes, BytesN, Env};
+use soroban_sdk::{
+    contract, contracterror, contractimpl, contracttype, xdr::ToXdr, Address, Bytes, BytesN, Env,
+};
 
 mod envoy;
 mod fade;
@@ -75,6 +80,14 @@ pub struct Pod {
     pub state: u32,           // 0=buried 1=opened
 }
 
+/// A hidden Pod claim intent, bound to the recipient and deployment.
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct PodClaimCommitment {
+    pub commitment: BytesN<32>,
+    pub committed_at: u32,
+}
+
 /// Trigger: event escrow (SPEC_V2). Funder locks funds for a beneficiary; an
 /// independent attester's ed25519 signature executes the payout; after the
 /// deadline a rule-based refund returns funds to the funder.
@@ -100,8 +113,8 @@ pub struct Mandate {
     pub agent_pubkey: BytesN<32>,
     pub max_per_tx: i128,
     pub daily_cap: i128,
-    pub valid_until: u32, // last ledger the mandate is usable
-    pub daily_used: i128, // spend accumulated in the current window
+    pub valid_until: u32,  // last ledger the mandate is usable
+    pub daily_used: i128,  // spend accumulated in the current window
     pub window_start: u32, // ledger where the current daily window began
     pub revoked: bool,
     /// Successful envoy_claim count (audit v2 finding 2). Under the Envoy
@@ -130,10 +143,10 @@ pub enum Error {
     Locked = 6,         // pod unlock_ledger not reached yet
     BadSignature = 7,   // zero/empty pubkey, bad sig format, or sha256(preimage) != key_hash
     // 8 reserved (v1 ImzaGecersiz merged into BadSignature)
-    CapExceeded = 9,      // per-tx or daily cap would be exceeded
-    MandateExpired = 10,  // ledger > valid_until
-    Unauthorized = 11,    // mandate revoked, or caller is not the mandate owner
-    InvalidInput = 12,    // parameter combination rejected (e.g. positive price via envoy)
+    CapExceeded = 9,     // per-tx or daily cap would be exceeded
+    MandateExpired = 10, // ledger > valid_until
+    Unauthorized = 11,   // mandate revoked, or caller is not the mandate owner
+    InvalidInput = 12,   // parameter combination rejected (e.g. positive price via envoy)
 }
 
 #[contracttype]
@@ -143,10 +156,19 @@ pub enum DataKey {
     Pod(u64),
     Trigger(u64),
     Mandate(u64),
+    PodClaim(u64, Address),
     FadeCount,
     PodCount,
     TriggerCount,
     MandateCount,
+}
+
+/// Prefix every off-chain credential with its purpose, network and deployment.
+pub(crate) fn credential_payload(env: &Env, purpose: &[u8]) -> Bytes {
+    let mut payload = Bytes::from_slice(env, purpose);
+    payload.append(&Bytes::from(env.ledger().network_id()));
+    payload.append(&env.current_contract_address().to_xdr(env));
+    payload
 }
 
 #[contract]
@@ -154,6 +176,11 @@ pub struct Agyion;
 
 #[contractimpl]
 impl Agyion {
+    /// Clients must check this before using v2 signatures or Pod claims.
+    pub fn protocol_version() -> u32 {
+        2
+    }
+
     // ---- Fade ----
 
     pub fn create_fade(
@@ -195,7 +222,7 @@ impl Agyion {
     }
 
     /// Verifies the venue ed25519 signature
-    /// (payload: fade_id(8B BE) || claimant XDR || ts(8B BE)); settles at the
+    /// (v2 handoff domain || fade_id(8B BE) || claimant XDR || ts(8B BE)); settles at the
     /// price frozen at `claimed_at`.
     pub fn confirm_handoff(env: Env, fade_id: u64, ts: u64, sig: BytesN<64>) -> Result<(), Error> {
         fade::confirm_handoff(&env, fade_id, ts, sig)
@@ -226,8 +253,26 @@ impl Agyion {
         pod::create_pod(&env, funder, asset, amount, unlock_ledger, key_hash)
     }
 
-    /// sha256(preimage)==key_hash && ledger>=unlock_ledger; recipient must
-    /// authorize the transaction (front-running protection — final review F2).
+    /// Record a hidden claim intent before revealing a Pod's bearer secret.
+    pub fn commit_pod_claim(
+        env: Env,
+        pod_id: u64,
+        recipient: Address,
+        commitment: BytesN<32>,
+    ) -> Result<(), Error> {
+        pod::commit_pod_claim(&env, pod_id, recipient, commitment)
+    }
+
+    pub fn get_pod_claim_commitment(
+        env: Env,
+        pod_id: u64,
+        recipient: Address,
+    ) -> Option<PodClaimCommitment> {
+        pod::get_pod_claim_commitment(&env, pod_id, recipient)
+    }
+
+    /// Open after the timelock and a matching commitment from an earlier ledger.
+    /// Recipient authorization alone does not protect a public bearer preimage.
     pub fn claim_pod(
         env: Env,
         pod_id: u64,
@@ -264,7 +309,7 @@ impl Agyion {
         )
     }
 
-    /// Attester signature payload: trigger_id(8B BE) || beneficiary XDR ||
+    /// Attester signature payload: v2 attest domain || trigger_id(8B BE) || beneficiary XDR ||
     /// ts(8B BE). Valid sig && ledger <= deadline -> pays the beneficiary.
     pub fn attest(env: Env, trigger_id: u64, ts: u64, sig: BytesN<64>) -> Result<(), Error> {
         trigger::attest(&env, trigger_id, ts, sig)
@@ -293,10 +338,17 @@ impl Agyion {
         daily_cap: i128,
         valid_until: u32,
     ) -> Result<u64, Error> {
-        envoy::create_mandate(&env, owner, agent_pubkey, max_per_tx, daily_cap, valid_until)
+        envoy::create_mandate(
+            &env,
+            owner,
+            agent_pubkey,
+            max_per_tx,
+            daily_cap,
+            valid_until,
+        )
     }
 
-    /// Agent signature payload: mandate_id(8B BE) || fade_id(8B BE) ||
+    /// Agent signature payload: v2 envoy domain || mandate_id(8B BE) || fade_id(8B BE) ||
     /// ts(8B BE). Enforces: ledger <= valid_until, price <= max_per_tx,
     /// daily_used + price <= daily_cap, then claims the fade with
     /// claimant = owner.

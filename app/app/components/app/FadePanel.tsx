@@ -1,14 +1,6 @@
 "use client";
 
-/**
- * FadePanel — the price is the hero (§5).
- *
- * 96px+ serif tabular numerals in terracotta, flipping to ember the instant
- * the price crosses zero (color IS the alarm — no banner). Below: full-width
- * decay curve with a draggable "now" handle. Right rail: parameters in mono.
- * Claim stays text+arrow until claimable, then becomes the single filled
- * terracotta moment on the screen.
- */
+/** Fade creation, price preview and the loaded contract's claim/handoff flow. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -19,14 +11,18 @@ import {
   priceAtLedger,
   type Fade,
 } from "../../lib/hakClient";
-import { useLedger } from "../../lib/useLedger";
+import { useLedgerStatus } from "../../lib/useLedger";
 import { formatMinor, formatRemaining, parseMinor, shortAddress, shortHex } from "../../lib/format";
 import { logEntry } from "../../lib/ledgerLog";
-import { newKeypair, signHandoff, publicKeyHex } from "../../lib/signers";
+import { signHandoff, publicKeyHex } from "../../lib/signers";
+import { findVenueIdentity, getOrCreateVenueIdentity } from "../../lib/venueIdentity";
 import { demoAddress } from "../../lib/wallet";
 import type { WalletState } from "../../lib/useWallet";
 import { CONFIG, IS_MOCK } from "../../lib/config";
-import { ArrowLink, ErrorNote, Eyebrow, Field, FilledButton, GhostButton, OkNote, TextInput } from "../ui";
+import { ErrorNote, Field, FilledButton, GhostButton, OkNote, StateChip, TextInput } from "../ui";
+import { WalletPrerequisite } from "./panelControls";
+import { durationLedgers, ledgerDeadline } from "./panelValidation";
+import { DraftSummary, draftAmount, draftDelay, formatDraftMinor } from "./instrumentPresentation";
 
 export default function FadePanel({ wallet }: { wallet: WalletState }) {
   const [fade, setFade] = useState<(Fade & { settlement?: { price: bigint; claimantPaid: bigint; claimantReceived: bigint; sellerReceived: bigint } }) | null>(null);
@@ -39,16 +35,47 @@ export default function FadePanel({ wallet }: { wallet: WalletState }) {
     } catch {
       return null;
     }
+    // Re-resolve the shared client when its wallet signer changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet.address]);
 
-  const ledger = useLedger(client);
+  const ledgerState = useLedgerStatus(client);
+  const ledger = ledgerState.ledger;
+
+  useEffect(() => {
+    let live = true;
+    let request = 0;
+    let loadingId: string | null = null;
+    const openRecord = async (id: unknown) => {
+      if (!client || typeof id !== "string" || !/^\d+$/.test(id) || BigInt(id) > 0xffff_ffff_ffff_ffffn || loadingId === id) return;
+      const ticket = ++request;
+      loadingId = id;
+      setError(null);
+      try {
+        const record = await client.get_fade(BigInt(id));
+        if (!record) throw new Error(`Fade #${id} was not found.`);
+        if (live && ticket === request) setFade(record);
+      } catch (e) {
+        if (live && ticket === request) setError(humanizeError(e));
+      } finally { if (ticket === request) loadingId = null; }
+    };
+    const onRecord = (event: Event) => {
+      const detail = (event as CustomEvent<{ tab?: string; id?: unknown }>).detail;
+      if (detail?.tab === "fade") void openRecord(detail.id);
+    };
+    window.addEventListener("agyion:open-record", onRecord);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "fade") void openRecord(params.get("ref"));
+    return () => { live = false; request++; window.removeEventListener("agyion:open-record", onRecord); };
+  }, [client]);
 
   const reload = useCallback(async () => {
     if (!client || !fade) return;
     const fresh = IS_MOCK
       ? await mockClient()?.getLatestFade()
       : await client.get_fade(fade.id);
-    if (fresh) setFade(fresh as typeof fade);
+    if (!fresh) throw new Error(`Fade #${fade.id} is not available yet. Refresh its record before taking another action.`);
+    setFade(fresh as typeof fade);
   }, [client, fade]);
 
   const run = useCallback(
@@ -65,19 +92,8 @@ export default function FadePanel({ wallet }: { wallet: WalletState }) {
   );
 
   return (
-    <div className="space-y-10">
-      <header>
-        <Eyebrow>Fade · declining price</Eyebrow>
-        <h1 className="display mt-2 text-[34px] text-ink md:text-[44px]">The last hour, on a curve</h1>
-        <p className="mt-3 max-w-[64ch] text-[16px] leading-[1.65] text-muted">
-          A bakery at closing time: unsold portions, a price that walks
-          backwards on a curve — and below zero the locked pot starts paying the
-          claimant for rescuing the portion. The pot is the venue&apos;s
-          campaign budget: it says &ldquo;waste costs us more than paying you to
-          take it.&rdquo; The handoff is proven with the venue&apos;s signature —
-          or the pot refunds by rule. No discretion.
-        </p>
-      </header>
+    <div className="instrument-panel panel-fade">
+      <WalletPrerequisite address={wallet.address} />
 
       {!fade && (
         <SellerForm
@@ -91,12 +107,17 @@ export default function FadePanel({ wallet }: { wallet: WalletState }) {
         <FadeStage
           fade={fade}
           ledger={ledger}
+          ledgerFresh={ledgerState.fresh}
           wallet={wallet}
           run={run}
           onChanged={reload}
           onReset={() => setFade(null)}
         />
       )}
+
+      {fade && ledger != null && !ledgerState.fresh && <p role="status" className="text-[13px] text-muted">Checking the ledger connection. Showing the last confirmed ledger {ledger}; transactions resume after a current ledger is confirmed. <button type="button" className="instrument-inline-action underline" onClick={ledgerState.refresh}>Retry connection</button></p>}
+
+      {fade && ledger == null && <p role="status" className="text-[13px] text-muted">Fade #{fade.id.toString()} loaded. Waiting for the ledger connection before showing its current price.</p>}
 
       {error && <ErrorNote>{error}</ErrorNote>}
       {notice && <OkNote>{notice}</OkNote>}
@@ -122,7 +143,10 @@ function SellerForm({
   const [handoffMinutes, setHandoffMinutes] = useState("3");
   const [venuePub, setVenuePub] = useState("");
   const [venueSecret, setVenueSecret] = useState("");
+  const [revealSecret, setRevealSecret] = useState(false);
+  const [backupNote, setBackupNote] = useState<string | null>(null);
   const [loadId, setLoadId] = useState("");
+  const [createdId, setCreatedId] = useState<bigint | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,25 +155,35 @@ function SellerForm({
     const m = mockClient();
     if (m) setVenuePub(m.venuePubkey());
     else {
-      const k = newKeypair();
+      const k = getOrCreateVenueIdentity();
       setVenuePub(k.pubkeyHex);
       setVenueSecret(k.secret);
-      try {
-        window.sessionStorage.setItem("agyion.venueSecret", k.secret);
-      } catch {
-        /* ignore */
-      }
     }
   }, []);
 
+  const copyVenueSecret = async () => {
+    try { await navigator.clipboard.writeText(venueSecret); setBackupNote("Venue secret copied. Store it somewhere private."); }
+    catch { setRevealSecret(true); setBackupNote("Copy is unavailable. Select the revealed secret and save it privately."); }
+  };
+  const downloadVenueSecret = () => {
+    const url = URL.createObjectURL(new Blob([JSON.stringify({ kind: "agyion-demo-venue", publicKey: publicKeyHex(venueSecret), secret: venueSecret }, null, 2)], { type: "application/json" }));
+    const link = document.createElement("a"); link.href = url; link.download = `agyion-demo-venue-${publicKeyHex(venueSecret).slice(0, 12)}.json`; link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setBackupNote("Secret file downloaded. Keep it private; it authorizes venue proofs.");
+  };
+
   const create = async () => {
+    if (busy || createdId != null) return;
     setBusy(true);
     setError(null);
+    let confirmedId: bigint | null = null;
     try {
       const client = getClient();
       const seller = wallet.address ?? demoAddress();
-      const duration = Math.max(30, Math.round(Number(minutes) * 60 / SECONDS_PER_LEDGER));
-      const handoff = Math.max(10, Math.round(Number(handoffMinutes) * 60 / SECONDS_PER_LEDGER));
+      const duration = durationLedgers(minutes, "Duration", 30, 1_000_000);
+      const handoff = durationLedgers(handoffMinutes, "Handoff window", 10, 1_000_000);
+      const now = await client.currentLedger();
+      ledgerDeadline(now, duration, "Duration and handoff window", handoff + 1);
       const start = parseMinor(startPrice);
       const floor = parseMinor(floorPrice);
       // slope: linear from start to floor across the duration
@@ -168,7 +202,9 @@ function SellerForm({
         handoff,
         venuePub,
       );
-      const now = await client.currentLedger();
+      confirmedId = id;
+      setCreatedId(id);
+      setLoadId(id.toString());
       logEntry({
         ledger: now,
         template: "fade",
@@ -179,10 +215,13 @@ function SellerForm({
         detail: `pot ${pot} ${CONFIG.assetCode} · ${startPrice} → ${floorPrice} over ${minutes}m`,
         txHash: null,
       });
-      const f = IS_MOCK ? await mockClient()?.getLatestFade() : await client.get_fade(id);
-      if (f) onCreated(f);
+      const f = await client.get_fade(id);
+      if (!f) throw new Error("The new record is not available yet.");
+      onCreated(f);
     } catch (e) {
-      setError(humanizeError(e));
+      setError(confirmedId != null
+        ? `Fade #${confirmedId} was created. Load this ID to retry reading its record. ${humanizeError(e)}`
+        : humanizeError(e));
     } finally {
       setBusy(false);
     }
@@ -200,61 +239,103 @@ function SellerForm({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
-      <div className="rounded-xl border bg-cream p-6 lg:col-span-7 md:p-8" style={{ borderColor: "var(--hairline)" }}>
-        <h2 className="display text-[24px] text-ink">List a Fade</h2>
-        <div className="mt-6 grid grid-cols-2 gap-4">
+    <>
+    <div className="instrument-layout">
+      <section className="instrument-main instrument-section">
+        <header><h3>List a Fade</h3></header>
+        <div className="instrument-fields">
           <Field label={`Pot (${CONFIG.assetCode})`} hint="Locked in the contract">
             <TextInput value={pot} onChange={(e) => setPot(e.target.value)} inputMode="decimal" />
           </Field>
-          <Field label="Start price" hint="Asking price at ledger zero">
+          <Field label="Start price">
             <TextInput value={startPrice} onChange={(e) => setStartPrice(e.target.value)} inputMode="decimal" />
           </Field>
-          <Field label="Floor price" hint="You decide: 0 = never goes negative · negative = the pot pays the claimant">
+          <Field label="Floor price" hint="Negative prices pay the claimant from the pot">
             <TextInput value={floorPrice} onChange={(e) => setFloorPrice(e.target.value)} inputMode="decimal" />
           </Field>
           <Field label="Duration (minutes)" hint="Until the claim deadline">
             <TextInput value={minutes} onChange={(e) => setMinutes(e.target.value)} inputMode="numeric" />
           </Field>
-          <Field label="Handoff window (minutes)" hint="After a claim, before refund wins">
+          <Field label="Handoff window (minutes)" hint="Proof due after a claim">
             <TextInput value={handoffMinutes} onChange={(e) => setHandoffMinutes(e.target.value)} inputMode="numeric" />
           </Field>
+        </div>
+        <details className="instrument-technical">
+          <summary>Venue signing key</summary>
           <Field label="Venue pubkey (hex)" hint="Raw ed25519 key that proves handoff">
             <TextInput value={venuePub} onChange={(e) => setVenuePub(e.target.value)} className="font-mono text-[12px]" />
           </Field>
-        </div>
-        {venueSecret && (
-          <p className="mt-3 font-mono text-[11px] text-muted">
-            demo venue secret: {venueSecret.slice(0, 12)}… (kept in this tab for the handoff step)
-          </p>
-        )}
+          {venueSecret && <div className="space-y-3">
+            <p className="text-[12px] text-muted">This demo venue identity is reused in this browser session. Back it up before closing the session; it authorizes handoff proofs.</p>
+            <div className="instrument-actions"><GhostButton onClick={() => setRevealSecret(value => !value)}>{revealSecret ? "Hide venue secret" : "Reveal venue secret"}</GhostButton><GhostButton onClick={() => void copyVenueSecret()}>Copy venue secret</GhostButton><GhostButton onClick={downloadVenueSecret}>Download venue key</GhostButton></div>
+            {revealSecret && <TextInput aria-label="Generated venue secret" value={venueSecret} readOnly autoComplete="off" spellCheck={false} />}
+            {backupNote && <p role="status" className="text-[12px] text-muted">{backupNote}</p>}
+          </div>}
+        </details>
         {error && <div className="mt-4"><ErrorNote>{error}</ErrorNote></div>}
-        <div className="mt-6">
-          <FilledButton onClick={() => void create()} disabled={busy}>
+        {createdId != null && <div className="mt-4"><OkNote>Fade #{createdId.toString()} created. Its ID is ready in the load form.</OkNote></div>}
+        <div className="instrument-actions">
+          <FilledButton transaction onClick={() => void create()} disabled={busy || createdId != null || (!IS_MOCK && !wallet.address)}>
             {busy ? "Locking…" : "Lock the pot"}
           </FilledButton>
         </div>
-      </div>
-
-      <div className="lg:col-span-5">
-        <div className="rounded-xl border p-6" style={{ borderColor: "var(--hairline)" }}>
-          <h3 className="display text-[20px] text-ink">Load an existing Fade</h3>
-          <div className="mt-4 flex gap-2">
+      </section>
+      <DraftSummary
+        title="Price preview"
+        visual={<DraftPriceCurve startPrice={startPrice} floorPrice={floorPrice} minutes={minutes} />}
+        rows={[
+          { label: "Pot to lock", value: draftAmount(pot) },
+          { label: "Claim window", value: draftDelay(minutes, "Duration", 30, 1_000_000) },
+          { label: "Handoff window", value: draftDelay(handoffMinutes, "Handoff window", 10, 1_000_000) },
+        ]}
+      >
+        <p>The confirmed claim fixes the price. Funds move only at signed handoff.</p>
+      </DraftSummary>
+    </div>
+    <section className="instrument-records">
+          <header><h3>Load an existing Fade</h3></header>
+          <div className="instrument-inline-control">
             <TextInput
               value={loadId}
               onChange={(e) => setLoadId(e.target.value)}
               placeholder="fade id"
+              aria-label="Load Fade by ID"
               inputMode="numeric"
             />
             <GhostButton onClick={() => void load()}>Load</GhostButton>
           </div>
-          <p className="mt-4 text-[13px] leading-relaxed text-muted">
-            Mock mode keeps fades in this browser. On testnet, any fade id is
-            readable by anyone — rules are public by design.
-          </p>
-        </div>
-      </div>
-    </div>
+    </section>
+    </>
+  );
+}
+
+/** Uses the same integer price calculation as the contract preview, without a live ledger or a transaction. */
+function DraftPriceCurve({ startPrice, floorPrice, minutes }: { startPrice: string; floorPrice: string; minutes: string }) {
+  let curve: { path: string; zeroY: number; start: bigint; floor: bigint; duration: number };
+  try {
+    const start = parseMinor(startPrice), floor = parseMinor(floorPrice);
+    if (floor > start) throw new Error("Floor exceeds starting price");
+    const duration = durationLedgers(minutes, "Duration", 30, 1_000_000);
+    const top = start > 0n ? start : 0n, bottom = floor < 0n ? floor : 0n;
+    const span = top - bottom || 1n;
+    const y = (value: bigint) => 20 + Number((top - value) * 10000n / span) / 10000 * 120;
+    const pricing = { start_price: start, floor_price: floor, start_ledger: 0, slope_num: start - floor || 1n, slope_den: BigInt(duration) };
+    const path = Array.from({ length: 65 }, (_, i) => `${i ? "L" : "M"}${20 + i * 4.375},${y(priceAtLedger(pricing, Math.round(duration * i / 64)))}`).join(" ");
+    curve = { path, zeroY: y(0n), start, floor, duration };
+  } catch {
+    return <p className="instrument-empty">Enter valid prices and a duration to preview the curve. The floor must not exceed the start price.</p>;
+  }
+  return (
+    <svg viewBox="0 0 320 190" className="instrument-draft-curve" role="img" aria-label={`Draft price curve from ${formatDraftMinor(curve.start)} to ${formatDraftMinor(curve.floor)} ${CONFIG.assetCode} over ${curve.duration} ledgers`}>
+      <path d="M20 20H300M20 60H300M20 100H300M20 140H300M90 20V140M160 20V140M230 20V140M300 20V140" className="diagram-guide" />
+      <path d={`${curve.path} L300,140 L20,140 Z`} className="curve-envelope" />
+      <line x1="20" x2="300" y1={curve.zeroY} y2={curve.zeroY} stroke="var(--hairline-strong)" strokeDasharray="3 5" />
+      <path d={curve.path} className="curve-trajectory" />
+      <text x="20" y="163" className="curve-value">{formatDraftMinor(curve.start)}</text>
+      <text x="300" y="163" textAnchor="end" className="curve-value">{formatDraftMinor(curve.floor)}</text>
+      <text x="20" y="182" className="curve-label">Start · {CONFIG.assetCode}</text>
+      <text x="300" y="182" textAnchor="end" className="curve-label">Claim deadline</text>
+    </svg>
   );
 }
 
@@ -263,6 +344,7 @@ function SellerForm({
 function FadeStage({
   fade,
   ledger,
+  ledgerFresh,
   wallet,
   run,
   onChanged,
@@ -270,6 +352,7 @@ function FadeStage({
 }: {
   fade: Fade & { settlement?: { price: bigint; claimantPaid: bigint; claimantReceived: bigint; sellerReceived: bigint } };
   ledger: number;
+  ledgerFresh: boolean;
   wallet: WalletState;
   run: (fn: () => Promise<void>) => Promise<void>;
   onChanged: () => Promise<void>;
@@ -294,29 +377,42 @@ function FadeStage({
   const secondsLeft = Math.max(0, (fade.deadline_ledger - ledger) * SECONDS_PER_LEDGER);
 
   return (
-    <div className="space-y-8">
+    <div className="instrument-records">
       {/* status line */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="font-mono text-[13px] text-muted">
-          fade #{fade.id.toString()} · ledger <span className="tnum">{ledger}</span> ·{" "}
-          <span style={{ color: fade.state === FADE_STATE.Settled ? "#6B7256" : fade.state === FADE_STATE.Refunded ? "var(--muted)" : "var(--accent)" }}>
-            {stateLabel}
+        <div className="flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+          <span className="tnum">fade #{fade.id.toString()}</span>
+          <span style={{ color: "var(--hairline-strong)" }}>·</span>
+          <span>
+            ledger <span className="tnum text-ink">{ledger}</span>
           </span>
+          <StateChip
+            live={fade.state === FADE_STATE.Open}
+            color={
+              fade.state === FADE_STATE.Settled
+                ? "var(--olive)"
+                : fade.state === FADE_STATE.Refunded
+                  ? "var(--muted)"
+                  : "var(--accent)"
+            }
+          >
+            {stateLabel}
+          </StateChip>
         </div>
         <GhostButton onClick={onReset}>New fade</GhostButton>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+      <div className="instrument-layout">
         {/* price hero + curve */}
-        <div className="lg:col-span-8">
+        <div className="instrument-main instrument-section">
           <div className="flex items-end justify-between">
             <div>
-              <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-muted">
-                {scrub != null ? "Preview at dragged ledger" : "Live price"}
+              <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
+                {scrub != null ? "Preview at dragged ledger" : ledgerFresh ? "Live price" : "Last confirmed price"}
               </div>
               <motion.div
-                className="tnum display text-[72px] leading-none md:text-[110px]"
-                animate={{ color: shownPrice < 0n ? "#8F4E2A" : "#BC773F" }}
+                className="tnum display text-[48px] leading-none tracking-[-0.04em] md:text-[72px]"
+                animate={{ color: shownPrice < 0n ? "var(--ember)" : "var(--accent)" }}
                 transition={{ duration: reduced ? 0 : 0.3 }}
               >
                 {formatMinor(shownPrice)}
@@ -328,8 +424,8 @@ function FadeStage({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em]"
-                    style={{ color: "#8F4E2A" }}
+                    className="mt-2 font-mono text-[11px] uppercase tracking-[0.16em]"
+                    style={{ color: "var(--ember)" }}
                   >
                     Below zero — the pot now pays the claimant
                   </motion.div>
@@ -338,10 +434,10 @@ function FadeStage({
             </div>
             {fade.state === FADE_STATE.Open && (
               <div className="text-right">
-                <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-muted">
+                <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
                   Claim window
                 </div>
-                <div className="tnum font-mono text-[20px] text-ink">{formatRemaining(secondsLeft)}</div>
+                <div className="tnum font-mono text-[22px] text-ink">{formatRemaining(secondsLeft)}</div>
               </div>
             )}
           </div>
@@ -350,7 +446,8 @@ function FadeStage({
         </div>
 
         {/* right rail — parameters in mono */}
-        <aside className="space-y-4 lg:col-span-4">
+        <aside className="instrument-aside instrument-section space-y-4">
+          <header><h3>Listing terms</h3></header>
           <RailRow k="Locked pot" v={`${formatMinor(fade.pot)} ${CONFIG.assetCode}`} />
           <RailRow
             k="Decay rate"
@@ -367,11 +464,11 @@ function FadeStage({
 
       {/* settlement receipt */}
       {fade.state === FADE_STATE.Settled && fade.settlement && (
-        <div className="rounded-xl border p-6" style={{ borderColor: "#6B7256" }}>
-          <div className="text-[12px] font-semibold uppercase tracking-[0.12em]" style={{ color: "#6B7256" }}>
+        <div className="instrument-section">
+          <div className="font-mono text-[11px] uppercase tracking-[0.16em]" style={{ color: "var(--olive)" }}>
             Settled at handoff
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-4 font-mono text-[14px] md:grid-cols-4">
+          <div className="mt-3 grid grid-cols-2 gap-4 md:grid-cols-4">
             <RailRow k="Price" v={formatMinor(fade.settlement.price)} />
             <RailRow k="Claimant paid" v={formatMinor(fade.settlement.claimantPaid)} />
             <RailRow k="Claimant received" v={formatMinor(fade.settlement.claimantReceived)} />
@@ -380,11 +477,11 @@ function FadeStage({
         </div>
       )}
       {fade.state === FADE_STATE.Refunded && (
-        <div className="rounded-xl border p-6" style={{ borderColor: "var(--hairline)" }}>
-          <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-muted">
+        <div className="instrument-section">
+          <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
             Returned
           </div>
-          <p className="mt-2 text-[15px] text-muted">
+          <p className="mt-2 text-[14px] leading-relaxed text-muted">
             No claim before the deadline, or no handoff inside the window — the
             pot went back to the seller by rule. No discretion was involved.
           </p>
@@ -392,7 +489,7 @@ function FadeStage({
       )}
 
       {/* actions */}
-      <FadeActions fade={fade} ledger={ledger} wallet={wallet} run={run} onChanged={onChanged} />
+      <FadeActions fade={fade} ledger={ledger} ledgerFresh={ledgerFresh} wallet={wallet} run={run} onChanged={onChanged} />
     </div>
   );
 }
@@ -400,8 +497,8 @@ function FadeStage({
 function RailRow({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b pb-2" style={{ borderColor: "var(--hairline)" }}>
-      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{k}</span>
-      <span className="tnum font-mono text-[13px] text-ink">{v}</span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">{k}</span>
+      <span className="tnum font-mono text-[12px] text-ink">{v}</span>
     </div>
   );
 }
@@ -476,11 +573,28 @@ function DecayCurve({
       onPointerMove={(e) => {
         if (dragging) onScrub(pointerToLedger(e.clientX));
       }}
-      onPointerUp={() => setDragging(false)}
-      onPointerLeave={() => setDragging(false)}
+      onPointerUp={() => { setDragging(false); onScrub(null); }}
+      onPointerCancel={() => { setDragging(false); onScrub(null); }}
+      onLostPointerCapture={() => { setDragging(false); onScrub(null); }}
+      onKeyDown={(event) => {
+        const current = Math.min(end, Math.max(start, scrub ?? ledger));
+        let next: number;
+        if (event.key === "ArrowRight" || event.key === "ArrowUp") next = current + 1;
+        else if (event.key === "ArrowLeft" || event.key === "ArrowDown") next = current - 1;
+        else if (event.key === "Home") next = start;
+        else if (event.key === "End") next = end;
+        else if (event.key === "Escape") { event.preventDefault(); onScrub(null); return; }
+        else return;
+        event.preventDefault();
+        onScrub(Math.min(end, Math.max(start, next)));
+      }}
+      onBlur={() => onScrub(null)}
       role="slider"
       aria-label="Preview ledger"
-      aria-valuenow={scrub ?? ledger}
+      aria-valuemin={start}
+      aria-valuemax={end}
+      aria-valuenow={Math.min(end, Math.max(start, scrub ?? ledger))}
+      aria-valuetext={`Ledger ${Math.min(end, Math.max(start, scrub ?? ledger))}. ${scrub == null ? "Live" : "Preview; press Escape to return to live"}`}
       tabIndex={0}
     >
       {/* zero line */}
@@ -536,12 +650,12 @@ function DecayCurve({
         cy={y(priceAtLedger(fade, scrub ?? ledger))}
         r="9"
         fill="var(--paper)"
-        stroke={priceAtLedger(fade, scrub ?? ledger) < 0n ? "#8F4E2A" : "var(--accent)"}
+        stroke={priceAtLedger(fade, scrub ?? ledger) < 0n ? "var(--ember)" : "var(--accent)"}
         strokeWidth="2.5"
         style={{ cursor: "grab" }}
       />
       <text x={nowX} y={H - 6} fontSize="10" fill="var(--muted)" fontFamily="var(--font-mono)" textAnchor="middle">
-        {scrub != null ? `ledger ${scrub} — release to resume live` : "now — drag me"}
+        {scrub != null ? `ledger ${scrub} — release or press Escape for live` : "now — drag me"}
       </text>
     </svg>
   );
@@ -552,12 +666,14 @@ function DecayCurve({
 function FadeActions({
   fade,
   ledger,
+  ledgerFresh,
   wallet,
   run,
   onChanged,
 }: {
   fade: Fade;
   ledger: number;
+  ledgerFresh: boolean;
   wallet: WalletState;
   run: (fn: () => Promise<void>) => Promise<void>;
   onChanged: () => Promise<void>;
@@ -566,16 +682,42 @@ function FadeActions({
   const [sig, setSig] = useState("");
   const [sigTs, setSigTs] = useState<bigint | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const actionBusy = useRef(false);
+  const [confirmedAction, setConfirmedAction] = useState<string | null>(null);
   const [localErr, setLocalErr] = useState<string | null>(null);
 
   useEffect(() => {
+    setVenueSecret(findVenueIdentity(fade.venue_pubkey)?.secret ?? "");
+    setSig("");
+    setSigTs(null);
+    setConfirmedAction(null);
+    setLocalErr(null);
+  }, [fade.id, fade.venue_pubkey]);
+
+  const disabled = busy !== null || confirmedAction !== null || !ledgerFresh || (!IS_MOCK && !wallet.address);
+  const perform = (action: string, send: () => Promise<void>, record: () => void) => run(async () => {
+    if (actionBusy.current || confirmedAction || !ledgerFresh || (!IS_MOCK && !wallet.address)) return;
+    actionBusy.current = true;
+    setBusy(action);
     try {
-      const s = window.sessionStorage.getItem("agyion.venueSecret");
-      if (s) setVenueSecret(s);
-    } catch {
-      /* ignore */
+      await send();
+      // A subsequent read failure must offer a read retry, never a second send.
+      setConfirmedAction(action);
+      record();
+      await onChanged();
+      setConfirmedAction(null);
+    } finally {
+      actionBusy.current = false;
+      setBusy(null);
     }
-  }, []);
+  });
+  const refreshRecord = () => run(async () => {
+    if (actionBusy.current) return;
+    actionBusy.current = true;
+    setBusy("refresh");
+    try { await onChanged(); setConfirmedAction(null); }
+    finally { actionBusy.current = false; setBusy(null); }
+  });
 
   const claimable = fade.state === FADE_STATE.Open && ledger <= fade.deadline_ledger;
   const refundable =
@@ -585,10 +727,7 @@ function FadeActions({
       ledger > fade.claimed_at + fade.handoff_window);
 
   const doClaim = () =>
-    run(async () => {
-      setBusy("claim");
-      const claimant = wallet.address ?? demoAddress();
-      await getClient().claim(fade.id, claimant);
+    perform("claim", () => getClient().claim(fade.id, wallet.address ?? demoAddress()), () => {
       logEntry({
         ledger,
         template: "fade",
@@ -599,11 +738,10 @@ function FadeActions({
         detail: `claimed at ${formatMinor(priceAtLedger(fade, ledger))} ${CONFIG.assetCode}`,
         txHash: null,
       });
-      await onChanged();
-      setBusy(null);
     });
 
   const produceSig = () => {
+    if (!ledgerFresh || actionBusy.current || confirmedAction) return;
     setLocalErr(null);
     try {
       const claimant = fade.claimant;
@@ -628,10 +766,10 @@ function FadeActions({
   };
 
   const doConfirm = () =>
-    run(async () => {
+    perform("handoff", async () => {
       if (!sig || sigTs == null) throw new Error("Produce the venue signature first");
-      setBusy("handoff");
       await getClient().confirm_handoff(fade.id, sigTs, sig);
+    }, () => {
       logEntry({
         ledger,
         template: "fade",
@@ -642,14 +780,10 @@ function FadeActions({
         detail: "venue signature verified — settled at the frozen price",
         txHash: null,
       });
-      await onChanged();
-      setBusy(null);
     });
 
   const doRefund = () =>
-    run(async () => {
-      setBusy("refund");
-      await getClient().refund(fade.id);
+    perform("refund", () => getClient().refund(fade.id), () => {
       logEntry({
         ledger,
         template: "fade",
@@ -660,12 +794,11 @@ function FadeActions({
         detail: "rule-based refund — pot returned to the seller",
         txHash: null,
       });
-      await onChanged();
-      setBusy(null);
     });
 
   return (
-    <div className="space-y-6 rounded-xl border bg-cream p-6" style={{ borderColor: "var(--hairline)" }}>
+    <div className="instrument-section space-y-6">
+      {confirmedAction && <p role="status" className="text-[13px] text-muted">Transaction confirmed. Refresh the record to load its current state. <button type="button" onClick={() => void refreshRecord()} disabled={busy !== null} className="instrument-inline-action underline">{busy === "refresh" ? "Refreshing record…" : "Refresh record"}</button></p>}
       {/* claim */}
       {fade.state === FADE_STATE.Open && (
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -675,7 +808,7 @@ function FadeActions({
             pot pays the claimant.
           </p>
           {claimable ? (
-            <FilledButton onClick={() => void doClaim()} disabled={busy === "claim"}>
+            <FilledButton transaction onClick={() => void doClaim()} disabled={disabled}>
               {busy === "claim" ? "Claiming…" : `Claim at ${formatMinor(priceAtLedger(fade, ledger))} ${CONFIG.assetCode}`}
             </FilledButton>
           ) : (
@@ -689,7 +822,7 @@ function FadeActions({
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <h3 className="display text-[20px] text-ink">Prove the handoff</h3>
-            <span className="tnum font-mono text-[13px] text-muted">
+            <span className="tnum font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
               window ends at ledger{" "}
               {fade.claimed_at != null ? fade.claimed_at + fade.handoff_window : "—"}
             </span>
@@ -709,13 +842,13 @@ function FadeActions({
           </div>
           {localErr && <ErrorNote>{localErr}</ErrorNote>}
           <div className="flex flex-wrap gap-3">
-            <GhostButton onClick={produceSig}>Produce signature</GhostButton>
+            <GhostButton onClick={produceSig} disabled={!ledgerFresh || busy !== null || confirmedAction !== null}>Produce signature</GhostButton>
             {sig ? (
-              <FilledButton onClick={() => void doConfirm()} disabled={busy === "handoff"}>
+              <FilledButton transaction onClick={() => void doConfirm()} disabled={disabled}>
                 {busy === "handoff" ? "Settling…" : "Confirm handoff"}
               </FilledButton>
             ) : (
-              <ArrowLink onClick={() => void doConfirm()}>Confirm handoff</ArrowLink>
+              <GhostButton disabled>Enter a handoff signature to confirm</GhostButton>
             )}
           </div>
         </div>
@@ -729,7 +862,7 @@ function FadeActions({
             handoff window lapses. The pot returns to the seller.
           </p>
           {refundable ? (
-            <GhostButton onClick={() => void doRefund()}>
+            <GhostButton transaction onClick={() => void doRefund()} disabled={disabled}>
               {busy === "refund" ? "Refunding…" : "Refund to seller"}
             </GhostButton>
           ) : (

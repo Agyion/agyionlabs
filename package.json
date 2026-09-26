@@ -1,0 +1,16 @@
+{
+  "name": "agyion-workspace",
+  "private": true,
+  "scripts": {
+    "build": "bash scripts/build_site.sh",
+    "test": "npm --prefix landing test && npm --prefix app test",
+    "preview": "node scripts/preview-site.mjs"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/three": "^0.180.0"
+  }
+}

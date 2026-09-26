@@ -2,7 +2,7 @@
 //! start_price toward the floor; venue-signed handoff confirmation and
 //! rule-based refund.
 
-use soroban_sdk::{token, xdr::ToXdr, Address, Bytes, BytesN, Env};
+use soroban_sdk::{token, xdr::ToXdr, Address, Bytes, BytesN, Env, I256};
 
 use crate::{DataKey, Error, Fade, TTL_EXTEND, TTL_THRESHOLD};
 
@@ -20,7 +20,9 @@ pub(crate) fn next_id(env: &Env) -> u64 {
     let id: u64 = env.storage().instance().get(&key).unwrap_or(0) + 1;
     env.storage().instance().set(&key, &id);
     // Instance storage (counters) is archivable too; extend on every touch.
-    env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    env.storage()
+        .instance()
+        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
     id
 }
 
@@ -36,7 +38,9 @@ pub(crate) fn read(env: &Env, fade_id: u64) -> Result<Fade, Error> {
     env.storage()
         .persistent()
         .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-    env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    env.storage()
+        .instance()
+        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
     Ok(fade)
 }
 
@@ -49,19 +53,19 @@ fn write(env: &Env, fade_id: u64, fade: &Fade) {
 }
 
 /// Price at a given ledger: start_price - slope*elapsed, stops at the floor.
-/// Overflow-safe (saturating) — view functions never panic.
-pub(crate) fn price_at_ledger(fade: &Fade, ledger: u32) -> i128 {
-    let elapsed = ledger.saturating_sub(fade.start_ledger) as i128;
-    let decline = fade
-        .slope_num
-        .saturating_mul(elapsed)
-        .checked_div(fade.slope_den)
-        .unwrap_or(0);
-    let price = fade.start_price.saturating_sub(decline);
-    if price < fade.floor_price {
+/// Validated i128 slopes times u32 elapsed ledgers fit the I256 intermediate.
+pub(crate) fn price_at_ledger(env: &Env, fade: &Fade, ledger: u32) -> i128 {
+    let elapsed = I256::from_i128(env, ledger.saturating_sub(fade.start_ledger) as i128);
+    let decline = I256::from_i128(env, fade.slope_num)
+        .mul(&elapsed)
+        .div(&I256::from_i128(env, fade.slope_den));
+    let price = I256::from_i128(env, fade.start_price).sub(&decline);
+    let floor = I256::from_i128(env, fade.floor_price);
+    if price < floor {
         fade.floor_price
     } else {
-        price
+        // Bounded by floor_price and start_price, both i128 values.
+        price.to_i128().unwrap()
     }
 }
 
@@ -110,11 +114,21 @@ pub fn create_fade(
         return Err(Error::BadSignature);
     }
 
+    // Both the latest handoff and the following refund ledger must exist.
+    // Span bounds alone do not prevent overflow near the end of u32.
+    let now = env.ledger().sequence();
+    let deadline_ledger = now
+        .checked_add(duration_ledgers)
+        .ok_or(Error::InvalidInput)?;
+    deadline_ledger
+        .checked_add(handoff_window)
+        .and_then(|end| end.checked_add(1))
+        .ok_or(Error::InvalidInput)?;
+
     // Non-custodial: the pot is deposited into the contract; from now on only
     // the rules move it.
-    token::Client::new(env, &asset).transfer(&seller, &env.current_contract_address(), &pot);
+    token::Client::new(env, &asset).transfer(&seller, env.current_contract_address(), &pot);
 
-    let now = env.ledger().sequence();
     let fade = Fade {
         seller,
         asset,
@@ -122,7 +136,7 @@ pub fn create_fade(
         start_price,
         floor_price,
         start_ledger: now,
-        deadline_ledger: now + duration_ledgers,
+        deadline_ledger,
         handoff_window,
         slope_num,
         slope_den,
@@ -144,7 +158,7 @@ pub fn get_fade(env: &Env, fade_id: u64) -> Result<Fade, Error> {
 
 pub fn fade_price(env: &Env, fade_id: u64) -> i128 {
     match read(env, fade_id) {
-        Ok(fade) => price_at_ledger(&fade, env.ledger().sequence()),
+        Ok(fade) => price_at_ledger(env, &fade, env.ledger().sequence()),
         // Missing record returns 0 (view function: no panic, fixed signature).
         // Caution: 0 is also a valid price (a fade at its floor); the frontend
         // must use get_fade to distinguish "no such fade" from "price is 0".
@@ -206,9 +220,9 @@ pub fn confirm_handoff(env: &Env, fade_id: u64, ts: u64, sig: BytesN<64>) -> Res
         return Err(Error::BadSignature);
     }
 
-    // Venue ed25519 signature: payload = fade_id(8B BE) || claimant(XDR) || ts(8B BE)
+    // Venue signature: v2 handoff domain || fade_id || claimant(XDR) || ts.
     // NOTE (ts freshness, audit v2 finding 3): `ts` is committed into the
-    // signed payload but its freshness is NOT enforced on-chain in v1 — a
+    // signed payload but its freshness is NOT enforced on-chain — a
     // signature stays valid for the whole handoff_window. Replay within the
     // window is closed by the state machine (state 1 -> 2 is single-direction;
     // after the window, refund wins). See docs/LIMITATIONS.md.
@@ -219,14 +233,15 @@ pub fn confirm_handoff(env: &Env, fade_id: u64, ts: u64, sig: BytesN<64>) -> Res
     // with an invalid signature is rejected with a host error, no funds are
     // lost (the tx is atomically rolled back, state stays 1, and the seller
     // may fall back to refund).
-    let mut payload = Bytes::new(env);
+    let mut payload = crate::credential_payload(env, b"agyion:handoff:v2\0");
     payload.append(&Bytes::from_array(env, &fade_id.to_be_bytes()));
     payload.append(&claimant.clone().to_xdr(env));
     payload.append(&Bytes::from_array(env, &ts.to_be_bytes()));
-    env.crypto().ed25519_verify(&fade.venue_pubkey, &payload, &sig);
+    env.crypto()
+        .ed25519_verify(&fade.venue_pubkey, &payload, &sig);
 
     // Settle: the price is frozen at the ledger of the claim.
-    let price = price_at_ledger(&fade, claimed_at);
+    let price = price_at_ledger(env, &fade, claimed_at);
     let token = token::Client::new(env, &fade.asset);
     let contract = env.current_contract_address();
 

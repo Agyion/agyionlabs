@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
-const SHEETS = ["#DEC9B8", "#F5ECE5", "#3C3835"];
+const SHEETS = ["#26302A", "#151917", "#1FD48C"];
 
 export default function PageWipe() {
   const reduced = useReducedMotion();

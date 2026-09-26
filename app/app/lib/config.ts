@@ -30,6 +30,8 @@ export const CONFIG = {
     "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
   /** Official hackathon TR mock anchor (SEP-10 + SEP-6 + SEP-38 + SEP-12) */
   anchorUrl: process.env.NEXT_PUBLIC_ANCHOR_URL ?? "https://tr-mock-anchor.fly.dev",
+  /** Optional pin, checked against the HTTPS stellar.toml SIGNING_KEY. */
+  anchorSigningKey: process.env.NEXT_PUBLIC_ANCHOR_SIGNING_KEY ?? "",
   /** stroop-benzeri minor unit: 7 ondalık (SPEC §3.1) */
   decimals: 7,
   /** WalletConnect modülü için Reown/WalletConnect project ID; boşsa modül modal'da listelenmez */

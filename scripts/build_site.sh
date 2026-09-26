@@ -3,7 +3,7 @@
 # build_site.sh — birleşik site build'i (landing + app tek Worker'da)
 # -----------------------------------------------------------------------------
 #   landing/  (Vite + React 19, Fluid Studio türevi) → dist/  → site/ kökü
-#   app/      (Next.js static export, soroban mode)  → out/   → site/app.html
+#   app/      (Next.js static export, soroban mode)  → out/   → site/app/index.html
 #
 # Çıktı: app/site/ — wrangler.toml'un [assets] dizini; `npx wrangler deploy`
 # (app/ altından) tek Worker'a yükler: `/` landing, `/app` ürün.
@@ -19,20 +19,17 @@ say() { printf '\033[1;34m[site]\033[0m %s\n' "$*"; }
 
 [[ -d "$LANDING" ]] || { echo "landing/ yok"; exit 1; }
 
+say "workspace dependencies"
+(cd "$ROOT" && npm ci --no-audit --no-fund)
+
 say "1/4 landing build (vite)"
-(cd "$LANDING" && npm install --no-audit --no-fund && npm test -- --run && npm run build)
+(cd "$LANDING" && npm ci --no-audit --no-fund && npm test -- --run && npm run build)
 
 say "2/4 app build (next static export)"
-(cd "$APP" && npm install --no-audit --no-fund && npm run build)
+(cd "$APP" && npm ci --no-audit --no-fund && npm test && npm run typecheck && npm run lint && npm run build)
 
 say "3/4 birleştir: $SITE"
-rm -rf "$SITE"
-mkdir -p "$SITE"
-cp -r "$LANDING/dist/." "$SITE/"
-cp -r "$APP/out/_next" "$SITE/_next"
-cp "$APP/out/app.html" "$APP/out/app.txt" "$APP/out/404.html" "$SITE/"
-[[ -d "$APP/out/zk" ]] && cp -r "$APP/out/zk" "$SITE/zk"
-cp "$APP/out/fonts/"*.woff2 "$SITE/fonts/"
+node "$ROOT/scripts/assemble-site.mjs"
 
 say "4/4 özet: $(find "$SITE" -type f | wc -l) dosya, $(du -sh "$SITE" | cut -f1)"
 say "deploy: cd app && npx wrangler deploy"

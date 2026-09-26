@@ -24,7 +24,10 @@ import { demoAddress } from "../../lib/wallet";
 import { newKeypair, publicKeyHex, signAttest } from "../../lib/signers";
 import type { WalletState } from "../../lib/useWallet";
 import { CONFIG, IS_MOCK } from "../../lib/config";
-import { ErrorNote, Eyebrow, Field, FilledButton, GhostButton, OkNote, TextInput } from "../ui";
+import { ErrorNote, Field, FilledButton, GhostButton, OkNote, StateChip, TextInput } from "../ui";
+import { RecordLoader, WalletPrerequisite } from "./panelControls";
+import { durationLedgers, ledgerDeadline } from "./panelValidation";
+import { ConditionGate, DraftSummary, draftAmount, draftDelay } from "./instrumentPresentation";
 
 interface AttestEvent {
   ts: string;
@@ -45,11 +48,23 @@ export default function TriggerPanel({ wallet }: { wallet: WalletState }) {
     } catch {
       return null;
     }
+    // Re-resolve the shared client when its wallet signer changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet.address]);
   const ledger = useLedger(client);
 
-  const refresh = async () => {
-    if (IS_MOCK) setTriggers((await mockClient()?.listTriggers()) ?? []);
+  const upsert = (trigger: Trigger) => setTriggers((cur) => [trigger, ...cur.filter((item) => item.id !== trigger.id)]);
+  const refresh = async (id?: bigint) => {
+    try {
+      if (IS_MOCK) setTriggers((await mockClient()?.listTriggers()) ?? []);
+      else if (id != null) {
+        const fresh = await getClient().get_trigger(id);
+        if (!fresh) throw new Error("The record is not available yet.");
+        upsert(fresh);
+      }
+    } catch (e) {
+      setError(`Could not refresh Trigger #${id}. Load it by ID to retry. ${humanizeError(e)}`);
+    }
   };
   useEffect(() => {
     void refresh();
@@ -59,54 +74,39 @@ export default function TriggerPanel({ wallet }: { wallet: WalletState }) {
   const pushEvent = (e: AttestEvent) => setEvents((cur) => [e, ...cur].slice(0, 12));
 
   return (
-    <div className="space-y-10">
-      <header>
-        <Eyebrow>Trigger · event escrow</Eyebrow>
-        <h1 className="display mt-2 text-[34px] text-ink md:text-[44px]">
-          Released by proof, returned by rule
-        </h1>
-        <p className="mt-3 max-w-[64ch] text-[16px] leading-[1.65] text-muted">
-          A funder locks an amount for a beneficiary behind a real-world
-          condition. An independent attester — not the funder, not the
-          beneficiary — signs that the condition happened, and the escrow
-          executes. If the deadline lands first, the money walks home.
-        </p>
-      </header>
-
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
-        {/* left: condition spec */}
-        <div className="space-y-8 lg:col-span-6">
+    <div className="instrument-panel panel-trigger">
+      <WalletPrerequisite address={wallet.address} />
           <CreateTrigger
             wallet={wallet}
-            onCreated={() => void refresh()}
+            onCreated={(id) => void refresh(id)}
             setError={setError}
             setNotice={setNotice}
             pushEvent={pushEvent}
           />
+      <div className="instrument-feedback">
+        {error && <ErrorNote>{error}</ErrorNote>}
+        {notice && <OkNote>{notice}</OkNote>}
+      </div>
+      <section className="instrument-records">
+          <header><h3>Escrows</h3></header>
+          {!IS_MOCK && <RecordLoader name="Trigger" load={(id) => getClient().get_trigger(id)} onLoaded={upsert} />}
+          {triggers.length === 0 && <p className="instrument-empty">No escrows loaded.</p>}
           {triggers.map((t) => (
-            <TriggerSpec key={t.id.toString()} trigger={t} ledger={ledger} />
-          ))}
-        </div>
-
-        {/* right: attestation feed + actions */}
-        <div className="space-y-8 lg:col-span-6">
-          {triggers.map((t) => (
+            <article className="instrument-record instrument-layout" key={t.id.toString()}>
+            <TriggerSpec trigger={t} ledger={ledger} />
             <TriggerActions
-              key={t.id.toString()}
               trigger={t}
               ledger={ledger}
-              onChanged={() => void refresh()}
+              wallet={wallet}
+              onChanged={() => void refresh(t.id)}
               setError={setError}
               setNotice={setNotice}
               pushEvent={pushEvent}
             />
+            </article>
           ))}
-          <AttestFeed events={events} />
-        </div>
-      </div>
-
-      {error && <ErrorNote>{error}</ErrorNote>}
-      {notice && <OkNote>{notice}</OkNote>}
+          {events.length > 0 && <AttestFeed events={events} />}
+      </section>
     </div>
   );
 }
@@ -119,7 +119,7 @@ function CreateTrigger({
   pushEvent,
 }: {
   wallet: WalletState;
-  onCreated: () => void;
+  onCreated: (id: bigint) => void;
   setError: (e: string | null) => void;
   setNotice: (n: string | null) => void;
   pushEvent: (e: AttestEvent) => void;
@@ -155,10 +155,12 @@ function CreateTrigger({
     setNotice(null);
     try {
       if (!attesterPub) throw new Error("Generate or paste an attester key first");
+      const duration = durationLedgers(minutes, "Deadline", 10);
       const client = getClient();
       const now = await client.currentLedger();
-      const deadline = now + Math.max(10, Math.round((Number(minutes) * 60) / SECONDS_PER_LEDGER));
-      const ben = beneficiary.trim() || demoAddress();
+      const deadline = ledgerDeadline(now, duration, "Deadline", 1);
+      const ben = beneficiary.trim() || (IS_MOCK ? demoAddress() : wallet.address);
+      if (!ben) throw new Error("Connect a wallet or enter a beneficiary first.");
       const id = await client.create_trigger(
         wallet.address ?? demoAddress(),
         CONFIG.assetContractId,
@@ -184,7 +186,7 @@ function CreateTrigger({
         note: `escrow #${id} locked — awaiting attestation`,
       });
       setNotice(`Trigger #${id} locked. The attester key can now decide its fate.`);
-      onCreated();
+      onCreated(id);
     } catch (e) {
       setError(humanizeError(e));
     } finally {
@@ -193,30 +195,43 @@ function CreateTrigger({
   };
 
   return (
-    <div className="rounded-xl border bg-cream p-6" style={{ borderColor: "var(--hairline)" }}>
-      <h2 className="display text-[24px] text-ink">Lock a conditional escrow</h2>
-      <div className="mt-5 space-y-4">
+    <div className="instrument-layout">
+    <section className="instrument-main instrument-section">
+      <header><h3>Lock a conditional escrow</h3></header>
+      <div className="instrument-fields">
         <Field label={`Amount (${CONFIG.assetCode})`}>
           <TextInput value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" />
         </Field>
-        <Field label="Beneficiary (G…)" hint="Empty = a demo address">
+        <Field label="Deadline (minutes)" hint="Refund becomes available after this deadline">
+          <TextInput value={minutes} onChange={(e) => setMinutes(e.target.value)} inputMode="numeric" />
+        </Field>
+        <div className="instrument-field-wide">
+        <Field label="Beneficiary (G…)" hint={IS_MOCK ? "Empty = a demo address" : "Empty = your connected wallet"}>
           <TextInput value={beneficiary} onChange={(e) => setBeneficiary(e.target.value)} className="font-mono text-[12px]" placeholder="G…" />
         </Field>
-        <Field label="Attester pubkey (hex)" hint="The independent signer whose proof executes the escrow">
-          <div className="flex gap-2">
+        </div>
+      </div>
+      <div className="instrument-section">
+        <Field label="Attester pubkey (hex)" hint="Choose a trusted signer. Generated keys are for demos.">
+          <div className="instrument-inline-control">
             <TextInput value={attesterPub} onChange={(e) => setAttesterPub(e.target.value)} className="font-mono text-[12px]" />
             <GhostButton onClick={generateAttester}>Generate demo key</GhostButton>
           </div>
         </Field>
-        <Field label="Deadline (minutes)" hint="After it, only the rule-based refund remains">
-          <TextInput value={minutes} onChange={(e) => setMinutes(e.target.value)} inputMode="numeric" />
-        </Field>
       </div>
-      <div className="mt-5">
-        <FilledButton onClick={() => void create()} disabled={busy}>
+      <div className="instrument-actions">
+        <FilledButton transaction onClick={() => void create()} disabled={busy || (!IS_MOCK && !wallet.address)}>
           {busy ? "Locking…" : "Lock the escrow"}
         </FilledButton>
       </div>
+    </section>
+    <DraftSummary title="Escrow terms" visual={<ConditionGate keySet={Boolean(attesterPub.trim())} beneficiary={beneficiary.trim() ? shortAddress(beneficiary.trim()) : IS_MOCK ? "the demo beneficiary" : wallet.address ? shortAddress(wallet.address) : "the beneficiary you choose"} />} rows={[
+      { label: "Amount to lock", value: draftAmount(amount) },
+      { label: "Beneficiary", value: beneficiary.trim() ? shortAddress(beneficiary.trim()) : IS_MOCK ? "Demo address" : wallet.address ? shortAddress(wallet.address) : "Connect a wallet or enter an address" },
+      { label: "Deadline after", value: draftDelay(minutes, "Deadline", 10) },
+    ]}>
+      <p>The contract verifies the attester&apos;s signature, not the real-world event.</p>
+    </DraftSummary>
     </div>
   );
 }
@@ -233,26 +248,25 @@ function TriggerSpec({ trigger, ledger }: { trigger: Trigger; ledger: number | n
     trigger.state === TRIGGER_STATE.Pending
       ? "var(--accent)"
       : trigger.state === TRIGGER_STATE.Executed
-        ? "#6B7256"
+        ? "var(--olive)"
         : "var(--muted)";
   const secondsLeft = ledger == null ? 0 : Math.max(0, (trigger.deadline_ledger - ledger) * SECONDS_PER_LEDGER);
 
   return (
-    <div className="rounded-xl border p-6" style={{ borderColor: "var(--hairline)" }}>
+    <div className="instrument-aside instrument-section order-2">
       <div className="flex items-baseline justify-between">
-        <h3 className="display text-[22px] text-ink">Escrow #{trigger.id.toString()}</h3>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color }}>
+        <h3 className="display text-[20px] text-ink">Escrow #{trigger.id.toString()}</h3>
+        <StateChip live={trigger.state === TRIGGER_STATE.Pending} color={color}>
           {stateLabel}
-        </span>
+        </StateChip>
       </div>
-      <p className="mt-3 font-serif text-[17px] leading-[1.6] text-ink">
-        If the attester signs that the condition occurred before ledger{" "}
-        <span className="tnum font-mono text-[14px]">{trigger.deadline_ledger}</span>, pay{" "}
+      <p className="mt-3 text-[14px] leading-relaxed text-muted">
+        A valid attestation before ledger{" "}
+        <span className="tnum font-mono text-[14px]">{trigger.deadline_ledger}</span> pays{" "}
         <span className="tnum font-mono text-[14px]">
           {formatMinor(trigger.amount)} {CONFIG.assetCode}
         </span>{" "}
-        to the beneficiary. Otherwise, when the deadline passes, return
-        everything to the funder. No third outcome exists.
+        to the beneficiary. After the deadline, the funder can submit a refund transaction.
       </p>
       <div className="mt-4 space-y-2 font-mono text-[13px]">
         <Row k="funder" v={shortAddress(trigger.funder)} />
@@ -268,6 +282,7 @@ function TriggerSpec({ trigger, ledger }: { trigger: Trigger; ledger: number | n
 function TriggerActions({
   trigger,
   ledger,
+  wallet,
   onChanged,
   setError,
   setNotice,
@@ -275,6 +290,7 @@ function TriggerActions({
 }: {
   trigger: Trigger;
   ledger: number | null;
+  wallet: WalletState;
   onChanged: () => void;
   setError: (e: string | null) => void;
   setNotice: (n: string | null) => void;
@@ -371,18 +387,17 @@ function TriggerActions({
 
   return (
     <motion.div
-      className="rounded-xl border bg-cream p-6"
-      style={{ borderColor: "var(--hairline)" }}
+      className="instrument-main instrument-section order-1"
       layout={!reduced}
     >
       <div className="flex items-center justify-between">
         <h3 className="display text-[20px] text-ink">Attest escrow #{trigger.id.toString()}</h3>
         {/* stroke-drawn status mark */}
         <svg viewBox="0 0 32 32" className="h-7 w-7">
-          <circle cx="16" cy="16" r="13" fill="none" stroke={expired ? "#8F4E2A" : "var(--sand)"} strokeWidth="1.6" />
+          <circle cx="16" cy="16" r="13" fill="none" stroke={expired ? "var(--ember)" : "var(--sand)"} strokeWidth="1.6" />
           <motion.path
             d="M 16 8 v 8 l 5 3"
-            stroke={expired ? "#8F4E2A" : "var(--accent)"}
+            stroke={expired ? "var(--ember)" : "var(--accent)"}
             strokeWidth="1.8" fill="none" strokeLinecap="round"
             animate={reduced ? undefined : { rotate: expired ? 0 : [0, 360] }}
             transition={reduced ? undefined : { duration: 24, repeat: Infinity, ease: "linear" }}
@@ -394,18 +409,18 @@ function TriggerActions({
         <Field label="Attester secret (demo signer)" hint="S… or 64-hex seed">
           <TextInput value={secret} onChange={(e) => setSecret(e.target.value)} className="font-mono text-[12px]" placeholder="S…" />
         </Field>
-        <div className="flex flex-wrap gap-3">
+        <div className="instrument-actions">
           {!expired ? (
-            <FilledButton onClick={() => void attest()} disabled={busy === "attest"}>
+            <FilledButton transaction onClick={() => void attest()} disabled={busy !== null || (!IS_MOCK && !wallet.address)}>
               {busy === "attest" ? "Verifying…" : "Attest the condition"}
             </FilledButton>
           ) : (
-            <GhostButton onClick={() => void refund()} disabled={busy === "refund"}>
+            <GhostButton transaction onClick={() => void refund()} disabled={busy !== null || (!IS_MOCK && !wallet.address)}>
               {busy === "refund" ? "Refunding…" : "Refund to funder (deadline passed)"}
             </GhostButton>
           )}
           {!expired && (
-            <GhostButton onClick={() => void refund()} disabled={busy === "refund"}>
+            <GhostButton transaction onClick={() => void refund()} disabled={busy !== null || (!IS_MOCK && !wallet.address)}>
               Try early refund
             </GhostButton>
           )}
@@ -418,8 +433,8 @@ function TriggerActions({
 /** Attestation feed — rows with mono timestamps and lifecycle colors */
 function AttestFeed({ events }: { events: AttestEvent[] }) {
   return (
-    <div className="rounded-xl border" style={{ borderColor: "var(--hairline)" }}>
-      <div className="border-b px-6 py-4 text-[12px] font-semibold uppercase tracking-[0.12em] text-muted" style={{ borderColor: "var(--hairline)" }}>
+    <div className="instrument-section">
+      <div className="border-b px-6 py-4 font-mono text-[10px] uppercase tracking-[0.16em] text-muted" style={{ borderColor: "var(--hairline)" }}>
         Attestation feed
       </div>
       {events.length === 0 ? (
@@ -431,10 +446,10 @@ function AttestFeed({ events }: { events: AttestEvent[] }) {
               <span className="tnum font-mono text-[12px] text-muted">{e.ts.slice(11, 19)}</span>
               <span className="font-mono text-[12px] text-ink">{e.source}</span>
               <span
-                className="ml-auto text-[11px] font-semibold uppercase tracking-[0.1em]"
+                className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em]"
                 style={{
                   color:
-                    e.status === "executed" ? "#6B7256" : e.status === "failed" ? "#8F4E2A" : "var(--sand)",
+                    e.status === "executed" ? "var(--olive)" : e.status === "failed" ? "var(--ember)" : "var(--muted)",
                 }}
               >
                 {e.status}
@@ -451,8 +466,8 @@ function AttestFeed({ events }: { events: AttestEvent[] }) {
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex justify-between gap-4 border-b pb-1.5" style={{ borderColor: "var(--hairline)" }}>
-      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">{k}</span>
-      <span className="tnum text-ink">{v}</span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">{k}</span>
+      <span className="tnum font-mono text-[12px] text-ink">{v}</span>
     </div>
   );
 }

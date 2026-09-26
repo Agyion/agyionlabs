@@ -11,7 +11,7 @@
  * talks to the real testnet anchor either way.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Horizon } from "@stellar/stellar-sdk";
 import {
   AnchorError,
@@ -26,7 +26,7 @@ import {
   type TryUsdcPrice,
   type WithdrawInstructions,
 } from "../../lib/anchor";
-import { defaultSigner } from "../../lib/wallet";
+import { defaultSigner, onWalletSessionChange, walletSessionVersion } from "../../lib/wallet";
 import {
   createAssetTrustline,
   friendbotFund,
@@ -35,10 +35,10 @@ import {
 import { CONFIG, IS_MOCK } from "../../lib/config";
 import { shortAddress } from "../../lib/format";
 import type { WalletState } from "../../lib/useWallet";
+import { ExchangeRoute } from "./instrumentPresentation";
 import {
   ArrowLink,
   ErrorNote,
-  Eyebrow,
   Field,
   FilledButton,
   GhostButton,
@@ -48,22 +48,48 @@ import {
 
 const HORIZON_URL = "https://horizon-testnet.stellar.org";
 
+interface DepositEstimate {
+  value: TryUsdcPrice;
+  requestedAmount: string;
+  direction: "TRY → USDC";
+  requestedAt: string;
+}
+
 export default function RampPanel({ wallet }: { wallet: WalletState }) {
+  const [sessionVersion, setSessionVersion] = useState(walletSessionVersion);
+  useEffect(() => onWalletSessionChange(() => setSessionVersion(walletSessionVersion())), []);
+  return <RampSession key={`${wallet.address ?? "disconnected"}:${sessionVersion}`} wallet={wallet} sessionVersion={sessionVersion} />;
+}
+
+function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionVersion: number }) {
+  // Re-resolve the signer when the connected wallet changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const signer = useMemo(() => defaultSigner(), [wallet.address]);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  const isCurrentSession = useCallback(() => mounted.current && walletSessionVersion() === sessionVersion, [sessionVersion]);
+  const assertCurrentSession = useCallback(() => {
+    if (!isCurrentSession()) throw new AnchorError("auth", "The wallet session changed. Start this action again with the connected wallet.");
+  }, [isCurrentSession]);
 
   const [token, setToken] = useState<string | null>(null);
   const [info, setInfo] = useState<{ feePercent?: number } | null>(null);
-  const [quote, setQuote] = useState<TryUsdcPrice | null>(null);
-  const [quoteAmount, setQuoteAmount] = useState("1000");
+  const [quote, setQuote] = useState<DepositEstimate | null>(null);
+  const [quoteBusy, setQuoteBusy] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const quoteGeneration = useRef(0);
   const [balance, setBalance] = useState<string | null>(null);
   const [balanceNote, setBalanceNote] = useState<string | null>(null);
 
+  const [direction, setDirection] = useState<"deposit" | "withdraw">("deposit");
   const [depAmount, setDepAmount] = useState("1000");
   const [deposit, setDeposit] = useState<DepositInstructions | null>(null);
   const [wdAmount, setWdAmount] = useState("20");
   const [wdIban, setWdIban] = useState("TR330006100519786457841326");
-  const [withdraw, setWithdraw] = useState<WithdrawInstructions | null>(null);
-  const [status, setStatus] = useState<AnchorTransaction | null>(null);
+  const [withdraw, setWithdraw] = useState<(WithdrawInstructions & { requestedAmount: string; destinationIban: string }) | null>(null);
+  const [statusRecord, setStatusRecord] = useState<{ id: string; value: AnchorTransaction } | null>(null);
+  const activeTransfer = direction === "deposit" ? deposit : withdraw;
+  const status = statusRecord?.id === activeTransfer?.id ? statusRecord?.value : null;
 
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,9 +100,10 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
     setError(null);
     setNotice(null);
     try {
+      assertCurrentSession();
       await fn();
     } catch (e) {
-      setError(
+      if (isCurrentSession()) setError(
         e instanceof AnchorError
           ? e.message
           : e instanceof Error
@@ -84,21 +111,48 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
             : String(e),
       );
     } finally {
-      setBusy(null);
+      if (isCurrentSession()) setBusy(null);
     }
-  }, []);
+  }, [assertCurrentSession, isCurrentSession]);
 
-  // Capability sheet + first quote on mount
+  const invalidateQuote = () => {
+    quoteGeneration.current += 1;
+    setQuote(null);
+    setQuoteError(null);
+    setQuoteBusy(false);
+  };
+
+  const requestQuote = useCallback(async (amount: string) => {
+    const generation = ++quoteGeneration.current;
+    const requestedAmount = amount.trim();
+    const requestedAt = new Date().toISOString();
+    const current = () => isCurrentSession() && generation === quoteGeneration.current;
+    setQuote(null);
+    setQuoteError(null);
+    if (!/^\d+(?:\.\d+)?$/.test(requestedAmount) || !Number.isFinite(Number(requestedAmount)) || Number(requestedAmount) <= 0) {
+      setQuoteBusy(false);
+      setQuoteError("Enter a positive TRY amount to request an estimate.");
+      return;
+    }
+    setQuoteBusy(true);
+    try {
+      const value = await tryUsdcPrice(requestedAmount);
+      if (current()) setQuote({ value, requestedAmount, direction: "TRY → USDC", requestedAt });
+    } catch (e) {
+      if (current()) setQuoteError(e instanceof Error ? e.message : String(e));
+    } finally {
+      if (current()) setQuoteBusy(false);
+    }
+  }, [isCurrentSession]);
+
+  // This endpoint only estimates TRY -> USDC. It does not reserve a rate.
   useEffect(() => {
     sep6Info()
-      .then((i) =>
-        setInfo({ feePercent: i.deposit?.[CONFIG.assetCode]?.fee_percent }),
-      )
-      .catch(() => setInfo(null));
-    tryUsdcPrice("1000")
-      .then(setQuote)
-      .catch(() => setQuote(null));
-  }, []);
+      .then((i) => { if (isCurrentSession()) setInfo({ feePercent: i.deposit?.[CONFIG.assetCode]?.fee_percent }); })
+      .catch(() => { if (isCurrentSession()) setInfo(null); });
+    void requestQuote("1000");
+    return () => { quoteGeneration.current += 1; };
+  }, [isCurrentSession, requestQuote]);
 
   // USDC balance via Horizon (honest fallback if the account is unfunded)
   useEffect(() => {
@@ -126,6 +180,7 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
   }, [wallet.address]);
 
   const ensureAuth = useCallback(async (): Promise<string> => {
+    assertCurrentSession();
     if (token) return token;
     if (!signer) {
       throw new AnchorError(
@@ -134,9 +189,10 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
       );
     }
     const t = await authenticate(signer);
+    assertCurrentSession();
     setToken(t);
     return t;
-  }, [token, signer]);
+  }, [token, signer, assertCurrentSession]);
 
   const doAuth = () =>
     run("auth", async () => {
@@ -144,43 +200,47 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
       setNotice("SEP-10 authenticated with the mock anchor.");
     });
 
-  const doQuote = () =>
-    run("quote", async () => {
-      const q = await tryUsdcPrice(quoteAmount || "1000");
-      setQuote(q);
-    });
-
   const doDeposit = () =>
     run("deposit", async () => {
       const t = await ensureAuth();
       const account = wallet.address ?? (await signer!.address());
+      assertCurrentSession();
       const d = await depositTry(t, account, depAmount);
+      assertCurrentSession();
       setDeposit(d);
-      setStatus(null);
+      setStatusRecord(null);
       setNotice("Deposit instructions received from the anchor.");
     });
 
   const doWithdraw = () =>
     run("withdraw", async () => {
       const t = await ensureAuth();
-      const w = await withdrawTry(t, wdAmount, wdIban.trim());
-      setWithdraw(w);
-      setStatus(null);
+      const requestedAmount = wdAmount.trim();
+      const destinationIban = wdIban.trim();
+      assertCurrentSession();
+      const w = await withdrawTry(t, requestedAmount, destinationIban);
+      assertCurrentSession();
+      setWithdraw({ ...w, requestedAmount, destinationIban });
+      setStatusRecord(null);
       setNotice("Withdrawal registered — send the USDC payment with the exact memo below.");
     });
 
   const doStatus = () =>
     run("status", async () => {
-      const id = deposit?.id ?? withdraw?.id;
+      const id = direction === "deposit" ? deposit?.id : withdraw?.id;
       if (!id) throw new AnchorError("anchor", "No transaction to check yet.");
       const t = await ensureAuth();
-      setStatus(await transactionStatus(t, id));
+      assertCurrentSession();
+      const fresh = await transactionStatus(t, id);
+      assertCurrentSession();
+      setStatusRecord({ id, value: fresh });
     });
 
   const doFriendbot = () =>
     run("friendbot", async () => {
       if (!wallet.address) throw new AnchorError("auth", "Connect a wallet first.");
       await friendbotFund(wallet.address);
+      assertCurrentSession();
       setNotice("Friendbot funded the account with testnet XLM (fees covered).");
     });
 
@@ -189,6 +249,7 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
       if (!signer || !wallet.address)
         throw new AnchorError("auth", "Connect a wallet first.");
       const hash = await createAssetTrustline(signer, wallet.address);
+      assertCurrentSession();
       setNotice(`USDC trustline created (tx ${hash.slice(0, 12)}…) — deposits can now land.`);
     });
 
@@ -201,232 +262,82 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
         signer,
         wallet.address,
         withdraw.accountId,
-        wdAmount,
+        withdraw.requestedAmount,
         withdraw.memoType,
         withdraw.memo,
       );
+      assertCurrentSession();
       setNotice(`USDC sent to the anchor (tx ${hash.slice(0, 12)}…). The TRY payout is simulated by the sandbox.`);
     });
 
   return (
-    <div className="space-y-10">
-      <header>
-        <Eyebrow>On/Off-ramp · SEP-6</Eyebrow>
-        <h1 className="display mt-2 text-[34px] text-ink md:text-[44px]">
-          TRY in, TRY out
-        </h1>
-        <p className="mt-3 max-w-[64ch] text-[16px] leading-[1.65] text-muted">
-          The official hackathon TR mock anchor ramps TRY against testnet USDC:
-          deposit TRY by (simulated) bank transfer, receive USDC on Stellar,
-          withdraw back to a TRY IBAN. KYC lives off-chain at the ramp; the
-          merchant only ever sees TRY.
-        </p>
-        <p className="mt-2 max-w-[64ch] font-mono text-[12px] leading-relaxed text-muted">
-          anchor: {CONFIG.anchorUrl} · asset: {CONFIG.assetCode}:
-          {shortAddress(CONFIG.assetAddress)}
-          {info?.feePercent != null && ` · fee: ${info.feePercent}%`}
-        </p>
-        {IS_MOCK && (
-          <p className="mt-2 max-w-[64ch] text-[13px] italic text-muted">
-            Note: the contract templates above are in mock mode, but this panel
-            is not — it talks to the live testnet anchor. Sandbox only: no real
-            money moves.
-          </p>
-        )}
-      </header>
-
-      {/* quote + balance */}
-      <section className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-xl border p-5" style={{ borderColor: "var(--hairline)" }}>
-          <Eyebrow>rate · SEP-38</Eyebrow>
-          <div className="mt-3 flex items-end gap-3">
-            <Field label="TRY amount">
-              <TextInput
-                value={quoteAmount}
-                onChange={(e) => setQuoteAmount(e.target.value)}
-                inputMode="decimal"
-              />
-            </Field>
-            <GhostButton onClick={doQuote} disabled={busy === "quote"}>
-              {busy === "quote" ? "…" : "Quote"}
-            </GhostButton>
+    <div className="instrument-panel panel-ramp">
+      <div className="instrument-notice"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 9v5m0-9v1"/></svg><p>Sandbox only: bank transfers and TRY payouts are simulated; USDC uses Stellar testnet.{IS_MOCK ? " Separate from local instrument simulation." : ""}</p></div>
+      <div className="instrument-feedback">{error && <ErrorNote>{error}</ErrorNote>}{notice && <OkNote>{notice}</OkNote>}</div>
+      <div className="instrument-layout">
+        <div className="instrument-main">
+          <div className="ramp-switch" role="group" aria-label="Transfer direction">
+            <button type="button" aria-pressed={direction === "deposit"} onClick={() => { if (direction !== "deposit") invalidateQuote(); setDirection("deposit"); }}>Deposit</button>
+            <button type="button" aria-pressed={direction === "withdraw"} onClick={() => { if (direction !== "withdraw") invalidateQuote(); setDirection("withdraw"); }}>Withdraw</button>
           </div>
-          {quote && (
-            <div className="mt-4 space-y-1 font-mono text-[13px] text-muted">
-              <div className="tnum font-serif text-[28px] text-ink">
-                1 USDC ≈ {Number(quote.price).toFixed(2)} TRY
-              </div>
-              <div>
-                {quote.sellAmount} TRY → {Number(quote.buyAmount).toFixed(2)} USDC
-                {quote.feeTotal && ` · fee ${quote.feeTotal} TRY (0.5% spread)`}
-              </div>
+          <ExchangeRoute direction={direction} amount={direction === "deposit" ? depAmount : wdAmount} />
+          <section className="instrument-section" aria-label="Deposit terms" hidden={direction !== "deposit"}>
+            <Field label="TRY amount"><TextInput value={depAmount} onChange={(e) => { invalidateQuote(); setDepAmount(e.target.value); }} inputMode="decimal" /></Field>
+            <div className="instrument-actions"><FilledButton onClick={doDeposit} disabled={busy !== null || !signer || !wallet.address}>{busy === "deposit" ? "Requesting…" : "Get deposit instructions"}</FilledButton></div>
+            {!wallet.address && <p className="instrument-disclosure">Connect a wallet to continue.</p>}
+            {deposit && <div className="ramp-receipt">
+              <Row k="Bank" v={deposit.bankName} /><Row k="IBAN" v={deposit.iban} /><Row k="Reference" v={deposit.transferMemo} /><Row k="Transaction ID" v={deposit.id} />
+              {deposit.eta != null && <Row k="Estimated time" v={`${deposit.eta}s (sandbox)`} />}
+              <p className="instrument-disclosure">{deposit.how}</p>{deposit.message && <p className="instrument-disclosure">{deposit.message}</p>}
+            </div>}
+          </section>
+          <section className="instrument-section" aria-label="Withdrawal terms" hidden={direction !== "withdraw"}>
+            <div className="instrument-fields">
+              <Field label={`Amount (${CONFIG.assetCode})`}><TextInput value={wdAmount} onChange={(e) => setWdAmount(e.target.value)} inputMode="decimal" /></Field>
+              <div className="instrument-field-wide"><Field label="Destination IBAN (TRY)"><TextInput value={wdIban} onChange={(e) => setWdIban(e.target.value)} /></Field></div>
             </div>
-          )}
+            <div className="instrument-actions"><FilledButton onClick={doWithdraw} disabled={busy !== null || !signer || !wallet.address}>{busy === "withdraw" ? "Registering…" : "Register withdrawal"}</FilledButton></div>
+            {!wallet.address && <p className="instrument-disclosure">Connect a wallet to continue.</p>}
+            {withdraw && <div className="ramp-receipt">
+              <Row k="Send USDC to" v={withdraw.accountId} /><Row k="Registered amount" v={`${withdraw.requestedAmount} ${CONFIG.assetCode}`} /><Row k="Destination IBAN" v={withdraw.destinationIban} /><Row k={`Memo (${withdraw.memoType})`} v={withdraw.memo} /><Row k="Transaction ID" v={withdraw.id} />
+              {withdraw.message && <p className="instrument-disclosure">{withdraw.message}</p>}
+              <p className="instrument-disclosure">Sign the USDC payment with the exact memo above so the anchor can match it. The TRY payout to your IBAN is simulated.</p>
+              <div className="instrument-actions"><FilledButton onClick={doSendPayment} disabled={busy !== null || !signer || !wallet.address}>{busy === "pay" ? "Sending…" : `Send ${withdraw.requestedAmount} ${CONFIG.assetCode} to the anchor`}</FilledButton></div>
+              {withdraw.paymentUri && <div className="mt-4"><ArrowLink href={withdraw.paymentUri}>Open payment URI</ArrowLink></div>}
+            </div>}
+          </section>
+          {activeTransfer && <section className="instrument-records">
+            <header><h3>Transfer status</h3><GhostButton onClick={doStatus} disabled={busy === "status"}>{busy === "status" ? "Checking…" : "Refresh"}</GhostButton></header>
+            {status ? <div className="ramp-receipt"><Row k="ID" v={status.id} /><Row k="Kind" v={status.kind} /><Row k="Status" v={status.status} />{status.amountIn && <Row k="In" v={status.amountIn} />}{status.amountOut && <Row k="Out" v={status.amountOut} />}{status.message && <p className="instrument-disclosure">{status.message}</p>}</div> : <p className="instrument-empty">Refresh to check this transfer with the anchor.</p>}
+          </section>}
         </div>
-
-        <div className="rounded-xl border p-5" style={{ borderColor: "var(--hairline)" }}>
-          <Eyebrow>your side</Eyebrow>
-          <div className="mt-3 space-y-2 text-[14px] text-muted">
-            <div>
-              wallet:{" "}
-              <span className="font-mono text-ink">
-                {wallet.address ? shortAddress(wallet.address) : "not connected"}
-              </span>
-            </div>
-            <div>
-              anchor session:{" "}
-              <span className="font-mono text-ink">
-                {token ? "SEP-10 authenticated" : "—"}
-              </span>
-            </div>
-            <div>
-              testnet balance:{" "}
-              <span className="tnum font-mono text-ink">{balance ?? "—"}</span>
-            </div>
-            {balanceNote && <p className="text-[12px] italic">{balanceNote}</p>}
-            {wallet.address && (
-              <div className="flex flex-wrap gap-2 pt-2">
-                <GhostButton onClick={doFriendbot} disabled={busy === "friendbot"}>
-                  {busy === "friendbot" ? "Funding…" : "Fund with friendbot"}
-                </GhostButton>
-                <GhostButton onClick={doTrustline} disabled={busy === "trustline"}>
-                  {busy === "trustline" ? "Signing…" : "Create USDC trustline"}
-                </GhostButton>
-              </div>
-            )}
-            <p className="text-[12px] text-muted">
-              New testnet key? Friendbot covers the XLM for fees, the trustline
-              opens your account to USDC — then the deposit below lands.
-            </p>
-          </div>
-          {!token && (
-            <div className="mt-4">
-              <GhostButton onClick={doAuth} disabled={busy === "auth" || !signer}>
-                {busy === "auth" ? "Authenticating…" : "Connect to anchor (SEP-10)"}
-              </GhostButton>
-              {!signer && (
-                <p className="mt-2 text-[12px] text-muted">
-                  Connect a wallet in the top bar first.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* deposit */}
-      <section className="rounded-xl border p-5" style={{ borderColor: "var(--hairline)" }}>
-        <Eyebrow>deposit · TRY → USDC</Eyebrow>
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <Field label="TRY amount" hint="Funding method: bank transfer (simulated)">
-            <TextInput
-              value={depAmount}
-              onChange={(e) => setDepAmount(e.target.value)}
-              inputMode="decimal"
-            />
-          </Field>
-          <FilledButton onClick={doDeposit} disabled={busy === "deposit"}>
-            {busy === "deposit" ? "Requesting…" : "Get deposit instructions"}
-          </FilledButton>
-        </div>
-
-        {deposit && (
-          <div className="mt-5 space-y-2 rounded-lg bg-cream p-4 font-mono text-[13px] text-ink">
-            <Row k="bank" v={deposit.bankName} />
-            <Row k="IBAN" v={deposit.iban} />
-            <Row k="reference" v={deposit.transferMemo} />
-            <Row k="tx id" v={deposit.id} />
-            {deposit.eta != null && <Row k="eta" v={`${deposit.eta}s (sandbox)`} />}
-            <p className="pt-1 text-[12px] leading-relaxed text-muted">{deposit.how}</p>
-            {deposit.message && (
-              <p className="text-[12px] italic leading-relaxed text-muted">
-                {deposit.message}
-              </p>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* withdraw */}
-      <section className="rounded-xl border p-5" style={{ borderColor: "var(--hairline)" }}>
-        <Eyebrow>withdraw · USDC → TRY</Eyebrow>
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <Field label={`Amount (${CONFIG.assetCode})`}>
-            <TextInput
-              value={wdAmount}
-              onChange={(e) => setWdAmount(e.target.value)}
-              inputMode="decimal"
-            />
-          </Field>
-          <Field label="Destination IBAN (TRY)">
-            <TextInput
-              value={wdIban}
-              onChange={(e) => setWdIban(e.target.value)}
-              className="min-w-[280px]"
-            />
-          </Field>
-          <GhostButton onClick={doWithdraw} disabled={busy === "withdraw"}>
-            {busy === "withdraw" ? "Registering…" : "Register withdrawal"}
-          </GhostButton>
-        </div>
-
-        {withdraw && (
-          <div className="mt-5 space-y-2 rounded-lg bg-cream p-4 font-mono text-[13px] text-ink">
-            <Row k="send USDC to" v={withdraw.accountId} />
-            <Row k={`memo (${withdraw.memoType})`} v={withdraw.memo} />
-            <Row k="tx id" v={withdraw.id} />
-            {withdraw.message && (
-              <p className="pt-1 text-[12px] leading-relaxed text-muted">
-                {withdraw.message}
-              </p>
-            )}
-            <p className="text-[12px] italic leading-relaxed text-muted">
-              Sign the USDC payment from your wallet with the exact memo above —
-              without it the anchor cannot match your transfer. The TRY payout
-              to your IBAN is simulated by the sandbox.
-            </p>
-            <div className="pt-1">
-              <FilledButton onClick={doSendPayment} disabled={busy === "pay"}>
-                {busy === "pay" ? "Sending…" : `Send ${wdAmount} ${CONFIG.assetCode} to the anchor`}
-              </FilledButton>
-            </div>
-            {withdraw.paymentUri && (
-              <ArrowLink href={withdraw.paymentUri}>open payment URI</ArrowLink>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* status */}
-      {(deposit || withdraw) && (
-        <section className="rounded-xl border p-5" style={{ borderColor: "var(--hairline)" }}>
-          <div className="flex items-center justify-between">
-            <Eyebrow>transaction status</Eyebrow>
-            <GhostButton onClick={doStatus} disabled={busy === "status"}>
-              {busy === "status" ? "…" : "Refresh"}
-            </GhostButton>
-          </div>
-          {status ? (
-            <div className="mt-3 space-y-1 font-mono text-[13px] text-ink">
-              <Row k="id" v={status.id} />
-              <Row k="kind" v={status.kind} />
-              <Row k="status" v={status.status} />
-              {status.amountIn && <Row k="in" v={status.amountIn} />}
-              {status.amountOut && <Row k="out" v={status.amountOut} />}
-              {status.message && (
-                <p className="pt-1 text-[12px] italic text-muted">{status.message}</p>
-              )}
-            </div>
-          ) : (
-            <p className="mt-3 text-[13px] text-muted">
-              No status fetched yet — hit Refresh to poll the anchor.
-            </p>
-          )}
-        </section>
-      )}
-
-      {error && <ErrorNote>{error}</ErrorNote>}
-      {notice && <OkNote>{notice}</OkNote>}
+        <aside className="instrument-aside">
+          <section className="instrument-preview">
+            <h3>{direction === "deposit" ? "TRY → USDC estimate" : "Withdrawal estimate"}</h3>
+            {direction === "deposit" ? <>
+              <p className="instrument-disclosure">Indicative only; not a booked rate. The price endpoint supplies no expiry.</p>
+              <GhostButton onClick={() => void requestQuote(depAmount)} disabled={quoteBusy}>{quoteBusy ? "Estimating…" : "Refresh estimate"}</GhostButton>
+              {quoteError && <ErrorNote>{quoteError}</ErrorNote>}
+              {quote?.value ? <>
+                <div className="ramp-rate">1 USDC ≈ {Number(quote.value.price).toFixed(2)} TRY</div>
+                <dl className="instrument-summary"><div><dt>Direction</dt><dd>{quote.direction}</dd></div><div><dt>Requested amount</dt><dd>{quote.requestedAmount} TRY</dd></div><div><dt>Estimated amount</dt><dd>{Number(quote.value.buyAmount).toFixed(2)} USDC</dd></div>{quote.value.feeTotal && <div><dt>Estimated fee</dt><dd>{quote.value.feeTotal} {quote.value.feeAsset === "iso4217:TRY" ? "TRY" : quote.value.feeAsset}</dd></div>}</dl>
+                <p className="instrument-disclosure">Requested at <time dateTime={quote.requestedAt}>{new Date(quote.requestedAt).toLocaleTimeString()}</time>. Refresh before relying on this estimate.</p>
+              </> : !quoteBusy && !quoteError && <p className="instrument-empty">Refresh for the current TRY amount.</p>}
+            </> : <p className="instrument-disclosure">No USDC-to-TRY estimate is available from this price endpoint. Registering a withdrawal fixes its USDC amount and payment memo; the sandbox simulates the TRY payout.</p>}
+          </section>
+          <section className="ramp-account">
+            <h3>Your account</h3>
+            <dl className="instrument-summary"><div><dt>Wallet</dt><dd>{wallet.address ? shortAddress(wallet.address) : "Not connected"}</dd></div><div><dt>Anchor session</dt><dd>{token ? "SEP-10 authenticated" : "Not connected"}</dd></div><div><dt>Testnet balance</dt><dd>{balance ?? "—"}</dd></div></dl>
+            {balanceNote && <p className="mt-3">{balanceNote}</p>}
+            {!token && <div className="instrument-actions"><GhostButton onClick={doAuth} disabled={busy !== null || !signer || !wallet.address}>{busy === "auth" ? "Authenticating…" : "Connect to anchor (SEP-10)"}</GhostButton></div>}
+            <details className="instrument-technical"><summary>Testnet setup & anchor details</summary>
+              <p>Friendbot provides test XLM for fees. A USDC trustline lets your account receive the asset.</p>
+              {wallet.address && <div className="instrument-actions"><GhostButton onClick={doFriendbot} disabled={busy === "friendbot"}>{busy === "friendbot" ? "Funding…" : "Fund with friendbot"}</GhostButton><GhostButton onClick={doTrustline} disabled={busy === "trustline"}>{busy === "trustline" ? "Signing…" : "Create USDC trustline"}</GhostButton></div>}
+              <dl className="instrument-summary"><div><dt>Anchor</dt><dd>{CONFIG.anchorUrl}</dd></div><div><dt>Asset issuer</dt><dd>{shortAddress(CONFIG.assetAddress)}</dd></div>{info?.feePercent != null && <div><dt>Fee</dt><dd>{info.feePercent}%</dd></div>}</dl>
+            </details>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }
@@ -434,11 +345,11 @@ export default function RampPanel({ wallet }: { wallet: WalletState }) {
 function Row({ k, v }: { k: string; v?: string }) {
   if (!v) return null;
   return (
-    <div className="flex flex-wrap gap-2">
-      <span className="w-[130px] shrink-0 uppercase tracking-[0.08em] text-muted" style={{ fontSize: 11 }}>
+    <div className="flex flex-wrap gap-x-2 gap-y-1">
+      <span className="w-[130px] shrink-0 font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
         {k}
       </span>
-      <span className="break-all">{v}</span>
+      <span className="tnum break-all text-ink">{v}</span>
     </div>
   );
 }

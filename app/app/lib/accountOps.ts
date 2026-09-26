@@ -11,29 +11,34 @@ import {
   Asset,
   Horizon,
   Memo,
+  Networks,
   Operation,
+  StrKey,
   Transaction,
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
 import { CONFIG } from "./config";
 import type { TransactionSigner } from "./hakClient";
+import { assertSignedTransactionMatches, walletSessionVersion } from "./wallet";
 
 const HORIZON_URL = "https://horizon-testnet.stellar.org";
 
 export class AccountOpError extends Error {}
 
 function horizon(): Horizon.Server {
+  if (CONFIG.networkPassphrase !== Networks.TESTNET) throw new AccountOpError("Account operations support Stellar testnet only.");
   return new Horizon.Server(HORIZON_URL);
 }
 
 /** Fund a testnet account via friendbot (XLM for fees). Idempotent-ish. */
 export async function friendbotFund(address: string): Promise<void> {
+  if (CONFIG.networkPassphrase !== Networks.TESTNET || !StrKey.isValidEd25519PublicKey(address)) throw new AccountOpError("Friendbot requires a valid Stellar testnet account.");
   const res = await fetch(
     `https://friendbot.stellar.org/?addr=${encodeURIComponent(address)}`,
   );
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    if (body.includes("createAccountAlreadyExist") || res.status === 400) {
+    if (body.includes("createAccountAlreadyExist")) {
       return; // already funded — fine
     }
     throw new AccountOpError(`Friendbot refused (${res.status}). Try again in a few seconds.`);
@@ -46,8 +51,16 @@ async function signAndSubmit(
   ops: Parameters<TransactionBuilder["addOperation"]>[0][],
   memo?: Memo,
 ): Promise<string> {
+  const version = walletSessionVersion();
+  async function assertSession(): Promise<void> {
+    if (version !== walletSessionVersion()) throw new AccountOpError("Wallet session changed before submission.");
+    if (await signer.address() !== address) throw new AccountOpError("Wallet account does not match the transaction source.");
+    if (version !== walletSessionVersion()) throw new AccountOpError("Wallet session changed before submission.");
+  }
+  await assertSession();
   const server = horizon();
   const source = await server.loadAccount(address);
+  if (source.accountId() !== address) throw new AccountOpError("Horizon returned a different source account.");
   const builder = new TransactionBuilder(source, {
     fee: "10000",
     networkPassphrase: CONFIG.networkPassphrase,
@@ -55,7 +68,10 @@ async function signAndSubmit(
   for (const op of ops) builder.addOperation(op);
   if (memo) builder.addMemo(memo);
   const tx = builder.setTimeout(60).build();
+  await assertSession();
   const signedXdr = await signer.signTransaction(tx.toXDR(), CONFIG.networkPassphrase);
+  assertSignedTransactionMatches(tx.toXDR(), signedXdr, CONFIG.networkPassphrase, address);
+  await assertSession();
   const signed = new Transaction(signedXdr, CONFIG.networkPassphrase);
   const result = await server.submitTransaction(signed);
   return result.hash as string;

@@ -20,12 +20,16 @@
  */
 
 import type { TransactionSigner } from "./hakClient";
-import { registerSigner, unregisterSigner } from "./wallet";
+import { activeSigner, assertSignedTransactionMatches, registerSigner, unregisterSigner, walletSessionVersion } from "./wallet";
 import { CONFIG } from "./config";
+import { Networks, StrKey } from "@stellar/stellar-sdk";
+import type { ModuleInterface } from "@creit.tech/stellar-wallets-kit/types";
 
 type KitModule = typeof import("@creit.tech/stellar-wallets-kit/sdk");
 
 let loading: Promise<KitModule> | null = null;
+let connectionAttempt = 0;
+let disconnecting: Promise<void> | null = null;
 
 /** Init the kit once and return the sdk module */
 function loadKit(): Promise<KitModule> {
@@ -64,25 +68,59 @@ function loadKit(): Promise<KitModule> {
         // Scenario (a): install link for wallets that are not installed
         authModal: { showInstallLabel: true },
       });
+      sdk.StellarWalletsKit.on(types.KitEventType.DISCONNECT, () => {
+        if (activeSigner() instanceof KitSigner) unregisterSigner();
+      });
+      sdk.StellarWalletsKit.on(types.KitEventType.STATE_UPDATED, ({ payload }) => {
+        const signer = activeSigner();
+        if (signer instanceof KitSigner && (payload.address !== signer.connectedAddress || payload.networkPassphrase !== CONFIG.networkPassphrase)) unregisterSigner();
+      });
+      sdk.StellarWalletsKit.on(types.KitEventType.WALLET_SELECTED, ({ payload }) => {
+        const signer = activeSigner();
+        if (signer instanceof KitSigner && payload.id !== signer.walletModule.productId) unregisterSigner();
+      });
       return sdk;
-    })();
+    })().catch((error) => { loading = null; throw error; });
   }
   return loading;
 }
 
 /** Kit signer → TransactionSigner adapter */
 class KitSigner implements TransactionSigner {
+  constructor(readonly connectedAddress: string, readonly walletModule: ModuleInterface, private sdk: KitModule) {}
+
+  private async assertSession(): Promise<void> {
+    if (activeSigner() !== this) throw new Error("Wallet session is disconnected. Connect again.");
+    try {
+      if (this.sdk.StellarWalletsKit.selectedModule !== this.walletModule) throw new Error("Wallet changed. Connect again.");
+      const [{ address }, { networkPassphrase }] = await Promise.all([
+        this.walletModule.getAddress({ skipRequestAccess: true }),
+        this.walletModule.getNetwork(),
+      ]);
+      if (address !== this.connectedAddress) throw new Error("Wallet account changed. Connect again.");
+      if (networkPassphrase !== CONFIG.networkPassphrase) throw new Error("Wallet is not on Stellar testnet. Switch networks and connect again.");
+      if (activeSigner() !== this || this.sdk.StellarWalletsKit.selectedModule !== this.walletModule) throw new Error("Wallet session changed. Connect again.");
+    } catch (error) {
+      if (activeSigner() === this) unregisterSigner();
+      throw error instanceof Error ? error : new Error("Cannot verify wallet account and network. Connect again.");
+    }
+  }
+
   async address(): Promise<string> {
-    const sdk = await loadKit();
-    const { address } = await sdk.StellarWalletsKit.getAddress();
-    return address;
+    await this.assertSession();
+    return this.connectedAddress;
   }
 
   async signTransaction(txXdr: string, networkPassphrase: string): Promise<string> {
-    const sdk = await loadKit();
-    const { signedTxXdr } = await sdk.StellarWalletsKit.signTransaction(txXdr, {
+    if (networkPassphrase !== CONFIG.networkPassphrase || networkPassphrase !== Networks.TESTNET) throw new Error("Wallet signing is available on Stellar testnet only.");
+    await this.assertSession();
+    const { signedTxXdr, signerAddress } = await this.walletModule.signTransaction(txXdr, {
       networkPassphrase,
+      address: this.connectedAddress,
     });
+    await this.assertSession();
+    if (signerAddress && signerAddress !== this.connectedAddress) throw new Error("Wallet returned a signature for a different account.");
+    assertSignedTransactionMatches(txXdr, signedTxXdr, networkPassphrase, this.connectedAddress);
     return signedTxXdr;
   }
 }
@@ -99,14 +137,24 @@ export interface KitConnectResult {
  * Connect flow:
  * 1) In an in-app wallet browser (scenario c), connect directly, no modal.
  * 2) Otherwise open the kit auth modal; the user picks a wallet.
- * 3) Plug the adapter in via registerSigner; read getNetwork for a mismatch
- *    warning.
+ * 3) Verify the account and network before registering a session-bound adapter.
  */
 export async function connectWithKit(): Promise<KitConnectResult> {
+  if (CONFIG.networkPassphrase !== Networks.TESTNET) throw new Error("This wallet integration supports Stellar testnet only.");
+  const attempt = ++connectionAttempt;
+  unregisterSigner();
+  const version = walletSessionVersion();
+  function assertAttempt(): void {
+    if (attempt !== connectionAttempt || version !== walletSessionVersion()) throw new Error("Wallet connection cancelled because the session changed.");
+  }
+  if (disconnecting) await disconnecting;
+  assertAttempt();
   const sdk = await loadKit();
+  assertAttempt();
 
   // Scenario (c): in-app browsers like LOBSTR auto-detected
   const supported = await sdk.StellarWalletsKit.refreshSupportedWallets().catch(() => []);
+  assertAttempt();
   const wrapper = supported.find((w) => w.isPlatformWrapper && w.isAvailable);
   let address: string;
   if (wrapper) {
@@ -115,27 +163,33 @@ export async function connectWithKit(): Promise<KitConnectResult> {
   } else {
     address = (await sdk.StellarWalletsKit.authModal()).address;
   }
+  assertAttempt();
+  if (!StrKey.isValidEd25519PublicKey(address)) throw new Error("Wallet returned an invalid account address.");
 
-  const walletName = sdk.StellarWalletsKit.selectedModule?.productName ?? "Wallet";
+  const walletModule = sdk.StellarWalletsKit.selectedModule;
+  const walletName = walletModule?.productName ?? "Wallet";
 
-  // Read the wallet's network for a mismatch warning; silently skip otherwise
-  let walletNetwork: string | null = null;
+  let walletNetwork: string;
   try {
     walletNetwork = (await sdk.StellarWalletsKit.getNetwork()).networkPassphrase;
   } catch {
-    walletNetwork = null;
+    throw new Error("Cannot verify this wallet's network. Use a wallet that reports Stellar testnet.");
   }
-
-  registerSigner(new KitSigner());
+  assertAttempt();
+  if (walletNetwork !== CONFIG.networkPassphrase) throw new Error("Wallet is not on Stellar testnet. Switch networks before connecting.");
+  if (sdk.StellarWalletsKit.selectedModule !== walletModule || (await walletModule.getAddress({ skipRequestAccess: true })).address !== address) throw new Error("Wallet account changed while connecting. Try again.");
+  assertAttempt();
+  registerSigner(new KitSigner(address, walletModule, sdk));
   return { address, walletName, walletNetwork };
 }
 
 /** Disconnect the kit and clear the signer registration */
 export async function disconnectKit(): Promise<void> {
-  try {
-    const sdk = await loadKit();
-    await sdk.StellarWalletsKit.disconnect();
-  } finally {
-    unregisterSigner();
-  }
+  connectionAttempt++;
+  unregisterSigner();
+  if (disconnecting) return disconnecting;
+  if (!loading) return;
+  const pending = loading.then((sdk) => sdk.StellarWalletsKit.disconnect());
+  disconnecting = pending;
+  try { await pending; } finally { if (disconnecting === pending) disconnecting = null; }
 }

@@ -44,15 +44,15 @@
 
 :root {
   /* palette (overridable per instance via config → inline vars in App) */
-  --canvas: #000000;
-  --surface: #141414;
-  --ink: #ffffff;
-  --menu-bg: #e7eae8;
-  --menu-ink: #15201e;
-  --menu-line: rgba(21, 32, 30, 0.14);
-  --accent: #2fb3a4;
-  --glow: #2fb3a4;
-  --muted: #888888;
+  --canvas: #07090d;
+  --surface: #11151b;
+  --ink: #f2eee5;
+  --menu-bg: #11151b;
+  --menu-ink: #f2eee5;
+  --menu-line: rgba(167, 173, 184, 0.2);
+  --accent: #e8b77b;
+  --glow: #e8b77b;
+  --muted: #a7adb8;
   --faint: #666666;
 
   /* depth-zone program ("scroll = descent").

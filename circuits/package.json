@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "snarkjs groth16 verify vk.json public.json proof.json"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +13,10 @@
   "dependencies": {
     "circomlib": "^2.0.5",
     "snarkjs": "^0.7.6"
+  },
+  "overrides": {
+    "jsonpath": {
+      "underscore": "1.13.8"
+    }
   }
 }

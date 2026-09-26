@@ -8,13 +8,16 @@ const SCALE = 10n ** BigInt(CONFIG.decimals);
 
 /** Parse "12.5" / "12,5" into minor-unit bigint. Negative supported. */
 export function parseMinor(input: string): bigint {
-  const s = input.trim().replace(/\s/g, "").replace(",", ".");
+  const s = input.trim().replace(",", ".");
   if (!/^-?\d+(\.\d+)?$/.test(s)) throw new Error(`Invalid amount: "${input}"`);
   const neg = s.startsWith("-");
   const [whole, frac = ""] = s.replace("-", "").split(".");
+  if (frac.length > CONFIG.decimals) throw new Error(`Amounts support at most ${CONFIG.decimals} decimal places`);
   const fracPadded = (frac + "0".repeat(CONFIG.decimals)).slice(0, CONFIG.decimals);
   const v = BigInt(whole) * SCALE + BigInt(fracPadded || "0");
-  return neg ? -v : v;
+  const result = neg ? -v : v;
+  if (result < -(2n ** 127n) || result > 2n ** 127n - 1n) throw new Error("Amount exceeds the contract limit");
+  return result;
 }
 
 /** Format minor-unit bigint compactly: 12.5 → "12.50" */

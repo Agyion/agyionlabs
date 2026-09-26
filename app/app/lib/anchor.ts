@@ -19,6 +19,9 @@
 
 import { CONFIG } from "./config";
 import type { TransactionSigner } from "./hakClient";
+import { Buffer } from "buffer";
+import { StellarToml, StrKey, WebAuth } from "@stellar/stellar-sdk";
+import { assertSignedTransactionMatches, onWalletSessionChange, walletSessionVersion } from "./wallet";
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -105,13 +108,25 @@ export interface AnchorTransaction {
 
 const TIMEOUT_MS = 15_000;
 
+function anchorOrigin(): URL {
+  const url = new URL(CONFIG.anchorUrl);
+  if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash || (url.pathname !== "/" && url.pathname !== "")) {
+    throw new AnchorError("auth", "Anchor must be configured as an HTTPS origin.");
+  }
+  return url;
+}
+
 async function anchorFetch(path: string, token?: string): Promise<unknown> {
-  const url = `${CONFIG.anchorUrl}${path}`;
+  const url = `${anchorOrigin().origin}${path}`;
+  if (token) await requireAnchorSession(token);
   let res: Response;
   try {
     res = await fetch(url, {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       signal: AbortSignal.timeout(TIMEOUT_MS),
+      redirect: "error",
+      credentials: "omit",
+      referrerPolicy: "no-referrer",
     });
   } catch (e) {
     throw new AnchorError(
@@ -135,8 +150,10 @@ async function anchorFetch(path: string, token?: string): Promise<unknown> {
           : ((body as { error: { message?: string } }).error.message ?? res.statusText)
         : res.statusText;
     const kind: AnchorErrorKind = res.status === 401 || res.status === 403 ? "auth" : "anchor";
+    if (kind === "auth" && token) clearAnchorSession();
     throw new AnchorError(kind, `Anchor ${res.status}: ${msg}`, res.status);
   }
+  if (token) await requireAnchorSession(token);
   return body;
 }
 
@@ -165,8 +182,51 @@ export async function sep6Info(): Promise<Sep6Info> {
 // SEP-10 web authentication
 // ---------------------------------------------------------------------------
 
-/** In-memory token cache, keyed by account (tokens are short-lived JWTs). */
-const tokenCache = new Map<string, string>();
+/** Tokens belong to one signer object and wallet session, and expire locally. */
+const tokenCache = new Map<TransactionSigner, { account: string; token: string; expiresAt: number; version: number }>();
+let authGeneration = 0;
+onWalletSessionChange(() => clearAnchorSession());
+
+async function requireAnchorSession(token: string, account?: string): Promise<void> {
+  const entry = [...tokenCache.entries()].find(([, session]) => session.token === token);
+  if (!entry) throw new AnchorError("auth", "Anchor session expired or disconnected. Authenticate again.");
+  const [signer, session] = entry;
+  const generation = authGeneration;
+  if ((account && account !== session.account) || session.version !== walletSessionVersion() || session.expiresAt <= Date.now() ||
+      await signer.address() !== session.account || generation !== authGeneration || session.version !== walletSessionVersion()) {
+    throw new AnchorError("auth", "Anchor session no longer matches this wallet account. Authenticate again.");
+  }
+}
+
+async function discoverAuth(): Promise<{ signingKey: string; origin: URL }> {
+  const origin = anchorOrigin();
+  let toml: StellarToml.Api.StellarToml;
+  try {
+    toml = await StellarToml.Resolver.resolve(origin.host, { allowHttp: false, timeout: TIMEOUT_MS, allowedRedirects: 0 });
+  } catch {
+    throw new AnchorError("auth", "Cannot verify the anchor's stellar.toml. Authentication was stopped.");
+  }
+  if (!toml.SIGNING_KEY || !StrKey.isValidEd25519PublicKey(toml.SIGNING_KEY) ||
+      (CONFIG.anchorSigningKey && toml.SIGNING_KEY !== CONFIG.anchorSigningKey) ||
+      toml.WEB_AUTH_ENDPOINT !== `${origin.origin}/auth` ||
+      (toml.NETWORK_PASSPHRASE && toml.NETWORK_PASSPHRASE !== CONFIG.networkPassphrase)) {
+    throw new AnchorError("auth", "Anchor authentication metadata does not match the configured key, endpoint or network.");
+  }
+  return { signingKey: toml.SIGNING_KEY, origin };
+}
+
+/** JWT claims are cache hygiene; HTTPS and the SEP-10 challenge establish server trust. */
+function tokenExpiry(token: string, account: string, issuerOrigin: string): number {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) throw new Error();
+    const claims = JSON.parse(Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8")) as { sub?: unknown; exp?: unknown; iss?: unknown };
+    if (claims.sub !== account || typeof claims.iss !== "string" || new URL(claims.iss).origin !== issuerOrigin || typeof claims.exp !== "number" || !Number.isFinite(claims.exp) || claims.exp * 1000 <= Date.now()) throw new Error();
+    return claims.exp * 1000;
+  } catch {
+    throw new AnchorError("auth", "Anchor returned an invalid or expired token for this account.");
+  }
+}
 
 /**
  * SEP-10 round trip:
@@ -175,9 +235,19 @@ const tokenCache = new Map<string, string>();
  *   3. POST /auth {transaction}     -> JWT bearer token
  */
 export async function authenticate(signer: TransactionSigner): Promise<string> {
+  const generation = authGeneration;
+  const version = walletSessionVersion();
   const account = await signer.address();
-  const cached = tokenCache.get(account);
-  if (cached) return cached;
+  async function assertSession(): Promise<void> {
+    if (generation !== authGeneration || version !== walletSessionVersion() || await signer.address() !== account || generation !== authGeneration || version !== walletSessionVersion()) {
+      throw new AnchorError("auth", "Wallet session changed during authentication. Connect again.");
+    }
+  }
+  await assertSession();
+  const cached = tokenCache.get(signer);
+  if (cached && cached.account === account && cached.version === version && cached.expiresAt > Date.now() + 30_000) return cached.token;
+  tokenCache.delete(signer);
+  const { signingKey, origin } = await discoverAuth();
 
   const challenge = (await anchorFetch(
     `/auth?account=${encodeURIComponent(account)}`,
@@ -192,18 +262,34 @@ export async function authenticate(signer: TransactionSigner): Promise<string> {
     );
   }
 
+  try {
+    const parsed = WebAuth.readChallengeTx(challenge.transaction, signingKey, CONFIG.networkPassphrase, origin.hostname, origin.hostname);
+    // This app requests account-level authentication, with no memo/client domain.
+    if (parsed.clientAccountID !== account || parsed.memo !== null || parsed.tx.operations.some((op) => op.type === "manageData" && op.name === "client_domain")) {
+      throw new Error("Challenge targets a different account or authentication scope.");
+    }
+  } catch (e) {
+    throw new AnchorError("auth", `Invalid SEP-10 challenge: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  await assertSession();
+
   const signed = await signer.signTransaction(
     challenge.transaction,
     challenge.network_passphrase,
   );
+  assertSignedTransactionMatches(challenge.transaction, signed, CONFIG.networkPassphrase, account);
+  await assertSession();
 
   let res: Response;
   try {
-    res = await fetch(`${CONFIG.anchorUrl}/auth`, {
+    res = await fetch(`${origin.origin}/auth`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ transaction: signed }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
+      redirect: "error",
+      credentials: "omit",
+      referrerPolicy: "no-referrer",
     });
   } catch (e) {
     throw new AnchorError(
@@ -219,14 +305,18 @@ export async function authenticate(signer: TransactionSigner): Promise<string> {
       res.status,
     );
   }
-  tokenCache.set(account, body.token);
+  const expiresAt = tokenExpiry(body.token, account, origin.origin);
+  await assertSession();
+  tokenCache.set(signer, { account, token: body.token, expiresAt, version });
   return body.token;
 }
 
 /** Drop the cached token (e.g. after a 401 or on wallet disconnect). */
 export function clearAnchorSession(account?: string): void {
-  if (account) tokenCache.delete(account);
-  else tokenCache.clear();
+  authGeneration++;
+  if (account) {
+    for (const [signer, session] of tokenCache) if (session.account === account) tokenCache.delete(signer);
+  } else tokenCache.clear();
 }
 
 // ---------------------------------------------------------------------------
@@ -244,6 +334,7 @@ export async function depositTry(
   account: string,
   amountTry: string,
 ): Promise<DepositInstructions> {
+  await requireAnchorSession(token, account);
   const q = new URLSearchParams({
     asset_code: CONFIG.assetCode,
     account,

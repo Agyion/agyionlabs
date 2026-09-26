@@ -176,7 +176,7 @@ function DecayPlayground() {
         </div>
         <div
           className="tnum font-serif text-[34px] leading-none"
-          style={{ color: finalPrice < 0 ? "#8F4E2A" : "var(--accent)" }}
+          style={{ color: finalPrice < 0 ? "#F2A65A" : "var(--accent)" }}
         >
           {finalPrice.toLocaleString("en-US")}.00
           <span className="ml-2 text-[13px] font-sans text-muted">TRY at tick {ticks}</span>
@@ -197,8 +197,8 @@ function DecayPlayground() {
         />
         {/* the sweeping "now" bead */}
         <circle cx={bead.x} cy={bead.y} r="8" fill="none"
-          stroke={beadBelow ? "#8F4E2A" : "var(--accent)"} strokeWidth="1" opacity="0.5" />
-        <circle cx={bead.x} cy={bead.y} r="4" fill={beadBelow ? "#8F4E2A" : "var(--accent)"} />
+          stroke={beadBelow ? "#F2A65A" : "var(--accent)"} strokeWidth="1" opacity="0.5" />
+        <circle cx={bead.x} cy={bead.y} r="4" fill={beadBelow ? "#F2A65A" : "var(--accent)"} />
         <defs>
           <clipPath id="belowZero">
             <rect x="0" y={zeroY} width="480" height={330 - zeroY} />
@@ -207,7 +207,7 @@ function DecayPlayground() {
       </svg>
       <div className="mt-1 font-mono text-[11px] text-muted">
         now: tick <span className="tnum">{now}</span> · price{" "}
-        <span className="tnum" style={{ color: beadBelow ? "#8F4E2A" : "var(--accent)" }}>
+        <span className="tnum" style={{ color: beadBelow ? "#F2A65A" : "var(--accent)" }}>
           {bead.p.toLocaleString("en-US")}.00
         </span>{" "}
         TRY{beadBelow ? " — below zero" : ""}
@@ -218,7 +218,7 @@ function DecayPlayground() {
         max={16}
         value={rate}
         onChange={(e) => setRate(Number(e.target.value))}
-        className="mt-2 w-full accent-[#BC773F]"
+        className="mt-2 w-full accent-[#1FD48C]"
         aria-label="Decay rate in TRY per tick"
       />
       <div className="mt-1 flex justify-between font-mono text-[11px] text-muted">
@@ -301,13 +301,13 @@ function ExecuteDemo() {
     <div className="mt-6 grid grid-cols-2 gap-4">
       <motion.div
         className="rounded-xl border p-5"
-        style={{ borderColor: "#6B7256" }}
+        style={{ borderColor: "#35C77F" }}
         initial={reduced ? false : { opacity: 0.35 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: "#6B7256" }}>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: "#35C77F" }}>
           Proven
         </div>
         <div className="tnum mt-2 font-mono text-[15px] text-ink">pays the claimant</div>

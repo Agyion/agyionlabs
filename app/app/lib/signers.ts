@@ -4,6 +4,7 @@
  * The contract verifies three credential types, each with an exact byte
  * layout (see contracts/hak/src/*.rs):
  *
+ *   V2 prefix: action tag + network hash + contract Address XDR, then:
  *   handoff : fade_id(8B BE)     || claimant Address XDR    || ts(8B BE)
  *   attest  : trigger_id(8B BE)  || beneficiary Address XDR || ts(8B BE)
  *   envoy   : mandate_id(8B BE)  || fade_id(8B BE)          || ts(8B BE)
@@ -12,7 +13,8 @@
  */
 
 import { Buffer } from "buffer";
-import { Address, Keypair } from "@stellar/stellar-sdk";
+import { Address, Keypair, StrKey, hash } from "@stellar/stellar-sdk";
+import { CONFIG } from "./config";
 
 function u64be(v: bigint): Buffer {
   if (v < 0n || v > 0xffff_ffff_ffff_ffffn) throw new Error(`u64 out of range: ${v}`);
@@ -21,21 +23,36 @@ function u64be(v: bigint): Buffer {
   return b;
 }
 
-/** confirm_handoff payload — matches the contract byte-for-byte */
-export function handoffPayload(fadeId: bigint, claimant: string, ts: bigint): Buffer {
-  const claimantXdr = new Address(claimant).toScVal().toXDR();
-  return Buffer.concat([u64be(fadeId), claimantXdr, u64be(ts)]);
+export interface SigningDomain { contractId: string; networkPassphrase: string }
+
+/** V2 credentials cannot cross actions, contract deployments, or networks. */
+function credentialDomain(action: string, domain?: SigningDomain): Buffer {
+  const contractId = domain?.contractId ?? (CONFIG.mode === "mock"
+    ? StrKey.encodeContract(Buffer.alloc(32)) : CONFIG.contractId);
+  if (!contractId) throw new Error("A v2 kernel contract must be configured before signing.");
+  const network = domain?.networkPassphrase ?? CONFIG.networkPassphrase;
+  return Buffer.concat([
+    Buffer.from(`agyion:${action}:v2\0`, "utf8"),
+    hash(Buffer.from(network, "utf8")),
+    new Address(contractId).toScVal().toXDR(),
+  ]);
 }
 
-/** attest payload — matches the contract byte-for-byte */
-export function attestPayload(triggerId: bigint, beneficiary: string, ts: bigint): Buffer {
-  const beneficiaryXdr = new Address(beneficiary).toScVal().toXDR();
-  return Buffer.concat([u64be(triggerId), beneficiaryXdr, u64be(ts)]);
+export function handoffPayload(fadeId: bigint, claimant: string, ts: bigint, domain?: SigningDomain): Buffer {
+  return Buffer.concat([credentialDomain("handoff", domain), u64be(fadeId), new Address(claimant).toScVal().toXDR(), u64be(ts)]);
 }
 
-/** envoy_claim payload — matches the contract byte-for-byte */
-export function envoyPayload(mandateId: bigint, fadeId: bigint, ts: bigint): Buffer {
-  return Buffer.concat([u64be(mandateId), u64be(fadeId), u64be(ts)]);
+export function attestPayload(triggerId: bigint, beneficiary: string, ts: bigint, domain?: SigningDomain): Buffer {
+  return Buffer.concat([credentialDomain("attest", domain), u64be(triggerId), new Address(beneficiary).toScVal().toXDR(), u64be(ts)]);
+}
+
+export function envoyPayload(mandateId: bigint, fadeId: bigint, ts: bigint, domain?: SigningDomain): Buffer {
+  return Buffer.concat([credentialDomain("envoy", domain), u64be(mandateId), u64be(fadeId), u64be(ts)]);
+}
+
+/** Commit the hash first; reveal the preimage only in a later ledger. */
+export function podClaimCommitment(podId: bigint, recipient: string, preimage: string, domain?: SigningDomain): string {
+  return hash(Buffer.concat([credentialDomain("pod-claim", domain), u64be(podId), new Address(recipient).toScVal().toXDR(), Buffer.from(preimage, "utf8")])).toString("hex");
 }
 
 export function keypairFromSecret(secret: string): Keypair {

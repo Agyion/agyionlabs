@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- The root belongs to the separate Vite landing; a full document navigation is required. */
 "use client";
 
 /**
@@ -23,7 +24,7 @@ export default function Nav() {
     <>
       <header
         className="fixed inset-x-0 top-0 z-40 border-b backdrop-blur-sm"
-        style={{ borderColor: "var(--hairline)", background: "rgba(250,246,243,0.82)" }}
+        style={{ borderColor: "var(--hairline)", background: "rgba(14,16,15,0.82)" }}
       >
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-5">
           <a href="/" className="font-serif text-[22px] text-ink">
@@ -54,7 +55,7 @@ export default function Nav() {
           <motion.a
             href="/app"
             className="fixed left-1/2 z-40 rounded-full px-6 py-3 text-[14px] font-semibold"
-            style={{ background: "var(--accent)", color: "#FAF6F3", x: "-50%" }}
+            style={{ background: "var(--accent)", color: "#0E100F", x: "-50%" }}
             initial={{ top: -100, opacity: 0 }}
             animate={{ top: 76, opacity: 1 }}
             exit={{ top: -100, opacity: 0 }}

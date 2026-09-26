@@ -8,3 +8,11 @@ target/
 landing/node_modules/
 landing/dist/
 app/site/
+
+artifacts/
+app/out/
+app/tsconfig.tsbuildinfo
+playwright-report/
+test-results/
+
+app/.wrangler/

@@ -11,7 +11,9 @@ pub(crate) fn next_id(env: &Env) -> u64 {
     let key = DataKey::TriggerCount;
     let id: u64 = env.storage().instance().get(&key).unwrap_or(0) + 1;
     env.storage().instance().set(&key, &id);
-    env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    env.storage()
+        .instance()
+        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
     id
 }
 
@@ -25,7 +27,9 @@ pub(crate) fn read(env: &Env, trigger_id: u64) -> Result<Trigger, Error> {
     env.storage()
         .persistent()
         .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-    env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    env.storage()
+        .instance()
+        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
     Ok(trigger)
 }
 
@@ -59,7 +63,7 @@ pub fn create_trigger(
     // A deadline in the past (or the current ledger) would birth a
     // refund-only escrow; rejected at create time, consistent with
     // create_mandate's valid_until check (audit v2 finding 4).
-    if deadline_ledger <= env.ledger().sequence() {
+    if deadline_ledger <= env.ledger().sequence() || deadline_ledger == u32::MAX {
         return Err(Error::InvalidInput);
     }
     // Zero attester pubkey can never verify a signature: the escrow would be
@@ -70,7 +74,7 @@ pub fn create_trigger(
 
     // Non-custodial: funds are deposited into the contract; only the
     // attest/refund rules can move them.
-    token::Client::new(env, &asset).transfer(&funder, &env.current_contract_address(), &amount);
+    token::Client::new(env, &asset).transfer(&funder, env.current_contract_address(), &amount);
 
     let trigger = Trigger {
         funder,
@@ -105,9 +109,9 @@ pub fn attest(env: &Env, trigger_id: u64, ts: u64, sig: BytesN<64>) -> Result<()
     }
 
     // Attester ed25519 signature:
-    // payload = trigger_id(8B BE) || beneficiary(XDR) || ts(8B BE)
+    // payload = v2 attest domain || trigger_id || beneficiary(XDR) || ts.
     // NOTE (ts freshness, audit v2 finding 3): `ts` is payload-bound but its
-    // freshness is NOT enforced on-chain in v1; a signature remains valid
+    // freshness is NOT enforced on-chain; a signature remains valid
     // until the deadline. Replay is closed by the state machine (0 -> 1 is
     // single-direction) and funds can only ever flow to the beneficiary.
     // See docs/LIMITATIONS.md.
@@ -115,7 +119,7 @@ pub fn attest(env: &Env, trigger_id: u64, ts: u64, sig: BytesN<64>) -> Result<()
     // instead of returning a Result; that branch cannot become an in-contract
     // Error. The tx rolls back atomically, funds stay locked, and after the
     // deadline the rule-based refund remains available.
-    let mut payload = Bytes::new(env);
+    let mut payload = crate::credential_payload(env, b"agyion:attest:v2\0");
     payload.append(&Bytes::from_array(env, &trigger_id.to_be_bytes()));
     payload.append(&trigger.beneficiary.clone().to_xdr(env));
     payload.append(&Bytes::from_array(env, &ts.to_be_bytes()));

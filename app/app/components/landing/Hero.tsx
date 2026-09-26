@@ -283,7 +283,7 @@ export default function Hero() {
               {/* the "now" bead riding the curve */}
               <motion.circle
                 r="4.5"
-                fill={belowZero ? "#8F4E2A" : "#BC773F"}
+                fill={belowZero ? "#F2A65A" : "#1FD48C"}
                 style={{ opacity: beadOpacity, cx: beadCX, cy: beadCY }}
               />
 
@@ -369,7 +369,7 @@ export default function Hero() {
               </div>
               <motion.div
                 className="tnum font-serif text-[52px] leading-none md:text-[64px]"
-                animate={{ color: belowZero ? "#8F4E2A" : "#BC773F" }}
+                animate={{ color: belowZero ? "#F2A65A" : "#1FD48C" }}
                 transition={{ duration: 0.3 }}
               >
                 {price.toLocaleString("en-US")}.00

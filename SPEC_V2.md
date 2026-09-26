@@ -1,3 +1,5 @@
+> **Historical specification — security revision 2026-09-24:** the executable contract and [security protocol](contracts/hak/SECURITY_PROTOCOL.md) supersede the signature layouts, single-step Pod opening, and related front-running claims below. V2 credentials bind action/network/contract; Pod requires an earlier recipient commitment. Refunds require a submitted transaction; there is no automatic keeper. Current project state: [HANDOFF.md](HANDOFF.md).
+
 # SPEC V2 — Agyion (one-shot full build)
 **Overrides SPEC.md where conflicting. Language rule: ALL code identifiers, comments, UI strings, docs = ENGLISH.**
 

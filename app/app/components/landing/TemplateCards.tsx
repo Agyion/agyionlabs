@@ -163,7 +163,7 @@ function FadeMotion({ active }: { active: boolean }) {
       </div>
       <div
         className="tnum font-serif text-[44px] leading-none transition-colors duration-300"
-        style={{ color: below ? "#8F4E2A" : "var(--accent)" }}
+        style={{ color: below ? "#F2A65A" : "var(--accent)" }}
       >
         {price}.00
       </div>
@@ -177,7 +177,7 @@ function FadeMotion({ active }: { active: boolean }) {
           cx={Math.min(200, cycle * 8.4)}
           cy={8 + Math.min(32, (cycle / 25) * 32)}
           r="3.5"
-          fill={below ? "#8F4E2A" : "var(--accent)"}
+          fill={below ? "#F2A65A" : "var(--accent)"}
         />
       </svg>
     </div>
@@ -245,16 +245,16 @@ function TriggerMotion({ active }: { active: boolean }) {
         </div>
         <div
           className="text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors duration-300"
-          style={{ color: executed ? "#6B7256" : "var(--accent)" }}
+          style={{ color: executed ? "#35C77F" : "var(--accent)" }}
         >
           {executed ? "Executed" : "Pending"}
         </div>
       </div>
       <svg viewBox="0 0 220 60" className="mt-2 w-full">
         <rect x="6" y="18" width="92" height="26" rx="6" fill="none"
-          stroke={executed ? "#6B7256" : "var(--accent)"} strokeWidth="1.6" />
+          stroke={executed ? "#35C77F" : "var(--accent)"} strokeWidth="1.6" />
         <text x="52" y="35" textAnchor="middle" fontSize="11" fontFamily="var(--font-mono)"
-          fill={executed ? "#6B7256" : "var(--accent)"}>
+          fill={executed ? "#35C77F" : "var(--accent)"}>
           {executed ? "released" : "locked"}
         </text>
         <motion.path
@@ -267,10 +267,10 @@ function TriggerMotion({ active }: { active: boolean }) {
         />
         <line x1="140" y1="31" x2="170" y2="31" stroke="var(--sand)" strokeWidth="1.4" />
         <circle cx="196" cy="31" r="16" fill="none"
-          stroke={executed ? "#6B7256" : "var(--sand)"} strokeWidth="1.6" />
+          stroke={executed ? "#35C77F" : "var(--sand)"} strokeWidth="1.6" />
         <motion.path
           d="M 188 31 l 6 6 l 12 -13"
-          stroke="#6B7256" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"
+          stroke="#35C77F" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"
           initial={false}
           animate={{ pathLength: executed ? 1 : 0 }}
           transition={{ duration: 0.4 }}
@@ -310,9 +310,9 @@ function EnvoyMotion({ active }: { active: boolean }) {
           <circle cx="70" cy="70" r={r * 0.72} fill="none" stroke="var(--sand)" strokeWidth="1"
             strokeDasharray="3 5" />
           <circle cx="70" cy="70" r="2.4" fill="var(--ink)" />
-          <circle cx={cx} cy={cy} r="4.5" fill={atCap ? "#8F4E2A" : "var(--accent)"} />
+          <circle cx={cx} cy={cy} r="4.5" fill={atCap ? "#F2A65A" : "var(--accent)"} />
           {atCap && (
-            <circle cx={cx} cy={cy} r="9" fill="none" stroke="#8F4E2A" strokeWidth="1.2" opacity="0.6" />
+            <circle cx={cx} cy={cy} r="9" fill="none" stroke="#F2A65A" strokeWidth="1.2" opacity="0.6" />
           )}
         </svg>
         <div>
@@ -322,12 +322,12 @@ function EnvoyMotion({ active }: { active: boolean }) {
           <div className="mt-1 h-1 w-[96px] rounded-full" style={{ background: "var(--hairline)" }}>
             <div
               className="h-1 rounded-full"
-              style={{ width: `${spent * 100}%`, background: atCap ? "#8F4E2A" : "var(--accent)" }}
+              style={{ width: `${spent * 100}%`, background: atCap ? "#F2A65A" : "var(--accent)" }}
             />
           </div>
           <div
             className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.1em]"
-            style={{ color: atCap ? "#8F4E2A" : "var(--muted)" }}
+            style={{ color: atCap ? "#F2A65A" : "var(--muted)" }}
           >
             {atCap ? "the contract said no" : "within cap"}
           </div>

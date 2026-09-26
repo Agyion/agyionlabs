@@ -9,41 +9,39 @@ export const config: SiteConfig = {
   locale: 'en',
   siteTitle: 'agyionlabs — conditional money',
   siteDescription:
-    'agyionlabs builds conditional money: it locks, it executes itself when proven, and it returns when not.',
+    'Money, bound by your rules. Explore conditional-money instruments on Stellar testnet.',
   brandName: 'AGYIONLABS',
 
   theme: {
-    canvas: '#000000',
-    surface: '#121512',
-    ink: '#ffffff',
-    menuBg: '#edf1e8',
-    menuInk: '#101c15',
-    menuLine: 'rgba(16, 28, 21, 0.14)',
-    accent: '#1fd48c',
-    glow: '#1fd48c',
-    muted: '#8a8a8a',
+    canvas: '#07090d',
+    surface: '#11151b',
+    ink: '#f2eee5',
+    menuBg: '#11151b',
+    menuInk: '#f2eee5',
+    menuLine: 'rgba(167, 173, 184, 0.2)',
+    accent: '#e8b77b',
+    glow: '#e8b77b',
+    muted: '#a7adb8',
     faint: '#666666',
     /* "scroll = descent": every page starts at the
      * foam surface and sinks through five bands to the abyss footer */
     depthZones: {
-      surface: '#edf1e9',
-      drift: '#bdd2c4',
-      twilight: '#2f6b53',
-      deep: '#0e2c22',
-      abyss: '#04100b',
+      surface: '#07090d',
+      drift: '#11151b',
+      twilight: '#0d1117',
+      deep: '#0b0f15',
+      abyss: '#07090d',
     },
   },
 
   /* signature chrome: right-edge depth gauge replaces the top progress bar */
-  depthGauge: { enabled: true, maxDepthM: 3600 },
+  depthGauge: { enabled: false, maxDepthM: 3600 },
 
   menu: {
     brandMark: 'A·L',
-    email: 'hello@agyionlabs.com',
     homeLabel: 'HOME',
     openAria: 'Open menu',
     closeAria: 'Close menu',
-    mailAria: 'Send us an email',
     /* frosted capsule dock at the bottom edge */
     form: 'dock',
     /* ledger row composition (index cell + capitalised
@@ -96,14 +94,14 @@ export const config: SiteConfig = {
   },
 
   cursor: {
-    enabled: true,
+    enabled: false,
     magnetStrength: 0.22,
     defaultLabel: 'OPEN',
     trail: true,
   },
 
   noise: {
-    enabled: true,
+    enabled: false,
     opacity: 0.06,
     density: 0.7,
     fps: 25,
@@ -112,13 +110,11 @@ export const config: SiteConfig = {
 
   footer: {
     marqueeWords: ['NO DISCRETION'],
-    email: 'hello@agyionlabs.com',
     phone: 'PGP on request',
     address: 'Internet-native · UTC±0',
     socials: [
-      { label: 'X / Twitter', href: 'https://x.com/agyionlabs' },
+      { label: 'X / Twitter', href: 'https://x.com/agyion_labs' },
       { label: 'GitHub', href: 'https://github.com/Agyion/agyionlabs' },
-      { label: 'Docs', href: 'https://docs.agyionlabs.com' },
     ],
     backToTopLabel: 'RESURFACE ↑',
     copyright: '© 2026 AGYIONLABS — conditional money',
@@ -126,12 +122,12 @@ export const config: SiteConfig = {
     video: { src: '/media/agyion-loop.mp4' },
     videoTag: 'RULE ENGINE — LOOP 01',
     /* abyss footer CTA */
-    cta: { label: 'Open the app', href: 'https://app.agyionlabs.com' },
+    cta: { label: 'Open the app', href: '/app/' },
     ctaKicker: 'THE RULE IS THE COUNTERPARTY',
   },
 
   home: {
-    loader: { enabled: true, letters: ['A', 'G'], holdMs: 2200, dismissMs: 2700 },
+    loader: { enabled: false, letters: ['A', 'G'], holdMs: 2200, dismissMs: 2700 },
     hero: {
       kicker: 'CONDITIONAL MONEY × SELF-EXECUTING RULES',
       brandWord: 'agyion',
@@ -139,7 +135,7 @@ export const config: SiteConfig = {
       brandWordOutline: 'labs',
       subLine: 'Conditional money: it locks, it executes itself when proven, and it returns when not.',
       ctas: [
-        { label: 'Open the app', href: 'https://app.agyionlabs.com', primary: true },
+        { label: 'Open the app', href: '/app/', primary: true },
         { label: 'How it works', href: '#how-it-works' },
       ],
       /* descent ledger — data strip, weight-contrast

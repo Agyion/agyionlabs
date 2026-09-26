@@ -63,14 +63,14 @@ export interface MenuRow {
 
 export interface MenuConfig {
   rows: MenuRow[]
-  /** mailto: target shown as the left icon in the pill bar. */
-  email: string
+  /** mailto: target shown as the left icon in the pill bar. Optional. */
+  email?: string
   /** Short brand mark rendered at pill center (text, not an image). */
   brandMark: string
   homeLabel: string
   closeAria: string
   openAria: string
-  mailAria: string
+  mailAria?: string
   /**
    * Chrome form variant: 'pill' (default) is the top-centred solid pill;
    * 'dock' is a frosted capsule docked at the bottom edge.
@@ -109,7 +109,7 @@ export interface NoiseConfig {
 
 export interface FooterConfig {
   marqueeWords: string[]
-  email: string
+  email?: string
   phone: string
   address: string
   socials: Array<{ label: string; href: string }>

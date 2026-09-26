@@ -58,7 +58,7 @@ export default function WhyStellar() {
   return (
     <section id="stellar" ref={root} className="relative" style={{ background: "#211D1A" }}>
       {/* gradient wipe in (day → night) */}
-      <div className="h-24" style={{ background: "linear-gradient(180deg, #FAF6F3, #211D1A)" }} />
+      <div className="h-24" style={{ background: "linear-gradient(180deg, #0E100F, #090B0A)" }} />
 
       <div className="mx-auto max-w-[1200px] px-6 py-24 md:py-36">
         <Eyebrow dark>Why Stellar</Eyebrow>
@@ -74,17 +74,17 @@ export default function WhyStellar() {
         </motion.h2>
 
         <div className="mt-10 flex flex-wrap items-end gap-x-6 gap-y-3">
-          <div className="font-serif text-[72px] leading-none md:text-[120px]" style={{ color: "#CF8850" }}>
+          <div className="font-serif text-[72px] leading-none md:text-[120px]" style={{ color: "#1FD48C" }}>
             <span className="tnum">{finality}</span>
-            <span className="text-[28px] md:text-[40px]" style={{ color: "#8E857E" }}>
+            <span className="text-[28px] md:text-[40px]" style={{ color: "#8A948D" }}>
               {" "}seconds to certainty
             </span>
           </div>
           {/* live ledger tick — the chain breathing in real time */}
-          <div className="flex items-center gap-2 pb-3 font-mono text-[12px]" style={{ color: "#8E857E" }}>
+          <div className="flex items-center gap-2 pb-3 font-mono text-[12px]" style={{ color: "#8A948D" }}>
             <span
               className={`inline-block h-1.5 w-1.5 rounded-full ${reduced ? "" : "stage-dot"}`}
-              style={{ background: "#CF8850" }}
+              style={{ background: "#1FD48C" }}
             />
             ledger <span className="tnum" style={{ color: "#F3ECE4" }}>#{ledger.toLocaleString("en-US")}</span> closed
           </div>
@@ -101,10 +101,10 @@ export default function WhyStellar() {
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.6, delay: i * 0.1 }}
             >
-              <div className="tnum font-mono text-[26px]" style={{ color: "#CF8850" }}>
+              <div className="tnum font-mono text-[26px]" style={{ color: "#1FD48C" }}>
                 {s.k}
               </div>
-              <p className="mt-3 text-[15px] leading-[1.6]" style={{ color: "#8E857E" }}>
+              <p className="mt-3 text-[15px] leading-[1.6]" style={{ color: "#8A948D" }}>
                 {s.v}
               </p>
             </motion.div>
@@ -127,7 +127,7 @@ export default function WhyStellar() {
           {!reduced && (
             <motion.path
               d="M 0 40 C 200 10, 400 55, 600 30 C 800 8, 1000 50, 1200 24"
-              stroke="#CF8850"
+              stroke="#1FD48C"
               strokeWidth="1.5"
               fill="none"
               strokeLinecap="round"
@@ -143,7 +143,7 @@ export default function WhyStellar() {
       </div>
 
       {/* gradient wipe out (night → day) */}
-      <div className="h-24" style={{ background: "linear-gradient(180deg, #211D1A, #FAF6F3)" }} />
+      <div className="h-24" style={{ background: "linear-gradient(180deg, #090B0A, #0E100F)" }} />
     </section>
   );
 }

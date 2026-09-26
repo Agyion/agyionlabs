@@ -24,18 +24,24 @@ below).
 | `artifacts/` | Copies of `vk.json`, `proof.json`, `public.json` consumed by tests |
 | `src/lib.rs` | `Groth16PreimageVerifier` contract: `init(vk)` + `verify(proof, public_inputs) -> bool` |
 | `src/test.rs` | On-chain verification of the real artifacts + rejection tests |
-| `wasm/zk_preimage.wasm` | Built contract (~4.8 KB) |
+| `wasm/zk_preimage.wasm` | Local build output (generated, not committed) |
 
 ## Contract API
 
 ```rust
-pub fn init(env: Env, vk: VerifyingKey)            // one-time VK registration
+pub fn init(env: Env, vk: VerifyingKey)            // one-time pinned VK registration
 pub fn verify(env: Env, proof: Bytes, public_inputs: Vec<Bytes>) -> bool
 ```
 
 * `proof`: 256 bytes = `pi_a (G1, 64B) || pi_b (G2, 128B) || pi_c (G1, 64B)`.
 * `public_inputs`: one 32-byte big-endian BN254 scalar per public signal
   (this circuit has exactly one: `hash`).
+* `init` accepts only the exact committed preimage-circuit key, with two IC
+  points. Its host-encoded SHA-256 is
+  `3966012757c54284dcf07c3b2d02a9c2c2a136d04e470b8bda75f4d3e84a905c`.
+  An untrusted first caller cannot install an arbitrary or all-zero key.
+* Public field elements must be canonical integers strictly below the BN254
+  scalar modulus. Alternate encodings such as `hash + modulus` return `false`.
 * Returns `false` for malformed blobs / wrong input counts; off-curve points
   are rejected by the host (tx traps — also rejection).
 
@@ -64,8 +70,8 @@ evaluated as one host pairing product:
 | Groth16 `verify` — CPU instructions (native test host) | ~26.0M |
 | Memory bytes (WASM) | ~1.5 MB |
 | Proof size on-chain | **256 bytes** |
-| Verifying key size | 640 bytes (4 points + 2 IC points) |
-| Contract WASM | ~4.8 KB |
+| Verifying key size | 576 bytes (4 points + 2 IC points) |
+| Contract WASM | ~5.2 KB |
 
 ~26M instructions ≈ 26% of the classic 100M/tx budget (and ~7% of the
 newer 400M limit) — a single transaction has ample headroom.
@@ -94,8 +100,10 @@ snarkjs groth16 verify vk.json public.json proof.json   # off-chain sanity check
 ## Tests
 
 ```bash
-cargo test          # 6 tests
-stellar contract build
+cargo test          # native tests; no prebuilt WASM needed
+stellar contract build --out-dir wasm
+cargo test --features wasm-tests # includes fresh WASM verification/security checks
+cd ../../circuits && npm ci --ignore-scripts && npm test
 ```
 
 * `valid_proof_verifies_on_chain` — the committed snarkjs proof verifies `true`
@@ -106,24 +114,18 @@ stellar contract build
 
 ## Pod integration roadmap (bridge notes)
 
-Today `pod.rs` commits to the claim key as `sha256(key)` (`key_hash`). SHA-256
-is prohibitively expensive inside a Circom circuit, which is why this module
-uses Poseidon. The merge path, in order:
+The current Pod opens with a SHA-256 bearer preimage plus the v2 hidden
+recipient-bound commit/reveal flow. This independent circuit proves only
+`Poseidon(preimage) == hash`; it does **not** bind a recipient, Pod ID, contract,
+network, or nullifier, and it does not produce an unlinkable payment protocol.
 
-1. **Dual commitment (no breaking change):** Pod creation stores *both*
-   `sha256(key)` (current claim path) and `poseidon(key)` — the latter
-   computed with the CAP-0075 Poseidon host function, which uses the same
-   BN254 scalar field and parameters family as the circuit.
-2. **ZK claim path:** a new Pod method takes `(proof, public_hash)` and calls
-   this verifier (`verify`) instead of revealing `key`. Only the hash crosses
-   the chain; the key stays off-chain → unlinkable, agent-less claims.
-3. **Quota/nullifier extension:** add a second public signal
-   `nullifier = Poseidon(key, campaign_id)` so each key can claim a campaign
-   exactly once without revealing itself. The verifier contract is already
-   generic over `nPublic` (VK's `ic` vector drives arity).
-4. **Browser proving:** the witness-gen WASM + zkey are small enough
-   (~1.6 MB witness-gen WASM, ~182 KB zkey) for in-browser snarkjs proving; the
-   frontend helper `app/lib/zk.ts` already loads these artifacts.
+An eventual ZK claim circuit must include the claim's recipient and domain as
+constrained public inputs, compare its hash against the recorded Pod, and let
+the caller's state machine consume the claim exactly once. A copied proof must
+not be usable with a substituted recipient. That is a circuit/storage/API
+change with a new setup, verification key, pinned hash, proof artifacts and
+verifier deployment. The current verifier is intentionally pinned to **one**
+public signal and must not be presented as a generic arbitrary-circuit verifier.
 
 ## Known limitations
 
@@ -131,5 +133,12 @@ uses Poseidon. The merge path, in order:
 * No replay/nullifier protection at the verifier level — it answers "is this
   proof valid for this hash", nothing more. Replay protection belongs to the
   calling contract (Pod state machine already closes replays for claims).
-* VK is write-once (`init` panics on second call); key rotation means
-  redeploying.
+* VK is pinned and write-once (`init` panics on second call); key rotation
+  requires changing the compiled pin and redeploying. Existing verifier
+  deployments do not gain these local fixes automatically.
+* Instance TTL is extended on executed init/verify calls; simulated RPC reads
+  do not persist extensions. Archived contract state requires restoration.
+* The checked-in proof is a demonstration with a publicly known sample input.
+  Source inspection and proof verification do not establish a production-safe
+  trusted setup. R1CS, witness WASM and zkey build outputs are not committed;
+  the current checkout does not reconstruct the original setup ceremony.

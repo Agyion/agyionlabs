@@ -1,23 +1,40 @@
 # agyionlabs
 
-> **Conditional money: it locks, it executes itself when proven, and it returns when not.**
+> **Conditional money: funds lock, proof authorizes settlement, and unmet conditions enable refunds.**
 
-Agyion is a conditional-payments application on Stellar (Soroban). One kernel contract, four condition templates, a regulated fiat rail on one side and a local proof ledger on the other. This repository is the Genesis Track MVP of the Rise In × Stellar Pro Hackathon (Istanbul, 19–20 September 2026): kernel contract + four templates + testnet + live demo.
+Agyion is a conditional-payments application on Stellar (Soroban). One kernel contract, four condition templates, a sandbox fiat-rail integration on one side and a local proof ledger on the other. This repository is the Genesis Track MVP of the Rise In × Stellar Pro Hackathon (Istanbul, 19–20 September 2026): kernel contract + four templates + testnet + live demo.
 
----
+## Current local revision — 24 September 2026
 
-## Live deployment (testnet)
+The orbital interface and security protocol v2 are implemented and verified
+**locally**. This revision has not been deployed to testnet or published to the
+websites below. The current app defaults to mock mode; its Soroban client
+requires `protocol_version() == 2` and refuses protected operations against the
+older kernel. A new kernel deployment, matching public configuration and an app
+rebuild are required before claiming live v2 behavior. Existing locked funds
+remain under the earlier contract; no automatic migration exists.
+
+Start with [HANDOFF.md](HANDOFF.md), the [security protocol and migration
+notes](contracts/hak/SECURITY_PROTOCOL.md), and the [local audit evidence and
+remaining limits](docs/verification/2026-09-24-orbital-audit.md). The historical
+hackathon narrative and roadmap below should be read with those current limits.
+
+## Historical hackathon testnet deployment — before this security revision
 
 | Artifact | Value |
 | --- | --- |
-| **App (live demo)** | https://agyionlabs.dev · https://agyion.jasurbek-rustamov.workers.dev |
-| **Kernel contract** | `CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5` ([Stellar Lab](https://lab.stellar.org/r/testnet/contract/CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5) · [Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5)) |
+| **Earlier demo URLs** | [agyionlabs.dev](https://agyionlabs.dev) · [Workers demo](https://agyion.jasurbek-rustamov.workers.dev) |
+| **Earlier kernel — not protocol v2** | `CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5` ([Stellar Lab](https://lab.stellar.org/r/testnet/contract/CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5) · [Stellar Expert](https://stellar.expert/explorer/testnet/contract/CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5)) |
 | **Network** | Stellar testnet (`Test SDF Network ; September 2015`), RPC `https://soroban-testnet.stellar.org` |
 | **Ramp asset** | USDC testnet — issuer `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` |
 | **Anchor** | Official hackathon TR mock anchor (SEP-6/10/12/38): `https://tr-mock-anchor.fly.dev` |
-| **On-chain proof** | Pod lock 1 XLM → [tx d193a85b…](https://stellar.expert/explorer/testnet/tx/d193a85b854aa89806bad61b4247db0dd663ce75e28daaa0833e2240822a80ae) · preimage claim → [tx f466151d…](https://stellar.expert/explorer/testnet/tx/f466151d901b7befd3a1ab24cc41b82df321c71ff20bdb8e181ee2193db5c150) |
+| **Historical transactions — earlier Pod flow** | Pod lock 1 XLM → [tx d193a85b…](https://stellar.expert/explorer/testnet/tx/d193a85b854aa89806bad61b4247db0dd663ce75e28daaa0833e2240822a80ae) · preimage claim → [tx f466151d…](https://stellar.expert/explorer/testnet/tx/f466151d901b7befd3a1ab24cc41b82df321c71ff20bdb8e181ee2193db5c150) |
 
-The app talks to the deployed contract directly (soroban mode, no mock) and signs with the user's wallet (Freighter via Stellar Wallets Kit).
+These addresses and transactions record the earlier hackathon demo. They do
+not establish that the current local revision is deployed or that the new
+commit/reveal and signature protections are active there. The new Soroban
+client fails closed on that older kernel; kernel operations require a
+compatible, explicitly configured v2 deployment.
 
 ---
 
@@ -34,7 +51,7 @@ Users are already asking for this in public. On r/toogoodtogo: *"Money is still 
 
 ## What Agyion is (one sentence)
 
-**Agyion is conditional money: funds lock into a contract, they execute themselves when a condition is proven, and they return automatically — no discretion — when it is not.**
+**Agyion is conditional money: funds lock into a contract, a submitted proof can authorize settlement, and an eligible refund transaction returns them by the recorded rule.**
 
 Agyion is not a wallet, not a stablecoin, and not a payment processor. It never touches user funds: money sits in the contract on-chain and at the regulated anchor off-chain. The merchant only ever sees fiat TRY (anchor → bank); crypto is never the payment instrument at the counter.
 
@@ -43,12 +60,12 @@ Agyion is not a wallet, not a stablecoin, and not a payment processor. It never 
 ```text
 LOCK ──► CONDITION WINDOW ──► PROOF? ──► yes ──► EXECUTE (pay claimant/beneficiary)
   │                                │
-  │                                └────► no ───► refund(): rule-based, automatic,
+  │                                └────► no ───► refund(): submitted transaction,
   │                                               zero-discretion return to owner
   └─ funds never pass through Agyion; they live in the contract and at the anchor
 ```
 
-`refund()` is the heart of the product: anyone may call it, it follows the recorded rule, and it always pays the recorded owner. No admin key, no support queue, no discretion. (An *exceptional* compliance freeze — M-of-N + 72-hour public queue + user `contest()` veto — exists only in the compliance layer design, never in the demo path, and no single party can trigger it alone.)
+`refund()` is the heart of the product: anyone may submit it, it follows the recorded rule, and it pays the recorded owner. Someone must submit and pay for the transaction; expiry alone does not move funds. No autonomous keeper is included. No admin key, no support queue, no discretionary destination. (An *exceptional* compliance freeze — M-of-N + 72-hour public queue + user `contest()` veto — exists only in the compliance layer design, never in the demo path, and no single party can trigger it alone.)
 
 ## The four templates
 
@@ -56,21 +73,21 @@ One kernel, four condition packs. On-chain they are generic (`T1..T4`); meaning 
 
 | Template | Mechanism | Return path | The promise |
 |---|---|---|---|
-| **Fade** ⏱ | Declining price clock; venue-signed handoff (`ed25519`) settles at the price of that ledger | `refund()` on no-show / expiry — automatic, rule-based | "Proven, it pays; unproven, it returns." Price may cross zero: the campaign pool pays the claimant. |
-| **Pod** 🗝 | `sha256(preimage)` key + `unlock_ledger` timelock | None (optional expiry claimant back to funder) | "No one opens before 2035 — not even me." No clawback flag, no refund path. |
+| **Fade** ⏱ | Declining price clock; venue-signed handoff (`ed25519`) settles at the price of that ledger | `refund()` transaction on no-show / expiry — rule-based | "Proven, it pays; unproven, it returns." Price may cross zero: the campaign pool pays the claimant. |
+| **Pod** 🗝 | `sha256(preimage)` key + `unlock_ledger` timelock + recipient-bound commit/reveal | No refund path | "No one opens before 2035 — not even me." No app-admin unlock or refund path; asset issuer policies still apply. |
 | **Trigger** 📜 | Event escrow; an independent attester's `ed25519` signature executes the payout | `refund_trigger()` after deadline if unattested | Conditional execution without either party's consent at execution time. |
 | **Envoy** 🤖 | On-chain limited mandate: agent key, per-tx cap, daily cap, `valid_until`, recipient bound to owner | One-click `revoke_mandate()` (instant, owner-only) | A mandate enforced by the contract, not by the agent's goodwill. |
 
 ## Use cases — one real-world story per template
 
-- **Fade — the bakery that would rather pay you than throw food away.** A Kadıköy bakery has 8 unsold portions at closing time. It loads a Fade campaign: a compensation pot (say 400 USDC), start price 30 TRY, floor **−20 TRY**, slope a few TRY every ten minutes. At 19:40 the price is still positive — normal sale. At 20:30 the clock has crossed zero: the campaign pool now **pays the taker** to rescue the food, because the marginal cost of a wasted portion is already negative. Whoever claims taps "Produce signature" at the counter (the venue's demo key signs the handoff), and settlement happens at the price of the claim ledger — including negative. Nobody shows up? The pickup window expires and `refund()` returns the pot to the bakery — automatically, by rule, no support ticket. Existing rescue apps stop at a *positive* discount (Too Good To Go ~⅓, Fazla ~50%) or forbid money entirely (Olio); nobody lets the price fall below zero, even though waste already costs money.
+- **Fade — the bakery that would rather pay you than throw food away.** A Kadıköy bakery has 8 unsold portions at closing time. It loads a Fade campaign: a compensation pot (say 400 USDC), start price 30 TRY, floor **−20 TRY**, slope a few TRY every ten minutes. At 19:40 the price is still positive — normal sale. At 20:30 the clock has crossed zero: the campaign pool now **pays the taker** to rescue the food, because the marginal cost of a wasted portion is already negative. Whoever claims taps "Produce signature" at the counter (the venue's demo key signs the handoff), and settlement happens at the price of the claim ledger — including negative. Nobody shows up? The pickup window expires and `refund()` returns the pot to the bakery — when someone submits the eligible refund transaction, by rule, without a support ticket. Existing rescue apps stop at a *positive* discount (Too Good To Go ~⅓, Fazla ~50%) or forbid money entirely (Olio); nobody lets the price fall below zero, even though waste already costs money.
 - **Pod — money that cannot move until the date, and the key you can hand to a stranger.** A parent locks an education fund that unlocks in 2035 and prints the sha256 preimage as a QR inside a letter. Until the unlock ledger passes, **no one** opens it — not the parent, not us, no admin key. After it: whoever physically holds the preimage claims it. Multi-year timelock + unknown recipient + physical discovery in one instrument.
 - **Trigger — the obligation that executes when the event is registered, not when someone feels like it.** A freelance milestone, an insurance payout on a registered flight delay, family support that must arrive when the attestation lands: the funder locks USDC for a beneficiary, an **independent attester's** ed25519 signature executes the payout — no consent needed from either party at execution time. If the deadline passes unattested, `refund_trigger()` sends it back to the funder. Deadlines resolve everything; disputes cannot deadlock (see EC-2 for the mutual-consent fast path in Trigger v2).
 - **Envoy — an AI agent that can shop, but can never run away with the money.** You grant an agent key an on-chain mandate: max per transaction, daily cap, an expiry, and a recipient hard-bound to **you**. Your agent hunts sub-zero Fade campaigns ("free food within my caps") and claims them *for* you — the contract enforces the limits, so the agent cannot exceed a cap, redirect funds, or outlive `valid_until`. One click revokes it, instantly. Worst case is bounded by the remaining daily cap — the agent's goodwill is never part of the security model.
 
-## Demo guide — the 5-minute jury run
+## Historical demo guide — the 5-minute jury run
 
-Everything below runs against the live testnet contract — no mock, every step signed in your wallet.
+This is the earlier jury flow, preserved for context. It is not verification of the current local revision. For v2, deploy and configure the new kernel first, and use the Pod commit/reveal flow described in the security protocol.
 
 **0:00 — Wallet (1 min).** Install [Freighter](https://www.freighter.app/) → open its ⚙️ menu → switch network to **Testnet**.
 
@@ -99,7 +116,7 @@ flowchart LR
 
     subgraph Stellar testnet
         KERNEL["contracts/hak — agyion kernel<br/>single contract, generic template IDs T1–T4<br/>lock / claim / refund / attest / mandate"]
-        ASSET["USDC — Circle testnet issuer<br/>(SAC-compatible, clawback flag OFF)"]
+        ASSET["USDC — Circle testnet issuer<br/>(SAC-compatible; issuer policies apply)"]
     end
 
     subgraph Fiat side (regulated)
@@ -129,15 +146,15 @@ Design invariants:
 
 | Path | Contents |
 |---|---|
-| `contracts/hak/` | Soroban kernel contract (Rust, `soroban-sdk` 28) — Fade, Pod, Trigger, Envoy + **30 unit tests** |
-| `contracts/zk-preimage/` | Independent Groth16/BN254 preimage verifier (Protocol 25 host functions; 6 tests) — working module, **not yet wired into Pod claims** (see [LIMITATIONS §4](docs/LIMITATIONS.md)) |
+| `contracts/hak/` | Soroban kernel contract (Rust, `soroban-sdk` 28) — Fade, Pod, Trigger, Envoy + **46 native tests + 1 WASM integration test** |
+| `contracts/zk-preimage/` | Independent Groth16/BN254 preimage verifier (Protocol 25 host functions; 10 native tests + 1 WASM test) — working module, **not yet wired into Pod claims** (see [LIMITATIONS §4](docs/LIMITATIONS.md)) |
 | `circuits/` | circom Poseidon preimage circuit + snarkjs artifacts (`input/proof/public/vk`) feeding the zk-preimage verifier |
 | `app/` | Next.js 14 + TypeScript + Tailwind; mock mode (localStorage) + soroban mode via generated bindings; **On/Off-ramp tab** = SEP-10/SEP-6/SEP-38 client for the official TR mock anchor (`app/app/lib/anchor.ts`) |
 | `anchor/` | *Self-host alternative* (not the demo path): Anchor Platform `assets.yaml` (tTRY, SEP-24) + quick-run notes and known traps |
-| `scripts/` | `setup.sh` (toolchain check), `deploy_testnet.sh` (testnet deploy + tTRY issuance) |
+| `scripts/` | `setup.sh` (toolchain check), `deploy_testnet.sh` (read-only plan by default; explicit kernel v2 testnet deployment) |
 | `docs/` | [EDGE_CASES.md](docs/EDGE_CASES.md) — adversarial design register (EC-1…EC-6) · [LIMITATIONS.md](docs/LIMITATIONS.md) — honest scope · internal TR runbooks (on/off-ramp flow, wallet-connect map, deploy notes) |
 | `verifier/` | Verification run logs (`runs/`: cargo test, deploy, final) — reproducibility evidence |
-| `SPEC_V2.md` | **Binding build spec** — brand/naming locks, contract signatures (sacred), English-language rule; overrides SPEC.md wherever they conflict |
+| `SPEC_V2.md` | Historical v2 build spec — naming and original API provenance; the current security protocol supersedes its signature and Pod-claim layouts |
 | `SPEC.md` | Historical v1 working spec (Turkish, codename "hak") — **superseded by SPEC_V2.md**, kept for provenance only; not binding |
 
 ## Quickstart
@@ -150,13 +167,17 @@ Prerequisites: Rust toolchain with the `wasm32v1-none` target, `stellar` CLI, No
 
 # 1) Contract: build + test
 cd contracts/hak
-cargo test                                    # expect: 30 passed; 0 failed
-cargo build --target wasm32v1-none --release  # produces the deployable wasm
+cargo test                                    # native suite: 46 passed
+stellar contract build                      # produces the deployable hak.wasm
+cargo test --features wasm-tests              # 47 passed, including compiled WASM
 
-# 2) Deploy to testnet (friendbot funding + wasm deploy + tTRY issuance)
+# 2) Review a kernel v2 testnet deployment plan (local checks only)
 cd ../..
-DRY_RUN=1 ./scripts/deploy_testnet.sh         # print the plan, touch nothing
-./scripts/deploy_testnet.sh                   # live run; prints the contract ID
+./scripts/deploy_testnet.sh                   # DRY_RUN=1 is the default; no network calls
+
+# Explicit operator action only: test, build, deploy, verify protocol_version == 2
+# Optional: DEPLOYER_ALIAS=<existing-funded-testnet-identity>
+DRY_RUN=0 ./scripts/deploy_testnet.sh
 
 # 3) App
 cd app && npm install && npm run dev          # http://localhost:3000
@@ -173,11 +194,26 @@ cd app && npm install && npm run dev          # http://localhost:3000
 npm run build                                 # output: 'export' → app/out
 ```
 
+**Deployment helper:** the default run only checks local tools/identity availability and prints
+its plan. `DRY_RUN=0` is the explicit operator action that runs the locked kernel
+tests, builds the exact `contracts/hak/target/wasm32v1-none/release/hak.wasm`,
+deploys on the hard-pinned Stellar testnet, and reads back `protocol_version()`
+with `--send no`. It prints the real `NEXT_PUBLIC_HAK_*`, RPC and network
+passphrase settings only after confirming version 2. An existing identity is
+reused and must already hold enough testnet XLM for fees; if the default identity
+is absent, only `agyion-testnet-deployer` is created and funded with Friendbot.
+Missing custom aliases are rejected. No issuer, trustline, asset issuance, or
+asset-transfer steps run; the app already uses Circle testnet USDC. The helper
+does not overwrite existing contract aliases or migrate existing locked funds.
+The local security fixes still require a new deployment and an app rebuild;
+the earlier deployed kernel is not upgraded by editing this repository.
+See [the v2 protocol and migration notes](contracts/hak/SECURITY_PROTOCOL.md).
+
 **Anchor:** the app integrates the official hackathon TR mock anchor (`https://tr-mock-anchor.fly.dev`) — a SEP-6 TRY↔USDC rail with SEP-10 auth, SEP-12 KYC and SEP-38 quotes; the bank leg is simulated by the sandbox. The self-host Anchor Platform quick-run (SEP-24 flow, also simulated) remains as an alternative in [anchor/README.md](anchor/README.md).
 
 ## Test evidence
 
-`cargo test` in `contracts/hak`: **30 passed, 0 failed** (soroban-sdk 28, wasm target `wasm32v1-none`) — plus 6 passing tests in `contracts/zk-preimage` for the standalone Groth16 verifier module.
+The local kernel suite passes **47 tests**, including its compiled-WASM integration test (`cargo test --features wasm-tests` after `stellar contract build`). The standalone Groth16 verifier passes **11 tests** with its WASM feature enabled after building to `wasm/`. Native-only defaults run 46 and 10 tests respectively. This is local execution evidence, not deployment verification. The [audit record](docs/verification/2026-09-24-orbital-audit.md) covers the reproduced vulnerabilities, fixes, and remaining limits.
 
 | Layer | Proof | Command |
 |---|---|---|
@@ -197,7 +233,7 @@ Built with the official and community Stellar skills, per the hackathon handbook
 |---|---|
 | `skills/anchors` ([stellar-anchor-skill](https://github.com/CheesecakeLabs/stellar-anchor-skill)) | SEP-10/SEP-6 client integration against the official TR mock anchor (`app/app/lib/anchor.ts`, On/Off-ramp tab); the "13 gotchas" list shaped our memo handling and `/info`-is-the-contract checks; `anchor/` keeps the self-host SEP-24 alternative |
 | `skills/standards` ([stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill)) | SEP-10/SEP-6/SEP-38 alignment, SAC-compatible asset usage, claimable-balance semantics behind Fade's native reclaim path |
-| `skills/zk-proofs` ([stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill)) | ZK roadmap grounding: Protocol 25 "X-Ray" (BN254 + Poseidon host functions) feasibility for agent-less anonymous claims (MVP ships a measured stub — see LIMITATIONS) |
+| `skills/zk-proofs` ([stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill)) | ZK roadmap grounding: Protocol 25 "X-Ray" (BN254 + Poseidon host functions) feasibility for agent-less anonymous claims (local standalone verifier ships separately from Pod claims — see LIMITATIONS) |
 | `skills/agentic-payments` ([stellar/stellar-dev-skill](https://github.com/stellar/stellar-dev-skill)) | Envoy mandate design: spending caps, TTL, fee-sponsored agent flows, and the smart-account/policy-signer variant of on-chain mandate enforcement |
 
 ## Security model — who can see and do what

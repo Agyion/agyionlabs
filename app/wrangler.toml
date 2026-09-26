@@ -1,17 +1,16 @@
 name = "agyion"
 compatibility_date = "2026-09-20"
 
-# Custom domain (agyionlabs.dev + www): attach from the Cloudflare dash —
-# Workers → agyion → Settings → Domains & Routes → Add. The dash offers to
-# replace the conflicting placeholder A records at the apex (wrangler's OAuth
-# token cannot delete externally managed DNS). Then re-add:
-# routes = [
-#   { pattern = "agyionlabs.dev", custom_domain = true },
-#   { pattern = "www.agyionlabs.dev", custom_domain = true },
-# ]
+# Existing production routes/settings verified against Cloudflare on 2026-09-26.
+workers_dev = true
+preview_urls = true
+routes = [
+  { pattern = "agyionlabs.dev", custom_domain = true },
+]
 
 [assets]
 directory = "./site"
-# SPA fallback: the Vite landing owns client-side routes (/fade, /pod, ...).
-# /app still wins because app.html exists as a real asset.
-not_found_handling = "single-page-application"
+# Both products and the six landing details are real generated HTML assets.
+# Missing asset paths must remain 404 instead of receiving the landing document.
+html_handling = "auto-trailing-slash"
+not_found_handling = "404-page"

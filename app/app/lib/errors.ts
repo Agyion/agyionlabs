@@ -46,7 +46,7 @@ const PATTERNS: [RegExp, string][] = [
   ],
   [
     /Failed to fetch|NetworkError|ECONNREFUSED|ETIMEDOUT|timeout|timed out/i,
-    "Network hiccup reaching the testnet — wait a few seconds and retry.",
+    "Network request failed. If you already approved a transaction, check its status before trying again.",
   ],
 ];
 

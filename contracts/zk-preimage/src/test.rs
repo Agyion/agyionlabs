@@ -30,7 +30,8 @@ fn dec_to_be32(s: &str) -> [u8; 32] {
 }
 
 fn json_str(v: &Value) -> &str {
-    v.as_str().expect("expected decimal string in artifact json")
+    v.as_str()
+        .expect("expected decimal string in artifact json")
 }
 
 /// snarkjs G1 [x, y, 1] -> 64 bytes be(X)||be(Y).
@@ -155,7 +156,10 @@ fn corrupted_proof_is_rejected() {
     proof.copy_into_slice(&mut tampered2);
     tampered2[31] ^= 1;
     let bad_proof2 = Bytes::from_array(&env, &tampered2);
-    let _ = s.client.try_verify(&bad_proof2, &public); // may trap in host; either way: rejected
+    assert!(
+        !matches!(s.client.try_verify(&bad_proof2, &public), Ok(Ok(true))),
+        "a corrupted point must not be accepted"
+    );
 
     // Truncated proof is structurally malformed -> false (no trap).
     let short = proof.slice(0..255);
@@ -198,12 +202,16 @@ fn init_twice_panics() {
 /// (closest in-repo equivalent of a `simulateTransaction` measurement).
 /// Requires `wasm/zk_preimage.wasm` (build: `stellar contract build`).
 #[test]
+#[cfg(feature = "wasm-tests")]
 fn wasm_verify_instruction_measurement() {
     const WASM: &[u8] = include_bytes!("../wasm/zk_preimage.wasm");
 
     let env = Env::default();
-    let id = env.register_contract_wasm(None, WASM);
+    let id = env.register(WASM, ());
     let client = Groth16PreimageVerifierClient::new(&env, &id);
+    let mut invalid_key = load_vk(&env);
+    invalid_key.alpha_g1 = BytesN::from_array(&env, &[0; 64]);
+    assert!(client.try_init(&invalid_key).is_err());
     client.init(&load_vk(&env));
 
     let proof = load_proof(&env);
@@ -215,6 +223,8 @@ fn wasm_verify_instruction_measurement() {
     let mem = env.cost_estimate().budget().memory_bytes_cost();
 
     assert!(ok, "valid Groth16 proof must verify under WASM");
+    assert!(!client.verify(&proof, &vec![&env, Bytes::from_array(&env, &FR_MODULUS_BE)]));
+    assert!(!client.verify(&Bytes::from_array(&env, &[0; 256]), &public));
     std::println!(
         "wasm groth16 verify: cpu_instructions={} mem_bytes={} proof_bytes={}",
         cpu,
@@ -235,4 +245,104 @@ fn proof_and_key_sizes() {
         include_str!("../artifacts/vk.json").len(),
         n_public
     );
+}
+
+#[test]
+fn security_attacker_cannot_install_degenerate_verifying_key() {
+    let env = Env::default();
+    let id = env.register(Groth16PreimageVerifier, ());
+    let client = Groth16PreimageVerifierClient::new(&env, &id);
+    let zero_key = VerifyingKey {
+        alpha_g1: BytesN::from_array(&env, &[0; 64]),
+        beta_g2: BytesN::from_array(&env, &[0; 128]),
+        gamma_g2: BytesN::from_array(&env, &[0; 128]),
+        delta_g2: BytesN::from_array(&env, &[0; 128]),
+        ic: vec![
+            &env,
+            BytesN::from_array(&env, &[0; 64]),
+            BytesN::from_array(&env, &[0; 64]),
+        ],
+    };
+    let rejected = client.try_init(&zero_key).is_err();
+    if !rejected {
+        assert!(
+            client.verify(
+                &Bytes::from_array(&env, &[0; 256]),
+                &vec![&env, Bytes::from_array(&env, &[0; 32])]
+            ),
+            "degenerate key makes the empty proof pass"
+        );
+    }
+    assert!(
+        rejected,
+        "an arbitrary caller must not replace the intended circuit key"
+    );
+}
+
+#[test]
+fn security_noncanonical_public_input_is_rejected() {
+    let env = Env::default();
+    let s = setup(&env);
+    let proof = load_proof(&env);
+    let public = load_public(&env);
+    let modulus = dec_to_be32(
+        "21888242871839275222246405745257275088548364400416034343698204186575808495617",
+    );
+    let mut noncanonical = [0u8; 32];
+    public.get(0).unwrap().copy_into_slice(&mut noncanonical);
+    let mut carry = 0u16;
+    for i in (0..32).rev() {
+        let sum = noncanonical[i] as u16 + modulus[i] as u16 + carry;
+        noncanonical[i] = sum as u8;
+        carry = sum >> 8;
+    }
+    assert_eq!(carry, 0);
+    assert!(
+        !s.client
+            .verify(&proof, &vec![&env, Bytes::from_array(&env, &noncanonical)]),
+        "input + Fr modulus is a different serialized claim and must be rejected"
+    );
+}
+
+#[test]
+fn security_zero_proof_is_rejected_under_pinned_key() {
+    let env = Env::default();
+    let s = setup(&env);
+    assert!(!s
+        .client
+        .verify(&Bytes::from_array(&env, &[0; 256]), &load_public(&env)));
+}
+
+#[test]
+fn security_public_input_size_and_modulus_are_rejected() {
+    let env = Env::default();
+    let s = setup(&env);
+    let proof = load_proof(&env);
+    for size in [0, 31, 33] {
+        let bytes = std::vec![0u8; size];
+        assert!(!s
+            .client
+            .verify(&proof, &vec![&env, Bytes::from_slice(&env, &bytes)]));
+    }
+    assert!(!s
+        .client
+        .verify(&proof, &vec![&env, Bytes::from_array(&env, &FR_MODULUS_BE)]));
+    assert!(!s
+        .client
+        .verify(&proof, &vec![&env, Bytes::from_array(&env, &[255; 32])]));
+}
+
+#[test]
+fn security_different_nonzero_circuit_key_is_rejected() {
+    let env = Env::default();
+    let id = env.register(Groth16PreimageVerifier, ());
+    let client = Groth16PreimageVerifierClient::new(&env, &id);
+    let mut changed = load_vk(&env);
+    let first = changed.ic.get(0).unwrap();
+    let second = changed.ic.get(1).unwrap();
+    changed.ic.set(0, second);
+    changed.ic.set(1, first);
+    assert!(client.try_init(&changed).is_err());
+    client.init(&load_vk(&env));
+    assert!(client.verify(&load_proof(&env), &load_public(&env)));
 }

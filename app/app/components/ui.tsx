@@ -1,24 +1,70 @@
 "use client";
 
 /**
- * ui.tsx — shared primitives (design_brief §2, §3.3)
- * Text+arrow links, one filled terracotta moment per screen, mono data.
+ * ui.tsx — shared primitives, in the landing's design language:
+ * mono uppercase micro-labels, hairline + flat-surface frames, accent fill
+ * with ink-sweep hover for the single primary action per screen.
  */
 
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
+
+// Only explicitly marked contract actions use this gate. Draft preparation,
+// record reads, and independent anchor flows remain available.
+export const TransactionAvailability = createContext(true);
 
 export function Eyebrow({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
   return (
     <div
       className="eyebrow"
-      style={dark ? { color: "var(--night-accent, #CF8850)" } : undefined}
+      style={dark ? { color: "var(--accent)" } : undefined}
     >
       {children}
     </div>
   );
 }
 
-/** Text + arrow link — the default CTA form (no filled button) */
+/**
+ * PanelHero — the mini LedgerHero every console panel gets: a 3-cell mono
+ * meta strip, the instrument name as a solid + outline word pair, and a
+ * hairline that draws itself in above the right-aligned description.
+ */
+export function PanelHero({
+  strip,
+  word,
+  outline,
+  desc,
+}: {
+  strip: [ReactNode, ReactNode, ReactNode];
+  word: string;
+  outline: string;
+  desc?: ReactNode;
+}) {
+  return (
+    <header className="panel-hero">
+      <div className="panel-hero__strip">
+        {strip.map((cell, i) => (
+          <span key={i} className="panel-hero__cell">
+            <span>{cell}</span>
+          </span>
+        ))}
+      </div>
+      <h2 className="panel-hero__words" aria-label={`${word} ${outline}`}>
+        <span className="panel-hero__mask" aria-hidden="true">
+          <span className="panel-hero__w1">{word}</span>
+        </span>
+        <span className="panel-hero__mask" aria-hidden="true">
+          <span className="panel-hero__w2">{outline}</span>
+        </span>
+      </h2>
+      <div className="panel-hero__foot">
+        <span className="panel-hero__rule" aria-hidden="true" />
+        {desc ? <p className="panel-hero__desc">{desc}</p> : null}
+      </div>
+    </header>
+  );
+}
+
+/** Text + arrow link — quiet tertiary action (dup-hover slide) */
 export function ArrowLink({
   children,
   href,
@@ -30,7 +76,7 @@ export function ArrowLink({
   onClick?: () => void;
   dark?: boolean;
 }) {
-  const color = dark ? "#CF8850" : "var(--accent)";
+  const color = dark ? "var(--accent)" : "var(--accent)";
   const inner = (
     <span className="dup-hover" style={{ color }}>
       <span className="dup-a">
@@ -41,7 +87,7 @@ export function ArrowLink({
       </span>
     </span>
   );
-  const cls = "text-[15px] font-medium underline-offset-4 hover:underline";
+  const cls = "font-mono text-[12px] uppercase tracking-[0.14em] underline-offset-4 hover:underline";
   if (href)
     return (
       <a href={href} className={cls}>
@@ -55,51 +101,66 @@ export function ArrowLink({
   );
 }
 
-/** The single filled terracotta moment on a screen — use sparingly */
+/** The single filled moment on a screen — accent fill, ink sweep on hover */
 export function FilledButton({
   children,
   onClick,
-  disabled = false,
+  disabled: requestedDisabled = false,
+  transaction = false,
 }: {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  transaction?: boolean;
 }) {
+  const available = useContext(TransactionAvailability);
+  const disabled = requestedDisabled || (transaction && !available);
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-full px-6 py-3 text-[15px] font-semibold transition-colors duration-200 disabled:cursor-not-allowed"
-      style={{
-        background: disabled ? "var(--sand)" : "var(--accent)",
-        color: disabled ? "var(--muted)" : "#FAF6F3",
-      }}
+      aria-describedby={transaction && !available ? "protocol-availability" : undefined}
+      className="btn btn-primary group px-6 py-3"
+      style={
+        disabled
+          ? { background: "transparent", color: "var(--faint)", border: "1px solid var(--hairline)" }
+          : { background: "var(--accent)", color: "#000", border: "1px solid var(--accent)" }
+      }
     >
-      {children}
+      {!disabled && <span className="btn__sweep" aria-hidden="true" />}
+      <span className="btn__label">{children}</span>
+      <span aria-hidden="true" className="btn__icon transition-transform duration-300 group-hover:translate-x-1">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="m4 12 8-8M4 4h8v8" /></svg>
+      </span>
     </button>
   );
 }
 
-/** Quiet secondary action — hairline outline, no filled background */
+/** Quiet secondary action — hairline outline, hover turns signal green */
 export function GhostButton({
   children,
   onClick,
-  disabled = false,
+  disabled: requestedDisabled = false,
+  transaction = false,
 }: {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  transaction?: boolean;
 }) {
+  const available = useContext(TransactionAvailability);
+  const disabled = requestedDisabled || (transaction && !available);
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-full border px-5 py-2.5 text-[14px] font-medium transition-colors duration-200 hover:bg-cream disabled:opacity-50"
-      style={{ borderColor: "var(--sand)", color: "var(--ink)" }}
+      aria-describedby={transaction && !available ? "protocol-availability" : undefined}
+      className="btn btn-secondary border px-5 py-2.5 text-ink hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-40"
+      style={{ borderColor: "var(--hairline)" }}
     >
-      {children}
+      <span className="btn__label">{children}</span>
     </button>
   );
 }
@@ -114,12 +175,12 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-[12px] font-semibold uppercase tracking-[0.12em] text-muted">
+    <label className="instrument-field block">
+      <span className="field-label">
         {label}
       </span>
       {children}
-      {hint ? <span className="mt-1 block text-[12px] text-muted">{hint}</span> : null}
+      {hint ? <span className="field-hint">{hint}</span> : null}
     </label>
   );
 }
@@ -128,17 +189,20 @@ export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`w-full rounded-lg border bg-paper px-3.5 py-2.5 text-[15px] text-ink placeholder:text-muted ${props.className ?? ""}`}
-      style={{ borderColor: "var(--sand)" }}
+      className={`field-input w-full rounded-[5px] border bg-black/50 px-3.5 py-2.5 text-[14px] text-ink transition-colors placeholder:text-faint ${props.className ?? ""}`}
     />
   );
 }
 
-/** Ember carries negative states — never red (anti-pattern 10) */
+/** Ember carries negative states — never red (warm alarm, not danger) */
 export function ErrorNote({ children }: { children: ReactNode }) {
   if (!children) return null;
   return (
-    <p className="rounded-lg border px-3.5 py-2.5 text-[13px]" style={{ borderColor: "#8F4E2A", color: "#8F4E2A" }}>
+    <p
+      role="alert"
+      className="rounded-[5px] border bg-surface px-3.5 py-2.5 font-mono text-[12px] leading-relaxed"
+      style={{ borderColor: "var(--ember)", color: "var(--ember)" }}
+    >
       {children}
     </p>
   );
@@ -147,32 +211,61 @@ export function ErrorNote({ children }: { children: ReactNode }) {
 export function OkNote({ children }: { children: ReactNode }) {
   if (!children) return null;
   return (
-    <p className="rounded-lg border px-3.5 py-2.5 text-[13px]" style={{ borderColor: "#6B7256", color: "#6B7256" }}>
+    <p
+      role="status"
+      className="rounded-[5px] border bg-surface px-3.5 py-2.5 font-mono text-[12px] leading-relaxed"
+      style={{ borderColor: "var(--olive)", color: "var(--olive)" }}
+    >
       {children}
     </p>
   );
 }
 
-/** Status chip — text-only with the lifecycle color (§5 Ledger) */
+/** Lifecycle chip — mono, hairline pill, status dot (landing pg-life__chip) */
 export function StatusChip({ status }: { status: "locked" | "executed" | "returned" | "rejected" | "recorded" }) {
   const color =
     status === "locked"
       ? "var(--accent)"
       : status === "executed"
-        ? "#6B7256"
+        ? "var(--olive)"
         : status === "rejected"
-          ? "#8F4E2A"
+          ? "var(--ember)"
           : "var(--muted)";
   return (
-    <span className="text-[12px] font-semibold uppercase tracking-[0.1em]" style={{ color }}>
+    <span
+      className={`chip ${status === "locked" ? "chip--live" : ""}`}
+      style={{ color, borderColor: "var(--hairline)" }}
+    >
+      <span className="chip__dot" />
       {status}
+    </span>
+  );
+}
+
+/** Generic state chip for live panel states (buried / at horizon / active…) */
+export function StateChip({
+  color,
+  live = false,
+  children,
+}: {
+  color: string;
+  live?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={`chip ${live ? "chip--live" : ""}`}
+      style={{ color, borderColor: "var(--hairline)" }}
+    >
+      <span className="chip__dot" />
+      {children}
     </span>
   );
 }
 
 /**
  * Media slot — shows /media/<name> when the generated asset exists,
- * otherwise a warm grain placeholder (assets are produced separately).
+ * otherwise a dark grain placeholder (assets are produced separately).
  */
 export function MediaSlot({
   name,
@@ -198,7 +291,7 @@ export function MediaSlot({
         />
       ) : (
         <div className={`flex h-full w-full items-center justify-center ${dark ? "grain-dark" : "grain"}`}>
-          <span className="font-serif text-[15px] italic" style={{ color: dark ? "#8E857E" : "var(--muted)" }}>
+          <span className="font-serif text-[15px] italic" style={{ color: "var(--muted)" }}>
             {alt}
           </span>
         </div>
@@ -207,7 +300,7 @@ export function MediaSlot({
   );
 }
 
-/** Hand-drawn-feel inline SVG stroke icons (§6) — 1.5px, round caps */
+/** Hand-drawn-feel inline SVG stroke icons — 1.5px, round caps */
 export function Icon({ kind, size = 20, color = "currentColor" }: { kind: "fade" | "pod" | "trigger" | "envoy" | "check" | "lock" | "arrow"; size?: number; color?: string }) {
   const s = { stroke: color, strokeWidth: 1.5, fill: "none", strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   return (

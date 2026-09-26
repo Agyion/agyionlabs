@@ -1,35 +1,42 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Agyion design tokens — single source of truth (design_brief §1).
- * Warm, low-saturation earth palette. No blue anywhere in the brand layer.
+ * Agyion design tokens — mirror the landing (Fluid Studio) palette exactly:
+ * canvas #000, surface #121512, ink #fff, accent/glow #1fd48c,
+ * muted #8a8a8a, faint #666, depth zones abyss #04100b / deep #0e2c22.
  */
 const config: Config = {
   content: ["./app/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
       colors: {
-        // Light theme (default, editorial)
-        paper: "#FAF6F3", // bg — warm off-white
-        cream: "#F5ECE5", // surface — peach-tinted cream
-        ink: "#3C3835", // charcoal brown — primary text
-        muted: "#AEAAA7", // warm gray — secondary text
-        accent: "#BC773F", // terracotta — CTAs, live price, locked state
-        sand: "#DEC9B8", // decorative lifelines, hairline dividers
-        hairline: "#EEE7E0", // table rows, card borders (1px)
-        // Semantic lifecycle colors (same warm ladder)
-        ember: "#8F4E2A", // decaying / below zero / negative states
-        olive: "#6B7256", // executed / claimed — success
-        returned: "#AEAAA7", // returned / expired
-        // Dark theme (ink interludes + app dark surfaces)
+        // Landing depth tokens (landing/src/config.ts theme)
+        paper: "#000000", // canvas — pure black base
+        cream: "#121512", // surface — lifted dark panel
+        ink: "#FFFFFF", // primary text
+        muted: "#8A8A8A", // secondary text
+        faint: "#666666", // tertiary text / disabled
+        accent: "#1FD48C", // signal green — CTAs, live price, locked state
+        sand: "#26302A", // decorative lifelines inside visualizations
+        hairline: "rgba(255,255,255,0.14)", // table rows, card borders (1px)
+        // Depth zones ("scroll = descent")
+        abyss: "#04100B", // footers, empty states, accent wells
+        deep: "#0E2C22",
+        twilight: "#2F6B53",
+        drift: "#BDD2C4",
+        // Semantic lifecycle colors
+        ember: "#F2A65A", // below zero / expired / rejected / mock (warm alarm)
+        olive: "#35C77F", // executed / claimed — success
+        returned: "#8A8A8A", // returned / expired
+        // Deeper zone (abyss surfaces)
         night: {
-          bg: "#211D1A",
-          surface: "#2B2521",
-          ink: "#F3ECE4",
-          muted: "#8E857E",
-          accent: "#CF8850",
-          line: "#4A3F35",
-          hairline: "#3A332D",
+          bg: "#04100B",
+          surface: "#0E2C22",
+          ink: "#FFFFFF",
+          muted: "#8A8A8A",
+          accent: "#1FD48C",
+          line: "rgba(255,255,255,0.14)",
+          hairline: "rgba(255,255,255,0.14)",
         },
       },
       fontFamily: {

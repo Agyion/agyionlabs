@@ -1,16 +1,18 @@
 //! Pod template: the funder buries funds in the contract; after unlock_ledger
 //! has passed, a recipient who knows the correct preimage opens the fund.
 
-use soroban_sdk::{token, Address, Bytes, BytesN, Env};
+use soroban_sdk::{token, xdr::ToXdr, Address, Bytes, BytesN, Env};
 
-use crate::{DataKey, Error, Pod, TTL_EXTEND, TTL_THRESHOLD};
+use crate::{DataKey, Error, Pod, PodClaimCommitment, TTL_EXTEND, TTL_THRESHOLD};
 
 pub(crate) fn next_id(env: &Env) -> u64 {
     let key = DataKey::PodCount;
     let id: u64 = env.storage().instance().get(&key).unwrap_or(0) + 1;
     env.storage().instance().set(&key, &id);
     // Instance storage (counter) is archivable too; extend on every touch.
-    env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    env.storage()
+        .instance()
+        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
     id
 }
 
@@ -25,7 +27,9 @@ pub(crate) fn read(env: &Env, pod_id: u64) -> Result<Pod, Error> {
     env.storage()
         .persistent()
         .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-    env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    env.storage()
+        .instance()
+        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
     Ok(pod)
 }
 
@@ -58,7 +62,7 @@ pub fn create_pod(
 
     // Non-custodial: funds are deposited into the contract; outside the rules
     // nobody can withdraw them.
-    token::Client::new(env, &asset).transfer(&funder, &env.current_contract_address(), &amount);
+    token::Client::new(env, &asset).transfer(&funder, env.current_contract_address(), &amount);
 
     let pod = Pod {
         funder,
@@ -74,15 +78,55 @@ pub fn create_pod(
     Ok(id)
 }
 
-pub fn claim_pod(
+/// Commit to a recipient-specific claim without revealing the bearer preimage.
+/// Each replacement restarts the maturity delay; only the recipient may replace it.
+pub fn commit_pod_claim(
     env: &Env,
     pod_id: u64,
-    preimage: Bytes,
     recipient: Address,
+    commitment: BytesN<32>,
 ) -> Result<(), Error> {
-    // Front-running protection (F2): someone who observes the preimage cannot
-    // pull the funds to their own address; the recipient must authorize the
-    // transaction themselves.
+    recipient.require_auth();
+    let pod = read(env, pod_id)?;
+    if pod.state != 0 {
+        return Err(Error::InvalidState);
+    }
+    if env.ledger().sequence() == u32::MAX {
+        return Err(Error::InvalidInput);
+    }
+    let key = DataKey::PodClaim(pod_id, recipient);
+    let intent = PodClaimCommitment {
+        commitment,
+        committed_at: env.ledger().sequence(),
+    };
+    env.storage().persistent().set(&key, &intent);
+    env.storage()
+        .persistent()
+        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+    Ok(())
+}
+
+pub fn get_pod_claim_commitment(
+    env: &Env,
+    pod_id: u64,
+    recipient: Address,
+) -> Option<PodClaimCommitment> {
+    let key = DataKey::PodClaim(pod_id, recipient);
+    let intent = env.storage().persistent().get(&key);
+    if intent.is_some() {
+        env.storage()
+            .persistent()
+            .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+        env.storage()
+            .instance()
+            .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    }
+    intent
+}
+
+pub fn claim_pod(env: &Env, pod_id: u64, preimage: Bytes, recipient: Address) -> Result<(), Error> {
+    // Auth binds the call to the recipient; the earlier hidden commitment
+    // prevents a pending-reveal observer from choosing their own recipient.
     recipient.require_auth();
 
     let mut pod = read(env, pod_id)?;
@@ -99,6 +143,19 @@ pub fn claim_pod(
         return Err(Error::BadSignature);
     }
 
+    let intent =
+        get_pod_claim_commitment(env, pod_id, recipient.clone()).ok_or(Error::InvalidInput)?;
+    if intent.committed_at >= env.ledger().sequence() {
+        return Err(Error::InvalidInput);
+    }
+    let mut payload = crate::credential_payload(env, b"agyion:pod-claim:v2\0");
+    payload.append(&Bytes::from_array(env, &pod_id.to_be_bytes()));
+    payload.append(&recipient.clone().to_xdr(env));
+    payload.append(&preimage);
+    if env.crypto().sha256(&payload).to_bytes() != intent.commitment {
+        return Err(Error::BadSignature);
+    }
+
     token::Client::new(env, &pod.asset).transfer(
         &env.current_contract_address(),
         &recipient,
@@ -107,5 +164,8 @@ pub fn claim_pod(
 
     pod.state = 1;
     write(env, pod_id, &pod);
+    env.storage()
+        .persistent()
+        .remove(&DataKey::PodClaim(pod_id, recipient));
     Ok(())
 }

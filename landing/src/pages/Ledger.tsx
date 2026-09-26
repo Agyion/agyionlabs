@@ -1,69 +1,34 @@
-/* Ledger — the local proof record + signed Proof Pack export page. */
-import { Link } from 'react-router'
-import LedgerHero from '../components/LedgerHero'
-import DiveBand from '../components/DiveBand'
-import WordMarquee from '../components/WordMarquee'
-import Footer from '../components/Footer'
-import { config } from '../config'
-import { LEDGER, PAGE_ORDER } from './instruments-data'
+import DetailWorld from '../components/DetailWorld'
+
+function RecordDiagram({ step }: { step: number }) {
+  return (
+    <figure className="detail-record" data-stage={step} aria-label="Local records, an export checksum and a transaction reference">
+      <svg viewBox="0 0 600 360" fill="none" aria-hidden="true">
+        <path className="detail-visual__guide" d="M28 180H572M300 28V332" />
+        <g className="detail-record__pages"><path d="M173 70H362L410 118V298H173ZM200 47H389L437 95V275H410M224 27H414L462 75V254H437" /><path d="M362 70V119H410M389 47V96H437M414 27V76H462" /></g>
+        <g className="detail-record__lines"><path d="M207 156H372M207 177H346M207 198H362M207 238H293M207 259H326" /><circle cx="190" cy="156" r="2" /><circle cx="190" cy="198" r="2" /></g>
+        <g className="detail-record__checksum"><circle cx="390" cy="253" r="52" /><circle cx="390" cy="253" r="42" /><path d="M377 232L371 274M397 232L391 274M363 245H408M361 261H406" /></g>
+        <g className="detail-record__reference"><path d="M432 168H525V108M502 108H525V131" /><circle cx="529" cy="98" r="33" /></g>
+      </svg>
+      <figcaption key={step}>{['Local records', 'Proof Pack + checksum', 'Transaction reference'][step]}<span>{step === 1 ? 'Signature optional' : 'Record structure'}</span></figcaption>
+    </figure>
+  )
+}
 
 export default function Ledger() {
-  const idx = PAGE_ORDER.findIndex((p) => p.slug === 'ledger')
-  const prev = PAGE_ORDER[(idx - 1 + PAGE_ORDER.length) % PAGE_ORDER.length]
-  const next = PAGE_ORDER[(idx + 1) % PAGE_ORDER.length]
-
-  return (
-    <div>
-      <LedgerHero data={LEDGER.hero} />
-      <DiveBand from={0} to={1} />
-
-      <section className="pg-steps zone zone-z1" aria-label="Ledger properties">
-        <h2 className="pg-section-title" data-reveal>THE RECORD</h2>
-        <div className="pg-steps__list">
-          {LEDGER.features.map((s) => (
-            <article className="pg-step" key={s.n} data-reveal>
-              <span className="pg-step__n">{s.n}</span>
-              <h3 className="pg-step__title">{s.title}</h3>
-              <p className="pg-step__body">{s.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-      <DiveBand from={1} to={3} />
-
-      <section className="pg-pack zone zone-z3">
-        <h2 className="pg-section-title" data-reveal>PROOF PACK — SIGNED JSON</h2>
-        <div className="pg-pack__box" data-reveal>
-          <div className="pg-pack__head">
-            <span>proof-pack.json</span>
-            <span>SIGNED</span>
-          </div>
-          <ul className="pg-pack__fields">
-            {LEDGER.packFields.map((f) => (
-              <li key={f}><code>{f}</code></li>
-            ))}
-          </ul>
-          <p className="pg-pack__kernel">
-            KERNEL <code>{LEDGER.kernel}</code>
-          </p>
-        </div>
-      </section>
-      <DiveBand from={3} to={4} />
-
-      <section className="pg-cta zone zone-z4">
-        <p className="pg-cta__kicker" data-reveal>YOUR HISTORY IS YOURS</p>
-        <a className="pg-cta__btn" href={LEDGER.cta.href} target="_blank" rel="noreferrer" data-reveal>
-          {LEDGER.cta.label} <span aria-hidden="true">↗</span>
-        </a>
-        <nav className="pg-nav" aria-label="Pages">
-          <Link to={`/${prev.slug}`} className="pg-nav__link">← {prev.label}</Link>
-          <Link to="/#instruments" className="pg-nav__link pg-nav__link--mid">ALL INSTRUMENTS</Link>
-          <Link to={`/${next.slug}`} className="pg-nav__link">{next.label} →</Link>
-        </nav>
-      </section>
-
-      <WordMarquee words={['PROOF PACK', ...config.footer.marqueeWords]} duration={22} />
-      <Footer />
-    </div>
-  )
+  return <DetailWorld id="ledger" name="Ledger" promise="Keep the record. Check the reference."
+    steps={[
+      { label: 'Review', text: 'Review the actions and statuses recorded by this browser.' },
+      { label: 'Export', text: 'Export a Proof Pack with recorded entries, transaction references and an integrity checksum.' },
+      { label: 'Verify', text: 'Check the referenced transaction on the configured Stellar testnet before relying on a settlement claim.' },
+    ]}
+    caveat="Exports may be unsigned; local history is not proof of settlement."
+    notes={[
+      'A connected wallet does not automatically sign an export; a supported signing key is required.',
+      'A checksum records integrity, not confirmation of an on-chain result.',
+      'Clearing browser data can erase this history; an export preserves it but does not reverse transactions.',
+    ]}
+    environment="Local history. Testnet references."
+    visual={step => <RecordDiagram step={step} />}
+  />
 }

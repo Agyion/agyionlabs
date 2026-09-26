@@ -73,7 +73,7 @@ export default function Compliance() {
                     <td className="px-6 py-3.5 text-ink">{what}</td>
                     <td
                       className="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-[0.1em]"
-                      style={{ color: state === "visible" ? "#6B7256" : "var(--accent)" }}
+                      style={{ color: state === "visible" ? "#35C77F" : "var(--accent)" }}
                     >
                       {state}
                     </td>

@@ -33,7 +33,11 @@ import {
   handoffPayload,
   attestPayload,
   envoyPayload,
+  podClaimCommitment,
 } from "./signers";
+
+import { assertSignedTransactionMatches, walletSessionVersion } from "./wallet";
+import { rememberReceipt, listTransactionAttempts, rememberTransactionAttempt, updateTransactionAttempt, unresolvedTransaction, type TransactionIntent } from "./transactionReceipts";
 
 // ---------------------------------------------------------------------------
 // Types (SPEC_V2 — field names are sacred)
@@ -66,6 +70,8 @@ export interface Fade {
   claimant: string | null;
   claimed_at: number | null;
 }
+
+export interface PodClaimCommitment { commitment: string; committed_at: number }
 
 export interface Pod {
   id: bigint;
@@ -136,6 +142,11 @@ export class AgyionError extends Error {
   }
 }
 
+/** Known local refusal before transport; never describe it as an unknown broadcast. */
+class NotBroadcastError extends AgyionError {
+  constructor(message: string) { super(AgyionErrorCode.RpcError, message); }
+}
+
 // ---------------------------------------------------------------------------
 // Price curve — linear decay, integer math, stops at the floor.
 // Used identically by the mock, the UI ticker, and as a local estimate.
@@ -166,7 +177,10 @@ export interface TransactionSigner {
 // Client interface
 // ---------------------------------------------------------------------------
 
+export type ProtocolReadiness = "ready" | "incompatible" | "unavailable";
+
 export interface AgyionClient {
+  protocolReadiness?(): Promise<ProtocolReadiness>;
   // Fade
   create_fade(
     seller: string,
@@ -193,6 +207,8 @@ export interface AgyionClient {
     unlock_ledger: number,
     key_hash: string,
   ): Promise<bigint>;
+  commit_pod_claim(pod_id: bigint, recipient: string, commitment: string): Promise<void>;
+  get_pod_claim_commitment(pod_id: bigint, recipient: string): Promise<PodClaimCommitment | null>;
   claim_pod(pod_id: bigint, preimage: string, recipient: string): Promise<void>;
   get_pod(pod_id: bigint): Promise<Pod | null>;
   // Trigger
@@ -238,6 +254,12 @@ export const LEDGERS_PER_DAY = 17_280;
  * bound on agent activity.
  */
 export const MAX_CLAIMS_PER_MANDATE = 50;
+function validLedger(value: number): boolean {
+  return Number.isInteger(value) && value >= 0 && value <= 0xffff_ffff;
+}
+function requireLedger(value: number): void {
+  if (!validLedger(value)) throw new AgyionError(AgyionErrorCode.InvalidInput, "Ledger must be a finite u32 integer");
+}
 
 interface MockStore {
   epochMs: number;
@@ -249,6 +271,7 @@ interface MockStore {
   venueSecret: string; // demo venue ed25519 secret (S...)
   fades: MockFadeRec[];
   pods: MockPodRec[];
+  podClaims: Record<string, PodClaimCommitment>;
   triggers: MockTriggerRec[];
   mandates: MockMandateRec[];
 }
@@ -278,19 +301,26 @@ export async function sha256Hex(input: string): Promise<string> {
 
 function loadStore(): MockStore {
   if (typeof window === "undefined") return freshStore();
-  const raw = window.localStorage.getItem(MOCK_KEY);
-  if (raw) {
-    try {
-      return JSON.parse(raw, (_k, v) =>
+  try {
+    const raw = window.localStorage.getItem(MOCK_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw, (_k, v) =>
         typeof v === "string" && /^-?\d+n$/.test(v) ? BigInt(v.slice(0, -1)) : v,
       ) as MockStore;
-    } catch {
-      /* corrupted — start fresh */
+      if (validStore(parsed)) return { ...parsed, podClaims: parsed.podClaims ?? {} };
     }
-  }
+  } catch { /* unavailable or corrupted browser storage: keep a usable in-memory demo */ }
   const s = freshStore();
   saveStore(s);
   return s;
+}
+
+function validStore(s: MockStore): boolean {
+  if (!s || !Number.isSafeInteger(s.epochMs) || !Number.isSafeInteger(s.baseLedger)) return false;
+  if (![s.nextFadeId, s.nextPodId, s.nextTriggerId, s.nextMandateId].every(v => typeof v === "string" && /^[1-9]\d*$/.test(v))) return false;
+  try { Keypair.fromSecret(s.venueSecret); } catch { return false; }
+  const groups = [[s.fades, ["pot", "start_price", "floor_price", "slope_num", "slope_den"]], [s.pods, ["amount"]], [s.triggers, ["amount"]], [s.mandates, ["max_per_tx", "daily_cap", "daily_used"]]] as const;
+  return groups.every(([rows, fields]) => Array.isArray(rows) && rows.every(r => r && /^[1-9]\d*$/.test(r.id) && fields.every(k => typeof (r as unknown as Record<string, unknown>)[k] === "bigint")));
 }
 
 function freshStore(): MockStore {
@@ -304,6 +334,7 @@ function freshStore(): MockStore {
     venueSecret: Keypair.random().secret(),
     fades: [],
     pods: [],
+    podClaims: {},
     triggers: [],
     mandates: [],
   };
@@ -311,10 +342,9 @@ function freshStore(): MockStore {
 
 function saveStore(s: MockStore): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(
-    MOCK_KEY,
-    JSON.stringify(s, (_k, v) => (typeof v === "bigint" ? `${v}n` : v)),
-  );
+  try {
+    window.localStorage.setItem(MOCK_KEY, JSON.stringify(s, (_k, v) => (typeof v === "bigint" ? `${v}n` : v)));
+  } catch { /* The in-memory demo remains usable when storage is unavailable. */ }
 }
 
 export class MockAgyionClient implements AgyionClient {
@@ -370,13 +400,17 @@ export class MockAgyionClient implements AgyionClient {
     handoff_window: number,
     venue_pubkey: string,
   ): Promise<bigint> {
-    if (pot <= 0n || start_price === 0n)
-      throw new AgyionError(AgyionErrorCode.InvalidAmount, "Pot and start price must be non-zero");
-    if (slope_den === 0n || floor_price >= start_price)
+    if (pot <= 0n || floor_price < -pot || start_price < floor_price)
+      throw new AgyionError(AgyionErrorCode.InvalidAmount, "Pot must be positive and fund the price floor");
+    if (slope_den <= 0n || slope_num < 0n)
       throw new AgyionError(AgyionErrorCode.InvalidCurve, "Invalid decay curve");
-    if (handoff_window === 0)
+    if (!Number.isInteger(duration_ledgers) || duration_ledgers <= 0 || !Number.isInteger(handoff_window) || handoff_window <= 0 || duration_ledgers > 1_000_000 || handoff_window > 1_000_000)
       throw new AgyionError(AgyionErrorCode.InvalidInput, "Handoff window must be non-zero");
     const start = await this.currentLedger();
+    if (!validLedger(start + duration_ledgers + handoff_window + 1))
+      throw new AgyionError(AgyionErrorCode.InvalidInput, "Refund ledger exceeds the contract horizon");
+    hexToBuffer(venue_pubkey, 32);
+    if (/^0+$/.test(venue_pubkey)) throw new AgyionError(AgyionErrorCode.BadSignature, "Venue key cannot be zero");
     const id = BigInt(this.store.nextFadeId);
     this.store.nextFadeId = (id + 1n).toString();
     this.store.fades.push({
@@ -491,6 +525,8 @@ export class MockAgyionClient implements AgyionClient {
     key_hash: string,
   ): Promise<bigint> {
     if (amount <= 0n) throw new AgyionError(AgyionErrorCode.InvalidAmount, "Amount must be positive");
+    requireLedger(unlock_ledger);
+    hexToBuffer(key_hash, 32);
     const id = BigInt(this.store.nextPodId);
     this.store.nextPodId = (id + 1n).toString();
     this.store.pods.push({
@@ -506,6 +542,21 @@ export class MockAgyionClient implements AgyionClient {
     return id;
   }
 
+  async commit_pod_claim(pod_id: bigint, recipient: string, commitment: string): Promise<void> {
+    const pod = await this.get_pod(pod_id);
+    if (!pod) throw new AgyionError(AgyionErrorCode.NotFound, "Pod not found");
+    if (pod.state !== POD_STATE.Buried) throw new AgyionError(AgyionErrorCode.InvalidState, "Pod already opened");
+    hexToBuffer(commitment, 32);
+    const committed_at = await this.currentLedger();
+    if (committed_at >= 0xffff_ffff) throw new AgyionError(AgyionErrorCode.InvalidInput, "No later ledger is representable");
+    this.store.podClaims[`${pod_id}:${recipient}`] = { commitment: commitment.toLowerCase(), committed_at };
+    this.persist();
+  }
+
+  async get_pod_claim_commitment(pod_id: bigint, recipient: string): Promise<PodClaimCommitment | null> {
+    return this.store.podClaims[`${pod_id}:${recipient}`] ?? null;
+  }
+
   async claim_pod(pod_id: bigint, preimage: string, recipient: string): Promise<void> {
     const rec = this.store.pods.find((p) => BigInt(p.id) === pod_id);
     if (!rec) throw new AgyionError(AgyionErrorCode.NotFound, `Pod not found: #${pod_id}`);
@@ -515,7 +566,12 @@ export class MockAgyionClient implements AgyionClient {
       throw new AgyionError(AgyionErrorCode.Locked, "Pod is still buried — unlock ledger not reached");
     if ((await sha256Hex(preimage)) !== rec.key_hash)
       throw new AgyionError(AgyionErrorCode.BadSignature, "Preimage does not match the key hash");
-    void recipient; // recipient authorizes the tx (front-running protection); recorded on-chain
+    const intent = await this.get_pod_claim_commitment(pod_id, recipient);
+    if (!intent || intent.committed_at >= await this.currentLedger())
+      throw new AgyionError(AgyionErrorCode.InvalidInput, "Commit the claim and wait for the next ledger before opening");
+    if (intent.commitment !== podClaimCommitment(pod_id, recipient, preimage))
+      throw new AgyionError(AgyionErrorCode.BadSignature, "Claim does not match the recipient commitment");
+    delete this.store.podClaims[`${pod_id}:${recipient}`];
     rec.state = POD_STATE.Opened;
     this.persist();
   }
@@ -540,6 +596,11 @@ export class MockAgyionClient implements AgyionClient {
     deadline_ledger: number,
   ): Promise<bigint> {
     if (amount <= 0n) throw new AgyionError(AgyionErrorCode.InvalidAmount, "Amount must be positive");
+    requireLedger(deadline_ledger);
+    if (deadline_ledger <= await this.currentLedger() || deadline_ledger === 0xffff_ffff)
+      throw new AgyionError(AgyionErrorCode.InvalidInput, "Deadline must be in the future with room for refund");
+    hexToBuffer(attester_pubkey, 32);
+    if (/^0+$/.test(attester_pubkey)) throw new AgyionError(AgyionErrorCode.BadSignature, "Attester key cannot be zero");
     const id = BigInt(this.store.nextTriggerId);
     this.store.nextTriggerId = (id + 1n).toString();
     this.store.triggers.push({
@@ -605,6 +666,9 @@ export class MockAgyionClient implements AgyionClient {
     if (max_per_tx <= 0n || daily_cap <= 0n || max_per_tx > daily_cap)
       throw new AgyionError(AgyionErrorCode.InvalidAmount, "Caps must be positive and per-tx <= daily");
     const now = await this.currentLedger();
+    requireLedger(valid_until);
+    hexToBuffer(agent_pubkey, 32);
+    if (/^0+$/.test(agent_pubkey)) throw new AgyionError(AgyionErrorCode.BadSignature, "Agent key cannot be zero");
     if (valid_until <= now)
       throw new AgyionError(AgyionErrorCode.InvalidInput, "valid_until must be in the future");
     const id = BigInt(this.store.nextMandateId);
@@ -648,10 +712,11 @@ export class MockAgyionClient implements AgyionClient {
     if (now > fade.deadline_ledger)
       throw new AgyionError(AgyionErrorCode.DeadlinePassed, "Fade deadline passed");
     const price = priceAtLedger(fade, now);
+    if (price > 0n) throw new AgyionError(AgyionErrorCode.InvalidInput, "Envoy may only claim at zero or below");
     if (price > m.max_per_tx)
       throw new AgyionError(AgyionErrorCode.CapExceeded, "Price above max_per_tx — the contract said no");
     // day window rollover
-    if (now > m.window_start + LEDGERS_PER_DAY) {
+    if (now >= m.window_start + LEDGERS_PER_DAY) {
       m.window_start = now;
       m.daily_used = 0n;
     }
@@ -662,7 +727,7 @@ export class MockAgyionClient implements AgyionClient {
     if (m.claims_used >= MAX_CLAIMS_PER_MANDATE)
       throw new AgyionError(AgyionErrorCode.CapExceeded, `Claim limit reached (${MAX_CLAIMS_PER_MANDATE} per mandate) — the contract said no`);
 
-    m.daily_used += price;
+    // Zero-or-below claims spend no owner funds; daily_used stays unchanged.
     m.claims_used += 1;
     fade.state = FADE_STATE.Claimed;
     fade.claimant = m.owner; // recipient is fixed to the owner
@@ -712,11 +777,12 @@ export interface SorobanConfig {
   rpcUrl: string;
   contractId: string;
   networkPassphrase: string;
-  signer: TransactionSigner;
+  signer?: TransactionSigner;
 }
 
 function hexToBuffer(hex: string, expected?: number): Buffer {
   const clean = hex.trim().toLowerCase().replace(/^0x/, "");
+  if (!/^(?:[a-f0-9]{2})*$/.test(clean)) throw new AgyionError(AgyionErrorCode.InvalidInput, "Invalid hex bytes");
   const buf = Buffer.from(clean, "hex");
   if (expected !== undefined && buf.length !== expected)
     throw new AgyionError(
@@ -788,35 +854,67 @@ function mandateFromChain(id: bigint, m: ChainMandate): Mandate {
 
 function isNotFound(e: unknown): boolean {
   const msg = e instanceof Error ? e.message : String(e);
-  return msg.includes("NotFound") || /error.*\b1\b/i.test(msg);
+  return /^(?:Error: )?NotFound$/.test(msg) || /Error\(Contract, #1\)/.test(msg);
 }
 
 export class SorobanAgyionClient implements AgyionClient {
   private server: rpc.Server;
   private bindingsP: Promise<BindingsClient> | null = null;
+  private readonly session = walletSessionVersion();
+  private intent: TransactionIntent | null = null;
 
   constructor(private cfg: SorobanConfig) {
     this.server = new rpc.Server(cfg.rpcUrl, {
       allowHttp: cfg.rpcUrl.startsWith("http://"),
     });
+    const send = this.server.sendTransaction.bind(this.server);
+    this.server.sendTransaction = async (transaction) => {
+      this.assertSession();
+      const intent = this.intent;
+      if (!intent) throw new Error("Missing transaction intent; nothing was sent.");
+      const hash = transaction.hash().toString("hex");
+      const competing = unresolvedTransaction(intent);
+      if (competing && competing.hash !== hash) throw new NotBroadcastError(
+        `Another transaction for this action is unresolved. Check ${competing.hash} before retrying.`);
+      // Persist BEFORE transport: a reload or lost response cannot erase a broadcast.
+      try { rememberTransactionAttempt({ ...intent, hash }); }
+      catch (error) { throw new NotBroadcastError(error instanceof Error ? error.message : "Could not save recovery metadata. Nothing was sent."); }
+      try {
+        const response = await send(transaction);
+        updateTransactionAttempt(hash, intent, { status: response.status === "ERROR" ? "failed" : "pending" });
+        return response;
+      } catch (error) {
+        updateTransactionAttempt(hash, intent, { status: "unknown" });
+        throw error;
+      }
+    };
   }
 
   /** Lazy bindings init: the signer address resolves async on first call. */
   private bindings(): Promise<BindingsClient> {
     if (!this.bindingsP) {
       const p = (async () => {
-        const publicKey = await this.cfg.signer.address();
+        const publicKey = await this.cfg.signer?.address();
         return new BindingsClient({
           contractId: this.cfg.contractId,
           networkPassphrase: this.cfg.networkPassphrase,
           rpcUrl: this.cfg.rpcUrl,
+          server: this.server,
           publicKey,
-          signTransaction: async (txXdr, opts) => ({
-            signedTxXdr: await this.cfg.signer.signTransaction(
-              txXdr,
-              opts?.networkPassphrase ?? this.cfg.networkPassphrase,
-            ),
-          }),
+          signTransaction: async (txXdr, opts) => {
+            this.assertSession();
+            const signer = this.cfg.signer!;
+            const network = opts?.networkPassphrase ?? this.cfg.networkPassphrase;
+            if (network !== this.cfg.networkPassphrase) throw new Error("Unexpected signing network");
+            if (await signer.address() !== publicKey) throw new Error("Wallet account changed; reconnect before continuing");
+            this.assertSession();
+            const signedTxXdr = await signer.signTransaction(txXdr, network);
+            this.assertSession();
+            if (await signer.address() !== publicKey) throw new Error("Wallet account changed while signing");
+            this.assertSession();
+            assertSignedTransactionMatches(txXdr, signedTxXdr, network, publicKey);
+            return { signedTxXdr };
+          },
           allowHttp: this.cfg.rpcUrl.startsWith("http://"),
         });
       })();
@@ -826,6 +924,81 @@ export class SorobanAgyionClient implements AgyionClient {
       this.bindingsP = p;
     }
     return this.bindingsP;
+  }
+
+  private assertSession(): void {
+    if (!this.cfg.signer) throw new Error("Connect a wallet to approve this transaction");
+    if (walletSessionVersion() !== this.session) throw new Error("Wallet session changed; reconnect before continuing");
+  }
+
+  async protocolReadiness(): Promise<ProtocolReadiness> {
+    try {
+      const c = await this.bindings();
+      const version = await c.protocol_version();
+      return version.result === 2 ? "ready" : Number.isSafeInteger(version.result) ? "incompatible" : "unavailable";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      // The deployed pre-v2 kernel has no version entry point. Only its explicit
+      // missing-function diagnostic proves incompatibility; MissingValue alone
+      // can mean unrelated VM/storage failures and must remain unavailable.
+      const missingVersion = /Error\(WasmVm,\s*MissingValue\)/.test(message) &&
+        /\[\s*"trying to invoke non-existent contract function"\s*,\s*protocol_version\s*\]/.test(message);
+      return missingVersion ? "incompatible" : "unavailable";
+    }
+  }
+
+  private async writable(): Promise<BindingsClient> {
+    this.assertSession();
+    const readiness = await this.protocolReadiness();
+    if (readiness === "incompatible") throw new Error("This kernel needs the v2 security upgrade. Transactions are disabled for this deployment.");
+    if (readiness !== "ready") throw new AgyionError(AgyionErrorCode.RpcError, "Cannot check kernel readiness. Transactions are disabled until the RPC is available; retry the readiness check.");
+    this.assertSession();
+    return this.bindings();
+  }
+
+  private async submit<T>(tx: { signed?: { hash(): Buffer }; signAndSend(): Promise<{ result: { unwrap(): T }; getTransactionResponse?: { status: string; ledger?: number }; sendTransactionResponse?: { hash: string } }> }, action: string, refId?: string): Promise<T> {
+    this.assertSession();
+    const account = await this.cfg.signer!.address();
+    this.assertSession();
+    const intent: TransactionIntent = { account, network: this.cfg.networkPassphrase, contractId: this.cfg.contractId, action, refId: refId ?? null };
+    if (this.intent) throw new Error("Another transaction is awaiting a result. Check its status before continuing.");
+    const unresolved = unresolvedTransaction(intent);
+    if (unresolved) throw new AgyionError(AgyionErrorCode.RpcError, `An earlier ${action.replaceAll("_", " ")} is unresolved. Check ${unresolved.hash} in transaction activity before retrying.`);
+    this.intent = intent;
+    try {
+      let sent: Awaited<ReturnType<typeof tx.signAndSend>>;
+      try { sent = await tx.signAndSend(); }
+      catch (error) {
+        if (error instanceof NotBroadcastError) throw error;
+        if (tx.signed) {
+          const hash = tx.signed.hash().toString("hex");
+          // SDK or transport adapters can fail after signing, even without a response.
+          // Keep an unknown result; a signed hash alone never proves failure or success.
+          if (!unresolvedTransaction(intent)) {
+            const known = listTransactionAttempts(intent).find(row => row.hash === hash);
+            if (known?.status === "failed") throw new AgyionError(AgyionErrorCode.RpcError, `Transaction ${hash} was rejected by the network. Review the error before retrying.`);
+            if (!known) rememberTransactionAttempt({ ...intent, hash });
+          }
+          updateTransactionAttempt(hash, intent, { status: "unknown" });
+          throw new AgyionError(AgyionErrorCode.RpcError, `Transaction outcome could not be confirmed. Check ${hash} in transaction activity before retrying.`);
+        }
+        throw error;
+      }
+      const hash = sent.sendTransactionResponse?.hash ?? tx.signed?.hash().toString("hex");
+      if (hash) {
+        // Also supports a binding adapter that returns its own submission response.
+        rememberTransactionAttempt({ ...intent, hash });
+        updateTransactionAttempt(hash, intent, { status: sent.getTransactionResponse?.status === "SUCCESS" ? "success" : sent.getTransactionResponse?.status === "FAILED" ? "failed" : "unknown", ledger: sent.getTransactionResponse?.ledger ?? null });
+      }
+      if (sent.getTransactionResponse?.status !== "SUCCESS") throw new AgyionError(AgyionErrorCode.RpcError,
+        `Transaction not confirmed (${sent.getTransactionResponse?.status ?? "pending"}).${hash ? ` Check ${hash} in transaction activity before retrying.` : ""}`);
+      const result = sent.result.unwrap();
+      if (hash) {
+        updateTransactionAttempt(hash, intent, { status: "success", refId: refId ?? String(result), ledger: sent.getTransactionResponse.ledger ?? null });
+        if (walletSessionVersion() === this.session) rememberReceipt(action, refId ?? String(result), { hash, ledger: sent.getTransactionResponse.ledger ?? null, account: intent.account, network: intent.network, contractId: intent.contractId });
+      }
+      return result;
+    } finally { this.intent = null; }
   }
 
   async currentLedger(): Promise<number> {
@@ -847,7 +1020,7 @@ export class SorobanAgyionClient implements AgyionClient {
     handoff_window: number,
     venue_pubkey: string,
   ): Promise<bigint> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.create_fade({
       seller,
       asset,
@@ -860,8 +1033,7 @@ export class SorobanAgyionClient implements AgyionClient {
       handoff_window,
       venue_pubkey: hexToBuffer(venue_pubkey, 32),
     });
-    await tx.signAndSend();
-    return tx.result.unwrap();
+    return this.submit(tx, "create_fade");
   }
 
   async fade_price(fade_id: bigint): Promise<bigint> {
@@ -871,31 +1043,32 @@ export class SorobanAgyionClient implements AgyionClient {
   }
 
   async claim(fade_id: bigint, claimant: string): Promise<void> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.claim({ fade_id, claimant });
-    await tx.signAndSend();
-    tx.result.unwrap();
+    await this.submit(tx, "claim", String(fade_id));
   }
 
   async confirm_handoff(fade_id: bigint, ts: bigint, sig: string): Promise<void> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.confirm_handoff({ fade_id, ts, sig: hexToBuffer(sig, 64) });
-    await tx.signAndSend();
-    tx.result.unwrap();
+    await this.submit(tx, "confirm_handoff", String(fade_id));
   }
 
   async refund(fade_id: bigint): Promise<void> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.refund({ fade_id });
-    await tx.signAndSend();
-    tx.result.unwrap();
+    await this.submit(tx, "refund", String(fade_id));
   }
 
   async get_fade(fade_id: bigint): Promise<Fade | null> {
     const c = await this.bindings();
     try {
       const tx = await c.get_fade({ fade_id });
-      if (tx.result.isErr()) return null;
+      if (tx.result.isErr()) {
+        const error = tx.result.unwrapErr();
+        if (error.message === "NotFound") return null;
+        throw new Error(error.message);
+      }
       return fadeFromChain(fade_id, tx.result.unwrap());
     } catch (e) {
       if (isNotFound(e)) return null;
@@ -912,7 +1085,7 @@ export class SorobanAgyionClient implements AgyionClient {
     unlock_ledger: number,
     key_hash: string,
   ): Promise<bigint> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.create_pod({
       funder,
       asset,
@@ -920,26 +1093,40 @@ export class SorobanAgyionClient implements AgyionClient {
       unlock_ledger,
       key_hash: hexToBuffer(key_hash, 32),
     });
-    await tx.signAndSend();
-    return tx.result.unwrap();
+    return this.submit(tx, "create_pod");
+  }
+
+  async commit_pod_claim(pod_id: bigint, recipient: string, commitment: string): Promise<void> {
+    const c = await this.writable();
+    const tx = await c.commit_pod_claim({ pod_id, recipient, commitment: hexToBuffer(commitment, 32) });
+    await this.submit(tx, "commit_pod_claim", String(pod_id));
+  }
+
+  async get_pod_claim_commitment(pod_id: bigint, recipient: string): Promise<PodClaimCommitment | null> {
+    const c = await this.bindings();
+    const tx = await c.get_pod_claim_commitment({ pod_id, recipient });
+    return tx.result ? { commitment: Buffer.from(tx.result.commitment).toString("hex"), committed_at: tx.result.committed_at } : null;
   }
 
   async claim_pod(pod_id: bigint, preimage: string, recipient: string): Promise<void> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.claim_pod({
       pod_id,
       preimage: Buffer.from(new TextEncoder().encode(preimage)),
       recipient,
     });
-    await tx.signAndSend();
-    tx.result.unwrap();
+    await this.submit(tx, "claim_pod", String(pod_id));
   }
 
   async get_pod(pod_id: bigint): Promise<Pod | null> {
     const c = await this.bindings();
     try {
       const tx = await c.get_pod({ pod_id });
-      if (tx.result.isErr()) return null;
+      if (tx.result.isErr()) {
+        const error = tx.result.unwrapErr();
+        if (error.message === "NotFound") return null;
+        throw new Error(error.message);
+      }
       return podFromChain(pod_id, tx.result.unwrap());
     } catch (e) {
       if (isNotFound(e)) return null;
@@ -957,7 +1144,7 @@ export class SorobanAgyionClient implements AgyionClient {
     attester_pubkey: string,
     deadline_ledger: number,
   ): Promise<bigint> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.create_trigger({
       funder,
       asset,
@@ -966,29 +1153,30 @@ export class SorobanAgyionClient implements AgyionClient {
       attester_pubkey: hexToBuffer(attester_pubkey, 32),
       deadline_ledger,
     });
-    await tx.signAndSend();
-    return tx.result.unwrap();
+    return this.submit(tx, "create_trigger");
   }
 
   async attest(trigger_id: bigint, ts: bigint, sig: string): Promise<void> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.attest({ trigger_id, ts, sig: hexToBuffer(sig, 64) });
-    await tx.signAndSend();
-    tx.result.unwrap();
+    await this.submit(tx, "attest", String(trigger_id));
   }
 
   async refund_trigger(trigger_id: bigint): Promise<void> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.refund_trigger({ trigger_id });
-    await tx.signAndSend();
-    tx.result.unwrap();
+    await this.submit(tx, "refund_trigger", String(trigger_id));
   }
 
   async get_trigger(trigger_id: bigint): Promise<Trigger | null> {
     const c = await this.bindings();
     try {
       const tx = await c.get_trigger({ trigger_id });
-      if (tx.result.isErr()) return null;
+      if (tx.result.isErr()) {
+        const error = tx.result.unwrapErr();
+        if (error.message === "NotFound") return null;
+        throw new Error(error.message);
+      }
       return triggerFromChain(trigger_id, tx.result.unwrap());
     } catch (e) {
       if (isNotFound(e)) return null;
@@ -1005,7 +1193,7 @@ export class SorobanAgyionClient implements AgyionClient {
     daily_cap: bigint,
     valid_until: number,
   ): Promise<bigint> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.create_mandate({
       owner,
       agent_pubkey: hexToBuffer(agent_pubkey, 32),
@@ -1013,34 +1201,35 @@ export class SorobanAgyionClient implements AgyionClient {
       daily_cap,
       valid_until,
     });
-    await tx.signAndSend();
-    return tx.result.unwrap();
+    return this.submit(tx, "create_mandate");
   }
 
   async envoy_claim(mandate_id: bigint, fade_id: bigint, ts: bigint, agent_sig: string): Promise<void> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.envoy_claim({
       mandate_id,
       fade_id,
       ts,
       agent_sig: hexToBuffer(agent_sig, 64),
     });
-    await tx.signAndSend();
-    tx.result.unwrap();
+    await this.submit(tx, "envoy_claim", `${mandate_id}→${fade_id}`);
   }
 
   async revoke_mandate(owner: string, mandate_id: bigint): Promise<void> {
-    const c = await this.bindings();
+    const c = await this.writable();
     const tx = await c.revoke_mandate({ owner, mandate_id });
-    await tx.signAndSend();
-    tx.result.unwrap();
+    await this.submit(tx, "revoke_mandate", String(mandate_id));
   }
 
   async get_mandate(mandate_id: bigint): Promise<Mandate | null> {
     const c = await this.bindings();
     try {
       const tx = await c.get_mandate({ mandate_id });
-      if (tx.result.isErr()) return null;
+      if (tx.result.isErr()) {
+        const error = tx.result.unwrapErr();
+        if (error.message === "NotFound") return null;
+        throw new Error(error.message);
+      }
       return mandateFromChain(mandate_id, tx.result.unwrap());
     } catch (e) {
       if (isNotFound(e)) return null;

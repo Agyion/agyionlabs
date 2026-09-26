@@ -40,6 +40,21 @@ pub const PROOF_SIZE: u32 = 256;
 /// Size of one public input (BN254 scalar field element, big-endian).
 pub const FR_SIZE: u32 = 32;
 
+// Exact verification key of the committed preimage circuit, encoded as
+// alpha || beta || gamma || delta || IC[0] || IC[1] (host point encoding).
+// Pinning the circuit prevents an untrusted first init caller from supplying
+// a degenerate key under which every proof, including all zeros, verifies.
+const EXPECTED_VK_HASH: [u8; 32] = [
+    0x39, 0x66, 0x01, 0x27, 0x57, 0xc5, 0x42, 0x84, 0xdc, 0xf0, 0x7c, 0x3b, 0x2d, 0x02, 0xa9, 0xc2,
+    0xc2, 0xa1, 0x36, 0xd0, 0x4e, 0x47, 0x0b, 0x8b, 0xda, 0x75, 0xf4, 0xd3, 0xe8, 0x4a, 0x90, 0x5c,
+];
+const FR_MODULUS_BE: [u8; 32] = [
+    0x30, 0x64, 0x4e, 0x72, 0xe1, 0x31, 0xa0, 0x29, 0xb8, 0x50, 0x45, 0xb6, 0x81, 0x81, 0x58, 0x5d,
+    0x28, 0x33, 0xe8, 0x48, 0x79, 0xb9, 0x70, 0x91, 0x43, 0xe1, 0xf5, 0x93, 0xf0, 0x00, 0x00, 0x01,
+];
+const TTL_THRESHOLD: u32 = 17_280;
+const TTL_EXTEND: u32 = 172_800;
+
 const G1_SIZE: u32 = 64;
 const G2_SIZE: u32 = 128;
 
@@ -75,15 +90,29 @@ pub struct Groth16PreimageVerifier;
 
 #[contractimpl]
 impl Groth16PreimageVerifier {
-    /// Register the verifying key. Callable exactly once.
+    /// Register the pinned preimage-circuit key. Callable exactly once.
+    /// Anyone may supply the correct key; no caller can select another circuit.
     pub fn init(env: Env, vk: VerifyingKey) {
         if env.storage().instance().has(&DataKey::Vk) {
             panic!("already initialized");
         }
-        if vk.ic.len() == 0 {
-            panic!("verifying key must contain at least IC[0]");
+        if vk.ic.len() != 2 {
+            panic!("preimage circuit requires exactly one public input");
+        }
+        let mut encoded = Bytes::from(vk.alpha_g1.clone());
+        encoded.append(&Bytes::from(vk.beta_g2.clone()));
+        encoded.append(&Bytes::from(vk.gamma_g2.clone()));
+        encoded.append(&Bytes::from(vk.delta_g2.clone()));
+        for point in vk.ic.iter() {
+            encoded.append(&Bytes::from(point));
+        }
+        if env.crypto().sha256(&encoded).to_bytes() != BytesN::from_array(&env, &EXPECTED_VK_HASH) {
+            panic!("verifying key does not match the preimage circuit");
         }
         env.storage().instance().set(&DataKey::Vk, &vk);
+        env.storage()
+            .instance()
+            .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
     }
 
     /// Verify a Groth16 proof against the registered verifying key.
@@ -99,6 +128,9 @@ impl Groth16PreimageVerifier {
             .get(&DataKey::Vk)
             .unwrap_or_else(|| panic!("not initialized"));
 
+        env.storage()
+            .instance()
+            .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
         if proof.len() != PROOF_SIZE {
             return false;
         }
@@ -116,6 +148,11 @@ impl Groth16PreimageVerifier {
             }
             let mut arr = [0u8; FR_SIZE as usize];
             input.copy_into_slice(&mut arr);
+            // Bn254Fr::from_bytes reduces modulo r. Reject alternate encodings
+            // instead of silently treating distinct public statements as equal.
+            if arr >= FR_MODULUS_BE {
+                return false;
+            }
             scalars.push_back(Bn254Fr::from_bytes(BytesN::from_array(&env, &arr)));
         }
 
@@ -157,14 +194,16 @@ impl Groth16PreimageVerifier {
 /// Read a G1 point (64 bytes) from a byte blob at `offset`.
 fn g1_at(env: &Env, blob: &Bytes, offset: u32) -> Bn254G1Affine {
     let mut arr = [0u8; G1_SIZE as usize];
-    blob.slice(offset..offset + G1_SIZE).copy_into_slice(&mut arr);
+    blob.slice(offset..offset + G1_SIZE)
+        .copy_into_slice(&mut arr);
     Bn254G1Affine::from_bytes(BytesN::from_array(env, &arr))
 }
 
 /// Read a G2 point (128 bytes) from a byte blob at `offset`.
 fn g2_at(env: &Env, blob: &Bytes, offset: u32) -> Bn254G2Affine {
     let mut arr = [0u8; G2_SIZE as usize];
-    blob.slice(offset..offset + G2_SIZE).copy_into_slice(&mut arr);
+    blob.slice(offset..offset + G2_SIZE)
+        .copy_into_slice(&mut arr);
     Bn254G2Affine::from_bytes(BytesN::from_array(env, &arr))
 }
 

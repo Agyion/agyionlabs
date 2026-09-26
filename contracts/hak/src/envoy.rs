@@ -41,7 +41,9 @@ pub(crate) fn next_id(env: &Env) -> u64 {
     let key = DataKey::MandateCount;
     let id: u64 = env.storage().instance().get(&key).unwrap_or(0) + 1;
     env.storage().instance().set(&key, &id);
-    env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    env.storage()
+        .instance()
+        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
     id
 }
 
@@ -55,7 +57,9 @@ pub(crate) fn read(env: &Env, mandate_id: u64) -> Result<Mandate, Error> {
     env.storage()
         .persistent()
         .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-    env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    env.storage()
+        .instance()
+        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
     Ok(mandate)
 }
 
@@ -113,7 +117,7 @@ pub fn create_mandate(
 }
 
 /// Agent-submitted Fade claim on behalf of the owner.
-/// Agent signature payload: mandate_id(8B BE) || fade_id(8B BE) || ts(8B BE).
+/// Agent payload: v2 envoy domain || mandate_id(8B BE) || fade_id(8B BE) || ts(8B BE).
 ///
 /// Enforcement order (SPEC_V2): not revoked -> not expired -> agent sig ->
 /// price <= max_per_tx -> daily_used + price <= daily_cap ->
@@ -143,11 +147,11 @@ pub fn envoy_claim(
     // caveat as confirm_handoff/attest: a bad signature traps the tx
     // atomically; it cannot be mapped to an in-contract Error code.
     // NOTE (ts freshness, audit v2 finding 3): `ts` is committed into the
-    // payload but freshness is NOT enforced on-chain in v1 — an agent
+    // payload but freshness is NOT enforced on-chain — an agent
     // signature stays valid until valid_until. Replay of the same claim is
     // closed by the fade state machine (a claimed fade rejects re-claim with
     // InvalidState). See docs/LIMITATIONS.md.
-    let mut payload = Bytes::new(env);
+    let mut payload = crate::credential_payload(env, b"agyion:envoy:v2\0");
     payload.append(&Bytes::from_array(env, &mandate_id.to_be_bytes()));
     payload.append(&Bytes::from_array(env, &fade_id.to_be_bytes()));
     payload.append(&Bytes::from_array(env, &ts.to_be_bytes()));

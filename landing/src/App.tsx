@@ -1,13 +1,8 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Route, Routes, useLocation } from 'react-router'
 import { config } from './config'
 import { validateConfig } from './lib/validateConfig'
-import { destroySmoothScroll, initNavScrollClass, initSmoothScroll, ScrollTrigger } from './lib/smoothScroll'
 import { initReveals } from './lib/reveal'
-import Cursor from './components/Cursor'
-import Noise from './components/Noise'
-import ScrollProgress from './components/ScrollProgress'
-import DepthGauge from './components/DepthGauge'
 import NavPill from './components/NavPill'
 import Home from './pages/Home'
 import Instrument from './pages/Instrument'
@@ -18,26 +13,35 @@ import NotFound from './pages/NotFound'
 export default function App() {
   const errors = useMemo(() => validateConfig(config), [])
   const location = useLocation()
+  const previousLocationKey = useRef(location.key)
+  const previousHash = useRef(location.hash)
 
   useEffect(() => {
-    initSmoothScroll()
-    const offNavClass = initNavScrollClass()
-    return () => {
-      offNavClass()
-      destroySmoothScroll()
-    }
-  }, [])
-
-  /* scroll to top + refresh triggers on route change */
-  useEffect(() => {
-    window.scrollTo(0, 0)
-    const t = window.setTimeout(() => ScrollTrigger.refresh(), 60)
+    const navigated = previousLocationKey.current !== location.key
+    const leavingExplanation = previousHash.current === '#how-it-works' && location.hash !== '#how-it-works'
+    previousLocationKey.current = location.key
+    previousHash.current = location.hash
     const offReveals = initReveals()
+    const frame = window.requestAnimationFrame(() => {
+      const anchor = location.pathname === '/' && location.hash === '#instruments'
+        ? document.getElementById('instrument-stage') ?? document.getElementById('instruments')
+        : location.hash ? document.getElementById(location.hash.slice(1)) : null
+      // The immersive homepage owns its dialog focus and keeps one spatial view.
+      if (location.pathname === '/' && (location.hash === '#how-it-works' || leavingExplanation) && document.querySelector('.orbital-home--immersive')) return
+      if (anchor) {
+        const immersive = Boolean(anchor.closest('.orbital-home--immersive'))
+        anchor.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: immersive ? 'nearest' : 'start' })
+        anchor.focus({ preventScroll: true })
+      } else {
+        window.scrollTo({ top: 0, behavior: 'instant' })
+        if (navigated) document.getElementById('main')?.focus({ preventScroll: true })
+      }
+    })
     return () => {
-      window.clearTimeout(t)
+      window.cancelAnimationFrame(frame)
       offReveals()
     }
-  }, [location.pathname])
+  }, [location.pathname, location.hash, location.key])
 
   /* theme tokens from config */
   useEffect(() => {
@@ -79,10 +83,10 @@ export default function App() {
       bands.forEach((bg, i) => {
         const light = lumOf(bg) > 0.55
         root.setProperty(`--dz${i}-bg`, bg)
-        root.setProperty(`--dz${i}-ink`, light ? '#0e1b18' : '#eef2ef')
-        root.setProperty(`--dz${i}-line`, light ? 'rgba(14, 27, 24, 0.16)' : 'rgba(238, 242, 239, 0.16)')
+        root.setProperty(`--dz${i}-ink`, light ? '#11151b' : '#f2eee5')
+        root.setProperty(`--dz${i}-line`, light ? 'rgba(17, 21, 27, 0.16)' : 'rgba(242, 238, 229, 0.16)')
         root.setProperty(`--dz${i}-accent`, light ? scale(t.accent, 0.58) : t.accent)
-        root.setProperty(`--dz${i}-muted`, light ? 'rgba(14, 27, 24, 0.62)' : 'rgba(238, 242, 239, 0.6)')
+        root.setProperty(`--dz${i}-muted`, light ? 'rgba(17, 21, 27, 0.62)' : 'rgba(242, 238, 229, 0.7)')
       })
     }
     document.title = config.siteTitle
@@ -102,16 +106,8 @@ export default function App() {
       <a className="skip-link" href="#main">
         {config.copy.ui.skipLink}
       </a>
-      {config.depthGauge?.enabled ? <DepthGauge /> : <ScrollProgress />}
-      <Cursor />
-      <Noise />
-      {location.pathname === '/' && (
-        <span className="fixed-brand" aria-hidden="true">
-          {config.menu.brandMark}
-        </span>
-      )}
       <NavPill />
-      <main id="main">
+      <main id="main" className="orbital-route" key={location.pathname} tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/fade" element={<Instrument slug="fade" />} />

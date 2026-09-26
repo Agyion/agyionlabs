@@ -1,0 +1,31 @@
+import { mkdir } from 'node:fs/promises';
+import { chromium, expect } from '@playwright/test';
+const browser = await chromium.launch({executablePath:'/opt/google/chrome/chrome',headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader','--use-angle=swiftshader']});
+const page = await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1,reducedMotion:'reduce'});
+const errors=[];
+page.on('pageerror',e=>errors.push(e.message));
+page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,300))});
+try {
+ await mkdir('artifacts/verification',{recursive:true});
+ await page.goto(process.argv[2] || 'http://127.0.0.1:4192/app/',{waitUntil:'domcontentloaded',timeout:60000});
+ await expect(page.locator('.orbital-backdrop')).toHaveClass(/is-ready/,{timeout:30000});
+ await expect(page.locator('.orbital-canvas canvas')).toBeVisible();
+ await expect(page.getByRole('button',{name:/^(Pause motion|Resume motion|Motion reduced)$/})).toHaveCount(0);
+ const workspace=page.locator('.station-workspace');
+ if(await workspace.isVisible()) await page.getByRole('button',{name:'Close instrument',exact:true}).click();
+ await expect(workspace).toBeHidden();
+ await page.mouse.move(2,2);
+ await page.screenshot({path:'artifacts/verification/app-orbit-desktop.png',fullPage:true,timeout:60000});
+ await page.locator('[role="tab"][aria-selected="true"]').click();
+ await expect(workspace).toBeVisible();
+ await page.mouse.move(2,2);
+ await page.screenshot({path:'artifacts/verification/app-desktop.png',fullPage:true,timeout:60000});
+ console.log(JSON.stringify({title:await page.title(),heading:await page.locator('h1').allTextContents(),errors,canvas:await page.locator('canvas').count(),overflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)}));
+ await page.setViewportSize({width:390,height:844});
+ await page.screenshot({path:'artifacts/verification/app-mobile.png',fullPage:true,timeout:60000});
+ await page.getByRole('button',{name:'Close instrument',exact:true}).click();
+ await expect(workspace).toBeHidden();
+ await page.screenshot({path:'artifacts/verification/app-orbit-mobile.png',fullPage:true,timeout:60000});
+ console.log(JSON.stringify({mobileOverflow:await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)}));
+ expect(errors).toEqual([]);
+} finally { await browser.close(); }

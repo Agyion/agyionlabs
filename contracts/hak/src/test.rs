@@ -12,7 +12,9 @@ use ed25519_dalek::{Signer, SigningKey};
 use sha2::{Digest, Sha256};
 use soroban_sdk::{
     testutils::{Address as _, Ledger as _},
-    token, xdr::ToXdr, Address, Bytes, BytesN, Env,
+    token,
+    xdr::ToXdr,
+    Address, Bytes, BytesN, Env,
 };
 
 use crate::{Agyion, AgyionClient, Error};
@@ -78,8 +80,16 @@ fn agent_pubkey(env: &Env) -> BytesN<32> {
 
 /// Identical to the payload built in the contract:
 /// fade_id(8B BE) || claimant(XDR) || ts(8B BE)
-fn sign_handoff(env: &Env, fade_id: u64, claimant: &Address, ts: u64) -> BytesN<64> {
-    let mut payload = Bytes::new(env);
+fn sign_handoff(
+    env: &Env,
+    contract: &Address,
+    fade_id: u64,
+    claimant: &Address,
+    ts: u64,
+) -> BytesN<64> {
+    let mut payload = Bytes::from_slice(env, b"agyion:handoff:v2\0");
+    payload.append(&Bytes::from(env.ledger().network_id()));
+    payload.append(&contract.to_xdr(env));
     payload.append(&Bytes::from_array(env, &fade_id.to_be_bytes()));
     payload.append(&claimant.to_xdr(env));
     payload.append(&Bytes::from_array(env, &ts.to_be_bytes()));
@@ -90,8 +100,16 @@ fn sign_handoff(env: &Env, fade_id: u64, claimant: &Address, ts: u64) -> BytesN<
 }
 
 /// Trigger attestation payload: trigger_id(8B BE) || beneficiary(XDR) || ts(8B BE)
-fn sign_attest(env: &Env, trigger_id: u64, beneficiary: &Address, ts: u64) -> BytesN<64> {
-    let mut payload = Bytes::new(env);
+fn sign_attest(
+    env: &Env,
+    contract: &Address,
+    trigger_id: u64,
+    beneficiary: &Address,
+    ts: u64,
+) -> BytesN<64> {
+    let mut payload = Bytes::from_slice(env, b"agyion:attest:v2\0");
+    payload.append(&Bytes::from(env.ledger().network_id()));
+    payload.append(&contract.to_xdr(env));
     payload.append(&Bytes::from_array(env, &trigger_id.to_be_bytes()));
     payload.append(&beneficiary.to_xdr(env));
     payload.append(&Bytes::from_array(env, &ts.to_be_bytes()));
@@ -102,8 +120,10 @@ fn sign_attest(env: &Env, trigger_id: u64, beneficiary: &Address, ts: u64) -> By
 }
 
 /// Envoy agent payload: mandate_id(8B BE) || fade_id(8B BE) || ts(8B BE)
-fn sign_envoy(env: &Env, mandate_id: u64, fade_id: u64, ts: u64) -> BytesN<64> {
-    let mut payload = Bytes::new(env);
+fn sign_envoy(env: &Env, contract: &Address, mandate_id: u64, fade_id: u64, ts: u64) -> BytesN<64> {
+    let mut payload = Bytes::from_slice(env, b"agyion:envoy:v2\0");
+    payload.append(&Bytes::from(env.ledger().network_id()));
+    payload.append(&contract.to_xdr(env));
     payload.append(&Bytes::from_array(env, &mandate_id.to_be_bytes()));
     payload.append(&Bytes::from_array(env, &fade_id.to_be_bytes()));
     payload.append(&Bytes::from_array(env, &ts.to_be_bytes()));
@@ -111,6 +131,22 @@ fn sign_envoy(env: &Env, mandate_id: u64, fade_id: u64, ts: u64) -> BytesN<64> {
     let msg: std::vec::Vec<u8> = payload.iter().collect();
     let sig = agent().sign(&msg);
     BytesN::from_array(env, &sig.to_bytes())
+}
+
+fn pod_commitment(
+    env: &Env,
+    contract: &Address,
+    pod_id: u64,
+    recipient: &Address,
+    preimage: &Bytes,
+) -> BytesN<32> {
+    let mut payload = Bytes::from_slice(env, b"agyion:pod-claim:v2\0");
+    payload.append(&Bytes::from(env.ledger().network_id()));
+    payload.append(&contract.to_xdr(env));
+    payload.append(&Bytes::from_array(env, &pod_id.to_be_bytes()));
+    payload.append(&recipient.to_xdr(env));
+    payload.append(preimage);
+    env.crypto().sha256(&payload).to_bytes()
 }
 
 fn start_ledger(env: &Env) -> u32 {
@@ -128,13 +164,15 @@ fn happy_path_positive_price_settle() {
     s.token_admin.mint(&claimant, &500);
 
     let id = s.client.create_fade(
-        &seller, &s.asset, &1000, // pot
-        &200,   // start_price
-        &0,     // floor_price
-        &1,     // slope_num
-        &1,     // slope_den: 1 decline per ledger
-        &100,   // duration_ledgers
-        &10,    // handoff_window
+        &seller,
+        &s.asset,
+        &1000, // pot
+        &200,  // start_price
+        &0,    // floor_price
+        &1,    // slope_num
+        &1,    // slope_den: 1 decline per ledger
+        &100,  // duration_ledgers
+        &10,   // handoff_window
         &venue_pubkey(&s.env),
     );
     assert_eq!(id, 1);
@@ -148,8 +186,11 @@ fn happy_path_positive_price_settle() {
 
     s.client.claim(&id, &claimant);
 
-    s.client
-        .confirm_handoff(&id, &12345, &sign_handoff(&s.env, id, &claimant, 12345));
+    s.client.confirm_handoff(
+        &id,
+        &12345,
+        &sign_handoff(&s.env, &s.client.address, id, &claimant, 12345),
+    );
 
     // Settle: claimant pays 190 to the seller; the pot (1000) also returns to the seller.
     assert_eq!(s.token.balance(&seller), 1000 + 190);
@@ -167,10 +208,16 @@ fn negative_price_settle_pot_to_claimant() {
     s.token_admin.mint(&seller, &1000);
 
     let id = s.client.create_fade(
-        &seller, &s.asset, &1000, &100, // start_price
-        &-50,  // floor_price (negative: the campaign pool pays)
-        &2,    // slope_num: 2 decline per ledger
-        &1, &100, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &1000,
+        &100, // start_price
+        &-50, // floor_price (negative: the campaign pool pays)
+        &2,   // slope_num: 2 decline per ledger
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
     );
 
     // 80 ledgers later: 100 - 160 = -60, stops at the floor -> -50
@@ -179,8 +226,11 @@ fn negative_price_settle_pot_to_claimant() {
     assert_eq!(s.client.fade_price(&id), -50);
 
     s.client.claim(&id, &claimant);
-    s.client
-        .confirm_handoff(&id, &999, &sign_handoff(&s.env, id, &claimant, 999));
+    s.client.confirm_handoff(
+        &id,
+        &999,
+        &sign_handoff(&s.env, &s.client.address, id, &claimant, 999),
+    );
 
     // The claimant receives 50 compensation from the pot, the remaining 950 goes to the seller.
     assert_eq!(s.token.balance(&claimant), 50);
@@ -197,7 +247,16 @@ fn refund_after_deadline() {
     s.token_admin.mint(&seller, &700);
 
     let id = s.client.create_fade(
-        &seller, &s.asset, &700, &100, &0, &1, &1, &100, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &700,
+        &100,
+        &0,
+        &1,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
     );
     assert_eq!(s.token.balance(&seller), 0);
 
@@ -227,7 +286,16 @@ fn no_show_refund_after_handoff_window() {
     s.token_admin.mint(&seller, &400);
 
     let id = s.client.create_fade(
-        &seller, &s.asset, &400, &100, &0, &1, &1, &100, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &400,
+        &100,
+        &0,
+        &1,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
     );
 
     let start = start_ledger(&s.env);
@@ -278,6 +346,10 @@ fn pod_early_wrong_and_timely_claim() {
         Err(Ok(Error::BadSignature))
     );
 
+    // The hidden recipient-bound claim must have matured before revealing.
+    let commitment = pod_commitment(&s.env, &s.client.address, id, &recipient, &preimage);
+    s.client.commit_pod_claim(&id, &recipient, &commitment);
+    s.env.ledger().set_sequence_number(unlock + 1);
     // Timely + correct preimage: opens, funds go to the recipient.
     s.client.claim_pod(&id, &preimage, &recipient);
     assert_eq!(s.token.balance(&recipient), 800);
@@ -298,7 +370,16 @@ fn get_fade_view_record_and_missing() {
     s.token_admin.mint(&seller, &1000);
 
     let id = s.client.create_fade(
-        &seller, &s.asset, &1000, &200, &-50, &1, &1, &100, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &1000,
+        &200,
+        &-50,
+        &1,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
     );
 
     let f = s.client.get_fade(&id);
@@ -321,7 +402,10 @@ fn get_fade_view_record_and_missing() {
     assert_eq!(f2.claimant, Some(claimant));
 
     // Missing fade: defined error, no panic.
-    assert_eq!(s.client.try_get_fade(&999).unwrap_err(), Ok(Error::NotFound));
+    assert_eq!(
+        s.client.try_get_fade(&999).unwrap_err(),
+        Ok(Error::NotFound)
+    );
 }
 
 #[test]
@@ -331,7 +415,9 @@ fn get_pod_view_record_and_missing() {
     s.token_admin.mint(&funder, &800);
 
     let key_hash = BytesN::from_array(&s.env, &[9u8; 32]);
-    let id = s.client.create_pod(&funder, &s.asset, &800, &500, &key_hash);
+    let id = s
+        .client
+        .create_pod(&funder, &s.asset, &800, &500, &key_hash);
 
     let p = s.client.get_pod(&id);
     assert_eq!(p.funder, funder);
@@ -343,37 +429,36 @@ fn get_pod_view_record_and_missing() {
     assert_eq!(s.client.try_get_pod(&999).unwrap_err(), Ok(Error::NotFound));
 }
 
-// ---- TS venueSigner parity — a signature produced on the JS side
-// (stellar-sdk) must verify on the contract's ed25519_verify path. Fixture
-// values were generated with a node script using the same logic as
-// app/lib/venueSigner.ts (venue seed [7u8;32], claimant seed [9u8;32],
-// fade_id=1, ts=12345).
+// Cross-language fixture generated with @stellar/stellar-sdk 16.3.0:
+// venue seed [7;32], testnet passphrase, contract/claimant below, id=1, ts=12345.
 #[test]
 fn venue_sig_ts_parity() {
     let env = Env::default();
+    let contract = Address::from_string(&soroban_sdk::String::from_str(
+        &env,
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+    ));
     let claimant = Address::from_string(&soroban_sdk::String::from_str(
         &env,
         "GD6ROJBYLKQMOW3E7N4M2YBPUHMZD7PL65VRHRMO24BOVSBV5H3BQRSL",
     ));
-
-    // Payload built as in the contract: fade_id(8B BE) || claimant(XDR) || ts(8B BE)
-    let mut payload = Bytes::new(&env);
+    let network: [u8; 32] = Sha256::digest(b"Test SDF Network ; September 2015").into();
+    env.ledger().with_mut(|ledger| ledger.network_id = network);
+    env.register_at(&contract, Agyion, ());
+    // Use the production domain builder, then the public credential fields.
+    let mut payload = env.as_contract(&contract, || {
+        crate::credential_payload(&env, b"agyion:handoff:v2\0")
+    });
     payload.append(&Bytes::from_array(&env, &1u64.to_be_bytes()));
     payload.append(&claimant.to_xdr(&env));
     payload.append(&Bytes::from_array(&env, &12345u64.to_be_bytes()));
-
-    // Must match the bytes produced by the TS side exactly
-    let expected_payload: [u8; 60] = [
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0xfd, 0x17, 0x24, 0x38, 0x5a, 0xa0, 0xc7, 0x5b, 0x64, 0xfb,
-        0x78, 0xcd, 0x60, 0x2f, 0xa1, 0xd9, 0x91, 0xfd, 0xeb, 0xf7, 0x6b, 0x13, 0xc5, 0x8e, 0xd7,
-        0x02, 0xea, 0xc8, 0x35, 0xe9, 0xf6, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x30, 0x39,
-    ];
-    let produced: std::vec::Vec<u8> = payload.iter().collect();
-    assert_eq!(produced, expected_payload.to_vec());
-
-    // The signature produced by the TS side must pass contract verification (no panic = OK)
-    let sig_hex = "318bd92969d100cffd5a72daf3f8a5433cdf1fe16b1de89cf76f2e3176aa0780eeff53f8217adefd43499f16abe3a3e684d4d5f2461d0c8fc219d1c8883ff001";
+    let expected_hex = "616779696f6e3a68616e646f66663a763200cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472000000120000000100000000000000000000000000000000000000000000000000000000000000010000000000000001000000120000000000000000fd1724385aa0c75b64fb78cd602fa1d991fdebf76b13c58ed702eac835e9f6180000000000003039";
+    let expected: std::vec::Vec<u8> = (0..expected_hex.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&expected_hex[i..i + 2], 16).unwrap())
+        .collect();
+    assert_eq!(payload.iter().collect::<std::vec::Vec<u8>>(), expected);
+    let sig_hex = "769c3fdc5da46c4b4cd4f9320fb4a6433175c1e045e2855facc7caa5884200f985682bd387cfc000377ab4856893cb560efc94486116b4c6a5c1fbf969d09609";
     let mut sig_bytes = [0u8; 64];
     for i in 0..64 {
         sig_bytes[i] = u8::from_str_radix(&sig_hex[i * 2..i * 2 + 2], 16).unwrap();
@@ -396,20 +481,29 @@ fn same_ledger_double_claim() {
     s.token_admin.mint(&seller, &300);
 
     let id = s.client.create_fade(
-        &seller, &s.asset, &300, &100, &0, &1, &1, &100, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &300,
+        &100,
+        &0,
+        &1,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
     );
 
     // Two claims in the same ledger: the first valid transition wins.
     s.client.claim(&id, &c1);
-    assert_eq!(
-        s.client.try_claim(&id, &c2),
-        Err(Ok(Error::InvalidState))
-    );
+    assert_eq!(s.client.try_claim(&id, &c2), Err(Ok(Error::InvalidState)));
 
     // Winner c1: the handoff settle runs over c1.
     s.token_admin.mint(&c1, &500);
-    s.client
-        .confirm_handoff(&id, &77, &sign_handoff(&s.env, id, &c1, 77));
+    s.client.confirm_handoff(
+        &id,
+        &77,
+        &sign_handoff(&s.env, &s.client.address, id, &c1, 77),
+    );
     assert_eq!(s.token.balance(&s.client.address), 0);
 }
 
@@ -423,20 +517,47 @@ fn excessive_negative_floor_rejected() {
     // floor < -pot: the negative payout could exceed the pot -> InvalidAmount.
     assert_eq!(
         s.client.try_create_fade(
-            &seller, &s.asset, &100, &50, &-101, &1, &1, &100, &10, &venue_pubkey(&s.env),
+            &seller,
+            &s.asset,
+            &100,
+            &50,
+            &-101,
+            &1,
+            &1,
+            &100,
+            &10,
+            &venue_pubkey(&s.env),
         ),
         Err(Ok(Error::InvalidAmount))
     );
     // Extreme values are rejected too (i128 negation overflow vector closed).
     assert_eq!(
         s.client.try_create_fade(
-            &seller, &s.asset, &100, &50, &i128::MIN, &1, &1, &100, &10, &venue_pubkey(&s.env),
+            &seller,
+            &s.asset,
+            &100,
+            &50,
+            &i128::MIN,
+            &1,
+            &1,
+            &100,
+            &10,
+            &venue_pubkey(&s.env),
         ),
         Err(Ok(Error::InvalidAmount))
     );
     // Boundary value floor == -pot is accepted.
     let id = s.client.create_fade(
-        &seller, &s.asset, &100, &50, &-100, &1, &1, &100, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &100,
+        &50,
+        &-100,
+        &1,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
     );
     assert_eq!(id, 1);
 }
@@ -452,10 +573,16 @@ fn negative_price_pot_cap_settle() {
     // exactly on the pot (cap boundary). |price| > pot is closed by create
     // validation.
     let id = s.client.create_fade(
-        &seller, &s.asset, &500, &0, // start_price
+        &seller,
+        &s.asset,
+        &500,
+        &0,    // start_price
         &-500, // floor_price == -pot
         &10,   // slope_num
-        &1, &100, &10, &venue_pubkey(&s.env),
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
     );
 
     let start = start_ledger(&s.env);
@@ -463,8 +590,11 @@ fn negative_price_pot_cap_settle() {
     assert_eq!(s.client.fade_price(&id), -500); // stopped at the floor
 
     s.client.claim(&id, &claimant);
-    s.client
-        .confirm_handoff(&id, &42, &sign_handoff(&s.env, id, &claimant, 42));
+    s.client.confirm_handoff(
+        &id,
+        &42,
+        &sign_handoff(&s.env, &s.client.address, id, &claimant, 42),
+    );
 
     // Cap: the claimant receives the full pot (500), the seller gets 0.
     assert_eq!(s.token.balance(&claimant), 500);
@@ -513,13 +643,24 @@ fn invalid_sig_host_trap() {
     s.token_admin.mint(&seller, &400);
 
     let id = s.client.create_fade(
-        &seller, &s.asset, &400, &100, &0, &1, &1, &100, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &400,
+        &100,
+        &0,
+        &1,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
     );
     s.client.claim(&id, &claimant);
 
     // Well-formed 64B signature produced with a different key -> host trap.
     let other = SigningKey::from_bytes(&[13u8; 32]);
-    let mut payload = Bytes::new(&s.env);
+    let mut payload = Bytes::from_slice(&s.env, b"agyion:handoff:v2\0");
+    payload.append(&Bytes::from(s.env.ledger().network_id()));
+    payload.append(&s.client.address.clone().to_xdr(&s.env));
     payload.append(&Bytes::from_array(&s.env, &id.to_be_bytes()));
     payload.append(&claimant.to_xdr(&s.env));
     payload.append(&Bytes::from_array(&s.env, &55u64.to_be_bytes()));
@@ -540,7 +681,16 @@ fn confirm_after_window_rejected_refund_wins() {
     s.token_admin.mint(&claimant, &500);
 
     let id = s.client.create_fade(
-        &seller, &s.asset, &400, &100, &0, &1, &1, &100, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &400,
+        &100,
+        &0,
+        &1,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
     );
 
     let start = start_ledger(&s.env);
@@ -551,8 +701,11 @@ fn confirm_after_window_rejected_refund_wins() {
     // confirm is now InvalidState — on a no-show, refund wins.
     s.env.ledger().set_sequence_number(start + 16);
     assert_eq!(
-        s.client
-            .try_confirm_handoff(&id, &88, &sign_handoff(&s.env, id, &claimant, 88)),
+        s.client.try_confirm_handoff(
+            &id,
+            &88,
+            &sign_handoff(&s.env, &s.client.address, id, &claimant, 88)
+        ),
         Err(Ok(Error::InvalidState))
     );
 
@@ -571,7 +724,16 @@ fn confirm_valid_at_window_boundary() {
     s.token_admin.mint(&claimant, &500);
 
     let id = s.client.create_fade(
-        &seller, &s.asset, &400, &100, &0, &1, &1, &100, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &400,
+        &100,
+        &0,
+        &1,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
     );
 
     let start = start_ledger(&s.env);
@@ -582,8 +744,11 @@ fn confirm_valid_at_window_boundary() {
     // allowed (the refund condition is `>`, so confirm has priority at the
     // boundary ledger).
     s.env.ledger().set_sequence_number(start + 15);
-    s.client
-        .confirm_handoff(&id, &91, &sign_handoff(&s.env, id, &claimant, 91));
+    s.client.confirm_handoff(
+        &id,
+        &91,
+        &sign_handoff(&s.env, &s.client.address, id, &claimant, 91),
+    );
     assert_eq!(s.token.balance(&s.client.address), 0);
 }
 
@@ -596,7 +761,16 @@ fn zero_handoff_window_rejected() {
 
     assert_eq!(
         s.client.try_create_fade(
-            &seller, &s.asset, &100, &50, &0, &1, &1, &100, &0, &venue_pubkey(&s.env),
+            &seller,
+            &s.asset,
+            &100,
+            &50,
+            &0,
+            &1,
+            &1,
+            &100,
+            &0,
+            &venue_pubkey(&s.env),
         ),
         Err(Ok(Error::InvalidCurve))
     );
@@ -635,16 +809,22 @@ fn trigger_attest_success() {
     assert_eq!(t.state, 0);
 
     // Valid attestation within the deadline pays the beneficiary.
-    s.client
-        .attest(&id, &777, &sign_attest(&s.env, id, &beneficiary, 777));
+    s.client.attest(
+        &id,
+        &777,
+        &sign_attest(&s.env, &s.client.address, id, &beneficiary, 777),
+    );
     assert_eq!(s.token.balance(&beneficiary), 500);
     assert_eq!(s.token.balance(&s.client.address), 0);
     assert_eq!(s.client.get_trigger(&id).state, 1);
 
     // Single-direction: a second attest and a refund are both rejected.
     assert_eq!(
-        s.client
-            .try_attest(&id, &778, &sign_attest(&s.env, id, &beneficiary, 778)),
+        s.client.try_attest(
+            &id,
+            &778,
+            &sign_attest(&s.env, &s.client.address, id, &beneficiary, 778)
+        ),
         Err(Ok(Error::InvalidState))
     );
     s.env.ledger().set_sequence_number(deadline + 1);
@@ -675,7 +855,9 @@ fn trigger_attest_bad_sig_host_trap() {
     );
 
     let other = SigningKey::from_bytes(&[13u8; 32]);
-    let mut payload = Bytes::new(&s.env);
+    let mut payload = Bytes::from_slice(&s.env, b"agyion:attest:v2\0");
+    payload.append(&Bytes::from(s.env.ledger().network_id()));
+    payload.append(&s.client.address.clone().to_xdr(&s.env));
     payload.append(&Bytes::from_array(&s.env, &id.to_be_bytes()));
     payload.append(&beneficiary.to_xdr(&s.env));
     payload.append(&Bytes::from_array(&s.env, &1u64.to_be_bytes()));
@@ -706,8 +888,11 @@ fn trigger_refund_after_deadline() {
     // After the deadline the attestation window is closed...
     s.env.ledger().set_sequence_number(deadline + 1);
     assert_eq!(
-        s.client
-            .try_attest(&id, &5, &sign_attest(&s.env, id, &beneficiary, 5)),
+        s.client.try_attest(
+            &id,
+            &5,
+            &sign_attest(&s.env, &s.client.address, id, &beneficiary, 5)
+        ),
         Err(Ok(Error::DeadlinePassed))
     );
 
@@ -756,8 +941,11 @@ fn trigger_early_refund_rejected() {
     );
 
     // State untouched: attestation still executes afterwards.
-    s.client
-        .attest(&id, &42, &sign_attest(&s.env, id, &beneficiary, 42));
+    s.client.attest(
+        &id,
+        &42,
+        &sign_attest(&s.env, &s.client.address, id, &beneficiary, 42),
+    );
     assert_eq!(s.token.balance(&beneficiary), 500);
 }
 
@@ -771,10 +959,16 @@ fn trigger_early_refund_rejected() {
 fn setup_campaign_fade(s: &Setup, seller: &Address) -> u64 {
     s.token_admin.mint(seller, &1000);
     s.client.create_fade(
-        seller, &s.asset, &1000, &100, // start_price
-        &-50,  // floor_price
-        &2,    // slope: 2 per ledger -> hits the floor after 75 ledgers
-        &1, &200, &10, &venue_pubkey(&s.env),
+        seller,
+        &s.asset,
+        &1000,
+        &100, // start_price
+        &-50, // floor_price
+        &2,   // slope: 2 per ledger -> hits the floor after 75 ledgers
+        &1,
+        &200,
+        &10,
+        &venue_pubkey(&s.env),
     )
 }
 
@@ -788,8 +982,8 @@ fn envoy_claim_within_cap() {
     let mandate_id = s.client.create_mandate(
         &owner,
         &agent_pubkey(&s.env),
-        &100,    // max_per_tx
-        &1000,   // daily_cap
+        &100,            // max_per_tx
+        &1000,           // daily_cap
         &(start + 1000), // valid_until
     );
     assert_eq!(mandate_id, 1);
@@ -800,8 +994,12 @@ fn envoy_claim_within_cap() {
     s.env.ledger().set_sequence_number(start + 80);
     assert_eq!(s.client.fade_price(&fade_id), -50);
 
-    s.client
-        .envoy_claim(&mandate_id, &fade_id, &11, &sign_envoy(&s.env, mandate_id, fade_id, 11));
+    s.client.envoy_claim(
+        &mandate_id,
+        &fade_id,
+        &11,
+        &sign_envoy(&s.env, &s.client.address, mandate_id, fade_id, 11),
+    );
 
     let f = s.client.get_fade(&fade_id);
     assert_eq!(f.state, 1);
@@ -826,21 +1024,30 @@ fn envoy_claim_cap_exceeded() {
     let mandate_id = s.client.create_mandate(
         &owner,
         &agent_pubkey(&s.env),
-        &100,  // max_per_tx
-        &120,  // daily_cap
+        &100, // max_per_tx
+        &120, // daily_cap
         &(start + 1000),
     );
 
     // Constant positive price 150 (slope_num=0): above max_per_tx -> CapExceeded.
     let fade_over_cap = s.client.create_fade(
-        &seller, &s.asset, &1000, &150, &0, &0, &1, &200, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &1000,
+        &150,
+        &0,
+        &0,
+        &1,
+        &200,
+        &10,
+        &venue_pubkey(&s.env),
     );
     assert_eq!(
         s.client.try_envoy_claim(
             &mandate_id,
             &fade_over_cap,
             &1,
-            &sign_envoy(&s.env, mandate_id, fade_over_cap, 1),
+            &sign_envoy(&s.env, &s.client.address, mandate_id, fade_over_cap, 1),
         ),
         Err(Ok(Error::CapExceeded))
     );
@@ -848,14 +1055,23 @@ fn envoy_claim_cap_exceeded() {
     // Positive price within both caps: passes the cap checks but is rejected
     // by the Envoy design restriction (no owner auth possible) -> InvalidInput.
     let fade_in_cap = s.client.create_fade(
-        &seller, &s.asset, &1000, &50, &0, &0, &1, &200, &10, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &1000,
+        &50,
+        &0,
+        &0,
+        &1,
+        &200,
+        &10,
+        &venue_pubkey(&s.env),
     );
     assert_eq!(
         s.client.try_envoy_claim(
             &mandate_id,
             &fade_in_cap,
             &2,
-            &sign_envoy(&s.env, mandate_id, fade_in_cap, 2),
+            &sign_envoy(&s.env, &s.client.address, mandate_id, fade_in_cap, 2),
         ),
         Err(Ok(Error::InvalidInput))
     );
@@ -879,13 +1095,13 @@ fn envoy_claim_expired_mandate() {
 
     s.env.ledger().set_sequence_number(start + 11); // past valid_until
     assert_eq!(s.client.fade_price(&fade_id), 78); // price still positive, but
-    // expiry is checked first
+                                                   // expiry is checked first
     assert_eq!(
         s.client.try_envoy_claim(
             &mandate_id,
             &fade_id,
             &3,
-            &sign_envoy(&s.env, mandate_id, fade_id, 3),
+            &sign_envoy(&s.env, &s.client.address, mandate_id, fade_id, 3),
         ),
         Err(Ok(Error::MandateExpired))
     );
@@ -898,13 +1114,9 @@ fn envoy_claim_revoked_mandate() {
     let seller = Address::generate(&s.env);
 
     let start = start_ledger(&s.env);
-    let mandate_id = s.client.create_mandate(
-        &owner,
-        &agent_pubkey(&s.env),
-        &100,
-        &1000,
-        &(start + 1000),
-    );
+    let mandate_id =
+        s.client
+            .create_mandate(&owner, &agent_pubkey(&s.env), &100, &1000, &(start + 1000));
     let fade_id = setup_campaign_fade(&s, &seller);
 
     // A non-owner cannot revoke (param/caller mismatch -> Unauthorized).
@@ -924,7 +1136,7 @@ fn envoy_claim_revoked_mandate() {
             &mandate_id,
             &fade_id,
             &4,
-            &sign_envoy(&s.env, mandate_id, fade_id, 4),
+            &sign_envoy(&s.env, &s.client.address, mandate_id, fade_id, 4),
         ),
         Err(Ok(Error::Unauthorized))
     );
@@ -937,18 +1149,18 @@ fn envoy_claim_recipient_binding() {
     let seller = Address::generate(&s.env);
 
     let start = start_ledger(&s.env);
-    let mandate_id = s.client.create_mandate(
-        &owner,
-        &agent_pubkey(&s.env),
-        &100,
-        &1000,
-        &(start + 1000),
-    );
+    let mandate_id =
+        s.client
+            .create_mandate(&owner, &agent_pubkey(&s.env), &100, &1000, &(start + 1000));
     let fade_id = setup_campaign_fade(&s, &seller);
 
     s.env.ledger().set_sequence_number(start + 80);
-    s.client
-        .envoy_claim(&mandate_id, &fade_id, &5, &sign_envoy(&s.env, mandate_id, fade_id, 5));
+    s.client.envoy_claim(
+        &mandate_id,
+        &fade_id,
+        &5,
+        &sign_envoy(&s.env, &s.client.address, mandate_id, fade_id, 5),
+    );
 
     // Recipient binding is structural: the claim lands on the mandate owner,
     // never on the agent (the agent has only a pubkey, no address param).
@@ -970,7 +1182,16 @@ fn refund_no_overflow_huge_handoff_window() {
     // `claimed_at + handoff_window` in refund was an unchecked u32 add — with
     // an unbounded window this could overflow-panic and lock the pot forever.
     let id = s.client.create_fade(
-        &seller, &s.asset, &400, &100, &0, &1, &1, &100, &1_000_000, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &400,
+        &100,
+        &0,
+        &1,
+        &1,
+        &100,
+        &1_000_000,
+        &venue_pubkey(&s.env),
     );
 
     let start = start_ledger(&s.env);
@@ -1000,20 +1221,47 @@ fn oversized_duration_or_window_rejected() {
     // duration_ledgers above the 1_000_000 ledger bound -> InvalidInput.
     assert_eq!(
         s.client.try_create_fade(
-            &seller, &s.asset, &100, &50, &0, &1, &1, &1_000_001, &10, &venue_pubkey(&s.env),
+            &seller,
+            &s.asset,
+            &100,
+            &50,
+            &0,
+            &1,
+            &1,
+            &1_000_001,
+            &10,
+            &venue_pubkey(&s.env),
         ),
         Err(Ok(Error::InvalidInput))
     );
     // handoff_window near u32::MAX (the audit's overflow vector) -> InvalidInput.
     assert_eq!(
         s.client.try_create_fade(
-            &seller, &s.asset, &100, &50, &0, &1, &1, &100, &u32::MAX, &venue_pubkey(&s.env),
+            &seller,
+            &s.asset,
+            &100,
+            &50,
+            &0,
+            &1,
+            &1,
+            &100,
+            &u32::MAX,
+            &venue_pubkey(&s.env),
         ),
         Err(Ok(Error::InvalidInput))
     );
     // Boundary value exactly at the bound is accepted.
     let id = s.client.create_fade(
-        &seller, &s.asset, &100, &50, &0, &1, &1, &1_000_000, &1_000_000, &venue_pubkey(&s.env),
+        &seller,
+        &s.asset,
+        &100,
+        &50,
+        &0,
+        &1,
+        &1,
+        &1_000_000,
+        &1_000_000,
+        &venue_pubkey(&s.env),
     );
     assert_eq!(id, 1);
 }
@@ -1075,13 +1323,9 @@ fn envoy_claim_count_cap() {
     let seller = Address::generate(&s.env);
 
     let start = start_ledger(&s.env);
-    let mandate_id = s.client.create_mandate(
-        &owner,
-        &agent_pubkey(&s.env),
-        &100,
-        &1000,
-        &(start + 1000),
-    );
+    let mandate_id =
+        s.client
+            .create_mandate(&owner, &agent_pubkey(&s.env), &100, &1000, &(start + 1000));
 
     // 51 campaign fades (each is claimable exactly once).
     let mut fades = std::vec::Vec::new();
@@ -1097,8 +1341,12 @@ fn envoy_claim_count_cap() {
     // 50 claims succeed; the counter tracks them.
     for (i, fade_id) in fades.iter().take(50).enumerate() {
         let ts = 100 + i as u64;
-        s.client
-            .envoy_claim(&mandate_id, fade_id, &ts, &sign_envoy(&s.env, mandate_id, *fade_id, ts));
+        s.client.envoy_claim(
+            &mandate_id,
+            fade_id,
+            &ts,
+            &sign_envoy(&s.env, &s.client.address, mandate_id, *fade_id, ts),
+        );
     }
     let m = s.client.get_mandate(&mandate_id);
     assert_eq!(m.claims_used, 50);
@@ -1113,7 +1361,7 @@ fn envoy_claim_count_cap() {
             &mandate_id,
             &fade_51,
             &999,
-            &sign_envoy(&s.env, mandate_id, fade_51, 999),
+            &sign_envoy(&s.env, &s.client.address, mandate_id, fade_51, 999),
         ),
         Err(Ok(Error::CapExceeded))
     );
@@ -1130,30 +1378,624 @@ fn cross_template_mandate_claim_settles_owner_fade() {
     let seller = Address::generate(&s.env);
 
     let start = start_ledger(&s.env);
-    let mandate_id = s.client.create_mandate(
-        &owner,
-        &agent_pubkey(&s.env),
-        &100,
-        &1000,
-        &(start + 1000),
-    );
+    let mandate_id =
+        s.client
+            .create_mandate(&owner, &agent_pubkey(&s.env), &100, &1000, &(start + 1000));
     let fade_id = setup_campaign_fade(&s, &seller);
 
     // Agent claims at the floor price (-50) on behalf of the owner.
     s.env.ledger().set_sequence_number(start + 80);
-    s.client
-        .envoy_claim(&mandate_id, &fade_id, &6, &sign_envoy(&s.env, mandate_id, fade_id, 6));
+    s.client.envoy_claim(
+        &mandate_id,
+        &fade_id,
+        &6,
+        &sign_envoy(&s.env, &s.client.address, mandate_id, fade_id, 6),
+    );
 
     // The venue confirms the handoff; settle runs with claimant = owner:
     // the pot compensates the owner with 50, the remaining 950 goes to the seller.
     s.client.confirm_handoff(
         &fade_id,
         &60,
-        &sign_handoff(&s.env, fade_id, &s.client.get_fade(&fade_id).claimant.unwrap(), 60),
+        &sign_handoff(
+            &s.env,
+            &s.client.address,
+            fade_id,
+            &s.client.get_fade(&fade_id).claimant.unwrap(),
+            60,
+        ),
     );
 
     assert_eq!(s.token.balance(&owner), 50);
     assert_eq!(s.token.balance(&seller), 950);
     assert_eq!(s.token.balance(&s.client.address), 0);
     assert_eq!(s.client.get_fade(&fade_id).state, 2);
+}
+
+// Security regressions: each test failed against the pre-audit contract.
+#[test]
+fn security_handoff_signature_cannot_execute_trigger() {
+    let s = setup();
+    let seller = Address::generate(&s.env);
+    let recipient = Address::generate(&s.env);
+    s.token_admin.mint(&seller, &200);
+    let fade_id = s.client.create_fade(
+        &seller,
+        &s.asset,
+        &100,
+        &0,
+        &0,
+        &0,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
+    );
+    s.client.claim(&fade_id, &recipient);
+    let trigger_id = s.client.create_trigger(
+        &seller,
+        &s.asset,
+        &100,
+        &recipient,
+        &venue_pubkey(&s.env),
+        &100,
+    );
+    assert_eq!(fade_id, trigger_id);
+    let sig = sign_handoff(&s.env, &s.client.address, fade_id, &recipient, 7);
+    assert!(
+        s.client.try_attest(&trigger_id, &7, &sig).is_err(),
+        "a venue handoff must not authorize escrow payment"
+    );
+    assert_eq!(s.token.balance(&recipient), 0);
+}
+
+#[test]
+fn security_trigger_signature_cannot_cross_contracts() {
+    let s = setup();
+    let other_id = s.env.register(Agyion, ());
+    let other = AgyionClient::new(&s.env, &other_id);
+    let funder = Address::generate(&s.env);
+    let recipient = Address::generate(&s.env);
+    s.token_admin.mint(&funder, &200);
+    let id = s.client.create_trigger(
+        &funder,
+        &s.asset,
+        &100,
+        &recipient,
+        &attester_pubkey(&s.env),
+        &100,
+    );
+    let id2 = other.create_trigger(
+        &funder,
+        &s.asset,
+        &100,
+        &recipient,
+        &attester_pubkey(&s.env),
+        &100,
+    );
+    assert_eq!(id, id2);
+    let sig = sign_attest(&s.env, &s.client.address, id, &recipient, 9);
+    assert!(
+        other.try_attest(&id2, &9, &sig).is_err(),
+        "signature for another deployment must not release escrow"
+    );
+    assert_eq!(s.token.balance(&recipient), 0);
+}
+
+#[test]
+fn security_handoff_signature_cannot_cross_contracts() {
+    let s = setup();
+    let other_id = s.env.register(Agyion, ());
+    let other = AgyionClient::new(&s.env, &other_id);
+    let seller = Address::generate(&s.env);
+    let recipient = Address::generate(&s.env);
+    s.token_admin.mint(&seller, &200);
+    let id = s.client.create_fade(
+        &seller,
+        &s.asset,
+        &100,
+        &-10,
+        &-10,
+        &0,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
+    );
+    let id2 = other.create_fade(
+        &seller,
+        &s.asset,
+        &100,
+        &-10,
+        &-10,
+        &0,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
+    );
+    s.client.claim(&id, &recipient);
+    other.claim(&id2, &recipient);
+    let sig = sign_handoff(&s.env, &s.client.address, id, &recipient, 9);
+    assert!(
+        other.try_confirm_handoff(&id2, &9, &sig).is_err(),
+        "handoff for another deployment must not spend the pot"
+    );
+    assert_eq!(s.token.balance(&recipient), 0);
+}
+
+#[test]
+fn security_envoy_signature_cannot_cross_contracts() {
+    let s = setup();
+    let other_id = s.env.register(Agyion, ());
+    let other = AgyionClient::new(&s.env, &other_id);
+    let seller = Address::generate(&s.env);
+    let owner = Address::generate(&s.env);
+    s.token_admin.mint(&seller, &200);
+    let mandate = s
+        .client
+        .create_mandate(&owner, &agent_pubkey(&s.env), &1, &1, &100);
+    let mandate2 = other.create_mandate(&owner, &agent_pubkey(&s.env), &1, &1, &100);
+    let id = s.client.create_fade(
+        &seller,
+        &s.asset,
+        &100,
+        &0,
+        &0,
+        &0,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
+    );
+    let id2 = other.create_fade(
+        &seller,
+        &s.asset,
+        &100,
+        &0,
+        &0,
+        &0,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
+    );
+    let sig = sign_envoy(&s.env, &s.client.address, mandate, id, 9);
+    assert!(
+        other.try_envoy_claim(&mandate2, &id2, &9, &sig).is_err(),
+        "agent authorization is deployment-specific"
+    );
+    assert_eq!(other.get_fade(&id2).state, 0);
+}
+
+#[test]
+fn security_observed_pod_preimage_is_not_sufficient_to_steal() {
+    let s = setup();
+    let funder = Address::generate(&s.env);
+    let attacker = Address::generate(&s.env);
+    s.token_admin.mint(&funder, &100);
+    let secret = Bytes::from_slice(&s.env, b"observed-in-pending-transaction");
+    let hash = s.env.crypto().sha256(&secret).to_bytes();
+    let id = s
+        .client
+        .create_pod(&funder, &s.asset, &100, &start_ledger(&s.env), &hash);
+    // The attacker supplies their OWN valid account authorization, not the victim's.
+    assert!(
+        s.client.try_claim_pod(&id, &secret, &attacker).is_err(),
+        "recipient auth alone must not let a mempool observer steal the pod"
+    );
+    assert_eq!(s.token.balance(&attacker), 0);
+    assert_eq!(s.client.get_pod(&id).state, 0);
+}
+
+#[test]
+fn security_large_rational_slope_keeps_exact_price() {
+    let s = setup();
+    let seller = Address::generate(&s.env);
+    s.token_admin.mint(&seller, &100);
+    let id = s.client.create_fade(
+        &seller,
+        &s.asset,
+        &100,
+        &10,
+        &0,
+        &i128::MAX,
+        &i128::MAX,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
+    );
+    s.env.ledger().set_sequence_number(start_ledger(&s.env) + 2);
+    assert_eq!(
+        s.client.fade_price(&id),
+        8,
+        "MAX/MAX is a decline of one per ledger, even when the intermediate product exceeds i128"
+    );
+}
+
+#[test]
+fn security_trigger_requires_reachable_refund_ledger() {
+    let s = setup();
+    let funder = Address::generate(&s.env);
+    let recipient = Address::generate(&s.env);
+    s.token_admin.mint(&funder, &100);
+    assert_eq!(
+        s.client.try_create_trigger(
+            &funder,
+            &s.asset,
+            &100,
+            &recipient,
+            &attester_pubkey(&s.env),
+            &u32::MAX
+        ),
+        Err(Ok(Error::InvalidInput))
+    );
+    assert_eq!(s.token.balance(&funder), 100);
+}
+
+#[test]
+fn security_fade_deadline_overflow_returns_defined_error() {
+    let s = setup();
+    let seller = Address::generate(&s.env);
+    s.token_admin.mint(&seller, &100);
+    s.env.ledger().with_mut(|ledger| {
+        ledger.sequence_number = u32::MAX - 100;
+        ledger.min_persistent_entry_ttl = 1;
+        ledger.min_temp_entry_ttl = 1;
+        ledger.max_entry_ttl = 50;
+    });
+    assert_eq!(
+        s.client.try_create_fade(
+            &seller,
+            &s.asset,
+            &100,
+            &0,
+            &0,
+            &0,
+            &1,
+            &200,
+            &10,
+            &venue_pubkey(&s.env)
+        ),
+        Err(Ok(Error::InvalidInput))
+    );
+}
+
+#[test]
+fn security_fade_handoff_refund_must_fit_ledger_range() {
+    let s = setup();
+    let seller = Address::generate(&s.env);
+    s.token_admin.mint(&seller, &100);
+    s.env.ledger().with_mut(|ledger| {
+        ledger.sequence_number = u32::MAX - 100;
+        ledger.min_persistent_entry_ttl = 1;
+        ledger.min_temp_entry_ttl = 1;
+        ledger.max_entry_ttl = 50;
+    });
+    assert_eq!(
+        s.client.try_create_fade(
+            &seller,
+            &s.asset,
+            &100,
+            &0,
+            &0,
+            &0,
+            &1,
+            &50,
+            &100,
+            &venue_pubkey(&s.env)
+        ),
+        Err(Ok(Error::InvalidInput))
+    );
+}
+
+#[test]
+fn security_pod_commit_reveal_blocks_same_ledger_and_copied_intent() {
+    let s = setup();
+    let funder = Address::generate(&s.env);
+    let recipient = Address::generate(&s.env);
+    let attacker = Address::generate(&s.env);
+    s.token_admin.mint(&funder, &100);
+    let secret = Bytes::from_slice(&s.env, b"hidden until the next ledger");
+    let hash = s.env.crypto().sha256(&secret).to_bytes();
+    let id = s.client.create_pod(&funder, &s.asset, &100, &0, &hash);
+    let commitment = pod_commitment(&s.env, &s.client.address, id, &recipient, &secret);
+    s.client.commit_pod_claim(&id, &recipient, &commitment);
+    // An attacker can copy the opaque commitment, but it is bound to the recipient.
+    s.client.commit_pod_claim(&id, &attacker, &commitment);
+    assert_eq!(
+        s.client.try_claim_pod(&id, &secret, &recipient),
+        Err(Ok(Error::InvalidInput))
+    );
+    s.env.ledger().set_sequence_number(start_ledger(&s.env) + 1);
+    assert_eq!(
+        s.client.try_claim_pod(&id, &secret, &attacker),
+        Err(Ok(Error::BadSignature))
+    );
+    // Even with the newly observed secret, the attacker cannot commit+reveal now.
+    let attacker_commitment = pod_commitment(&s.env, &s.client.address, id, &attacker, &secret);
+    s.client
+        .commit_pod_claim(&id, &attacker, &attacker_commitment);
+    assert_eq!(
+        s.client.try_claim_pod(&id, &secret, &attacker),
+        Err(Ok(Error::InvalidInput))
+    );
+    s.client.claim_pod(&id, &secret, &recipient);
+    assert_eq!(s.token.balance(&recipient), 100);
+    assert_eq!(s.token.balance(&attacker), 0);
+    assert!(s.client.get_pod_claim_commitment(&id, &recipient).is_none());
+    assert_eq!(
+        s.client.try_commit_pod_claim(&id, &recipient, &commitment),
+        Err(Ok(Error::InvalidState))
+    );
+}
+
+#[test]
+fn security_pod_commitment_is_bound_to_pod_and_contract() {
+    let s = setup();
+    let funder = Address::generate(&s.env);
+    let recipient = Address::generate(&s.env);
+    s.token_admin.mint(&funder, &200);
+    let secret = Bytes::from_slice(&s.env, b"same shared secret across pods");
+    let hash = s.env.crypto().sha256(&secret).to_bytes();
+    let first = s.client.create_pod(&funder, &s.asset, &100, &0, &hash);
+    let second = s.client.create_pod(&funder, &s.asset, &100, &0, &hash);
+    let commitment = pod_commitment(&s.env, &s.client.address, first, &recipient, &secret);
+    s.client.commit_pod_claim(&second, &recipient, &commitment);
+    s.env.ledger().set_sequence_number(start_ledger(&s.env) + 1);
+    assert_eq!(
+        s.client.try_claim_pod(&second, &secret, &recipient),
+        Err(Ok(Error::BadSignature))
+    );
+    let other_contract = Address::generate(&s.env);
+    let wrong_contract = pod_commitment(&s.env, &other_contract, second, &recipient, &secret);
+    s.client
+        .commit_pod_claim(&second, &recipient, &wrong_contract);
+    s.env.ledger().set_sequence_number(start_ledger(&s.env) + 1);
+    assert_eq!(
+        s.client.try_claim_pod(&second, &secret, &recipient),
+        Err(Ok(Error::BadSignature))
+    );
+    assert_eq!(s.token.balance(&s.client.address), 200);
+}
+
+#[test]
+fn security_trigger_signature_cannot_cross_networks() {
+    let s = setup();
+    let funder = Address::generate(&s.env);
+    let recipient = Address::generate(&s.env);
+    s.token_admin.mint(&funder, &100);
+    let id = s.client.create_trigger(
+        &funder,
+        &s.asset,
+        &100,
+        &recipient,
+        &attester_pubkey(&s.env),
+        &100,
+    );
+    let sig = sign_attest(&s.env, &s.client.address, id, &recipient, 9);
+    s.env
+        .ledger()
+        .with_mut(|ledger| ledger.network_id = [42; 32]);
+    assert!(s.client.try_attest(&id, &9, &sig).is_err());
+    assert_eq!(s.client.get_trigger(&id).state, 0);
+    assert_eq!(s.token.balance(&recipient), 0);
+}
+
+#[test]
+fn security_owner_operations_reject_missing_auth() {
+    let s = setup();
+    let funder = Address::generate(&s.env);
+    let recipient = Address::generate(&s.env);
+    s.token_admin.mint(&funder, &400);
+    let secret = Bytes::from_slice(&s.env, b"secret");
+    let hash = s.env.crypto().sha256(&secret).to_bytes();
+    let pod = s.client.create_pod(&funder, &s.asset, &100, &0, &hash);
+    let fade = s.client.create_fade(
+        &funder,
+        &s.asset,
+        &100,
+        &0,
+        &0,
+        &0,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
+    );
+    let mandate = s
+        .client
+        .create_mandate(&funder, &agent_pubkey(&s.env), &1, &1, &100);
+    let commitment = pod_commitment(&s.env, &s.client.address, pod, &recipient, &secret);
+    s.client.commit_pod_claim(&pod, &recipient, &commitment);
+    s.env.ledger().set_sequence_number(start_ledger(&s.env) + 1);
+    s.env.set_auths(&[]);
+    assert!(s
+        .client
+        .try_create_pod(&funder, &s.asset, &100, &0, &hash)
+        .is_err());
+    assert!(s
+        .client
+        .try_create_fade(
+            &funder,
+            &s.asset,
+            &100,
+            &0,
+            &0,
+            &0,
+            &1,
+            &100,
+            &10,
+            &venue_pubkey(&s.env)
+        )
+        .is_err());
+    assert!(s
+        .client
+        .try_create_trigger(
+            &funder,
+            &s.asset,
+            &100,
+            &recipient,
+            &attester_pubkey(&s.env),
+            &100
+        )
+        .is_err());
+    assert!(s
+        .client
+        .try_create_mandate(&funder, &agent_pubkey(&s.env), &1, &1, &100)
+        .is_err());
+    assert!(s.client.try_claim(&fade, &recipient).is_err());
+    assert!(s.client.try_revoke_mandate(&funder, &mandate).is_err());
+    assert!(s
+        .client
+        .try_commit_pod_claim(&pod, &recipient, &commitment)
+        .is_err());
+    assert!(s.client.try_claim_pod(&pod, &secret, &recipient).is_err());
+    assert_eq!(s.token.balance(&funder), 200);
+    assert_eq!(s.token.balance(&s.client.address), 200);
+    assert!(!s.client.get_mandate(&mandate).revoked);
+    assert_eq!(s.client.get_fade(&fade).state, 0);
+}
+
+#[test]
+fn security_contract_balance_cannot_be_relocked_without_owner_auth() {
+    let s = setup();
+    let funder = Address::generate(&s.env);
+    let hash = BytesN::from_array(&s.env, &[7; 32]);
+    s.token_admin.mint(&funder, &100);
+    s.client.create_pod(&funder, &s.asset, &100, &100, &hash);
+    s.env.set_auths(&[]);
+    assert!(s
+        .client
+        .try_create_pod(&s.client.address, &s.asset, &100, &0, &hash)
+        .is_err());
+    assert_eq!(s.token.balance(&s.client.address), 100);
+}
+
+#[test]
+fn security_refunds_need_no_auth_and_preserve_other_reserves() {
+    let s = setup();
+    let funder = Address::generate(&s.env);
+    let recipient = Address::generate(&s.env);
+    let hash = BytesN::from_array(&s.env, &[7; 32]);
+    s.token_admin.mint(&funder, &300);
+    s.client.create_pod(&funder, &s.asset, &100, &100, &hash);
+    let fade = s.client.create_fade(
+        &funder,
+        &s.asset,
+        &100,
+        &0,
+        &0,
+        &0,
+        &1,
+        &10,
+        &10,
+        &venue_pubkey(&s.env),
+    );
+    let trigger = s.client.create_trigger(
+        &funder,
+        &s.asset,
+        &100,
+        &recipient,
+        &attester_pubkey(&s.env),
+        &10,
+    );
+    s.env.set_auths(&[]);
+    s.env.ledger().set_sequence_number(11);
+    s.client.refund(&fade);
+    s.client.refund_trigger(&trigger);
+    assert_eq!(s.token.balance(&funder), 200);
+    assert_eq!(s.token.balance(&s.client.address), 100);
+    assert_eq!(s.token.balance(&recipient), 0);
+}
+
+#[test]
+fn security_failed_positive_payment_rolls_back_handoff_and_pot() {
+    let s = setup();
+    let seller = Address::generate(&s.env);
+    let claimant = Address::generate(&s.env);
+    s.token_admin.mint(&seller, &100);
+    s.token_admin.mint(&claimant, &100);
+    let id = s.client.create_fade(
+        &seller,
+        &s.asset,
+        &100,
+        &10,
+        &10,
+        &0,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&s.env),
+    );
+    s.client.claim(&id, &claimant);
+    let sig = sign_handoff(&s.env, &s.client.address, id, &claimant, 1);
+    // Venue authorization cannot substitute for claimant SAC transfer auth.
+    s.env.set_auths(&[]);
+    assert!(s.client.try_confirm_handoff(&id, &1, &sig).is_err());
+    assert_eq!(s.client.get_fade(&id).state, 1);
+    assert_eq!(s.token.balance(&seller), 0);
+    assert_eq!(s.token.balance(&claimant), 100);
+    assert_eq!(s.token.balance(&s.client.address), 100);
+    s.env
+        .ledger()
+        .set_sequence_number(start_ledger(&s.env) + 11);
+    s.client.refund(&id);
+    assert_eq!(s.token.balance(&seller), 100);
+}
+
+/// Exercise deployment bytes in the real WASM host, including v2 ABI and domains.
+/// Build first with `stellar contract build`; opt in with `--features wasm-tests`.
+#[test]
+#[cfg(feature = "wasm-tests")]
+fn security_wasm_pod_commit_reveal_and_domain_bound_settlement() {
+    const WASM: &[u8] = include_bytes!("../target/wasm32v1-none/release/hak.wasm");
+    let env = Env::default();
+    env.mock_all_auths_allowing_non_root_auth();
+    let contract_id = env.register(WASM, ());
+    let client = AgyionClient::new(&env, &contract_id);
+    assert_eq!(client.protocol_version(), 2);
+    let funder = Address::generate(&env);
+    let recipient = Address::generate(&env);
+    let sac = env.register_stellar_asset_contract_v2(funder.clone());
+    let asset = sac.address();
+    let token = token::Client::new(&env, &asset);
+    token::StellarAssetClient::new(&env, &asset).mint(&funder, &300);
+    let secret = Bytes::from_slice(&env, b"wasm-pod-secret");
+    let hash = env.crypto().sha256(&secret).to_bytes();
+    let pod = client.create_pod(&funder, &asset, &100, &0, &hash);
+    let commitment = pod_commitment(&env, &contract_id, pod, &recipient, &secret);
+    assert_eq!(
+        client.try_claim_pod(&pod, &secret, &recipient),
+        Err(Ok(Error::InvalidInput))
+    );
+    client.commit_pod_claim(&pod, &recipient, &commitment);
+    assert_eq!(
+        client.try_claim_pod(&pod, &secret, &recipient),
+        Err(Ok(Error::InvalidInput))
+    );
+    env.ledger().set_sequence_number(start_ledger(&env) + 1);
+    client.claim_pod(&pod, &secret, &recipient);
+    assert_eq!(token.balance(&recipient), 100);
+    let fade = client.create_fade(
+        &funder,
+        &asset,
+        &100,
+        &-10,
+        &-10,
+        &0,
+        &1,
+        &100,
+        &10,
+        &venue_pubkey(&env),
+    );
+    client.claim(&fade, &recipient);
+    let trigger =
+        client.create_trigger(&funder, &asset, &100, &recipient, &venue_pubkey(&env), &100);
+    let sig = sign_handoff(&env, &contract_id, fade, &recipient, 7);
+    assert!(client.try_attest(&trigger, &7, &sig).is_err());
+    client.confirm_handoff(&fade, &7, &sig);
+    assert_eq!(token.balance(&recipient), 110);
+    assert_eq!(token.balance(&funder), 90);
+    assert_eq!(token.balance(&contract_id), 100);
 }

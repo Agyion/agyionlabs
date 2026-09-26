@@ -4,28 +4,28 @@
 
 import { CONFIG, IS_MOCK } from "./config";
 import { AgyionClient, MockAgyionClient, SorobanAgyionClient } from "./hakClient";
-import { defaultSigner } from "./wallet";
+import { defaultSigner, walletSessionVersion } from "./wallet";
 
 let single: AgyionClient | null = null;
+let session = -1;
 
 export function getClient(): AgyionClient {
-  if (single) return single;
+  const currentSession = walletSessionVersion();
+  if (single && session === currentSession) return single;
+  single = null;
+  session = currentSession;
   if (IS_MOCK) {
     single = new MockAgyionClient();
     return single;
   }
   const signer = defaultSigner();
-  if (!signer)
-    throw new Error(
-      "No wallet connected: plug in the Stellar Wallets Kit or enter a secret key in test mode.",
-    );
   if (!CONFIG.contractId)
     throw new Error("NEXT_PUBLIC_HAK_CONTRACT_ID is not set (the contract ID comes from config).");
   single = new SorobanAgyionClient({
     rpcUrl: CONFIG.rpcUrl,
     contractId: CONFIG.contractId,
     networkPassphrase: CONFIG.networkPassphrase,
-    signer,
+    signer: signer ?? undefined,
   });
   return single;
 }

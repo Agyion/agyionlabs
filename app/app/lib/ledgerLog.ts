@@ -13,6 +13,7 @@
  */
 
 import { storedTestSigner } from "./wallet";
+import { consumeReceipt, listTransactionAttempts, updateTransactionAttempt, type TransactionScope } from "./transactionReceipts";
 
 const LOG_KEY = "agyion.ledger.v1";
 
@@ -30,21 +31,47 @@ export interface LedgerEntry {
   status: EntryStatus;
   detail: string;
   txHash: string | null;
+  account?: string;
+  network?: string;
+  contractId?: string;
 }
 
+let volatileEntries: LedgerEntry[] | null = null;
+const MAX_ENTRIES = 1000;
+function validEntry(value: unknown): value is LedgerEntry {
+  if (!value || typeof value !== "object") return false;
+  const e = value as LedgerEntry;
+  return Number.isSafeInteger(e.seq) && e.seq > 0 && typeof e.ts === "string" &&
+    ["fade", "pod", "trigger", "envoy"].includes(e.template) &&
+    ["locked", "executed", "returned", "rejected", "recorded"].includes(e.status) &&
+    [e.action, e.refId, e.detail].every(v => typeof v === "string") &&
+    (e.amount === null || (typeof e.amount === "string" && /^-?\d+$/.test(e.amount))) &&
+    (e.ledger === null || Number.isSafeInteger(e.ledger)) &&
+    (e.network === undefined || (typeof e.network === "string" && e.network.length > 0 && e.network.length < 200)) &&
+    (e.account === undefined || (typeof e.account === "string" && /^G[A-Z2-7]{55}$/.test(e.account))) &&
+    (e.contractId === undefined || (typeof e.contractId === "string" && /^C[A-Z2-7]{55}$/.test(e.contractId))) &&
+    (e.txHash === null || (typeof e.txHash === "string" && /^[a-f0-9]{64}$/i.test(e.txHash)));
+}
 function load(): LedgerEntry[] {
+  if (volatileEntries) return [...volatileEntries];
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(LOG_KEY);
-    return raw ? (JSON.parse(raw) as LedgerEntry[]) : [];
-  } catch {
-    return [];
-  }
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter(validEntry).slice(-MAX_ENTRIES) : [];
+  } catch { return []; }
 }
 
 function save(entries: LedgerEntry[]): void {
+  const bounded = entries.slice(-MAX_ENTRIES);
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(LOG_KEY, JSON.stringify(entries));
+  try {
+    window.localStorage.setItem(LOG_KEY, JSON.stringify(bounded));
+    volatileEntries = null;
+  } catch {
+    // A storage failure must never turn a confirmed chain transaction into a failure.
+    volatileEntries = bounded;
+  }
 }
 
 export function listEntries(): LedgerEntry[] {
@@ -55,26 +82,68 @@ export function logEntry(
   e: Omit<LedgerEntry, "seq" | "ts"> & { ts?: string },
 ): LedgerEntry {
   const entries = load();
+  const receipt = consumeReceipt(e.action, e.refId);
+  const confirmed = e.status !== "rejected" ? receipt : undefined;
+  const hash = confirmed?.hash ?? e.txHash;
+  const previous = hash ? entries.find(row => row.txHash === hash) : undefined;
   const entry: LedgerEntry = {
-    seq: (entries[entries.length - 1]?.seq ?? 0) + 1,
-    ts: e.ts ?? new Date().toISOString(),
-    ledger: e.ledger,
+    seq: previous?.seq ?? Math.max(0, ...entries.map(row => row.seq)) + 1,
+    ts: previous?.ts ?? e.ts ?? new Date().toISOString(),
+    ledger: confirmed?.ledger ?? e.ledger,
     template: e.template,
     action: e.action,
     refId: e.refId,
     amount: e.amount,
     status: e.status,
     detail: e.detail,
-    txHash: e.txHash,
+    txHash: confirmed?.hash ?? e.txHash,
+    account: confirmed?.account ?? e.account,
+    network: confirmed?.network ?? e.network,
+    contractId: confirmed?.contractId ?? e.contractId,
   };
-  entries.push(entry);
+  if (previous) entries[entries.indexOf(previous)] = entry;
+  else entries.push(entry);
   save(entries);
+  if (entry.txHash) {
+    for (const attempt of listTransactionAttempts().filter(a => a.hash === entry.txHash)) updateTransactionAttempt(attempt.hash, attempt, { recorded: true });
+  }
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("agyion:record", { detail: entry }));
   return entry;
 }
 
+
+/** A local record link identifies a record, never a permission or a transaction. */
+export function recordHref(template: TemplateName, refId: string): string | null {
+  const id = template === "envoy" ? refId.split("→")[0] : refId;
+  if (!/^[0-9]{1,20}$/.test(id) || BigInt(id) > 0xffff_ffff_ffff_ffffn) return null;
+  return `/app/?tab=${template}&ref=${encodeURIComponent(id)}`;
+}
+export function entryRecordHref(entry: LedgerEntry, current: { network: string; contractId: string; mock: boolean }): string | null {
+  if (!current.mock && (entry.network !== current.network || entry.contractId !== current.contractId)) return null;
+  return recordHref(entry.template, entry.refId);
+}
+export function transactionTemplate(action: string): TemplateName {
+  if (action.includes("pod")) return "pod";
+  if (action.includes("trigger") || action === "attest") return "trigger";
+  if (action.includes("mandate") || action === "envoy_claim") return "envoy";
+  return "fade";
+}
+/** Recovered confirmations add evidence, not guessed amounts or simulated outcomes. */
+export function recoverTransactionEntries(scope?: TransactionScope): void {
+  const entries = load();
+  for (const attempt of listTransactionAttempts(scope)) {
+    if (attempt.status !== "success" || attempt.recorded || attempt.refId === null || entries.some(e => e.txHash === attempt.hash)) continue;
+    const entry = logEntry({ template: transactionTemplate(attempt.action), action: attempt.action, refId: attempt.refId,
+      amount: null, status: "recorded", detail: "Transaction confirmed by RPC. Open the record for its current state.",
+      txHash: attempt.hash, ledger: attempt.ledger, account: attempt.account, network: attempt.network, contractId: attempt.contractId });
+    entries.push(entry);
+  }
+}
+
 export function clearLog(): void {
+  volatileEntries = null;
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(LOG_KEY);
+  try { window.localStorage.removeItem(LOG_KEY); } catch { volatileEntries = []; }
 }
 
 // ---------------------------------------------------------------------------

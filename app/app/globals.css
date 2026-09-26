@@ -4,51 +4,68 @@
 
 /* Self-hosted fonts (static export; no build-time fetch). display=swap. */
 @font-face {
-  font-family: "DM Serif Display";
-  src: url("/fonts/dm-serif-display-400.woff2") format("woff2");
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Inter";
-  src: url("/fonts/inter-400.woff2") format("woff2");
+  font-family: "Bricolage Grotesque";
+  src: url("/fonts/bricolage-var.woff2") format("woff2");
   font-weight: 100 900;
   font-display: swap;
 }
 @font-face {
-  font-family: "IBM Plex Mono";
-  src: url("/fonts/ibm-plex-mono-400.woff2") format("woff2");
+  font-family: "Instrument Sans";
+  src: url("/fonts/instrsans-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Mono";
+  src: url("/fonts/space-mono-400.woff2") format("woff2");
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
-  font-family: "IBM Plex Mono";
-  src: url("/fonts/ibm-plex-mono-500.woff2") format("woff2");
-  font-weight: 500;
+  font-family: "Space Mono";
+  src: url("/fonts/space-mono-700.woff2") format("woff2");
+  font-weight: 700;
   font-display: swap;
 }
 
 :root {
-  --font-serif: "DM Serif Display", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-serif: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, Menlo, monospace;
 }
 
 /* ------------------------------------------------------------------
-   Agyion — warm editorial design system (design_brief §1–§2)
-   No pure black/white surfaces, no blue, no cross-hue gradients.
+   agyionlabs — landing design language on the app console.
+   Tokens mirror landing/src/config.ts + base.css exactly:
+   canvas #000, surface #121512, ink #fff, accent #1fd48c,
+   muted #8a8a8a, faint #666, depth zones abyss/deep/twilight.
 ------------------------------------------------------------------- */
 
 :root {
-  --bg: #faf6f3;
-  --surface: #f5ece5;
-  --ink: #3c3835;
-  --muted: #aeaaa7;
-  --accent: #bc773f;
-  --ember: #8f4e2a;
-  --olive: #6b7256;
-  --sand: #dec9b8;
-  --hairline: #eee7e0;
+  --canvas: #000000;
+  --bg: #000000;
+  --surface: #121512;
+  --ink: #ffffff;
+  --muted: #8a8a8a;
+  --faint: #666666;
+  --accent: #1fd48c;
+  --ember: #f2a65a; /* warm alarm — below zero, expired, rejected, mock */
+  --olive: #35c77f; /* executed / opened — success */
+  --sand: #26302a; /* decorative lifelines inside visualizations */
+  --paper: #000000; /* curve handles sit on the canvas */
+  --hairline: rgba(255, 255, 255, 0.14);
+  --hairline-strong: rgba(255, 255, 255, 0.26);
+  /* depth zones ("scroll = descent") — abyss/deep reserved for
+   * footers, empty states and accent wells */
+  --abyss: #04100b;
+  --deep: #0e2c22;
+  --twilight: #2f6b53;
+  /* fluid type + geometry + easings (landing base.css) */
+  --display-xs: clamp(2rem, 1.6rem + 1.8vw, 3.125rem);
+  --pill-radius: 6px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snap: cubic-bezier(0.19, 1, 0.22, 1);
+  --side-pad: clamp(18px, 6vw, 28px);
 }
 
 html {
@@ -64,8 +81,8 @@ body {
 }
 
 ::selection {
-  background: #dec9b8;
-  color: #3c3835;
+  background: var(--accent);
+  color: #000;
 }
 
 input,
@@ -87,22 +104,292 @@ a:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-/* Serif display defaults (design_brief §2) */
+/* Display defaults — landing language: Bricolage 800, tight track */
 .display {
-  font-family: var(--font-serif), Georgia, serif;
-  letter-spacing: -0.5px;
+  font-family: var(--font-serif), system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
-/* Eyebrow pattern: small uppercase label in terracotta */
+/* Mono kicker with leading rule — the landing eyebrow */
 .eyebrow {
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--accent);
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
+.eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 22px;
+  height: 1px;
+  margin-right: 10px;
+  vertical-align: middle;
+  background: var(--accent);
 }
 
-/* Duplicate-text hover: visible label slides up, duplicate slides in (§3.3) */
+/* ------------------------------------------------------------------
+   Mini ledger hero — the landing LedgerHero composition scaled down
+   for a console: 3-cell mono strip, solid + outline word pair,
+   hairline that draws itself in, right-aligned desc. Pure CSS entrance
+   (panels remount per tab switch, so mount == enter).
+------------------------------------------------------------------- */
+
+.panel-hero {
+  position: relative;
+  padding-bottom: 26px;
+}
+
+.panel-hero__strip {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.panel-hero__cell:nth-child(2) {
+  text-align: center;
+  color: var(--faint);
+}
+.panel-hero__cell:nth-child(3) {
+  text-align: right;
+}
+.panel-hero__cell > span {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: hero-rise 0.6s var(--ease-out) forwards;
+}
+.panel-hero__cell:nth-child(1) > span { animation-delay: 0.05s; }
+.panel-hero__cell:nth-child(2) > span { animation-delay: 0.14s; }
+.panel-hero__cell:nth-child(3) > span { animation-delay: 0.23s; }
+
+.panel-hero__words {
+  margin: 22px 0 0;
+  line-height: 0.95;
+}
+
+.panel-hero__mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.09em; /* descenders stay visible inside the mask */
+}
+
+.panel-hero__w1 {
+  display: block;
+  font-family: var(--font-serif), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(30px, 4.4vw, 54px);
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  transform: translateY(112%);
+  animation: hero-word 0.9s var(--ease-out) 0.1s forwards;
+}
+
+.panel-hero__w2 {
+  display: block;
+  margin-left: clamp(22px, 7vw, 110px);
+  margin-top: -0.06em;
+  font-family: var(--font-serif), system-ui, sans-serif;
+  font-weight: 340;
+  font-size: clamp(30px, 4.4vw, 54px);
+  letter-spacing: -0.02em;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--ink);
+  transform: translateY(112%);
+  animation: hero-word 0.9s var(--ease-out) 0.22s forwards;
+}
+
+.panel-hero__foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-top: 22px;
+}
+
+.panel-hero__rule {
+  flex: 1 1 auto;
+  height: 1px;
+  margin-bottom: 8px;
+  background: var(--hairline);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: hero-rule 1s var(--ease-out) 0.4s forwards;
+}
+
+.panel-hero__desc {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.65;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: right;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: hero-rise 0.7s var(--ease-out) 0.45s forwards;
+}
+
+@keyframes hero-rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes hero-word {
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes hero-rule {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (max-width: 767px) {
+  .panel-hero__strip {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 6px;
+    font-size: 9px;
+  }
+  .panel-hero__cell:nth-child(2) {
+    text-align: right;
+  }
+  .panel-hero__cell:nth-child(3) {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+  .panel-hero__foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .panel-hero__rule {
+    order: 2;
+  }
+  .panel-hero__desc {
+    text-align: left;
+    max-width: 46ch;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Lifecycle chip — mono micro-label, hairline pill, status dot
+   (the landing pg-life__chip, console-sized).
+------------------------------------------------------------------- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.chip__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  flex: none;
+}
+.chip--live .chip__dot {
+  animation: chip-pulse 1.6s ease-in-out infinite;
+}
+@keyframes chip-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Buttons — primary: accent fill, ink sweep on hover; secondary:
+   hairline outline. Mono uppercase labels, max radius --pill-radius.
+------------------------------------------------------------------- */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: 100%;
+  vertical-align: middle;
+  text-align: center;
+  white-space: normal;
+  overflow: hidden;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: var(--pill-radius);
+  transition:
+    color 250ms var(--ease-out),
+    border-color 250ms var(--ease-out),
+    background-color 250ms var(--ease-out);
+  cursor: pointer;
+  user-select: none;
+}
+.btn:disabled {
+  cursor: not-allowed;
+}
+.btn > * {
+  position: relative;
+  z-index: 1;
+}
+.btn__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 1;
+}
+.btn__icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.btn__sweep {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 350ms var(--ease-out);
+}
+.btn:hover:not(:disabled) .btn__sweep {
+  transform: scaleX(1);
+}
+
+/* Duplicate-text hover: visible label slides up, duplicate slides in */
 .dup-hover {
   position: relative;
   display: inline-block;
@@ -112,7 +399,7 @@ a:focus-visible {
 .dup-hover > .dup-a,
 .dup-hover > .dup-b {
   display: block;
-  transition: transform 300ms ease-out;
+  transition: transform 300ms var(--ease-out);
 }
 .dup-hover > .dup-b {
   position: absolute;
@@ -126,15 +413,15 @@ a:focus-visible {
   transform: translateY(0);
 }
 
-/* Warm paper grain for placeholder media wells (risograph feel, CSS-only) */
+/* Dark grain for placeholder media wells + abyss accent surfaces */
 .grain {
   background-image:
-    radial-gradient(circle at 18% 24%, rgba(188, 119, 63, 0.1), transparent 42%),
-    radial-gradient(circle at 82% 70%, rgba(143, 78, 42, 0.08), transparent 46%),
+    radial-gradient(circle at 18% 24%, rgba(31, 212, 140, 0.08), transparent 42%),
+    radial-gradient(circle at 82% 70%, rgba(47, 107, 83, 0.12), transparent 46%),
     repeating-linear-gradient(
       0deg,
-      rgba(60, 56, 53, 0.025) 0px,
-      rgba(60, 56, 53, 0.025) 1px,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 1px,
       transparent 1px,
       transparent 3px
     );
@@ -142,35 +429,35 @@ a:focus-visible {
 }
 .grain-dark {
   background-image:
-    radial-gradient(circle at 22% 30%, rgba(207, 136, 80, 0.12), transparent 44%),
+    radial-gradient(circle at 22% 30%, rgba(31, 212, 140, 0.1), transparent 44%),
     repeating-linear-gradient(
       0deg,
-      rgba(243, 236, 228, 0.03) 0px,
-      rgba(243, 236, 228, 0.03) 1px,
+      rgba(255, 255, 255, 0.03) 0px,
+      rgba(255, 255, 255, 0.03) 1px,
       transparent 1px,
       transparent 3px
     );
-  background-color: #2b2521;
+  background-color: var(--abyss);
 }
 
-/* Ledger table hairlines (§5) */
+/* Ledger table hairlines */
 .ledger-row {
   border-bottom: 1px solid var(--hairline);
   transition:
     border-color 200ms ease,
-    transform 200ms ease;
+    background-color 200ms ease;
 }
 .ledger-row:hover {
-  border-bottom-color: var(--sand);
-  transform: translateX(2px);
+  border-bottom-color: var(--hairline-strong);
+  background: rgba(255, 255, 255, 0.02);
 }
 
-/* Template cards — hover layer shift (v3, replaces scroll parallax) */
+/* Template cards — hover layer shift (landing page only) */
 .template-card {
   transition: border-color 300ms ease;
 }
 .template-card:hover {
-  border-color: var(--sand);
+  border-color: var(--hairline-strong);
 }
 .template-card .layer-media,
 .template-card .layer-chip {
@@ -209,7 +496,7 @@ a:focus-visible {
   }
 }
 
-/* Slow footer strip (the only marquee allowed — §4.6) */
+/* Slow footer strip (the only marquee allowed) */
 @keyframes strip-scroll {
   from {
     transform: translateX(0);
@@ -225,13 +512,24 @@ a:focus-visible {
   animation-play-state: paused;
 }
 
-/* Motion ethics: reduced motion collapses ambient animation (§3.4) */
+/* Motion ethics: reduced motion collapses ambient animation */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
   .strip {
     animation: none;
+  }
+  .chip--live .chip__dot {
+    animation: none;
+  }
+  .panel-hero__cell > span,
+  .panel-hero__w1,
+  .panel-hero__w2,
+  .panel-hero__rule,
+  .panel-hero__desc {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
   }
   .dup-hover > .dup-a,
   .dup-hover > .dup-b {
@@ -242,5 +540,8 @@ a:focus-visible {
   }
   .dup-hover:hover > .dup-b {
     display: none;
+  }
+  .btn__sweep {
+    transition: none;
   }
 }
