@@ -80,8 +80,8 @@ export default function NavPill() {
   return (
     <header className="orbital-nav" data-surface={location.pathname === '/' ? 'home' : 'detail'} ref={headerRef}>
       <Link to="/" className="orbital-brand" aria-label="Agyion Labs home" onClick={closeMenu}>
-        <svg viewBox="0 0 32 32" width="29" height="29" aria-hidden="true"><circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="1.4" /><path d="M3 22L29 10M9 29L23 3" stroke="currentColor" strokeWidth="1.4" /><circle cx="16" cy="16" r="3" fill="currentColor" /></svg>
-        <span>agyion<span className="orbital-brand__suffix">labs</span></span>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="16" rx="14" ry="5" transform="rotate(-30 16 16)" /><circle cx="16" cy="16" r="8" /></svg>
+        agyion<span className="orbital-brand__suffix">labs</span>
       </Link>
       <nav className="orbital-nav__desktop" aria-label="Main navigation">
         {sections.map(section => <Link key={section.id} to={sectionHref(section.id)} aria-current={currentSection(section.id)} aria-haspopup={section.id === 'how-it-works' ? 'dialog' : undefined} aria-controls={section.id === 'how-it-works' ? 'how-it-works-dialog' : undefined} onClick={event => visitSection(event, section.id)}>{section.label}</Link>)}

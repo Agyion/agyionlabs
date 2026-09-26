@@ -22,9 +22,11 @@ body { background: var(--void); color: var(--starlight); }
   color: var(--starlight); font-size: 13px;
 }
 .orbital-nav.is-scrolled { background: #0c1016; border-color: rgba(167, 173, 184, .32); }
-.orbital-brand { display: inline-flex; align-items: center; gap: 10px; font: 600 26px/1 var(--font-display); letter-spacing: -.05em; white-space: nowrap; }
-.orbital-brand svg { color: var(--accretion); flex: 0 0 auto; }
-.orbital-brand__suffix { font-weight: 400; color: var(--telemetry); }
+/* Match the app's station-brand; the existing app logo is the reference. */
+.orbital-brand { display: inline-flex; align-items: center; gap: 9px; font: 650 24px/1.5 "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif; letter-spacing: -1.3px; color: #f2eee5; white-space: nowrap; }
+.orbital-brand svg { width: 30px; height: 30px; fill: none; stroke: #e8b77b; stroke-width: 1.3; margin-right: 5px; flex: 0 0 auto; transition: transform 1s cubic-bezier(.22,1,.36,1); }
+.orbital-brand:hover svg { transform: rotate(24deg); }
+.orbital-brand__suffix { font-weight: 400; color: #aab2be; margin-left: -7px; }
 .orbital-nav__desktop { display: flex; align-items: center; gap: 30px; margin: 0 auto; }
 .orbital-nav__desktop a { color: #c6c7cc; white-space: nowrap; transition: color .18s; }
 .orbital-nav__desktop a:hover, .orbital-nav__desktop a[aria-current] { color: var(--accretion); }
@@ -182,8 +184,6 @@ body { background: var(--void); color: var(--starlight); }
 @media (max-width: 800px) {
   html { scroll-padding-top: 94px; }
   .orbital-nav { top: 12px; left: 18px; right: 18px; min-height: 64px; padding: 9px 12px; gap: 18px; }
-  .orbital-brand { font-size: 24px; gap: 9px; }
-  .orbital-brand svg { width: 24px; height: 24px; }
   .orbital-nav__desktop { display: none; }
   .orbital-nav__actions { gap: 13px; }
   .orbital-nav__launch { min-height: 42px; padding: 8px 11px; gap: 12px; font-size: 12px; }
@@ -262,8 +262,6 @@ body { background: var(--void); color: var(--starlight); }
 }
 @media (max-width: 390px) {
   .orbital-nav { left: 12px; right: 12px; gap: 10px; }
-  .orbital-brand { font-size: 21px; gap: 7px; }
-  .orbital-brand svg { width: 22px; height: 22px; }
   .orbital-nav__actions { gap: 8px; }
   .orbital-nav__launch { padding: 8px 9px; gap: 8px; font-size: 11px; }
   .orbital-nav__toggle { font-size: 11px; gap: 5px; min-width: 53px; }
@@ -273,7 +271,10 @@ body { background: var(--void); color: var(--starlight); }
   .process-chain h3 { font-size: 22px; }
 }
 @media (max-width: 360px) {
-  .orbital-brand__suffix { display: none; }
+  .orbital-nav { gap: 4px; }
+  .orbital-nav__actions { gap: 4px; }
+  .orbital-nav__launch { padding-inline: 6px; gap: 4px; }
+  .orbital-nav__toggle { min-width: 44px; gap: 3px; }
   .orbital-footer__invitation { flex-direction: column; align-items: start; }
   .process-chain li { grid-template-columns: 78px minmax(0, 1fr); }
   .process-art { width: 78px; }
@@ -292,8 +293,6 @@ body { background: var(--void); color: var(--starlight); }
 
 /* The landing is one continuous world; the controls stay in screen space. */
 .orbital-nav[data-surface="home"] { top: 22px; min-height: 48px; padding: 0; background: transparent; border: 0; border-radius: 0; box-shadow: none; color: #f7f3ec; }
-.orbital-nav[data-surface="home"] .orbital-brand { font-size: 22px; gap: 9px; }
-.orbital-nav[data-surface="home"] .orbital-brand svg { width: 24px; height: 24px; color: #f3b477; }
 .orbital-nav[data-surface="home"] .orbital-nav__desktop { gap: 33px; }
 .orbital-nav[data-surface="home"] .orbital-nav__desktop a { color: #d3d7df; text-shadow: 0 1px 8px #050609; }
 .orbital-nav[data-surface="home"] .orbital-nav__desktop a:hover,
@@ -391,11 +390,12 @@ body { background: var(--void); color: var(--starlight); }
 }
 @media (max-width: 800px) {
   .orbital-nav[data-surface="home"] { top: 15px; left: 20px; right: 20px; min-height: 48px; padding: 0; }
-  .orbital-nav[data-surface="home"] .orbital-brand { font-size: 22px; gap: 8px; }
   .orbital-nav[data-surface="home"] .orbital-nav__toggle { color: #f7f3ec; text-shadow: 0 1px 8px #050609; }
   .orbital-nav[data-surface="home"] .orbital-nav__mobile { top: calc(100% + 10px); background: #0c1119; }
 }
 @media (max-width: 600px) {
+  .orbital-brand { font-size: 21px; }
+  .orbital-brand svg { width: 25px; height: 25px; margin-right: 0; }
   .orbital-home--immersive .immersive-world { min-height: max(740px, 100svh); }
   .orbital-home--immersive .immersive-intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px 16px; width: 100%; padding: 100px var(--orbital-gutter) 8px; }
   .orbital-home--immersive .immersive-wordmark { grid-column: 1 / -1; display: flex; align-items: baseline; gap: .1em; white-space: nowrap; font-size: clamp(48px, 15vw, 72px); line-height: .94; letter-spacing: -.045em; }
