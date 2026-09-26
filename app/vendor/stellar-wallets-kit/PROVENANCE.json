@@ -13,7 +13,15 @@
     "lobstr",
     "wallet-connect"
   ],
-  "modifications": "No retained runtime or declaration file modified; only package identity, exports and reachable dependencies narrowed.",
+  "modifications": "Package identity, exports and reachable dependencies narrowed; one reviewed authModal readiness patch, with all remaining runtime/declaration files unchanged.",
+  "patches": [
+    {
+      "file": "esm/sdk/kit.js",
+      "reason": "Complete provider availability before rendering authModal so its first visible close cannot precede the close-event subscription.",
+      "originalSha256": "97a32644eb15dcbc59897742642075677df7a78489d5b7d68dcd07835e0dd5fb",
+      "patchedSha256": "a7fc479f0065b6eb84f7756103b9135d0b5b71be82e6af0c543a92bc376e2ffc"
+    }
+  ],
   "files": {
     "esm/components/app.d.ts": "f82571d6a0fe6637b78839346c708ce9f64c93b476a7a23df300700b8c4dada5",
     "esm/components/app.js": "ddb433a8f127adb7a6e0e5423cf25a13f46bd7fa67a083daa332f79896baa55e",
@@ -72,7 +80,7 @@
     "esm/deps/jsr.io/@std/encoding/1.0.11/varint.d.ts": "c39d20aae2d39cf3a9c5162df02bda07a57b7cd46f45042fb9af5650dc2a5669",
     "esm/deps/jsr.io/@std/encoding/1.0.11/varint.js": "1ed47eb014cc44ae40277309318217e7a0d3984ddebcbdcbfce0d737eed40ff9",
     "esm/sdk/kit.d.ts": "ade60c90f0e2c4c3350116fae4c13c5f08d8e0171a859847f14bb1c586c0c21a",
-    "esm/sdk/kit.js": "97a32644eb15dcbc59897742642075677df7a78489d5b7d68dcd07835e0dd5fb",
+    "esm/sdk/kit.js": "a7fc479f0065b6eb84f7756103b9135d0b5b71be82e6af0c543a92bc376e2ffc",
     "esm/sdk/mod.d.ts": "d873742575f778d0191b79ab96a1154f34e692fcd4082f94ff5dad89a4daf792",
     "esm/sdk/mod.js": "d873742575f778d0191b79ab96a1154f34e692fcd4082f94ff5dad89a4daf792",
     "esm/sdk/modules/freighter.module.d.ts": "4413da597a27f00306d5e219831a194d7df9630eac659a05426f8cf202567b9c",

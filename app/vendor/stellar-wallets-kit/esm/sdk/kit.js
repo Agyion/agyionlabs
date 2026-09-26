@@ -189,6 +189,7 @@ export class StellarWalletsKit {
      * it sets the selected wallet as the currently active module and then it requests the public key from the wallet.
      */
     static async authModal(params) {
+        await StellarWalletsKit.refreshSupportedWallets();
         resetHistory();
         navigateTo(SwkAppRoute.AUTH_OPTIONS);
         mode.value = params?.container ? SwkAppMode.BLOCK : SwkAppMode.FIXED;
@@ -197,7 +198,6 @@ export class StellarWalletsKit {
         render(html `
         <${SwkApp} />
       `, wrapper);
-        await StellarWalletsKit.refreshSupportedWallets();
         const subs = [];
         const close = () => {
             for (const sub of subs)

@@ -27,12 +27,24 @@ try {
   }));
   const pending = Object.values(exports).map((entry) => entry.import);
   const files = {};
+  const patches = [];
   const imports = new Set();
   while (pending.length) {
     const file = path.posix.normalize(pending.pop());
     if (files[file]) continue;
     assert(file.startsWith('esm/'), 'Import escapes ESM source');
-    const contents = fs.readFileSync(path.join(upstream, file));
+    let contents = fs.readFileSync(path.join(upstream, file));
+    if (file === 'esm/sdk/kit.js') {
+      const originalSha256 = createHash('sha256').update(contents).digest('hex');
+      assert.equal(originalSha256, '97a32644eb15dcbc59897742642075677df7a78489d5b7d68dcd07835e0dd5fb', 'Review the modal patch against changed upstream source');
+      const before = contents.toString('utf8');
+      const start = '    static async authModal(params) {\n';
+      const lateRefresh = '        await StellarWalletsKit.refreshSupportedWallets();\n        const subs = [];';
+      assert.equal(before.split(start).length, 2, 'Expected exactly one authModal');
+      assert.equal(before.split(lateRefresh).length, 2, 'Expected exactly one late provider refresh');
+      contents = Buffer.from(before.replace(start, start + '        await StellarWalletsKit.refreshSupportedWallets();\n').replace(lateRefresh, '        const subs = [];'));
+      patches.push({ file, reason: 'Complete provider availability before rendering authModal so its first visible close cannot precede the close-event subscription.', originalSha256, patchedSha256: createHash('sha256').update(contents).digest('hex') });
+    }
     files[file] = createHash('sha256').update(contents).digest('hex');
     for (const { fileName: specifier } of ts.preProcessFile(contents.toString('utf8'), true, true).importedFiles) {
       if (specifier.startsWith('.')) pending.push(path.posix.join(path.posix.dirname(file), specifier));
@@ -50,21 +62,22 @@ try {
     return [name, upstreamPackage.dependencies[name]];
   }));
   const pkg = {
-    name: '@agyion/stellar-wallets-kit', version: '2.7.0-agyion.1', private: true, type: 'module',
-    description: 'Unchanged Stellar Wallets Kit 2.7.0 ESM closure for Agyion selected wallets; see UPSTREAM.md',
+    name: '@agyion/stellar-wallets-kit', version: '2.7.0-agyion.2', private: true, type: 'module',
+    description: 'Selected Stellar Wallets Kit 2.7.0 ESM closure with an explicit modal readiness fix; see UPSTREAM.md',
     license: 'MIT', exports, files: ['esm', 'LICENSE', 'LICENSE.std-encoding', 'PROVENANCE.json', 'UPSTREAM.md'], dependencies,
   };
   const provenance = {
     upstream: { name: upstreamPackage.name, version: upstreamPackage.version, tarball: 'https://registry.npmjs.org/@creit.tech/stellar-wallets-kit/-/stellar-wallets-kit-2.7.0.tgz', integrity },
     selection: ['sdk', 'types', 'freighter', 'xbull', 'lobstr', 'wallet-connect'],
-    modifications: 'No retained runtime or declaration file modified; only package identity, exports and reachable dependencies narrowed.',
+    modifications: 'Package identity, exports and reachable dependencies narrowed; one reviewed authModal readiness patch, with all remaining runtime/declaration files unchanged.',
+    patches,
     files: Object.fromEntries(Object.entries(files).sort(([a], [b]) => a.localeCompare(b))),
   };
   for (const [name, value] of [['package.json', pkg], ['PROVENANCE.json', provenance]]) {
     if (verify) assert.deepEqual(JSON.parse(fs.readFileSync(path.join(output, name), 'utf8')), value, name);
     else fs.writeFileSync(path.join(output, name), JSON.stringify(value, null, 2) + '\n');
   }
-  console.log(`${verify ? 'Verified' : 'Selected'} ${Object.keys(files).length} unchanged upstream files; ${imports.size} direct dependency packages.`);
+  console.log(`${verify ? 'Verified' : 'Selected'} ${Object.keys(files).length - patches.length} unchanged upstream files and ${patches.length} explicit patched file; ${imports.size} direct dependency packages.`);
 } finally {
   fs.rmSync(temp, { recursive: true, force: true });
 }

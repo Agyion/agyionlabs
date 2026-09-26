@@ -88,6 +88,30 @@ describe('retained upstream wallet behavior', () => {
 });
 
 describe('retained upstream wallet modal', () => {
+  it('handles the first visible close immediately even when a provider probe is slow', async () => {
+    // The app checks wrapper availability before opening the chooser, so the
+    // cached provider rows are already visible during its second probe.
+    await StellarWalletsKit.refreshSupportedWallets();
+    let finishProbe!: (value: { isConnected: boolean }) => void;
+    api.freighter.isConnected.mockReturnValue(new Promise((resolve) => { finishProbe = resolve; }));
+    const result = StellarWalletsKit.authModal();
+    let outcome: unknown;
+    void result.then((value) => { outcome = value; }, (error) => { outcome = error; });
+    try {
+      await vi.waitFor(() => expect(document.querySelector('.stellar-wallets-kit header button')).not.toBeNull(), { timeout: 2000 });
+      const close = document.querySelectorAll<HTMLButtonElement>('.stellar-wallets-kit header button');
+      close[close.length - 1].click();
+      await vi.waitFor(() => expect(document.querySelector('.stellar-wallets-kit')).toBeNull(), { timeout: 200 });
+      expect(outcome).toMatchObject({ message: 'The user closed the modal.' });
+      expect(api.freighter.requestAccess).not.toHaveBeenCalled();
+    } finally {
+      finishProbe({ isConnected: false });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      const remainingClose = document.querySelectorAll<HTMLButtonElement>('.stellar-wallets-kit header button');
+      remainingClose[remainingClose.length - 1]?.click();
+      await result.catch(() => undefined);
+    }
+  });
   it('renders only configured providers and resolves selection through the actual SDK events', async () => {
     const selected = vi.fn(); const state = vi.fn();
     const stopSelected = StellarWalletsKit.on(KitEventType.WALLET_SELECTED, selected);

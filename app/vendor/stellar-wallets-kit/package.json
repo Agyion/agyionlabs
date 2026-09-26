@@ -1,9 +1,9 @@
 {
   "name": "@agyion/stellar-wallets-kit",
-  "version": "2.7.0-agyion.1",
+  "version": "2.7.0-agyion.2",
   "private": true,
   "type": "module",
-  "description": "Unchanged Stellar Wallets Kit 2.7.0 ESM closure for Agyion selected wallets; see UPSTREAM.md",
+  "description": "Selected Stellar Wallets Kit 2.7.0 ESM closure with an explicit modal readiness fix; see UPSTREAM.md",
   "license": "MIT",
   "exports": {
     "./sdk": {

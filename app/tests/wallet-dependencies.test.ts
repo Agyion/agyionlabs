@@ -10,7 +10,7 @@ const json = (file: string) => JSON.parse(read(file));
 const packageName = (specifier: string) => specifier.startsWith('@') ? specifier.split('/').slice(0, 2).join('/') : specifier.split('/')[0];
 
 describe('selected wallet dependency boundary', () => {
-  it('contains the unchanged upstream import closure for every retained wallet and modal', () => {
+  it('contains the verified selected import closure and only the declared modal readiness patch', () => {
     const provenance = json('PROVENANCE.json');
     const pkg = json('package.json');
     const pending = Object.values(pkg.exports).map((entry) => (entry as { import: string }).import);
@@ -34,6 +34,14 @@ describe('selected wallet dependency boundary', () => {
     expect(seen.has('esm/components/pages/auth-options.page.js')).toBe(true);
     expect(pkg.name).toBe('@agyion/stellar-wallets-kit');
     expect(provenance.upstream.version).toBe('2.7.0');
+    expect(pkg.version).toBe('2.7.0-agyion.2');
+    expect(provenance.patches).toEqual([{
+      file: 'esm/sdk/kit.js',
+      reason: expect.any(String),
+      originalSha256: '97a32644eb15dcbc59897742642075677df7a78489d5b7d68dcd07835e0dd5fb',
+      patchedSha256: provenance.files['esm/sdk/kit.js'],
+    }]);
+    expect(provenance.patches[0].originalSha256).not.toBe(provenance.patches[0].patchedSha256);
   });
 
   it('physically excludes unsupported wallet modules and their vulnerable dependency chains', async () => {
