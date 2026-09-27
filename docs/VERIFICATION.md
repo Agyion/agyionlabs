@@ -6,9 +6,9 @@ This record describes the development review on **27 September 2026**. The curre
 
 | Evidence | Files | Current lines |
 | --- | ---: | ---: |
-| Exact current bytes with complete source-read evidence | 471 | 49,478 |
+| Exact current bytes with complete source-read evidence | 479 | 51,214 |
 | Verified reviewed baseline plus completely reviewed differences | 99 | 23,951 |
-| Total first-party authored scope | 570 | 73,429 |
+| Total first-party authored scope | 578 | 75,165 |
 | Unresolved files or line ranges at this snapshot | 0 | 0 |
 
 The first row uses explicit complete reading ranges matched to each current file hash. It does not mean every file was read again when this manifest was generated. The second row is composed coverage: the previously reviewed baseline was checked against Git bytes, every difference was reviewed, and unchanged, changed and deleted ranges were reconciled. It is not a fresh full-file reread.
@@ -16,6 +16,8 @@ The first row uses explicit complete reading ranges matched to each current file
 The manifest lists each file's relative path, SHA-256, line count and review method. The scope includes first-party implementation, tests, configuration, styles, handwritten API declarations, vector assets and database migrations. Generated bindings, prover constants, cryptographic parameters, proof fixtures, geographic data, lockfiles, copied vendor code and dependency implementations are outside the authored totals. Ignored files, documentation, licenses and binary media are also excluded. The generated manifest excludes itself to avoid recursive hashing.
 
 ## Executed verification and limits
+
+The [offline V4 journal foundation](PUBLIC_V4_LIFECYCLE_PREPARATION.md), source `d4f208b3f10f0947dbf8934f271c916ca60ec4f8`, adds eight fully reviewed helper/test files. The local complete workspace passed 1,654 checks with eight default skips; the [exact hosted source run](https://github.com/Agyion/agyionlabs/actions/runs/36337259780) passed both jobs with 1,653 workspace checks and nine skips. The extra hosted skip is the local compiled-WASM snapshot case. The local final journal suite passed nineteen default checks and, separately, twenty with real snapshot/fee decoders enabled. These overlapping scopes include source contention, process death after signed persistence, expired original-hash recovery and a retained included failure. A separate offline ABI check covered all 39 scheduled envelopes, including 38 kernel calls. Production observation/state policies, the CLI, identity/funding preparation and live 39-step execution remain unfinished. No new chain transaction, activation or website publication occurred.
 
 The separate [offline V4 lifecycle foundation](PUBLIC_V4_LIFECYCLE_PREPARATION.md), source `d94ada7c1ded15b644b2f68c5f78b06306c65598`, adds four reviewed tool/test files. Its local complete workspace passed 1,476 checks with seven default optional skips, including 902 application and 182 tooling tests. Eight plan and thirteen grouped envelope tests are included in those totals. A separate check matched all twelve kernel method argument layouts against the exact compiled V4 WASM. Both jobs in the [exact hosted source run](https://github.com/Agyion/agyionlabs/actions/runs/36334160853) passed. This increment does not include a live executor, new funding, signed chain transaction, contract activation or website publication. The website release and its historical verification below remain unchanged.
 

@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T16:51:56.777855+00:00",
-  "sourceBaselineCommit": "d94ada7c1ded15b644b2f68c5f78b06306c65598",
+  "reviewedAt": "2026-09-27T17:43:38.138794+00:00",
+  "sourceBaselineCommit": "d4f208b3f10f0947dbf8934f271c916ca60ec4f8",
   "websiteRelease": {
     "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
     "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
@@ -42,12 +42,12 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 570,
-    "lines": 73429,
+    "files": 578,
+    "lines": 75165,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 471,
-        "lines": 49478
+        "files": 479,
+        "lines": 51214
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 99,
@@ -2965,15 +2965,39 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/lib/public-lifecycle-call.mjs",
+      "sha256": "63bd91fc037cdba4ce7d97282f192a3af3d1b35fcaed610687e23c20431d543d",
+      "lines": 133,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/lib/public-lifecycle-envelope.mjs",
       "sha256": "70fae6615d71fa154986200f87fc799dfcf70a1768b8bfff7b7ff6d9b74c3a25",
       "lines": 173,
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/lib/public-lifecycle-fees.mjs",
+      "sha256": "b4c9655f3c8df1581af5b623f57df02f81f681f1647b99b0d63d2882b25737bb",
+      "lines": 196,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-lifecycle-journal.mjs",
+      "sha256": "8fe722f57b2699a92db7f8ea2a1d27853bdfed83a7db9fd8a37be8aca38e0f3a",
+      "lines": 323,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/lib/public-lifecycle-plan.mjs",
       "sha256": "02b85dfd1d2c83b9e3ec49fb05b8475daf640cacc635af83e983f2d68f6020a4",
       "lines": 145,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-lifecycle-readback.mjs",
+      "sha256": "6fe966346cf06e2e32a3c45f04cbf61ec6bd25e89b6327a18a89311a8bfe1c7c",
+      "lines": 236,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3157,15 +3181,39 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/public-lifecycle-call.test.mjs",
+      "sha256": "f6015593cb812937d42b98f190b53230c407727bd949ebff7fdc13af20cddc23",
+      "lines": 149,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/public-lifecycle-envelope.test.mjs",
       "sha256": "f817a0741745bd2d49cb10b7949f60b93ae43f5f8b2d36906721e47db7503e47",
       "lines": 239,
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/public-lifecycle-fees.test.mjs",
+      "sha256": "a753d510ecbcfb3eb5becc9f6c5db3c4b7d7aa34d47db9537b8d5c3206bfd348",
+      "lines": 178,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-journal.test.mjs",
+      "sha256": "daf630b7080efa8f80124f037df01cda45da09580d40287d76ab356b731e2d2a",
+      "lines": 273,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/public-lifecycle-plan.test.mjs",
       "sha256": "d3c844ebdccf2bbe5160aa77f57cc5952fd8fcaf7d6fc94728b7c2d3a8f76342",
       "lines": 127,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-readback.test.mjs",
+      "sha256": "a77a5ef819e32a837313a3b0ebbf0979da252d484834b695c397670842a119f0",
+      "lines": 248,
       "reviewKind": "complete-source-read"
     },
     {
@@ -4386,5 +4434,154 @@
       }
     ],
     "boundary": "Offline immutable schedule of 39 calls and strict signing-time envelope validation only. Existing source byte identities preserved. Synthetic offline signatures are test fixtures. No lifecycle executor, new live identities, funding or submissions, application activation or website deployment. Original website/source-guard evidence remains unchanged. No external audit or exploit-absence guarantee."
+  },
+  "publicV4JournalFoundation": {
+    "status": "offline-journal-foundation-verified",
+    "sourceCommit": "d4f208b3f10f0947dbf8934f271c916ca60ec4f8",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36337259780",
+    "sourceInventorySha256": "213b3ad13ffea017c075353b33f8a4e2799fa4d885fd6ac5a0324c1075a30ab7",
+    "newAuthoredFiles": 8,
+    "newAuthoredLines": 1736,
+    "localWorkspacePassed": 1654,
+    "localDefaultOptionalSkips": 8,
+    "hostedWorkspacePassed": 1653,
+    "hostedDefaultOptionalSkips": 9,
+    "callTests": 8,
+    "snapshotTestsLocal": 88,
+    "snapshotTestsHosted": 87,
+    "feeTests": 63,
+    "journalDefaultTests": 19,
+    "journalRealDecoderFullFileLocal": 20,
+    "compiledUnsignedCalls": 39,
+    "compiledKernelAbiCalls": 38,
+    "hostedApplicationAndContractJobs": "passed",
+    "evidence": [
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-journal-inventory/repository-inventory.json",
+        "sha256": "213b3ad13ffea017c075353b33f8a4e2799fa4d885fd6ac5a0324c1075a30ab7"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-journal-inventory/summary.json",
+        "sha256": "e2767561257cc9f3f46bba3b27e92cc937bae92616586840f55ceae5298fc1f4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-journal-inventory/independent-verification.json",
+        "sha256": "daf17db1d0e5d4a8c9493dd6280e893318c60a92f6bfa90f55b17add4dae8b2c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal-root-source-coverage.json",
+        "sha256": "df3cb906fdc8da6ab7c9b0280f58aefcaa330491f9ec82a4a43cace28ad827b4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal-local-test-summary.json",
+        "sha256": "786900513a7213925c23baf5549a99bb8040661b2dd84c416c872621c777bcbb"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal-foundation-workspace.log",
+        "sha256": "306f77c3995e451d0f27376f9021206fcdc22a41c52fa098c5b76b65d06537e9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal-hosted-ci.json",
+        "sha256": "fdd032a7ae1e0daefc48a208e52ea54467a3a1cdeb88a523a0cb828ed9c9e664"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal-hosted-ci.log",
+        "sha256": "1d3c11d1f6693e72996df602668cc93a8b72b952ce43b333e90621892e08bda9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal-hosted-test-summary.json",
+        "sha256": "185d8a8b5a603bc0cfc2efbd54072b5be14691ff828f47bbaae0a4c119ba80ed"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/call/report.json",
+        "sha256": "7e4acdeddf23826a212a97ebe117ab6d7581243e8d1c12dd5a126917e9b96168"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/call/compiled-calls.json",
+        "sha256": "cc1eb8e8743d5737d6fad8de48f3a88b5bbdd96495ee1ba9cca45eb0c81fc4cd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/call/check-compiled-calls.mjs",
+        "sha256": "4e640913c74ecfb1c86cf45d3a0b9987f75ba6dea5f75ec60a4b66cfbfeb2713"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/call/simulation-wire.json",
+        "sha256": "638682d10aacc51b0c3cb499098e258d248f7623b6aab33e0aca158911421e65"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/readback/REPORT.md",
+        "sha256": "359b90b814743399023cdca509d49b4c776c080a419790e35d10ddf082a409a9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/readback/evidence.json",
+        "sha256": "ad6a050031dff62dafacd92fd14772a675b649c2fce849c064bd40648f208985"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/readback/readback-source-coverage.json",
+        "sha256": "b23d28c61965eaa8f4df65355c29965e1eeb9b8b49e6835668e6438b92e73b31"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/readback/INDEPENDENT_REVIEW.md",
+        "sha256": "912a2537dbf3b6c62ff8d48a3279b78862ff399c5fdd8b8bd3c78c446f860254"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/readback/FEE_AND_DOC_REVIEW.md",
+        "sha256": "30ebedce2ca503a83f1ead59b79a11b430a4ef5406a7aa1605a3149accb96748"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/readback/fee-doc-review-coverage.json",
+        "sha256": "71b9a98bcab10c01f28d6729c6fd0510a4cd5d9819ee684355fba634573a5cf9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/fees/report.json",
+        "sha256": "d075c1ce05e397a09009c52a60d4e54ed030ac8e89b5c5a72af79f4d8589ddfb"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/fees/source-coverage.json",
+        "sha256": "1aedb6b99d9a1ed685f814c2c6da98cd9539ea7efcf404081b171bb7abb6612c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/fees/historical-fee-observations.json",
+        "sha256": "6bcd84d65210c878064fc540306d8f113363e15d5658a0b3766148b3da77b8f1"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/fees/call-independent-review.json",
+        "sha256": "f58f0116c03bb51455fb06d08afe6f2271d04207acbae5f548fa07cc651dd192"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal/REPORT.md",
+        "sha256": "48d00d2def0f812428054d102aac3f5658d0afa5e98bd16314eb13762e8d5b75"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal/source-coverage.json",
+        "sha256": "94e1e9afe7675ab084d88dc0ef866dde875c0a6db81c05561a654c9dfc03d369"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal/INDEPENDENT_REVIEW.md",
+        "sha256": "40fd69b17f8a551df7668a6946536f8c7131ff5ed35256a6bef8930c1e0ed290"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal/independent-source-coverage.json",
+        "sha256": "e518f068da3e1e4a74c482bf196bdf99c0d1e076dfb675377b17f45b1f28d986"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal/INCLUDED_FAILURE_ADDITIVE_REVIEW.md",
+        "sha256": "ffaa9abbc0b0e39f29744d08307255db3b35055d2bbd7a9f5c58aa20e440946a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal/included-failure-additive-review.json",
+        "sha256": "80b03864594fd6fd2c5568953316573b9e22de8409f64a194e02b7b21968d6e1"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal/final-default-with-failure.log",
+        "sha256": "e64e0c167ddf07c7f8a3f23846063b9060830eb3245ffb7a632d7d6539cb7de3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/journal/final-real-decoders-with-failure.log",
+        "sha256": "aec6dcd26556e6d1efaaeb85093c83e1dfed216b0b56e2240a786a2015246842"
+      }
+    ],
+    "behavior": "Exact immutable call binding, coherent full-code snapshots, full V4 fee/refund accounting, durable single-send claims and original-hash-only recovery. Included failures retain fee ceilings and block successors.",
+    "boundary": "Offline libraries only. Race/order units use synthetic seller and snapshot/fee doubles; separate opt-in uses real decoders and pinned WASM with synthetic ledger evidence. Production observation/state policies, CLI, protected identity preparation, funding and live 39-step execution are unfinished. Clean hosted application job lacks local compiled WASM and skips one extra snapshot case. No new live transactions, activation or website publication, external audit or exploit-absence guarantee. Prior evidence remains historical."
   }
 }
