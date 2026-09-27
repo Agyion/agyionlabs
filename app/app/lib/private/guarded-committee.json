@@ -1,0 +1,124 @@
+{
+  "config": {
+    "version": "1",
+    "suite": "experimental-babyjub-feldman-v1",
+    "domain": {
+      "networkId": "cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472",
+      "contractId": "11e3d1f5f55778a92a9080d8b3987fedecb561a64aae1894375db70797e6e212"
+    },
+    "epoch": "1",
+    "sessionId": "7b923376cc946cf9f1d2df487228884af08b202ef1ba783c4cc9ffa921b34d41",
+    "threshold": "3",
+    "trustees": [
+      {
+        "id": "1",
+        "authPublicKey": "7f32b4d260ba735a8b13a03fb4b1ea77165c79eedf843e299ea9f698b2e71340"
+      },
+      {
+        "id": "2",
+        "authPublicKey": "5247ef5c16e2d9af56df0461ab5b49aa40fbcb446253840659cba50a3f6c587c"
+      },
+      {
+        "id": "3",
+        "authPublicKey": "02d859aabde9a90fb31768b3a74c4434a0779bfa7b2901d855f30ac43925af85"
+      },
+      {
+        "id": "4",
+        "authPublicKey": "7e12a6696a733633578a90ffe349a881252c4378261090852ce1c198196ee11e"
+      },
+      {
+        "id": "5",
+        "authPublicKey": "389f2ae0de9001e3669fa80e508e661ffd9a32cf8f308147fb27249bf0cfbf20"
+      }
+    ]
+  },
+  "packages": [
+    {
+      "version": "1",
+      "configHash": "c142d168caa226c849a5a55e6b0d389fb326f113dc8a1973f4d5fdf77563e4d7",
+      "dealerId": "1",
+      "commitments": [
+        "6b1b270b1ceb812e163b6a1051ea81169f54a93d1f9641181e190ee52c3bd3af",
+        "291a20158a90452d89672f008e1c47ce1b3dfce07f412d1edffc1521e126a50d",
+        "9070acba3756105bacc9eb90688df9b689b6ab483a1693e42ca8e3057a1f0eaf"
+      ],
+      "signature": "2f9a44354532f5948122de1ac957fe766350b3774eabd37b479a912c17ff9319a17e588df7ff3bf648613d94782bc6d6be6e4c192893f814aa2fb3e7bd8f6808"
+    },
+    {
+      "version": "1",
+      "configHash": "c142d168caa226c849a5a55e6b0d389fb326f113dc8a1973f4d5fdf77563e4d7",
+      "dealerId": "2",
+      "commitments": [
+        "f04ae7d68a146f356becdd04114ff8ddaafca0f7647746d38b4f606b3e210517",
+        "57b3c08906222d527a223e23267d61d8cb967d9e7d9becf0ff8a2aaf5d8e48a9",
+        "d82b1a2ffb37e7eb7f9bec10eb1db8fa5229bd66e9452b94fadce74db0b4b584"
+      ],
+      "signature": "34e688979f3007f90f1b3f9700f339db0bd104ce384e18a0e4f442857d9e40665e1afd1efbf219f9a8ffa46d5e91aeb0d63a4218d4fc5dd65931a228fd893306"
+    },
+    {
+      "version": "1",
+      "configHash": "c142d168caa226c849a5a55e6b0d389fb326f113dc8a1973f4d5fdf77563e4d7",
+      "dealerId": "3",
+      "commitments": [
+        "3ad6f1dd09228105ef3de11b70ea9ea8bcb857c6ba5e688836b235c3cc9e1124",
+        "a878dd0aa41253ac5ecb8b3a4b2cf67aff7f3bc2e77a1b27bb128f08d68efd2b",
+        "c619f28ee84587d50efa5b8e31daaa53cbd15af3bcdb598c18c25e08f70a8225"
+      ],
+      "signature": "43388fb837614810c7690bcf4f5620db538de1abc2c0c15f882958c2e313d71593b3da3221f819eff82b7b1f91e506f9a38042f7efa0097e87ecbb953e6b250f"
+    },
+    {
+      "version": "1",
+      "configHash": "c142d168caa226c849a5a55e6b0d389fb326f113dc8a1973f4d5fdf77563e4d7",
+      "dealerId": "4",
+      "commitments": [
+        "e202ee64dffe71777b0718dc3c93b5077830b417ea6f1b368126ea060c1c522f",
+        "6b1167ab579d4c48d8b96be3d09e219c4812fe16a2e6acf4c90708320e33b7a2",
+        "8b7216124a014136b8fc455adea0047744f7969110fe6d7a42343b1d2a1b2305"
+      ],
+      "signature": "dad35644b687fa165ca425e199dd8abd2df7a24869c0886278ce0e9184e2e268e45fea46b7d7abf145edad15eb2562662070c9d9e83b2ba60040af9b0b77030a"
+    },
+    {
+      "version": "1",
+      "configHash": "c142d168caa226c849a5a55e6b0d389fb326f113dc8a1973f4d5fdf77563e4d7",
+      "dealerId": "5",
+      "commitments": [
+        "abf2125a055283d3886f8e2b5cbf6d1fbde9d30d086ba456e2459f6cfae81492",
+        "9222e830ee4e93d77c6a76a0f2d9225e2e8d640828e965eb554d40d3f8ed960a",
+        "74d54c1b39acc9e114bfd2ae264f7647f8695570f03cdaea76c61cc4d0bbfe2b"
+      ],
+      "signature": "69498a6060d529c3169c7a4ff99c36245c3bb3cb5e956383f14378dd57e0f30f6b21f5465de9a2bb6ccbe534cc69bfc6fb000525259a6571fd4c79ce3c390901"
+    }
+  ],
+  "acceptances": [
+    {
+      "version": "1",
+      "transcriptHash": "b621fb04428dd42eb9d4f1cfac9f0d1401b638a4a0639d52d10c996a21c5f086",
+      "trusteeId": "1",
+      "signature": "e1c969828e9e4378a5941c310da8d9e796e0dd6d31b0f35a07002436a9cea48d4f6e228d513c45854c6f8b08ede5ab66a0556a3cf11af1f3986f3f3fac6b530e"
+    },
+    {
+      "version": "1",
+      "transcriptHash": "b621fb04428dd42eb9d4f1cfac9f0d1401b638a4a0639d52d10c996a21c5f086",
+      "trusteeId": "2",
+      "signature": "f9e5215efeb253c19d1ddac9edd41f32663bf78855701ff6f753daf0c01eed5e2c6878f08f7a13a4a0e2255396af66064056ee1930977173710ca5a9f5c9ad0c"
+    },
+    {
+      "version": "1",
+      "transcriptHash": "b621fb04428dd42eb9d4f1cfac9f0d1401b638a4a0639d52d10c996a21c5f086",
+      "trusteeId": "3",
+      "signature": "2a9cf8c0aa7f1a3bacd3b0545e56331eb8b895e713e1ea84817f053e4aef975cd76a4b002ee7b48540b7f7d3f8dda506a9829254c222a07ba171bd94d06d640a"
+    },
+    {
+      "version": "1",
+      "transcriptHash": "b621fb04428dd42eb9d4f1cfac9f0d1401b638a4a0639d52d10c996a21c5f086",
+      "trusteeId": "4",
+      "signature": "b2340997e7c2a0814962e3ea6751c72c7622b49d66c0e238a11aca37371d7fc27f3d644a46e1ac6e5f8ec95d1771d4298e6f31a204ab205b290723187944c504"
+    },
+    {
+      "version": "1",
+      "transcriptHash": "b621fb04428dd42eb9d4f1cfac9f0d1401b638a4a0639d52d10c996a21c5f086",
+      "trusteeId": "5",
+      "signature": "c3b58d7bf6c51fa8ab1e18c9bf2da6840f3bba7a56579487a74d889836008366b0ede011b0e23c23b66de2fd47a0d2f512156b1ddd34246468a9686dcd37fc06"
+    }
+  ]
+}

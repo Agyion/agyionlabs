@@ -7,12 +7,23 @@ import {
 } from '../app/lib/private/release';
 
 afterEach(()=>vi.unstubAllGlobals());
-it('preserves the original funding profile and pins all selection data together',async()=>{
- const options=listPrivateReleaseOptions();expect(options).toEqual([{key:'private-testnet-original',label:'Original private pool',policy:'funding',accounting:false}]);
+it('defaults to the guarded pool and preserves the original scope for recovery',async()=>{
+ const options=listPrivateReleaseOptions();expect(options).toEqual([{key:'private-testnet-accounting',label:'Current private pool',policy:'funding',accounting:true},{key:'private-testnet-original',label:'Earlier pool recovery',policy:'recovery',accounting:false}]);
  expect(Object.isFrozen(options)).toBe(true);expect(Object.isFrozen(options[0])).toBe(true);
  const selected=await resolvePrivateRelease(DEFAULT_PRIVATE_RELEASE_KEY);
  expect(selected.release).toBe(await getPrivatePoolRelease());expect(selected).toBe(await resolvePrivateRelease(selected.key));
- expect(selected.release.scope.profileId).toBe('1d99e28fc860cc080557a12b032dda5fd1218c26aad8c1a6b15e6e45bc4dbc22');
+ expect(DEFAULT_PRIVATE_RELEASE_KEY).toBe('private-testnet-accounting');
+ expect(selected.release.scope.profileId).toBe('c144c20b4b4d796759e44c8a7cf5c05180d9c63397dc58ff787578e0f0abf802');
+ expect(selected.release.pool).toBe('CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB');
+ expect(selected.release.wasmHash).toBe('4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018');
+ const earlier=await resolvePrivateRelease('private-testnet-original');
+ expect(earlier.policy).toBe('recovery');expect(earlier.accounting).toBe(false);
+ expect(earlier.release.scope.profileId).toBe('1d99e28fc860cc080557a12b032dda5fd1218c26aad8c1a6b15e6e45bc4dbc22');
+ expect(earlier.release.pool).toBe('CDSK32ISKXRW6PX3ZMCHLUP4URNQSYNNH2GZU7ZSZJFL4FSEFQM25YHT');
+ expect(earlier.release.wasmHash).toBe('103f46d4eb97b021f2618e307970ce49993417901789e03760a4af512b7fee6e');
+ expect(await findPrivateReleaseForScope(earlier.release.scope)).toBe(earlier);
+ expect(await findPrivateReleaseForScope(selected.release.scope)).toBe(selected);
+ expect(earlier.release.configXdr).not.toBe(selected.release.configXdr);
  expect(selected.assets).toEqual(['CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC','CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA']);
  expect(Object.isFrozen(selected)).toBe(true);expect(Object.isFrozen(selected.assets)).toBe(true);
  expect(()=>assertPrivateReleaseSelection(selected)).not.toThrow();
@@ -48,4 +59,12 @@ it('does not promote a locally valid self-signed roster into catalogue authority
  await expect(findPrivateReleaseForScope(foreign.scope)).rejects.toThrow('UNKNOWN_PRIVATE_RELEASE_SCOPE');
  expect(()=>assertPrivateReleaseSelection({key:DEFAULT_PRIVATE_RELEASE_KEY,label:'Original private pool',policy:'funding',accounting:false,assets:fixture.manifest.config.assets,release:foreign})).toThrow('KNOWN_PRIVATE_RELEASE_REQUIRED');
  expect(fetch).not.toHaveBeenCalled();
+});
+
+it('never combines an old deployment domain with the new committee profile',async()=>{
+ const earlier=await resolvePrivateRelease('private-testnet-original'),current=await resolvePrivateRelease(DEFAULT_PRIVATE_RELEASE_KEY);
+ for(const [a,b] of [[earlier,current],[current,earlier]]){
+  await expect(findPrivateReleaseForScope({...a.release.scope,profileId:b.release.scope.profileId})).rejects.toThrow('UNKNOWN_PRIVATE_RELEASE_SCOPE');
+  await expect(findPrivateReleaseForScope({...a.release.scope,domain:b.release.scope.domain})).rejects.toThrow('UNKNOWN_PRIVATE_RELEASE_SCOPE');
+ }
 });

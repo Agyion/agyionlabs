@@ -1,5 +1,7 @@
 import manifest from './release.json';
 import committee from './committee.json';
+import guardedManifest from './guarded-release.json';
+import guardedCommittee from './guarded-committee.json';
 import { verifyPoolRelease, type PoolRelease } from '../../../../contracts/private-pool/client/release';
 
 /** This is a deployed development profile, with one local operator holding the
@@ -13,7 +15,7 @@ export const privateDevelopmentProfile = Object.freeze({
   trusteeCount: 5,
 });
 
-export const DEFAULT_PRIVATE_RELEASE_KEY = 'private-testnet-original';
+export const DEFAULT_PRIVATE_RELEASE_KEY = 'private-testnet-accounting';
 export type PrivateReleasePolicy = 'funding' | 'recovery';
 export type PrivateReleaseOption = Readonly<{
   key: string; label: string; policy: PrivateReleasePolicy; accounting: boolean;
@@ -24,28 +26,40 @@ export type PrivateReleaseSelection = PrivateReleaseOption & Readonly<{
 
 // Compiled provenance is separate from cryptographic roster validity. Neither a
 // backup nor an API/form/URL can add releases to this catalogue.
-const original: PrivateReleaseOption = Object.freeze({
-  key: DEFAULT_PRIVATE_RELEASE_KEY, label: 'Original private pool', policy: 'funding', accounting: false,
+const current: PrivateReleaseOption = Object.freeze({
+  key: DEFAULT_PRIVATE_RELEASE_KEY, label: 'Current private pool', policy: 'funding', accounting: true,
 });
-const options: readonly PrivateReleaseOption[] = Object.freeze([original]);
+const original: PrivateReleaseOption = Object.freeze({
+  key: 'private-testnet-original', label: 'Earlier pool recovery', policy: 'recovery', accounting: false,
+});
+const entries = [
+  {option: current, manifest: guardedManifest, committee: guardedCommittee},
+  {option: original, manifest, committee},
+] as const;
+const options: readonly PrivateReleaseOption[] = Object.freeze(entries.map(entry => entry.option));
 const selections = new WeakSet<object>();
-let originalSelection: Promise<PrivateReleaseSelection> | undefined;
+const verified = new Map<string, Promise<PrivateReleaseSelection>>();
 
 export function listPrivateReleaseOptions(): readonly PrivateReleaseOption[] { return options; }
 export function assertPrivateReleaseSelection(value: unknown): asserts value is PrivateReleaseSelection {
   if (typeof value !== 'object' || value === null || !selections.has(value)) throw new Error('KNOWN_PRIVATE_RELEASE_REQUIRED');
 }
 export async function resolvePrivateRelease(key: unknown): Promise<PrivateReleaseSelection> {
-  if (key !== DEFAULT_PRIVATE_RELEASE_KEY) throw new Error('UNKNOWN_PRIVATE_RELEASE');
-  originalSelection ??= verifyPoolRelease({
+  const entry = entries.find(entry => entry.option.key === key);
+  if (!entry) throw new Error('UNKNOWN_PRIVATE_RELEASE');
+  const known = verified.get(entry.option.key);
+  if (known) return known;
+  const {option, manifest, committee} = entry;
+  const checking = verifyPoolRelease({
     ...manifest,
     config: {...manifest.config, auditor: manifest.config.auditor.map(value => BigInt(value))},
   }, committee).then(release => {
-    const selected = Object.freeze({...original, assets: Object.freeze([...manifest.config.assets]), release});
+    const selected = Object.freeze({...option, assets: Object.freeze([...manifest.config.assets]), release});
     selections.add(selected);
     return selected;
   });
-  return originalSelection;
+  verified.set(option.key, checking);
+  return checking;
 }
 
 function dataRecord(value: unknown, keys: readonly string[]): Record<string, unknown> {

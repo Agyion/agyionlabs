@@ -1,0 +1,54 @@
+{
+  "schema": "agyion-private-pool-release-v2",
+  "testOnly": true,
+  "networkPassphrase": "Test SDF Network ; September 2015",
+  "rpcUrl": "https://soroban-testnet.stellar.org",
+  "protocolVersion": 28,
+  "pool": "CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB",
+  "wasmHash": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018",
+  "config": {
+    "assets": [
+      "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
+    ],
+    "disclosureEpoch": 1,
+    "auditor": [
+      "5528665983358213663383876680317177356507447937740086846865740020302088507527",
+      "3024498621360108384896895329348558429721996610443497699848356178906032342875"
+    ],
+    "dkgTranscriptHash": "b621fb04428dd42eb9d4f1cfac9f0d1401b638a4a0639d52d10c996a21c5f086"
+  },
+  "thresholdConfig": {
+    "version": "1",
+    "suite": "experimental-babyjub-feldman-v1",
+    "domain": {
+      "networkId": "cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472",
+      "contractId": "11e3d1f5f55778a92a9080d8b3987fedecb561a64aae1894375db70797e6e212"
+    },
+    "epoch": "1",
+    "sessionId": "7b923376cc946cf9f1d2df487228884af08b202ef1ba783c4cc9ffa921b34d41",
+    "threshold": "3",
+    "trustees": [
+      {
+        "id": "1",
+        "authPublicKey": "7f32b4d260ba735a8b13a03fb4b1ea77165c79eedf843e299ea9f698b2e71340"
+      },
+      {
+        "id": "2",
+        "authPublicKey": "5247ef5c16e2d9af56df0461ab5b49aa40fbcb446253840659cba50a3f6c587c"
+      },
+      {
+        "id": "3",
+        "authPublicKey": "02d859aabde9a90fb31768b3a74c4434a0779bfa7b2901d855f30ac43925af85"
+      },
+      {
+        "id": "4",
+        "authPublicKey": "7e12a6696a733633578a90ffe349a881252c4378261090852ce1c198196ee11e"
+      },
+      {
+        "id": "5",
+        "authPublicKey": "389f2ae0de9001e3669fa80e508e661ffd9a32cf8f308147fb27249bf0cfbf20"
+      }
+    ]
+  }
+}

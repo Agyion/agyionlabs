@@ -6,9 +6,9 @@ This record describes the development review on **27 September 2026**. The curre
 
 | Evidence | Files | Current lines |
 | --- | ---: | ---: |
-| Exact current bytes with complete source-read evidence | 451 | 47,413 |
-| Verified reviewed baseline plus completely reviewed differences | 100 | 22,650 |
-| Total first-party authored scope | 551 | 70,063 |
+| Exact current bytes with complete source-read evidence | 454 | 47,723 |
+| Verified reviewed baseline plus completely reviewed differences | 99 | 22,560 |
+| Total first-party authored scope | 553 | 70,283 |
 | Unresolved files or line ranges at this snapshot | 0 | 0 |
 
 The first row uses explicit complete reading ranges matched to each current file hash. It does not mean every file was read again when this manifest was generated. The second row is composed coverage: the previously reviewed baseline was checked against Git bytes, every difference was reviewed, and unchanged, changed and deleted ranges were reconciled. It is not a fresh full-file reread.
@@ -32,6 +32,10 @@ Six additional checks against the published website used a fresh unfunded local 
 The [hosted run for ad58fed](https://github.com/Agyion/agyionlabs/actions/runs/36313392557) passed both application and contract jobs for the published private UI checkpoint. The [preceding run for b3858ea](https://github.com/Agyion/agyionlabs/actions/runs/36312265321) also passed. These exact commits do not establish hosted success for subsequent deployment tooling changes.
 
 The first hosted deployment-tooling run caught a fixture setup error: the new tests assumed an existing ignored artifacts directory. An isolated source fixture with installed dependencies reproduced 16 failures, then passed all 22 focused tests after each helper created its own parent directory. All 97 tooling tests also passed locally. This correction changes test setup only; it does not change the deployment executor or deployed code. The [failed hosted run](https://github.com/Agyion/agyionlabs/actions/runs/36315479003) remains part of the evidence.
+
+The corrected [hosted deployment-tooling run for 1a6effd](https://github.com/Agyion/agyionlabs/actions/runs/36316048453) passed both jobs. Subsequent source prepares the guarded pool as the default and preserves the exact original manifest and committee for recovery only. Its local checks passed 806 app tests, 57 focused checks, type checking and a static build. Nine direct local browser checks used real encrypted fixture files for both profiles, including old backup recovery, explicit switching, wrong password rejection and a forged cross-pool scope that failed authenticated restoration. No wallet or chain transaction was used in those browser checks.
+
+The general local release check initially failed because the catalogue accepts the production origin, not the local preview origin. A separate run routed only local application bytes at the production browser origin, retaining direct RPC traffic. It completed 34 HTTP and 14 UI assertions but retained two external mock-anchor network-change failures, so its overall status remains failed. Both endpoints separately returned HTTP 200 in a read-only diagnostic. This is prepared-source evidence, not a live publication or a clean-network claim. Native private lifecycle checks passed 122 assertions with 15 included transactions; scoped disclosure passed 13 checks. USDC lifecycle completion and publication remain separate gates at this checkpoint.
 
 ## Earlier verification checkpoints
 

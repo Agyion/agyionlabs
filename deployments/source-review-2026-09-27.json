@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T11:32:08.700260+00:00",
-  "sourceBaselineCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe",
+  "reviewedAt": "2026-09-27T11:51:01.021924+00:00",
+  "sourceBaselineCommit": "1a6effdc4c4c7b4116837f3287dd6515c2ce40b2",
   "websiteRelease": {
     "workerVersion": "b689440d-c297-4503-bf91-7bfb3970a509",
     "url": "https://agyionlabs.dev",
@@ -70,16 +70,16 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 551,
-    "lines": 70063,
+    "files": 553,
+    "lines": 70283,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 451,
-        "lines": 47413
+        "files": 454,
+        "lines": 47723
       },
       "verified-baseline-plus-reviewed-diff": {
-        "files": 100,
-        "lines": 22650
+        "files": 99,
+        "lines": 22560
       }
     },
     "unresolvedFiles": 0,
@@ -95,9 +95,9 @@
   "limitations": [
     "Development source review is not an independent security audit, execution coverage, proof of cryptographic soundness or a guarantee that every exploit is absent.",
     "Passing tests do not establish source-read coverage. Testnet and browser evidence has separate scope and limitations.",
-    "These hashes are a dated source checkpoint. The website release is identified by its worker version and verified published bytes. Public V4 remains a local artifact; the guarded private pool is deployed separately and is not yet the application default. Existing immutable addresses are not replaced. The source baseline does not include the subsequently listed tooling hashes.",
+    "These hashes are a dated source checkpoint. The website release is identified separately by its source commit, worker version and published bytes. Public V4 remains a local artifact; the guarded private pool is deployed separately. Existing immutable addresses are not replaced.",
     "Any subsequent source change requires renewed review evidence and manifest reconciliation.",
-    "The compiled private release catalogue currently contains only the unchanged original pool. The profile-aware UI is implemented and tested, but the second accounting contract and production custody are not activated by this website release."
+    "The published website still uses the original private pool. The prepared source now selects the guarded pool for new funding and retains the unchanged original profile for recovery. USDC lifecycle completion and live application publication remain gates; source preparation alone is not live activation."
   ],
   "files": [
     {
@@ -497,6 +497,18 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "app/app/lib/private/guarded-committee.json",
+      "sha256": "dc30627e67030c10ce533ef4d086dce2fc5c789f1026fe64587d7ae762db5568",
+      "lines": 124,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/private/guarded-release.json",
+      "sha256": "4883e3a9dda52b552b873d138c1d255e3235fed3ddcc02ac9f17b5ec89d9dd62",
+      "lines": 54,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "app/app/lib/private/note-summary.ts",
       "sha256": "609135ba81289f96521f4da9071e07b4d087c20cbb1bb562c5d7359d95a030b2",
       "lines": 26,
@@ -528,9 +540,9 @@
     },
     {
       "path": "app/app/lib/private/release.ts",
-      "sha256": "d031ebaccfffcb174e447f55fd226f994030fc1217029a6cf4ae705797f636c0",
-      "lines": 90,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "2bd3187bf9f41a38c230dc8dab53e1a0a1c0057cde696ff01816c95d09663bb3",
+      "lines": 104,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/app/lib/private/wallet-session.ts",
@@ -876,8 +888,8 @@
     },
     {
       "path": "app/tests/private-backup-release.test.ts",
-      "sha256": "bb2de080d7a7c0d7a9cdda5c1f922322d81444482c4298089f285827bef7f25e",
-      "lines": 21,
+      "sha256": "832f1520633fdd6cc4c0bc09c15668dd487179f2fdc65f3aeae323181495b259",
+      "lines": 30,
       "reviewKind": "complete-source-read"
     },
     {
@@ -918,8 +930,8 @@
     },
     {
       "path": "app/tests/private-release.test.ts",
-      "sha256": "6c3c605140b6b1eda049fca14e5e8282519fb6e5b54842a3a43ef4bfa9185ff5",
-      "lines": 51,
+      "sha256": "9b82c9df273a554ee215704b69f86aac74c229bb9958a62e5bca05ca8c459137",
+      "lines": 70,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3448,7 +3460,12 @@
         "sha256": "4c35cecaf3bdde92b97868c3f4d28c4a809b8ba6187545c62272b7ed4e472d31"
       }
     ],
-    "hostedRunForTheseChanges": null,
+    "hostedRunForTheseChanges": {
+      "url": "https://github.com/Agyion/agyionlabs/actions/runs/36316048453",
+      "headSha": "1a6effdc4c4c7b4116837f3287dd6515c2ce40b2",
+      "application": "success",
+      "contracts": "success"
+    },
     "boundary": "Dedicated valueless testnet only; no independent audit or automatic application activation.",
     "cleanFixtureRegression": {
       "before": {
@@ -3463,5 +3480,46 @@
       "emptyArtifactDirectoryAtStart": true
     },
     "earlierHostedFailure": "https://github.com/Agyion/agyionlabs/actions/runs/36315479003"
+  },
+  "preparedPrivateActivation": {
+    "status": "prepared locally; not published",
+    "defaultKey": "private-testnet-accounting",
+    "recoveryKey": "private-testnet-original",
+    "sourceChangesAfterBaseline": [
+      {
+        "path": "app/app/lib/private/release.ts",
+        "sha256": "2bd3187bf9f41a38c230dc8dab53e1a0a1c0057cde696ff01816c95d09663bb3"
+      },
+      {
+        "path": "app/app/lib/private/guarded-release.json",
+        "sha256": "4883e3a9dda52b552b873d138c1d255e3235fed3ddcc02ac9f17b5ec89d9dd62"
+      },
+      {
+        "path": "app/app/lib/private/guarded-committee.json",
+        "sha256": "dc30627e67030c10ce533ef4d086dce2fc5c789f1026fe64587d7ae762db5568"
+      },
+      {
+        "path": "app/tests/private-release.test.ts",
+        "sha256": "9b82c9df273a554ee215704b69f86aac74c229bb9958a62e5bca05ca8c459137"
+      },
+      {
+        "path": "app/tests/private-backup-release.test.ts",
+        "sha256": "832f1520633fdd6cc4c0bc09c15668dd487179f2fdc65f3aeae323181495b259"
+      }
+    ],
+    "appTestsPassed": 806,
+    "focusedTestsPassed": 57,
+    "localBrowserChecks": 9,
+    "browserTransactions": 0,
+    "nativeLifecycleChecks": 122,
+    "nativeIncludedTransactions": 15,
+    "thresholdDisclosureChecks": 13,
+    "usdcLifecycle": "running; no completed claim",
+    "generalLocalBrowser": {
+      "http": 34,
+      "ui": 14,
+      "status": "failed",
+      "boundary": "Local static bytes routed at production browser origin for catalogue CORS; direct chain/catalogue traffic. Two external mock-anchor network-change failures retained."
+    }
   }
 }

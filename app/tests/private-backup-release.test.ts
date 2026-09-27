@@ -19,3 +19,12 @@ it('rejects credentials, unknown profiles, malformed bytes and non-file inputs b
  await expect(readPrivateBackupRelease({size:1,arrayBuffer:vi.fn()} as unknown as File)).rejects.toThrow();
  expect(fetch).not.toHaveBeenCalled();
 });
+
+it('identifies both actual pool backup scopes without upgrading the recovery policy',async()=>{
+ vi.stubGlobal('File',NodeFile);
+ for(const key of ['private-testnet-original',DEFAULT_PRIVATE_RELEASE_KEY]){
+  const selected=await resolvePrivateRelease(key),file=new File([JSON.stringify({version:'2',kind:'CompletePrivacyKeyBackup',scope:selected.release.scope})],'vault.json');
+  const hint=await readPrivateBackupRelease(file);expect(hint).toBe(selected);
+  expect(hint.policy).toBe(key==='private-testnet-original'?'recovery':'funding');
+ }
+});
