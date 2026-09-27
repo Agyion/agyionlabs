@@ -1,4 +1,5 @@
-/** One bounded record-mode negative observation. Trusted RPC evidence only.
+/** One bounded fixed negative observation and its required ENFORCE control.
+ * Trusted RPC evidence only.
  * No journal release, persistence, submission, retries or historical freshness
  * authority. Callers must replay complete raw cases through the phase policies.
  */
@@ -7,11 +8,11 @@ import { createRequire } from 'node:module';
 import { hashPublicLifecyclePlan } from './public-lifecycle-plan.mjs';
 import { publicLifecycleAcquisitionKeys, verifyPublicLifecycleSnapshot } from './public-lifecycle-readback.mjs';
 import { assertPublicLifecycleDerivedState, verifyPublicLifecycleHeader } from './public-lifecycle-state.mjs';
-import { publicLifecycleObservationCases, publicLifecycleObservationIntent, verifyPublicLifecycleObservationCase } from './public-lifecycle-observations.mjs';
+import { publicLifecycleObservationCases, publicLifecycleObservationIntent, publicLifecycleSimulationError, verifyPublicLifecycleObservationCase } from './public-lifecycle-observations.mjs';
 import { acquirePublicLifecycleSnapshot } from './public-lifecycle-acquisition.mjs';
 import { acquirePublicLifecycleBaseline, verifyPublicLifecycleZeroRead } from './public-lifecycle-baseline.mjs';
 import { createPublicLifecycleRpc } from './public-lifecycle-rpc.mjs';
-const { Account, Keypair, Operation, TransactionBuilder, xdr } = createRequire(new URL('../../app/package.json', import.meta.url))('@stellar/stellar-sdk');
+const { Account, Address, Keypair, Operation, TransactionBuilder, nativeToScVal, xdr } = createRequire(new URL('../../app/package.json', import.meta.url))('@stellar/stellar-sdk');
 const MAX = 2 * 1024 * 1024, refusals = new WeakMap(), b64 = v => v.toXDR('base64');
 const abortedGetter = Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted').get;
 const addListener = EventTarget.prototype.addEventListener, removeListener = EventTarget.prototype.removeEventListener;
@@ -97,7 +98,8 @@ export async function acquirePublicLifecycleObservationCase(options) {
     const stepId = state.stepId, phase = state.phase, head = state.snapshot.ledger, keys = guarded(() => publicLifecycleAcquisitionKeys(plan), 'PLAN');
     const families = guarded(() => publicLifecycleObservationCases({ plan, stepId, phase }), 'SCOPE'); check(families.some(f => f.observationKind === observationKind && f.caseIds.includes(caseId)), 'SCOPE');
     const makeIntent = (ledger, timestamp) => guarded(() => publicLifecycleObservationIntent({ plan, stepId, observationKind, caseId, ledger, timestamp, recordAnchors: state.recordAnchors }), 'CASE');
-    const preIntent = makeIntent(head, '1'); check(preIntent.authMode === 'record' && preIntent.control === null, 'MODE');
+    const preIntent = makeIntent(head, '1'), enforce = preIntent.authMode === 'enforce' && preIntent.control !== null && ['fade-claim-wrong-source-enforce', 'positive-handoff-wrong-source-enforce', 'pod-recipient-auth-enforce', 'envoy-owner-mismatch-relayer-authorized'].includes(observationKind);
+    check(enforce || preIntent.authMode === 'record' && preIntent.control === null, 'MODE');
     callerSignal = input.signal;
     if (callerSignal !== undefined) check(!abortedGetter.call(callerSignal), 'ABORTED');
     // Pass an owned signal downstream: caller instance overrides cannot escape
@@ -125,15 +127,33 @@ export async function acquirePublicLifecycleObservationCase(options) {
     if (intent.credential) {
       check(typeof credential === 'function', 'CREDENTIAL'); signed = copy(await wait(() => credential({ stepId, phase, observationKind, caseId, ledger: head, timestamp, state }), 'CREDENTIAL')); clock();
     }
-    const args = guarded(() => proof(intent.call, intent.credential, signed), 'CREDENTIAL'), account = Object.values(beforeSnapshot.accounts).find(a => a.address === intent.call.sourceAccount); check(account, 'SOURCE');
-    const transaction = new TransactionBuilder(new Account(intent.call.sourceAccount, account.sequence), { fee: '100', networkPassphrase: plan.networkPassphrase })
-      .addOperation(Operation.invokeContractFunction({ contract: intent.call.target, function: intent.call.method, args, auth: [] })).setTimebounds(0, maxTime).build().toXDR();
-    const request = freeze({ transaction, authMode: 'record' }); clock();
+    const args = guarded(() => proof(intent.call, intent.credential, signed), 'CREDENTIAL');
+    const tree = (target, method, values, children = []) => new xdr.SorobanAuthorizedInvocation({ function: xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(new xdr.InvokeContractArgs({ contractAddress: new Address(target).toScAddress(), functionName: method, args: values })), subInvocations: children });
+    function requestFor(call, values) {
+      const account = Object.values(beforeSnapshot.accounts).find(a => a.address === call.sourceAccount); check(account, 'SOURCE');
+      const children = enforce && call.method === 'confirm_handoff' ? [tree(plan.assets[0], 'transfer', [new Address(plan.actors.recipient).toScVal(), new Address(plan.actors.seller).toScVal(), nativeToScVal(1000000n, { type: 'i128' })])] : [];
+      const auth = enforce ? [new xdr.SorobanAuthorizationEntry({ credentials: xdr.SorobanCredentials.sorobanCredentialsSourceAccount(), rootInvocation: tree(call.target, call.method, values, children) })] : [];
+      const transaction = new TransactionBuilder(new Account(call.sourceAccount, account.sequence), { fee: '100', networkPassphrase: plan.networkPassphrase })
+        .addOperation(Operation.invokeContractFunction({ contract: call.target, function: call.method, args: values, auth })).setTimebounds(0, maxTime).build().toXDR();
+      return freeze({ transaction, authMode: intent.authMode });
+    }
+    const request = requestFor(intent.call, args); let controlRequest;
+    if (enforce) {
+      const controlArgs = intent.control.argsXdr.map(s => xdr.ScVal.fromXDR(s, 'base64'));
+      if (intent.credential) controlArgs[intent.credential.argumentIndex] = args[intent.credential.argumentIndex];
+      controlRequest = requestFor(intent.control, controlArgs);
+    }
+    clock();
     const response = copy(await wait(() => invoke('simulateTransaction', request), 'RPC')), responseValidatedAtSeconds = clock(), ledger = response.latestLedger;
     check(Number.isSafeInteger(ledger) && ledger >= head && ledger <= head + 2, 'BRACKET');
     const actual = makeIntent(ledger, timestamp), shape = i => ({ call: i.call, credential: i.credential, expectedError: i.expectedError, authMode: i.authMode, control: i.control }); same(shape(intent), shape(actual), 'INTENT_DRIFT');
-    const caseRequest = { envelopeXdr: transaction, authMode: 'record' };
-    guarded(() => verifyPublicLifecycleObservationCase({ plan, stepId, observationKind, caseId, ledger, timestamp, recordAnchors: state.recordAnchors }, { request: caseRequest, response }), 'CASE');
+    check(guarded(() => publicLifecycleSimulationError(response), 'CASE') === actual.expectedError, 'CASE');
+    const caseRequest = { envelopeXdr: request.transaction, authMode: intent.authMode }; let control, controlResponseValidatedAtSeconds;
+    if (enforce) {
+      const controlResponse = copy(await wait(() => invoke('simulateTransaction', controlRequest), 'RPC')); controlResponseValidatedAtSeconds = clock();
+      control = { request: { envelopeXdr: controlRequest.transaction, authMode: 'enforce' }, response: controlResponse };
+    }
+    guarded(() => verifyPublicLifecycleObservationCase({ plan, stepId, observationKind, caseId, ledger, timestamp, recordAnchors: state.recordAnchors }, { request: caseRequest, response, ...(enforce ? { control } : {}) }), 'CASE');
     const stableRpc = { async request(method, params) { clock(); const raw = await invoke(method, params); clock(); return raw; } }, acquireOptions = { plan, rpc: stableRpc, ...(signal ? { signal } : {}) };
     const after = state.expected.fundedHistory
       ? { acquisition: await wait(() => acquirePublicLifecycleSnapshot(acquireOptions), 'AFTER'), zeroBalanceEvidence: null, zeroRead: null }
@@ -145,8 +165,8 @@ export async function acquirePublicLifecycleObservationCase(options) {
     const batch = value => ({ response: value.acquisition.response, headerEvidence: value.acquisition.headerEvidence, zeroBalanceEvidence: value.zeroBalanceEvidence });
     const first = batch(before), last = batch(after), beforeId = sha(canonical(first)), afterId = sha(canonical(last)), completedAtSeconds = clock();
     return copy({ schema: 'agyion-public-lifecycle-observation-acquisition-v1', planSha256, stepId, phase, observationKind,
-      case: { caseId, ledger, timestamp, beforeSnapshot: beforeId, afterSnapshot: afterId, request: caseRequest, response }, snapshots: { [beforeId]: first, [afterId]: last },
-      captures: { before: { raw: before.acquisition.raw, zeroRead: before.zeroRead }, after: { raw: after.acquisition.raw, zeroRead: after.zeroRead } }, timing: { startedAtSeconds, responseValidatedAtSeconds, completedAtSeconds } });
+      case: { caseId, ledger, timestamp, beforeSnapshot: beforeId, afterSnapshot: afterId, request: caseRequest, response, ...(enforce ? { control } : {}) }, snapshots: { [beforeId]: first, [afterId]: last },
+      captures: { before: { raw: before.acquisition.raw, zeroRead: before.zeroRead }, after: { raw: after.acquisition.raw, zeroRead: after.zeroRead } }, timing: { startedAtSeconds, responseValidatedAtSeconds, ...(enforce ? { controlResponseValidatedAtSeconds } : {}), completedAtSeconds } });
   } catch (error) { throw refusal(refusals.get(error) ?? 'INPUT'); }
   finally { if (callerSignal && onAbort) removeListener.call(callerSignal, 'abort', onAbort); }
 }

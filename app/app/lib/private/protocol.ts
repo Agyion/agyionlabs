@@ -184,7 +184,7 @@ export async function createPrivateProtocol(options:PrivateProtocolOptions,integ
    const wallet:PrivateWallet={session:()=>{assertCurrent();return bound.wallet.session()},async signTransaction(value,network,account){
     assertCurrent();assertAction(entry.plan.summary.action);const tx=TransactionBuilder.fromXDR(value,Networks.TESTNET);ensure(tx instanceof Transaction,'PRIVATE_SIGNING_PAYLOAD_INVALID');
     ensure(BigInt(tx.fee)<=BigInt(handle.maxFeeStroops),'FEE_BUDGET_EXCEEDED');publish({phase:'confirming-fee',feeQuote:{feeStroops:tx.fee,maxFeeStroops:handle.maxFeeStroops}});
-    const accepted=await bounded(Promise.resolve().then(()=>options.confirmFee(Object.freeze({feeStroops:tx.fee,maxFeeStroops:handle.maxFeeStroops,source:account,action:handle.summary.action,signal}))),signal,120_000);
+    const accepted=await bounded(Promise.resolve().then(()=>{assertCurrent();return options.confirmFee(Object.freeze({feeStroops:tx.fee,maxFeeStroops:handle.maxFeeStroops,source:account,action:handle.summary.action,signal}))}),signal,120_000);
     assertCurrent();assertAction(entry.plan.summary.action);sameSession(bound.wallet.session(),entry.session);
     if(accepted===false)throw new PrivateFeeConfirmationCancelledError();
     ensure(accepted===true,'INVALID_PRIVATE_FEE_CONFIRMATION');publish({phase:'signing'});

@@ -113,3 +113,23 @@ it('foreign Pod funding requires the actual reselected encrypted credential, not
   await expect(x.protocol.importCredential(file,password)).rejects.toThrow();
  }finally{forgetPrivacyVault(recipient)}
 },60000);
+
+it('a fee callback queued before invalidation is never invoked after that invalidation', async () => {
+  const x = await h(), handle = await x.protocol.prepare({ action: 'deposit', asset: x.asset, amount: '4' });
+  const order: string[] = []; let queued = false;
+  x.hooks.onFee = async () => { order.push('fee-callback'); };
+  const detach = x.protocol.subscribe(() => {
+    if (queued || x.protocol.getSnapshot().phase !== 'confirming-fee') return;
+    queued = true; order.push('phase-published');
+    // Public subscription boundary, not a scheduler or private-method patch:
+    // this continuation is queued during publish, ahead of confirmFee's then.
+    queueMicrotask(() => { order.push('invalidated'); x.vault.lock(); });
+  });
+  try {
+    await expect(x.protocol.submit(handle)).rejects.toThrow();
+    expect(queued).toBe(true); expect(x.vault.getSnapshot().status).toBe('locked');
+    expect(x.calls.signs).toBe(0); expect(x.calls.sends).toBe(0); expect(x.journal.rows.size).toBe(0);
+    expect(x.calls.fees).toHaveLength(0);
+    expect(order).toEqual(['phase-published', 'invalidated']);
+  } finally { detach(); }
+});

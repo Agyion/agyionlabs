@@ -224,3 +224,99 @@ it.each(['account', 'session'] as const)('an obsolete %s refresh cannot cancel t
   expect(observed.vault?.getSnapshot().status).toBe('locked');
   expect(screen.queryByRole('dialog')).toBeNull();
 });
+
+// Candidate component regressions: direct callback/Suspense harnesses below do
+// not claim these interleavings occur in the current AppShell wallet path.
+it('a retired fee callback cannot cancel the new owner fee', async () => {
+  render(<PrivateWorkspaceProvider address="fixture-public-account"><Probe /></PrivateWorkspaceProvider>);
+  await waitFor(() => expect(observed.protocol).not.toBeNull());
+  const old = boundary.factory.mock.calls[0][0] as PrivateProtocolOptions;
+  act(() => observed.selectRelease('private-testnet-accounting'));
+  await waitFor(() => expect(observed.scope?.profileId).toBe(secondScope.profileId));
+  await waitFor(() => expect(observed.protocol).not.toBeNull());
+  expect(boundary.factory).toHaveBeenCalledTimes(2);
+  const current = boundary.factory.mock.calls[1][0] as PrivateProtocolOptions;
+  const abort = new AbortController(); let settled = false; let answer!: Promise<boolean>;
+  await act(async () => {
+    answer = current.confirmFee({ feeStroops: '700', maxFeeStroops: '1000', source: 'fixture-public-account', action: 'deposit', signal: abort.signal });
+    void answer.then(() => { settled = true; });
+  });
+  try {
+    expect(screen.getByRole('dialog', { name: 'Confirm the network fee' })).toBeTruthy();
+    expect(settled).toBe(false);
+    await act(async () => { expect(await old.confirmFee({ feeStroops: '5', maxFeeStroops: '10', source: 'fixture-public-account', action: 'withdraw', signal: new AbortController().signal })).toBe(false); });
+    expect(settled).toBe(false);
+    expect(screen.getByRole('dialog', { name: 'Confirm the network fee' }).textContent).toContain('0.0000700 XLM');
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to wallet' }));
+    expect(await answer).toBe(true);
+    expect(boundary.factory).toHaveBeenCalledTimes(2);
+    expect(boundary.reconcile).not.toHaveBeenCalled();
+    expect(observed.vault?.getSnapshot().status).toBe('locked');
+  } finally { await act(async () => { abort.abort(); await answer; }); }
+});
+it('a pre-aborted fee request cannot cancel a valid pending fee', async () => {
+  render(<PrivateWorkspaceProvider address="fixture-public-account"><Probe /></PrivateWorkspaceProvider>);
+  await waitFor(() => expect(observed.protocol).not.toBeNull());
+  const options = boundary.factory.mock.calls[0][0] as PrivateProtocolOptions;
+  const active = new AbortController(), obsolete = new AbortController(); obsolete.abort();
+  let settled = false; let answer!: Promise<boolean>;
+  await act(async () => {
+    answer = options.confirmFee({ feeStroops: '700', maxFeeStroops: '1000', source: 'fixture-public-account', action: 'deposit', signal: active.signal });
+    void answer.then(() => { settled = true; });
+  });
+  try {
+    expect(screen.getByRole('dialog', { name: 'Confirm the network fee' })).toBeTruthy();
+    await act(async () => { expect(await options.confirmFee({ feeStroops: '5', maxFeeStroops: '10', source: 'fixture-public-account', action: 'withdraw', signal: obsolete.signal })).toBe(false); });
+    expect(settled).toBe(false);
+    expect(screen.getByRole('dialog', { name: 'Confirm the network fee' }).textContent).toContain('0.0000700 XLM');
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to wallet' })); expect(await answer).toBe(true);
+    expect(boundary.factory).toHaveBeenCalledOnce(); expect(boundary.reconcile).not.toHaveBeenCalled();
+  } finally { await act(async () => { active.abort(); await answer; }); }
+});
+it('an uncommitted suspended account render cannot discard the committed account discovery', async () => {
+  type Workspace = ReturnType<typeof usePrivateWorkspace>;
+  let committed!: { account: string; workspace: Workspace }, updateAccount!: React.Dispatch<React.SetStateAction<string>>;
+  let finish!: (rows: unknown[]) => void; const attempted: string[] = [], commits: string[] = [];
+  const blocked = new Promise<void>(() => {});
+  const attempt = { hash: 'ab'.repeat(32), source: 'old-account', releaseId: scope.profileId, pool: 'original-pool', operation: 'submit', releaseKey: 'private-testnet-original', releaseLabel: 'Earlier vault', releaseStatus: 'known' };
+  boundary.pending.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+  function CommittedProbe({ account }: { account: string }) {
+    const workspace = usePrivateWorkspace();
+    React.useLayoutEffect(() => { committed = { account, workspace }; commits.push(account); });
+    return <p data-testid="committed-account">{account}:{workspace.pendingChecked ? 'checked' : 'checking'}:{workspace.accountPending.map(row => row.hash).join(',')}</p>;
+  }
+  function SuspendForB({ account }: { account: string }) {
+    // This records a render attempt only. It never stands in for a commit.
+    attempted.push(account); if (account === 'new-account') throw blocked; return null;
+  }
+  function Harness() {
+    const [account, setAccount] = React.useState('old-account');
+    React.useLayoutEffect(() => { updateAccount = setAccount; }, []);
+    return <React.Suspense fallback={<p data-testid="suspended-fallback">Suspended</p>}>
+      <PrivateWorkspaceProvider address={account}><CommittedProbe account={account} /><SuspendForB account={account} /></PrivateWorkspaceProvider>
+    </React.Suspense>;
+  }
+  const view = render(<Harness />);
+  try {
+    await waitFor(() => expect(committed.workspace.protocol).not.toBeNull());
+    await waitFor(() => expect(boundary.pending).toHaveBeenCalledExactlyOnceWith({ source: 'old-account' }));
+    expect(committed.workspace.pendingChecked).toBe(false); expect(boundary.version).toBe(0);
+    act(() => { React.startTransition(() => updateAccount('new-account')); });
+    await waitFor(() => expect(attempted).toContain('new-account'));
+    expect(committed.account).toBe('old-account'); expect(commits).not.toContain('new-account');
+    expect(screen.queryByTestId('suspended-fallback')).toBeNull();
+    expect(screen.getByTestId('committed-account').textContent).toBe('old-account:checking:');
+    expect(boundary.pending).toHaveBeenCalledTimes(1); expect(boundary.factory).toHaveBeenCalledOnce();
+    // Resolve while B is still suspended: restoring A before this would hide
+    // the suspected ref mutation and make the regression meaningless.
+    await act(async () => { finish([attempt]); });
+    expect(committed.account).toBe('old-account');
+    expect(committed.workspace).toMatchObject({ accountPending: [attempt], pendingChecked: true, pendingError: null });
+    expect(screen.getByTestId('committed-account').textContent).toBe('old-account:checked:' + attempt.hash);
+    await act(async () => { updateAccount('old-account'); });
+    expect(commits).not.toContain('new-account'); expect(committed.workspace.accountPending).toEqual([attempt]);
+    expect(boundary.pending).toHaveBeenCalledTimes(1); expect(boundary.factory).toHaveBeenCalledOnce();
+    expect(boundary.version).toBe(0); expect(boundary.reconcile).not.toHaveBeenCalled();
+    expect(committed.workspace.vault?.getSnapshot().status).toBe('locked'); expect(screen.queryByRole('dialog')).toBeNull();
+  } finally { view.unmount(); }
+});

@@ -534,15 +534,15 @@ wire shape may refuse larger or differently represented valid RPC replies.
 
 ## Acquiring one negative observation
 
-The [record-mode case adapter](../scripts/lib/public-lifecycle-observation-acquisition.mjs)
+The [case adapter](../scripts/lib/public-lifecycle-observation-acquisition.mjs)
 accepts a live branded state and the complete earlier baseline capture. Before
 making any external request, it replays that capture through the existing raw
 acquisition decoder using an in-memory transport. The decoded result must equal
 the retained projection and the state snapshot. An omitted native Balance needs
 the full same-head zero-read request and response, not just a compact zero flag.
 
-The adapter selects one scheduled record-mode case, obtains its exact credential
-only when required, and constructs one unsigned simulation. A changed simulation
+The adapter selects one scheduled case, obtains its exact credential only when
+required, and constructs an unsigned simulation. A changed simulation
 head is accepted only when the original intent is identical at that head. The
 subsequent complete snapshot must preserve accounts, records, counters,
 liabilities and principal, with at most two ledgers between the before and after
@@ -561,8 +561,37 @@ capture times. Each case is bounded to2MiB. The actual journal record has its ow
 unchanged2MiB limit; raw sidecars are separate evidence and cannot be discarded
 to make an oversized journal appear valid. This library does not persist those
 sidecars, grant journal authority or implement a complete phase collector.
-Enforcement controls and the early historical staging pairs still need their
-own acquisition and integration paths.
+The four early historical staging pairs and the complete collector still need
+their own acquisition and integration paths.
+
+## Acquiring enforcement controls
+
+Four fixed before cases also acquire a successful control: wrong-source Fade
+claim, wrong-source positive handoff, Pod claim from an unauthorized source and
+Envoy owner mismatch. Each pair uses the scheduled negative account and the rightful
+recipient, with each account's own next sequence. Both requests are unsigned
+source-account ENFORCE simulations. Callers cannot override the account, call,
+authorization mode or control.
+
+The adapter validates the exact negative error before requesting the control.
+Both responses must refer to the same ledger within the existing two-ledger
+snapshot bracket. The control must return void and echo the exact authorization
+tree. Positive handoff includes the recipient's 1,000,000-stroop transfer to the
+seller. A required venue or Pod credential is obtained once and reused across
+the pair. Simulations neither consume a sequence nor authorize submission.
+
+Control schema, resource quote and authorization failures stop before readback.
+Cancellation and the original 90-second clock bound also cover the queued
+control call. Its separate validation time is retained alongside the negative
+response time. The combined case, both responses and raw snapshots share the
+existing 2 MiB output limit; ordinary record-case result shapes stay unchanged.
+
+These requests and responses are exercised with controlled transport and
+synthetic ledger state. They do not establish actual RPC enforcement wire
+compatibility or host execution. A successful pair still needs the complete
+phase policy, authenticated transaction fees where applicable and durable
+collector replay. Pod's before phase additionally needs a genuine observation
+captured before unlock; a later response cannot substitute for that history.
 
 ## Independent record-case journey
 

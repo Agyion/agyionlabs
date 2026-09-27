@@ -35,12 +35,12 @@ function zero(head) {
   const entries = f.snapshot(head).entries, data = new SorobanDataBuilder().setResources(20000, 0, 0).setResourceFee('700').setReadOnly([entries[2], entries[6]].map(r => xdr.LedgerKey.fromXDR(r.key, 'base64'))).build();
   return { latestLedger: head, transactionData: b64(data), minResourceFee: '700', results: [{ xdr: b64(nativeToScVal(0n, { type: 'i128' })), auth: [] }], events: [], stateChanges: [] };
 }
-function fixture({ head = HEAD, present = true, error = 3, simulationHead = head, response = snapshot(head, present), onCall, events } = {}) {
+function fixture({ head = HEAD, present = true, error = 3, errorText, simulationHead = head, response = snapshot(head, present), onCall, events } = {}) {
   const calls = [], values = { getNetwork: { passphrase: plan.networkPassphrase, protocolVersion: 28 }, getLedgerEntries: { latestLedger: response.latestLedger, entries: response.entries.map(({ val, ...r }) => ({ ...r, xdr: val })) }, getLatestLedger: header(head) };
   const rpc = createPublicLifecycleRpc({ fetch: async (url, init) => {
     assert.equal(url, 'https://soroban-testnet.stellar.org'); assert.equal(init.redirect, 'manual'); const q = JSON.parse(init.body); calls.push(clone(q)); await onCall?.(q, values);
     let result = values[q.method];
-    if (q.method === 'simulateTransaction') { const op = xdr.TransactionEnvelope.fromXDR(q.params.transaction, 'base64').v1().tx().operations()[0].body().invokeHostFunctionOp(); result = op.hostFunction().invokeContract().functionName().toString() === 'balance' ? zero(head) : { latestLedger: simulationHead, error: `HostError: Error(Contract, #${error})`, ...(events ? { events } : {}) }; }
+    if (q.method === 'simulateTransaction') { const op = xdr.TransactionEnvelope.fromXDR(q.params.transaction, 'base64').v1().tx().operations()[0].body().invokeHostFunctionOp(); result = op.hostFunction().invokeContract().functionName().toString() === 'balance' ? zero(head) : { latestLedger: simulationHead, error: errorText ?? `HostError: Error(Contract, #${error})`, ...(events ? { events } : {}) }; }
     assert.ok(result, q.method); return new Response(JSON.stringify({ jsonrpc: '2.0', id: q.id, result }));
   } });
   return { calls, values, rpc };
@@ -201,7 +201,6 @@ test('funded record-mode cases reject omitted Balance without invoking a zero ge
   const state = S.derivePublicLifecycleState({ ...stage, response: before.acquisition.response, headerEvidence: before.acquisition.headerEvidence }); assert.equal(state.expected.fundedHistory, true);
   const response = clone(stage.response); response.entries.splice(6, 1); const missing = fixture({ head, error: 12, response });
   await assert.rejects(acquire({ plan, state, before, observationKind: 'fade-kernel-or-asset-claimant-record-mode', caseId: 'kernel', rpc: missing.rpc }), fail('ZERO')); assert.equal(missing.calls.filter(c => c.method === 'simulateTransaction').length, 1);
-  const refused = fixture(); await assert.rejects(acquire({ plan, state, before, observationKind: 'fade-claim-wrong-source-enforce', caseId: 'source', rpc: refused.rpc }), fail('MODE')); assert.equal(refused.calls.length, 0);
 });
 test('credential mismatch and mutation during await cannot alter the captured request', async t => {
   t.mock.method(Date, 'now', () => NOW * 1000); const b = await boot(), before = clone(b.before), fx = fixture({ error: 14 });
@@ -251,4 +250,240 @@ for (const kind of ['simulation', 'credential']) test(`queued deadline expiry re
   t.mock.method(Date, 'now', () => { if (++clockCalls === (kind === 'simulation' ? 2 : 1)) queueMicrotask(() => { seconds = NOW + 90; }); return seconds * 1000; });
   const input = kind === 'simulation' ? basic(b, fx.rpc) : { ...basic(b, fx.rpc), observationKind: 'unsupported-asset-valid-creation-proof', caseId: 'pod', observationCredential: async () => { credentials++; throw Error('must not be invoked'); } };
   await assert.rejects(acquire(input), fail('TIME')); assert.equal(fx.calls.length, 0); assert.equal(credentials, 0);
+});
+
+// ENFORCE acquisition oracle: fixed contract calls and auth/payload bytes below
+// deliberately do not use the production intent or observation-evidence builder.
+// The shared journey supplies synthetic states; wire replies remain controlled.
+const ENFORCE = [
+  { step: 2, stepId: '02-fade-negative-claim', kind: 'fade-claim-wrong-source-enforce', caseId: 'source', method: 'claim', id: 1, error: 'Auth, InvalidAction', role: null },
+  { step: 11, stepId: '11-fade-positive-confirm_handoff', kind: 'positive-handoff-wrong-source-enforce', caseId: 'source', method: 'confirm_handoff', id: 3, error: 'Auth, InvalidAction', role: 'venue' },
+  { step: 13, stepId: '13-pod-timelock-claim_pod', kind: 'pod-recipient-auth-enforce', caseId: 'source', method: 'claim_pod', id: 1, error: 'Auth, InvalidAction', role: 'podTimelock' },
+  { step: 26, stepId: '26-grant-capped-revoke_mandate', kind: 'envoy-owner-mismatch-relayer-authorized', caseId: 'owner', method: 'revoke_mandate', id: 1, error: 'Contract, #11', role: null },
+];
+let enforceJourney;
+const enforceSeconds = row => NOW + (f.heads[row.step - 1] - HEAD) * 5;
+const eb64 = value => value.toXDR('base64'), ea = address => new Address(address).toScVal();
+const eu64 = value => nativeToScVal(BigInt(value), { type: 'u64' });
+function ebe64(value) { const bytes = Buffer.alloc(8); bytes.writeBigUInt64BE(BigInt(value)); return bytes; }
+function enforceOracle(row, state) {
+  assert.equal(plan.steps[row.step - 1].id, row.stepId); const capturedSeconds = enforceSeconds(row);
+  const purpose = row.role === 'venue' ? 'handoff:v2' : 'pod-claim:v3';
+  const payload = row.role ? Buffer.concat([Buffer.from('agyion:' + purpose + '\0'), Buffer.from(sha('Test SDF Network ; September 2015'), 'hex'), ea(plan.contractId).toXDR(), ebe64(row.id), ea(plan.actors.recipient).toXDR(), ...(row.role === 'venue' ? [ebe64(capturedSeconds)] : [])]) : null;
+  const key = row.role === 'venue' ? f.keys[2] : row.role === 'podTimelock' ? f.keys[3] : null;
+  if (key) assert.equal(key.publicKey(), plan.credentialKeys[row.role]);
+  const signature = key ? key.sign(payload) : null;
+  const tree = (target, method, args, children = []) => new xdr.SorobanAuthorizedInvocation({ function: xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(new xdr.InvokeContractArgs({ contractAddress: new Address(target).toScAddress(), functionName: method, args })), subInvocations: children });
+  function request(control) {
+    const source = plan.actors[control ? 'recipient' : 'relayer'];
+    const args = row.method === 'claim' ? [eu64(1), ea(plan.actors.recipient)]
+      : row.method === 'confirm_handoff' ? [eu64(3), eu64(capturedSeconds), xdr.ScVal.scvBytes(signature)]
+      : row.method === 'claim_pod' ? [eu64(1), ea(plan.actors.recipient), xdr.ScVal.scvBytes(signature)]
+      : [ea(source), eu64(1)];
+    const children = row.method === 'confirm_handoff' ? [tree(plan.assets[0], 'transfer', [ea(plan.actors.recipient), ea(plan.actors.seller), nativeToScVal(1000000n, { type: 'i128' })])] : [];
+    const auth = [new xdr.SorobanAuthorizationEntry({ credentials: xdr.SorobanCredentials.sorobanCredentialsSourceAccount(), rootInvocation: tree(plan.contractId, row.method, args, children) })];
+    const account = state.snapshot.accounts[control ? 'recipient' : 'relayer'];
+    const transaction = new TransactionBuilder(new Account(source, account.sequence), { fee: '100', networkPassphrase: 'Test SDF Network ; September 2015' }).addOperation(Operation.invokeContractFunction({ contract: plan.contractId, function: row.method, args, auth })).setTimebounds(0, capturedSeconds + 90).build().toXDR();
+    return { params: { transaction, authMode: 'enforce' }, auth: auth.map(eb64) };
+  }
+  const negative = request(false), control = request(true);
+  let credentials = 0;
+  return { negative, control, get credentials() { return credentials; }, async observationCredential(value) {
+    credentials++; assert.ok(payload); assert.equal(value.state, state); assert.equal(value.stepId, row.stepId); assert.equal(value.phase, 'before'); assert.equal(value.observationKind, row.kind); assert.equal(value.caseId, row.caseId); assert.equal(value.timestamp, String(capturedSeconds)); assert.equal(value.ledger, state.snapshot.ledger);
+    return { role: row.role, publicKey: key.publicKey(), payloadSha256: sha(payload), signatureHex: signature.toString('hex') };
+  } };
+}
+async function enforceBoot(row) {
+  const stage = (enforceJourney ??= f.journey(S, 26)).stages[row.step - 1].before, head = stage.response.latestLedger;
+  const capture = fixture({ head, response: stage.response }), before = await acquirePublicLifecycleBaseline({ plan, rpc: capture.rpc });
+  const state = S.derivePublicLifecycleState({ ...stage, response: before.acquisition.response, headerEvidence: before.acquisition.headerEvidence });
+  assert.equal(state.expected.fundedHistory, true); assert.equal(before.zeroRead, null); return { before, state };
+}
+function enforceTransport(row, boot, oracle, options = {}) {
+  const head = boot.state.snapshot.ledger, afterHead = options.afterHead ?? head, calls = [];
+  const response = clone(boot.before.acquisition.response); response.latestLedger = afterHead; options.mutateAfter?.(response);
+  const values = { getNetwork: { passphrase: plan.networkPassphrase, protocolVersion: 28 }, getLedgerEntries: { latestLedger: afterHead, entries: response.entries.map(({ val, ...entry }) => ({ ...entry, xdr: val })) }, getLatestLedger: header(afterHead) };
+  let simulations = 0;
+  const rpc = createPublicLifecycleRpc({ fetch: async (url, init) => {
+    assert.equal(url, 'https://soroban-testnet.stellar.org'); assert.equal(init.redirect, 'manual');
+    const q = JSON.parse(init.body); calls.push(clone(q)); let result;
+    if (q.method === 'simulateTransaction') {
+      const control = ++simulations === 2; assert.ok(simulations <= 2, 'no simulation retry');
+      assert.deepEqual(q.params, control ? oracle.control.params : oracle.negative.params);
+      result = control ? { latestLedger: options.controlHead ?? head, transactionData: eb64(new SorobanDataBuilder().setResourceFee('100').build()), minResourceFee: '100', results: [{ xdr: eb64(xdr.ScVal.scvVoid()), auth: oracle.control.auth }] }
+        : { latestLedger: options.negativeHead ?? head, error: `HostError: Error(${row.error})` };
+      (control ? options.mutateControl : options.mutateNegative)?.(result);
+      await options.onSimulation?.(control, q, result);
+    } else { result = values[q.method]; assert.ok(result, 'no extra method ' + q.method); }
+    return new Response(JSON.stringify({ jsonrpc: '2.0', id: q.id, result }));
+  } });
+  return { calls, rpc };
+}
+const enforceInput = (row, boot, oracle, rpc) => ({ plan, ...boot, observationKind: row.kind, caseId: row.caseId, observationCredential: oracle.observationCredential, rpc });
+for (const row of ENFORCE) test(`ENFORCE fixed pair ${row.stepId} has independent source/auth/payload oracle`, async t => {
+  t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row), oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle), original = JSON.stringify(boot.before);
+  const out = await acquire(enforceInput(row, boot, oracle, fx.rpc));
+  assert.deepEqual(fx.calls.map(q => q.method), ['simulateTransaction', 'simulateTransaction', 'getNetwork', 'getLedgerEntries', 'getLatestLedger']);
+  assert.equal(oracle.credentials, row.role ? 1 : 0); assert.equal(JSON.stringify(boot.before), original);
+  assert.deepEqual(out.case.request, { envelopeXdr: oracle.negative.params.transaction, authMode: 'enforce' });
+  assert.deepEqual(out.case.control.request, { envelopeXdr: oracle.control.params.transaction, authMode: 'enforce' });
+  assert.equal(out.case.response.error, `HostError: Error(${row.error})`); assert.deepEqual(out.case.control.response.results[0].auth, oracle.control.auth);
+  assert.equal(out.case.ledger, boot.state.snapshot.ledger); assert.deepEqual(afterOf(out), boot.before); assert.ok(Object.isFrozen(out.case.control.response.results[0].auth));
+  assert.deepEqual(out.timing, { startedAtSeconds: enforceSeconds(row), responseValidatedAtSeconds: enforceSeconds(row), controlResponseValidatedAtSeconds: enforceSeconds(row), completedAtSeconds: enforceSeconds(row) });
+  assert.equal(O.verifyPublicLifecycleObservationCase({ plan, stepId: row.stepId, observationKind: row.kind, caseId: row.caseId, ledger: out.case.ledger, timestamp: out.case.timestamp, recordAnchors: boot.state.recordAnchors }, { request: out.case.request, response: out.case.response, control: out.case.control }).caseId, row.caseId);
+});
+test('ENFORCE wrong negative error or success-shaped aliases stop before control and readback', async t => {
+  const row = ENFORCE[0]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row);
+  for (const mutateNegative of [r => r.error = 'HostError: Error(Contract, #3)', r => r.results = [], r => r.id = '', r => r.cost = false, r => r.restorePreamble = null, r => r._parsed = false]) {
+    const oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle, { mutateNegative });
+    await assert.rejects(acquire(enforceInput(row, boot, oracle, fx.rpc)), fail('CASE')); assert.equal(fx.calls.length, 1);
+  }
+});
+test('ENFORCE control auth, raw schema and resource quote failures never reach after-read', async t => {
+  const row = ENFORCE[0]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row);
+  for (const mutateControl of [r => delete r.results[0].auth, r => r.results[0].auth = [], r => r.results[0].auth = null, r => r.results[0].auth.push(r.results[0].auth[0]), r => r.minResourceFee = '101', r => r.minResourceFee = '0100', r => r.results[0].xdr = eb64(xdr.ScVal.scvBool(false)), r => r.restorePreamble = null, r => r.id = false, r => r._parsed = false]) {
+    const oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle, { mutateControl });
+    await assert.rejects(acquire(enforceInput(row, boot, oracle, fx.rpc)), fail('CASE')); assert.equal(fx.calls.length, 2);
+  }
+});
+test('ENFORCE requires the same simulation ledger and an unchanged two-ledger bracket', async t => {
+  const row = ENFORCE[0]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row), head = boot.state.snapshot.ledger;
+  const oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle, { negativeHead: head + 1, controlHead: head + 1, afterHead: head + 2 });
+  const out = await acquire(enforceInput(row, boot, oracle, fx.rpc)); assert.equal(out.case.ledger, head + 1); assert.equal(out.snapshots[out.case.afterSnapshot].response.latestLedger, head + 2);
+  const different = enforceTransport(row, boot, oracle, { controlHead: head + 1, afterHead: head + 1 });
+  await assert.rejects(acquire(enforceInput(row, boot, oracle, different.rpc)), fail('CASE')); assert.equal(different.calls.length, 2);
+  const outside = enforceTransport(row, boot, oracle, { negativeHead: head + 3, controlHead: head + 3, afterHead: head + 3 });
+  await assert.rejects(acquire(enforceInput(row, boot, oracle, outside.rpc)), fail('BRACKET')); assert.equal(outside.calls.length, 1);
+});
+test('ENFORCE cancellation and deadline during the negative leg prevent a control call', async t => {
+  const row = ENFORCE[0], started = enforceSeconds(row); let time = started; t.mock.method(Date, 'now', () => time * 1000); const boot = await enforceBoot(row);
+  for (const kind of ['abort', 'deadline']) {
+    time = started; const controller = new AbortController(), oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle, { onSimulation(control) { assert.equal(control, false); if (kind === 'abort') controller.abort(); else time = started + 90; } });
+    await assert.rejects(acquire({ ...enforceInput(row, boot, oracle, fx.rpc), signal: controller.signal }), fail(kind === 'abort' ? 'ABORTED' : 'TIME')); assert.equal(fx.calls.length, 1);
+  }
+});
+test('ENFORCE invalid fixed credential refuses before both simulations', async t => {
+  const row = ENFORCE[1]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row), oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle);
+  await assert.rejects(acquire({ ...enforceInput(row, boot, oracle, fx.rpc), observationCredential: async value => ({ ...await oracle.observationCredential(value), payloadSha256: '00'.repeat(32) }) }), fail('CREDENTIAL'));
+  assert.equal(oracle.credentials, 1); assert.equal(fx.calls.length, 0);
+});
+function editControlAuth(response, edit) { const original = response.results[0].auth[0], auth = xdr.SorobanAuthorizationEntry.fromXDR(original, 'base64'); edit(auth); assert.notEqual(eb64(auth), original, 'fixture edit must change auth bytes'); response.results[0].auth = [eb64(auth)]; }
+test('ENFORCE altered root, payment child or credential type is rejected before readback', async t => {
+  const row = ENFORCE[1]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row);
+  for (const edit of [
+    auth => auth.rootInvocation().function().contractFn().functionName('claim'),
+    auth => auth.rootInvocation().function().contractFn().contractAddress(new Address(plan.assets[0]).toScAddress()),
+    auth => { const fn = auth.rootInvocation().function().contractFn(); fn.args([eu64(4), ...fn.args().slice(1)]); },
+    auth => auth.rootInvocation().subInvocations([]),
+    auth => auth.rootInvocation().subInvocations().push(auth.rootInvocation().subInvocations()[0]),
+    auth => { const fn = auth.rootInvocation().subInvocations()[0].function().contractFn(); fn.args([ea(plan.actors.relayer), ...fn.args().slice(1)]); },
+    auth => { const fn = auth.rootInvocation().subInvocations()[0].function().contractFn(); fn.args([fn.args()[0], ea(plan.actors.relayer), fn.args()[2]]); },
+    auth => { const fn = auth.rootInvocation().subInvocations()[0].function().contractFn(); fn.args([...fn.args().slice(0, 2), nativeToScVal(1000001n, { type: 'i128' })]); },
+    auth => auth.credentials(xdr.SorobanCredentials.sorobanCredentialsAddress(new xdr.SorobanAddressCredentials({ address: new Address(plan.actors.recipient).toScAddress(), nonce: xdr.Int64.fromString('1'), signatureExpirationLedger: boot.state.snapshot.ledger + 10, signature: xdr.ScVal.scvVoid() }))),
+  ]) {
+    const oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle, { mutateControl: response => editControlAuth(response, edit) });
+    await assert.rejects(acquire(enforceInput(row, boot, oracle, fx.rpc)), fail('CASE')); assert.equal(fx.calls.length, 2); assert.equal(oracle.credentials, 1);
+  }
+});
+test('ENFORCE resource extensions reject restoration and enforce encoded fee cap', async t => {
+  const row = ENFORCE[0]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row);
+  for (const [fee, archived, accepted] of [['0', [], true], ['9999900', [], true], ['9999901', [], false], ['100', [0], false]]) {
+    const oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle, { mutateControl(response) {
+      const data = new SorobanDataBuilder().setResourceFee(fee).build(); data.ext(new xdr.SorobanTransactionDataExt(1, new xdr.SorobanResourcesExtV0({ archivedSorobanEntries: archived })));
+      response.transactionData = eb64(data); response.minResourceFee = fee;
+    } });
+    if (accepted) { const out = await acquire(enforceInput(row, boot, oracle, fx.rpc)); assert.equal(out.case.control.response.minResourceFee, fee); assert.equal(fx.calls.length, 5); }
+    else { await assert.rejects(acquire(enforceInput(row, boot, oracle, fx.rpc)), fail('CASE')); assert.equal(fx.calls.length, 2); }
+  }
+});
+function enforceEvent(type, success) { return eb64(new xdr.DiagnosticEvent({ inSuccessfulContractCall: success, event: new xdr.ContractEvent({ ext: new xdr.ExtensionPoint(0), contractId: null, type, body: new xdr.ContractEventBody(0, new xdr.ContractEventV0({ topics: [xdr.ScVal.scvSymbol('fixture')], data: xdr.ScVal.scvVoid() })) }) })); }
+test('ENFORCE nonempty simulated state changes and diagnostic wrappers stay raw while after state is unchanged', async t => {
+  const row = ENFORCE[0]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row), oracle = enforceOracle(row, boot.state);
+  const account = boot.before.acquisition.response.entries[8], data = xdr.LedgerEntryData.fromXDR(account.val, 'base64');
+  const entry = eb64(new xdr.LedgerEntry({ lastModifiedLedgerSeq: boot.state.snapshot.ledger, data, ext: new xdr.LedgerEntryExt(0) }));
+  const changes = [{ type: 'created', key: account.key, before: null, after: entry }, { type: 'updated', key: account.key, before: entry, after: entry }, { type: 'deleted', key: account.key, before: entry, after: null }];
+  const events = [xdr.ContractEventType.system(), xdr.ContractEventType.contract(), xdr.ContractEventType.diagnostic()].flatMap(type => [false, true].map(flag => enforceEvent(type, flag)));
+  const fx = enforceTransport(row, boot, oracle, { mutateNegative: response => response.events = events, mutateControl(response) { response.events = events; response.stateChanges = changes; const resources = xdr.SorobanTransactionData.fromXDR(response.transactionData, 'base64'); resources.resources().footprint().readWrite([xdr.LedgerKey.fromXDR(account.key, 'base64')]); response.transactionData = eb64(resources); } });
+  const out = await acquire(enforceInput(row, boot, oracle, fx.rpc)); assert.deepEqual(out.case.control.response.stateChanges, changes); assert.deepEqual(out.case.control.response.events, events); assert.deepEqual(out.case.response.events, events); assert.deepEqual(afterOf(out), boot.before); assert.equal(fx.calls.length, 5);
+});
+test('ENFORCE control bytes contribute to the combined two-MiB result limit', async t => {
+  const row = ENFORCE[0]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const original = await enforceBoot(row), boot = { ...original, before: clone(original.before) }, oracle = enforceOracle(row, boot.state);
+  const tx = xdr.TransactionEnvelope.fromXDR(oracle.negative.params.transaction, 'base64'), meta = xdr.LedgerCloseMeta.fromXDR(boot.before.acquisition.raw.latest.metadataXdr, 'base64');
+  meta.v0().txSet().txes(Array(Math.ceil(1300000 / (tx.toXDR().length * 4 / 3))).fill(tx)); boot.before.acquisition.raw.latest.metadataXdr = eb64(meta);
+  assert.ok(Buffer.byteLength(canonical(boot.before)) < MAX);
+  const fx = enforceTransport(row, boot, oracle, { mutateControl: response => response.events = Array(20).fill(diagnostic(36000)) });
+  await assert.rejects(acquire(enforceInput(row, boot, oracle, fx.rpc)), fail('BOUNDS')); assert.equal(fx.calls.length, 5);
+});
+test('ENFORCE pending control abort returns without waiting and late completion cannot read state', async t => {
+  const row = ENFORCE[0]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row), oracle = enforceOracle(row, boot.state), abort = new AbortController();
+  let entered, release; const started = new Promise(resolve => { entered = resolve; });
+  const fx = enforceTransport(row, boot, oracle, { onSimulation: control => control ? new Promise(resolve => { release = resolve; entered(); }) : undefined });
+  const pending = acquire({ ...enforceInput(row, boot, oracle, fx.rpc), signal: abort.signal }); await started; abort.abort(); await assert.rejects(pending, fail('ABORTED'));
+  assert.equal(fx.calls.length, 2); release(); await Promise.resolve(); await Promise.resolve(); assert.equal(fx.calls.length, 2);
+});
+for (const kind of ['abort', 'deadline']) test(`ENFORCE queued control ${kind} never dispatches its RPC`, async t => {
+  const row = ENFORCE[0], start = enforceSeconds(row); let current = start, queued = false, afterNegativeClock = 0;
+  t.mock.method(Date, 'now', () => current * 1000); const boot = await enforceBoot(row), oracle = enforceOracle(row, boot.state), abort = new AbortController(); let negativeReturned = false;
+  // Direct trusted RPC capability makes the exact scheduling boundary explicit:
+  // the first post-await clock check queues cancellation before wait's next job.
+  const calls = [], rpc = { async request(method, params) { calls.push(method); assert.equal(method, 'simulateTransaction'); assert.deepEqual(params, oracle.negative.params); negativeReturned = true; return { latestLedger: boot.state.snapshot.ledger, error: 'HostError: Error(Auth, InvalidAction)' }; } };
+  t.mock.method(Date, 'now', () => { if (negativeReturned && ++afterNegativeClock === 1) { queued = true; queueMicrotask(() => { if (kind === 'abort') abort.abort(); else current = start + 90; }); } return current * 1000; });
+  await assert.rejects(acquire({ ...enforceInput(row, boot, oracle, rpc), signal: abort.signal }), fail(kind === 'abort' ? 'ABORTED' : 'TIME')); assert.equal(queued, true); assert.deepEqual(calls, ['simulateTransaction']);
+});
+test('ENFORCE expiry after control prevents readback and expiry in readback prevents a result', async t => {
+  const row = ENFORCE[0], start = enforceSeconds(row); let current = start; t.mock.method(Date, 'now', () => current * 1000); const boot = await enforceBoot(row), oracle = enforceOracle(row, boot.state);
+  const first = enforceTransport(row, boot, oracle, { onSimulation(control) { if (control) current = start + 90; } });
+  await assert.rejects(acquire(enforceInput(row, boot, oracle, first.rpc)), fail('TIME')); assert.equal(first.calls.length, 2);
+  current = start; const second = enforceTransport(row, boot, oracle), rpc = { async request(method, params) { const result = await second.rpc.request(method, params); if (method === 'getLedgerEntries') current = start + 90; return result; } };
+  await assert.rejects(acquire(enforceInput(row, boot, oracle, rpc)), fail('TIME')); assert.deepEqual(second.calls.map(q => q.method), ['simulateTransaction', 'simulateTransaction', 'getNetwork', 'getLedgerEntries']);
+});
+test('ENFORCE after-read account economics and funded Balance must remain unchanged', async t => {
+  const row = ENFORCE[0]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row);
+  for (const mutateAfter of [response => response.entries.splice(6, 1), response => { const entry = xdr.LedgerEntryData.fromXDR(response.entries[8].val, 'base64'); entry.account().balance(xdr.Int64.fromString('999999999')); response.entries[8].val = eb64(entry); }, response => { const entry = xdr.LedgerEntryData.fromXDR(response.entries[9].val, 'base64'); entry.account().seqNum(xdr.SequenceNumber.fromString('11')); response.entries[9].val = eb64(entry); }]) {
+    const oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle, { mutateAfter });
+    await assert.rejects(acquire(enforceInput(row, boot, oracle, fx.rpc)), /^Error: LIFECYCLE_OBSERVATION_ACQUISITION_(ZERO|SNAPSHOT|UNCHANGED)$/); assert.equal(fx.calls.length, 5);
+  }
+});
+test('ENFORCE caller source, auth, mode, control and payload overrides are rejected before capabilities', async t => {
+  const row = ENFORCE[0]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row);
+  for (const override of [{ sourceAccount: plan.actors.seller }, { authMode: 'record' }, { auth: [] }, { control: null }, { transaction: 'AAAA' }, { expectedError: 'Contract#3' }]) {
+    const oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle);
+    await assert.rejects(acquire({ ...enforceInput(row, boot, oracle, fx.rpc), ...override }), fail('INPUT')); assert.equal(fx.calls.length, 0); assert.equal(oracle.credentials, 0);
+  }
+});
+function enforcePhaseGate(row, boot, rawEvidence) {
+  const stage = enforceJourney.stages[row.step - 1].before, state = boot.state;
+  const scope = { plan, planSha256: state.planSha256, stepId: row.stepId, phase: 'before', claim: { stepId: row.stepId, binding: stage.binding }, prefix: stage.prefix, initialEvidence: { expected: enforceJourney.initial.expected, response: f.snapshot(), headerEvidence: f.header() }, currentInclusion: null, snapshotResponse: boot.before.acquisition.response, headerEvidence: boot.before.acquisition.headerEvidence, beforeSnapshot: null };
+  const policies = createPublicLifecyclePolicies(); policies.verifyStateExpectations({ ...scope, expected: state.expected });
+  return policies.verifyObservations({ ...scope, snapshot: state.snapshot, currentFee: null, rawEvidence });
+}
+for (const row of ENFORCE.filter(row => row.step !== 13)) test(`ENFORCE acquired pair completes exact before-phase gate ${row.stepId}`, async t => {
+  t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row), oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle);
+  const out = await acquire(enforceInput(row, boot, oracle, fx.rpc)), families = O.publicLifecycleObservationCases({ plan, stepId: row.stepId, phase: 'before' }), raw = Object.fromEntries(families.map(family => [family.observationKind, { cases: [] }])), batches = { ...out.snapshots };
+  raw[row.kind].cases.push(out.case);
+  if (row.step === 2) for (const caseId of ['kernel', 'asset']) {
+    const transport = fixture({ head: boot.state.snapshot.ledger, response: boot.before.acquisition.response, error: 12 });
+    const record = await acquire({ plan, ...boot, observationKind: 'fade-kernel-or-asset-claimant-record-mode', caseId, rpc: transport.rpc }); raw['fade-kernel-or-asset-claimant-record-mode'].cases.push(record.case); Object.assign(batches, record.snapshots);
+  }
+  raw[families[0].observationKind].snapshots = batches;
+  assert.equal(enforcePhaseGate(row, boot, raw).evidence.length, families.length);
+  for (const change of [tx => tx.sourceAccount(xdr.MuxedAccount.keyTypeEd25519(new Address(plan.actors.relayer).toScAddress().accountId().ed25519())), tx => tx.seqNum(xdr.SequenceNumber.fromString(String(BigInt(tx.seqNum().toString()) + 1n)))]) {
+    const bad = clone(raw), request = bad[row.kind].cases[0].control.request, envelope = xdr.TransactionEnvelope.fromXDR(request.envelopeXdr, 'base64'); change(envelope.v1().tx()); request.envelopeXdr = eb64(envelope);
+    assert.throws(() => enforcePhaseGate(row, boot, bad), /LIFECYCLE_OBSERVATION_(ENVELOPE|SEQUENCE)/);
+  }
+});
+test('ENFORCE Pod plus all six current record cases still cannot replace the missing historical early case', async t => {
+  const row = ENFORCE[2]; t.mock.method(Date, 'now', () => enforceSeconds(row) * 1000); const boot = await enforceBoot(row), oracle = enforceOracle(row, boot.state), fx = enforceTransport(row, boot, oracle), head = boot.state.snapshot.ledger;
+  const out = await acquire(enforceInput(row, boot, oracle, fx.rpc)), families = O.publicLifecycleObservationCases({ plan, stepId: row.stepId, phase: 'before' }), raw = Object.fromEntries(families.map(family => [family.observationKind, { cases: [] }])), batches = { ...out.snapshots }; raw[row.kind].cases.push(out.case);
+  let records = 0;
+  for (const [observationKind, caseIds] of [['pod-crypto-domain', ['recipient', 'purpose', 'deployment', 'legacy']], ['pod-destination-resigned-after-unlock', ['kernel', 'asset']]]) for (const caseId of caseIds) {
+    const destinationCase = observationKind === 'pod-destination-resigned-after-unlock', recipient = destinationCase ? caseId === 'kernel' ? plan.contractId : plan.assets[0] : plan.actors.recipient;
+    const purpose = caseId === 'purpose' ? 'handoff:v2' : caseId === 'legacy' ? 'pod-claim:v2' : 'pod-claim:v3', deployment = caseId === 'deployment' ? 'CBIIHFELPAKC2KJD4NCJSB32BQO5QUBNEKHBMISFB4MVDKBVM6AJSRXT' : plan.contractId;
+    const payload = Buffer.concat([Buffer.from('agyion:' + purpose + '\0'), Buffer.from(sha(plan.networkPassphrase), 'hex'), ea(deployment).toXDR(), ebe64(1), ea(recipient).toXDR()]);
+    const transport = fixture({ head, response: boot.before.acquisition.response, errorText: destinationCase ? 'HostError: Error(Contract, #12)' : 'HostError: Error(Crypto, InvalidInput)' }); let credentials = 0;
+    const record = await acquire({ plan, ...boot, observationKind, caseId, rpc: transport.rpc, observationCredential: async () => { credentials++; return { role: 'podTimelock', publicKey: f.keys[3].publicKey(), payloadSha256: sha(payload), signatureHex: f.keys[3].sign(payload).toString('hex') }; } });
+    assert.equal(credentials, 1); raw[observationKind].cases.push(record.case); Object.assign(batches, record.snapshots); records++;
+  }
+  assert.equal(records, 6); assert.deepEqual(raw['pod-before-unlock'].cases, []); raw[families[0].observationKind].snapshots = batches;
+  assert.throws(() => enforcePhaseGate(row, boot, raw), /LIFECYCLE_OBSERVATION_CASES/);
 });

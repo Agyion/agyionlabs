@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { createPrivateVaultController, PrivateVaultControllerProvider, type PrivateVaultController, type PrivacyVaultScope } from '../../lib/privateVault';
 import { DEFAULT_PRIVATE_RELEASE_KEY, listPrivateReleaseOptions, resolvePrivateRelease, assertPrivateReleaseSelection, type PrivateReleaseSelection } from '../../lib/private/release';
 import { onWalletSessionChange, walletSessionVersion } from '../../lib/wallet';
@@ -68,7 +68,8 @@ export default function PrivateWorkspaceProvider({ address, children }: { addres
   const pendingError = pendingState?.identity === accountIdentity ? pendingState.error : null;
   const pendingChecked = pendingState?.identity === accountIdentity;
   const currentAccount = useRef(accountIdentity);
-  currentAccount.current = accountIdentity;
+  // A suspended replacement render must not revoke the committed account's read.
+  useLayoutEffect(() => { currentAccount.current = accountIdentity; }, [accountIdentity]);
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const selection = verified?.key === releaseKey ? verified : null;
@@ -147,8 +148,8 @@ export default function PrivateWorkspaceProvider({ address, children }: { addres
   }, [selection, address, session]);
 
   const confirmFee = useCallback((value: FeeConfirmation): Promise<boolean> => {
-    pendingFee.current?.(false);
     if (!owner || owner.retired || value.signal.aborted) return Promise.resolve(false);
+    pendingFee.current?.(false);
     return new Promise(resolve => {
       const finish = (approved: boolean) => {
         value.signal.removeEventListener('abort', cancel);
