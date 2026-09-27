@@ -5,6 +5,7 @@ import { Buffer } from 'buffer';
 import { Asset, Networks, StrKey } from '@stellar/stellar-sdk';
 import { usePrivateWorkspace } from './PrivateWorkspaceProvider';
 import PrivateVault from './PrivateVault';
+import PrivatePendingRecovery from './PrivatePendingRecovery';
 import PrivateTriggerAttester from './PrivateTriggerAttester';
 import EnvoyDiscovery from '../market/EnvoyDiscovery';
 import { usePrivateVault } from '../../lib/privateVault';
@@ -13,13 +14,12 @@ import { WalletSignatureRejectedError } from '../../lib/wallet-errors';
 import { formatMinor, shortAddress, shortHex } from '../../lib/format';
 import { newPrivateGrantId, privateAmount, privateAttestation, privateDeadline, privateDestination, readPrivateFile } from '../../lib/privateWorkspaceInputs';
 import type { PrivateCommand, PrivateNoteAction, PrivateNoteSummary, PreparedPrivateOperation } from '../../lib/private/protocol-types';
-import manifest from '../../lib/private/release.json';
+import type { PrivateReleaseSelection } from '../../lib/private/release';
 import { Field, TextInput } from '../ui';
 
 type Instrument = 'pod' | 'trigger' | 'envoy';
 const native = Asset.native().contractId(Networks.TESTNET);
-const assets = manifest.config.assets.map(contract => ({ contract, id: StrKey.decodeContract(contract).toString('hex'), label: contract === native ? 'XLM' : contract === CONFIG.assetContractId ? CONFIG.assetCode : shortAddress(contract) }));
-const assetLabel = (id: string) => assets.find(asset => asset.id === id)?.label ?? shortHex(id);
+const selectedAssets = (selection: PrivateReleaseSelection) => selection.assets.map(contract => ({ contract, id: StrKey.decodeContract(contract).toString('hex'), label: contract === native ? 'XLM' : contract === CONFIG.assetContractId ? CONFIG.assetCode : shortAddress(contract) }));
 const title = (kind: Instrument) => kind === 'pod' ? 'Pod' : kind === 'trigger' ? 'Trigger' : 'Envoy';
 const actionTitle = (action: string) => ({ deposit: 'Add private funds', transfer: 'Private payment', withdraw: 'Public withdrawal', consolidate: 'Consolidate private notes', 'pod-create': 'Lock a Pod', 'pod-claim': 'Claim a Pod', 'trigger-create': 'Create a Trigger', 'trigger-claim': 'Claim a Trigger', 'trigger-refund': 'Refund a Trigger', 'envoy-grant': 'Delegate private notes', 'envoy-claim': 'Agent claim', 'envoy-reclaim': 'Owner reclaim', 'envoy-revoke': 'Revoke private delegation' }[action] ?? 'Private operation');
 function downloadFile(blob: Blob, filename: string) {
@@ -36,9 +36,11 @@ export default function PrivateInstrumentPanel({ kind, address, legacy, publicRe
   useEffect(() => { if (publicRecordRequested) setPublicOpen(true); }, [publicRecordRequested]);
   return <div className={`instrument-panel private-instrument panel-${kind}`} data-private-instrument={kind}>
     <header className="private-introduction"><h3>{title(kind)} · Private</h3><p>Experimental testnet. One operator holds the development trustee keys. Deposits, withdrawals and fee payers remain public.</p></header>
+    {workspace.releaseOptions.length > 1 && <Field label="Private pool"><select className="field-input" value={workspace.releaseKey} onChange={event => workspace.selectRelease(event.target.value)}>{workspace.releaseOptions.map(option => <option key={option.key} value={option.key}>{option.label}{option.policy === 'recovery' ? ' (recovery only)' : ''}</option>)}</select></Field>}
     {workspace.loading && <p role="status">Verifying the private workspace…</p>}
     {workspace.error && <p role="alert">{workspace.error}</p>}
-    {workspace.vault && <PrivateReadyPanel kind={kind} address={address} active={active} />}
+    {workspace.vault && workspace.selection && <PrivateReadyPanel key={`${workspace.releaseKey}:${workspace.scope?.profileId}:${address ?? ''}`} selection={workspace.selection} kind={kind} address={address} active={active} />}
+    {address && <PrivatePendingRecovery key={`${address}:${workspace.releaseKey}`} />}
     {kind === 'envoy' && <EnvoyDiscovery active={active} />}
     <details className="instrument-technical private-public-records" open={publicOpen} onToggle={event => setPublicOpen(event.currentTarget.open)}>
       <summary>{kind === 'envoy' ? 'Fade agent' : 'Existing public positions'}</summary>
@@ -48,10 +50,13 @@ export default function PrivateInstrumentPanel({ kind, address, legacy, publicRe
   </div>;
 }
 
-function PrivateReadyPanel({ kind, address, active }: { kind: Instrument; address: string | null; active: boolean }) {
-  const { protocol, snapshot, scope, feeLimit, setFeeLimit, reviewId, setReviewId } = usePrivateWorkspace();
+function PrivateReadyPanel({ kind, address, active, selection }: { kind: Instrument; address: string | null; active: boolean; selection: PrivateReleaseSelection }) {
+  const assets = selectedAssets(selection);
+  const assetLabel = (id: string) => assets.find(asset => asset.id === id)?.label ?? shortHex(id);
+  const recoveryOnly = selection.policy === 'recovery';
+  const { protocol, snapshot, scope, feeLimit, setFeeLimit, reviewId, setReviewId, refreshPending, selectRelease } = usePrivateWorkspace();
   const { state: vaultState, controller: vault } = usePrivateVault();
-  const [action, setAction] = useState<string>(`${kind}-create` === 'envoy-create' ? 'envoy-grant' : `${kind}-create`);
+  const [action, setAction] = useState<string>(recoveryOnly ? 'withdraw' : kind === 'envoy' ? 'envoy-grant' : `${kind}-create`);
   const [asset, setAsset] = useState(assets.find(value => value.contract === CONFIG.assetContractId)?.id ?? assets[0].id);
   const [amount, setAmount] = useState('1');
   const [minutes, setMinutes] = useState('5');
@@ -109,11 +114,13 @@ function PrivateReadyPanel({ kind, address, active }: { kind: Instrument; addres
     finally {
       // An operation may have been submitted before a lock, timeout or UI error.
       // Rediscover its durable hash even when local private keys are unavailable.
-      try { await protocol?.refreshPending(); } catch { if (token === generation.current) setError('Recovery records could not be read. Do not repeat the operation.'); }
+      const pending = await Promise.allSettled([protocol?.refreshPending(), refreshPending()]);
+      if (pending.some(result => result.status === 'rejected') && token === generation.current) setError('Recovery records could not be read. Do not repeat the operation.');
       if (token === generation.current) { busyRef.current = false; setBusy(false); }
     }
   };
   const createGrant = () => void run(async assertCurrent => {
+    if (recoveryOnly) throw new Error('This pool permits recovery only.');
     invalidate(); const id = newPrivateGrantId(); await vault.addGrant({ id, kind }); assertCurrent(); setGrantId(id); setVaultOpen(true);
   }, 'The new grant key could not be prepared. No funds were sent.');
   const showPrepared = async (command: PrivateCommand) => {
@@ -183,8 +190,9 @@ function PrivateReadyPanel({ kind, address, active }: { kind: Instrument; addres
   return <>
     <details className="private-vault-disclosure workbench-surface" open={vaultOpen} onToggle={event => setVaultOpen(event.currentTarget.open)}>
       <summary>Key recovery · {vaultState.status === 'ready' ? 'Backup checked' : vaultState.status === 'locked' ? 'Locked' : 'Backup required'}</summary>
-      <PrivateVault />
+      <PrivateVault allowCreate={!recoveryOnly} releaseKey={selection.key} selectRelease={selectRelease} />
     </details>
+    {recoveryOnly && <p>Recovery only. Restore the backup for this pool to withdraw or manage existing positions.</p>}
     {!address && <p>Connect your testnet wallet to use the private pool.</p>}
     <section className="private-account workbench-surface" aria-label="Verified private balances">
       <header><h4>Private balance</h4><button className="btn btn-secondary px-4 py-2" type="button" disabled={blocked || !protocol || vaultState.status !== 'ready'} onClick={refresh}>Refresh private balance</button></header>
@@ -196,7 +204,7 @@ function PrivateReadyPanel({ kind, address, active }: { kind: Instrument; addres
     </section>
     <section className="private-operation workbench-surface" aria-label={`Private ${title(kind)} operation`}>
       <nav className="private-actions" aria-label="Private actions">
-        {[[kind === 'envoy' ? 'envoy-grant' : `${kind}-create`, kind === 'pod' ? 'Save until later' : kind === 'trigger' ? 'Create escrow' : 'Authorize agent'], ['deposit', 'Add funds'], ['transfer', 'Send'], ['withdraw', 'Withdraw'], ['consolidate', 'Combine notes']].map(([value, label]) => <button type="button" key={value} aria-pressed={action === value} disabled={blocked} onClick={() => { setAction(value); invalidate(); }}>{label}</button>)}
+        {[[kind === 'envoy' ? 'envoy-grant' : `${kind}-create`, kind === 'pod' ? 'Save until later' : kind === 'trigger' ? 'Create escrow' : 'Authorize agent'], ['deposit', 'Add funds'], ['transfer', 'Send'], ['withdraw', 'Withdraw'], ['consolidate', 'Combine notes']].filter(([value]) => !recoveryOnly || value === 'withdraw' || value === 'consolidate').map(([value, label]) => <button type="button" key={value} aria-pressed={action === value} disabled={blocked} onClick={() => { setAction(value); invalidate(); }}>{label}</button>)}
       </nav>
       <div className="instrument-fields" onChange={invalidate}>
         <Field label="Asset"><select className="field-input" value={asset} disabled={blocked} onChange={event => setAsset(event.target.value)}>{assets.map(value => <option key={value.id} value={value.id}>{value.label}</option>)}</select></Field>
@@ -222,8 +230,7 @@ function PrivateReadyPanel({ kind, address, active }: { kind: Instrument; addres
       <button type="button" className="btn btn-primary px-5 py-3" disabled={blocked || submitted || !protocol || vaultState.status !== 'ready' || !prepared.credentials.every(credential => checkedCredentials.has(credential.id))} onClick={submit}>Confirm private operation</button><button type="button" className="btn btn-secondary px-4 py-2" disabled={blocked} onClick={invalidate}>Discard prepared operation</button>
     </section>}
     {kind === 'envoy' && grants.length > 0 && <section className="private-operation workbench-surface" aria-label="Revoke private delegation"><h4>Revoke a private delegation</h4><Field label="Owner grant to revoke"><select className="field-input" value={revokeGrant} disabled={blocked} onChange={event => setRevokeGrant(event.target.value)}><option value="">Choose your grant</option>{grants.map(grant => <option value={grant.id} key={grant.id}>{shortHex(grant.id)}</option>)}</select></Field><button type="button" className="btn btn-secondary px-4 py-2" disabled={blocked || !ready || prepared !== null || !revokeGrant} onClick={() => void run(() => showPrepared({ action: 'envoy-revoke', grantId: revokeGrant }), 'The owner revocation could not be prepared.')}>Prepare revocation</button></section>}
-    <section className="private-notes workbench-surface" aria-label={`Private ${title(kind)} positions`}><h4>Your {title(kind)} positions</h4>{snapshot.notes.filter(note => note.kind === kind).map(note => <PrivateNote key={note.id} note={note} kind={kind} disabled={blocked || !ready || prepared !== null} prepare={command => run(() => showPrepared(command), 'The position could not be prepared. Check ownership, its time limits and any required credential.')} />)}{snapshot.status === 'ready' && !snapshot.notes.some(note => note.kind === kind) && <p>No recoverable {title(kind)} positions.</p>}</section>
-    <section className="private-pending" aria-label="Private transaction recovery"><h4>Pending transactions</h4>{snapshot.pending.length === 0 ? <p>No pending transaction recorded on this device.</p> : snapshot.pending.map(attempt => <div className="instrument-record" key={attempt.hash}><p>{attempt.operation} · {shortHex(attempt.hash)}</p><button type="button" className="btn btn-secondary px-4 py-2" disabled={blocked || !protocol} onClick={() => void run(async assertCurrent => { const result = await protocol!.reconcile(attempt.hash); assertCurrent(); setNotice(`Transaction ${result.hash}: ${result.status}.`); if (result.status === 'confirmed' && vault.getSnapshot().status === 'ready') await protocol!.refresh(); }, 'Transaction status is still unavailable. Do not submit a replacement.')}>Check transaction status</button></div>)}</section>
+    <section className="private-notes workbench-surface" aria-label={`Private ${title(kind)} positions`}><h4>Your {title(kind)} positions</h4>{snapshot.notes.filter(note => note.kind === kind).map(note => <PrivateNote key={note.id} assetLabel={assetLabel} note={note} kind={kind} disabled={blocked || !ready || prepared !== null} prepare={command => run(() => showPrepared(command), 'The position could not be prepared. Check ownership, its time limits and any required credential.')} />)}{snapshot.status === 'ready' && !snapshot.notes.some(note => note.kind === kind) && <p>No recoverable {title(kind)} positions.</p>}</section>
     {snapshot.phase && <p role="status">{snapshot.phase === 'recovering' ? 'Recovering verified notes…' : snapshot.phase === 'proving' ? 'Generating proof locally…' : snapshot.phase === 'confirming-fee' ? 'Waiting for fee confirmation…' : 'Waiting for the wallet…'}</p>}
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
   </>;
@@ -246,10 +253,12 @@ function CredentialExport({ credential, active, disabled, download, check, onChe
 }) {
   const [password, setPassword] = useState(''), [file, setFile] = useState<File | null>(null), [checked, setChecked] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (!active) { setPassword(''); setFile(null); if (input.current) input.current.value = ''; } }, [active]);
-  return <section className="private-credential-export"><h5>{credential.role} credential</h5><p>Recipient {shortHex(credential.recipient)}. Save the encrypted file and check it before sending funds.</p><Field label={`${credential.role} credential password`}><TextInput type="password" autoComplete="off" maxLength={1024} value={password} disabled={disabled || busy} onChange={event => setPassword(event.target.value)} /></Field><button type="button" className="btn btn-secondary px-4 py-2" disabled={disabled || busy || password.length < 12} onClick={() => { const secret = password; setPassword(''); setBusy(true); setError(null); void download(secret).then(value => { downloadFile(value.blob, value.filename); }).catch(() => setError('Encrypted credential download failed.')).finally(() => setBusy(false)); }}>Download encrypted credential</button><Field label={`Reselect saved ${credential.role} credential`}><input ref={input} type="file" accept="application/json,.json" disabled={disabled || busy} onChange={event => { setFile(event.target.files?.[0] ?? null); setChecked(false); onChecked(false); }} /></Field><button type="button" className="btn btn-secondary px-4 py-2" disabled={disabled || busy || !file || password.length < 12} onClick={() => { if (!file) return; const selected = file, secret = password; setFile(null); setPassword(''); setChecked(false); onChecked(false); if (input.current) input.current.value = ''; setBusy(true); setError(null); void check(selected, secret).then(() => { setChecked(true); onChecked(true); }).catch(() => setError('Credential check failed. Reselect the correct saved file.')).finally(() => setBusy(false)); }}>Check saved credential</button>{checked && <p role="status">Saved credential checked</p>}{error && <p role="alert">{error}</p>}</section>;
+  const generation = useRef(0);
+  useEffect(() => { generation.current++; return () => { generation.current++; }; }, [active, credential.id]);
+  useEffect(() => { if (!active) { setPassword(''); setFile(null); setBusy(false); if (input.current) input.current.value = ''; } }, [active]);
+  return <section className="private-credential-export"><h5>{credential.role} credential</h5><p>Recipient {shortHex(credential.recipient)}. Save the encrypted file and check it before sending funds.</p><Field label={`${credential.role} credential password`}><TextInput type="password" autoComplete="off" maxLength={1024} value={password} disabled={disabled || busy} onChange={event => setPassword(event.target.value)} /></Field><button type="button" className="btn btn-secondary px-4 py-2" disabled={disabled || busy || password.length < 12} onClick={() => { const secret = password, token = generation.current; setPassword(''); setBusy(true); setError(null); void download(secret).then(value => { if (token === generation.current) downloadFile(value.blob, value.filename); }).catch(() => { if (token === generation.current) setError('Encrypted credential download failed.'); }).finally(() => { if (token === generation.current) setBusy(false); }); }}>Download encrypted credential</button><Field label={`Reselect saved ${credential.role} credential`}><input ref={input} type="file" accept="application/json,.json" disabled={disabled || busy} onChange={event => { setFile(event.target.files?.[0] ?? null); setChecked(false); onChecked(false); }} /></Field><button type="button" className="btn btn-secondary px-4 py-2" disabled={disabled || busy || !file || password.length < 12} onClick={() => { if (!file) return; const selected = file, secret = password, token = generation.current; setFile(null); setPassword(''); setChecked(false); onChecked(false); if (input.current) input.current.value = ''; setBusy(true); setError(null); void check(selected, secret).then(() => { if (token === generation.current) { setChecked(true); onChecked(true); } }).catch(() => { if (token === generation.current) setError('Credential check failed. Reselect the correct saved file.'); }).finally(() => { if (token === generation.current) setBusy(false); }); }}>Check saved credential</button>{checked && <p role="status">Saved credential checked</p>}{error && <p role="alert">{error}</p>}</section>;
 }
-function PrivateNote({ note, kind, disabled, prepare }: { note: PrivateNoteSummary; kind: Instrument; disabled: boolean; prepare(command: PrivateCommand): Promise<void> }) {
+function PrivateNote({ note, kind, disabled, prepare, assetLabel }: { assetLabel(id: string): string; note: PrivateNoteSummary; kind: Instrument; disabled: boolean; prepare(command: PrivateCommand): Promise<void> }) {
   const { scope } = usePrivateWorkspace();
   const request = useRef(0);
   useEffect(() => () => { request.current++; }, [scope, note.id]);

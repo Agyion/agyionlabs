@@ -17,7 +17,7 @@ type Workspace = Readonly<{
   scope: PrivacyVaultScope | null;
   releaseKey: string; selection: PrivateReleaseSelection | null;
   releaseOptions: ReturnType<typeof listPrivateReleaseOptions>; selectRelease(key: string): void;
-  accountPending: readonly PrivateAccountPendingAttempt[]; pendingError: string | null; pendingBusy: string | null;
+  accountPending: readonly PrivateAccountPendingAttempt[]; pendingError: string | null; pendingChecked: boolean; pendingBusy: string | null;
   refreshPending(): Promise<void>; reconcilePending(hash: string): Promise<PrivateOperationOutcome>;
   vault: PrivateVaultController | null; protocol: PrivateProtocol | null; snapshot: PrivateProtocolSnapshot;
   feeLimit: string; setFeeLimit(value: string): void; loading: boolean; error: string | null;
@@ -60,11 +60,13 @@ export default function PrivateWorkspaceProvider({ address, children }: { addres
   const [pendingState, setPendingState] = useState<{ identity: string; rows: readonly PrivateAccountPendingAttempt[]; error: string | null } | null>(null);
   const [pendingBusy, setPendingBusy] = useState<string | null>(null);
   const pendingOperation = useRef(false);
+  const pendingRefresh = useRef(0);
   const accountIdentity = `${address ?? ''}:${session}`;
   // Do not wait for an effect to clear another wallet's public activity. Its
   // association with this browser must not appear in the replacement render.
   const accountPending = pendingState?.identity === accountIdentity ? pendingState.rows : [];
   const pendingError = pendingState?.identity === accountIdentity ? pendingState.error : null;
+  const pendingChecked = pendingState?.identity === accountIdentity;
   const currentAccount = useRef(accountIdentity);
   currentAccount.current = accountIdentity;
   const mounted = useRef(true);
@@ -76,8 +78,9 @@ export default function PrivateWorkspaceProvider({ address, children }: { addres
   const protocol = owner && protocolState?.owner === owner ? protocolState.value : null;
 
   const refreshPending = useCallback(async () => {
+    const refresh = ++pendingRefresh.current;
     const revision = releaseRevision.current;
-    const current = () => mounted.current && currentAccount.current === accountIdentity && walletSessionVersion() === session && revision === releaseRevision.current;
+    const current = () => mounted.current && currentAccount.current === accountIdentity && walletSessionVersion() === session && revision === releaseRevision.current && refresh === pendingRefresh.current;
     if (!address || !current()) return;
     try {
       const helper = await import('../../lib/private/pending-recovery');
@@ -193,7 +196,7 @@ export default function PrivateWorkspaceProvider({ address, children }: { addres
     if (BigInt(privateAmount(value)) > 0xffff_ffffn) throw new Error('The fee limit exceeds the supported transaction range.');
     setFeeLimitValue(value);
   };
-  const value: Workspace = { scope, releaseKey, selection, releaseOptions, selectRelease, accountPending, pendingError, pendingBusy, refreshPending, reconcilePending, vault, protocol, snapshot, feeLimit, setFeeLimit, reviewId, setReviewId, loading: !owner && !releaseError || connecting, error: releaseError ?? connectionError };
+  const value: Workspace = { scope, releaseKey, selection, releaseOptions, selectRelease, accountPending, pendingError, pendingChecked, pendingBusy, refreshPending, reconcilePending, vault, protocol, snapshot, feeLimit, setFeeLimit, reviewId, setReviewId, loading: !owner && !releaseError || connecting, error: releaseError ?? connectionError };
   return <Context.Provider value={value}><PrivateVaultControllerProvider controller={vault}>
     {children}
     {fee && <dialog ref={feeDialog} className="private-fee-dialog workbench-surface" aria-labelledby="private-fee-title" onCancel={event => { event.preventDefault(); pendingFee.current?.(false); }}>

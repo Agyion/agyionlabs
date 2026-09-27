@@ -4,6 +4,7 @@ import { WalletSignatureRejectedError } from '../app/lib/wallet-errors';
 import { File as NodeFile } from 'node:buffer';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import manifest from '../app/lib/private/release.json';
 import type { PreparedPrivateOperation, PrivateProtocolSnapshot } from '../app/lib/private/protocol-types';
 
 const boundary = vi.hoisted(() => ({ workspace: null as unknown, vault: null as unknown }));
@@ -25,7 +26,7 @@ const protocol = { prepare: vi.fn(), submit: vi.fn(), refresh: vi.fn(), refreshP
 const vaultState = { status: 'ready', busy: null, grants: [] as { id: string; kind: string }[], ownerId: '55'.repeat(32), error: null };
 const vault = { getSnapshot: () => vaultState, addGrant: vi.fn() };
 let snapshot: PrivateProtocolSnapshot;
-let workspace: { protocol: typeof protocol; vault: typeof vault; snapshot: PrivateProtocolSnapshot; scope: typeof scope; feeLimit: string; setFeeLimit: ReturnType<typeof vi.fn>; reviewId: string | null; setReviewId(value: string | null): void; loading: boolean; error: string | null };
+let workspace: { protocol: typeof protocol; vault: typeof vault; snapshot: PrivateProtocolSnapshot; scope: typeof scope; releaseKey: string; selection: {key:string;label:string;policy:'funding'|'recovery';assets:readonly string[];release:{scope:typeof scope}}; releaseOptions:{key:string;label:string;policy:'funding'|'recovery';accounting:boolean}[]; selectRelease:ReturnType<typeof vi.fn>; accountPending: {hash:string;source:string;pool:string;releaseId:string;releaseKey:string|null;releaseLabel:string|null;releaseStatus:'known'|'unknown';operation:'submit'|'revoke'}[]; pendingError:string|null;pendingChecked:boolean;pendingBusy:string|null;refreshPending:ReturnType<typeof vi.fn>;reconcilePending:ReturnType<typeof vi.fn>; feeLimit: string; setFeeLimit: ReturnType<typeof vi.fn>; reviewId: string | null; setReviewId(value: string | null): void; loading: boolean; error: string | null };
 beforeEach(() => {
   snapshot = { status: 'ready', phase: null, ledger: 1000, balances: [], notes: [], pending: [], error: null, feeQuote: null };
   vaultState.status = 'ready'; vaultState.grants = [];
@@ -35,7 +36,7 @@ beforeEach(() => {
   protocol.withFeeLimit.mockImplementation((handle: PreparedPrivateOperation, cap: string) => Object.freeze({ ...handle, id: 'revised-test-handle', maxFeeStroops: cap }));
   protocol.receiveDescriptor.mockResolvedValue({ version: '1', kind: 'PrivateReceiveDescriptor', scope, spendingAuthHash: '7', viewPoint: ['1', '2'] });
   protocol.checkExportedCredential.mockResolvedValue(undefined);
-  workspace = { protocol, vault, snapshot, scope, feeLimit: '1', setFeeLimit: vi.fn(), reviewId: null, setReviewId(value) { workspace.reviewId = value; }, loading: false, error: null };
+  workspace = { protocol, vault, snapshot, scope, releaseKey:'original',selection:{key:'original',label:'Original private pool',policy:'funding',assets:manifest.config.assets,release:{scope}},releaseOptions:[{key:'original',label:'Original private pool',policy:'funding',accounting:false}],selectRelease:vi.fn(),accountPending:[],pendingError:null,pendingChecked:true,pendingBusy:null,refreshPending:vi.fn().mockResolvedValue(undefined),reconcilePending:vi.fn().mockResolvedValue({status:'pending',hash:'66'.repeat(32)}), feeLimit: '1', setFeeLimit: vi.fn(), reviewId: null, setReviewId(value) { workspace.reviewId = value; }, loading: false, error: null };
   boundary.workspace = workspace; boundary.vault = { state: vaultState, controller: vault };
   vi.stubGlobal('File', NodeFile);
 });
@@ -161,4 +162,74 @@ it('shows typed signature cancellation while still refreshing recovery and never
   expect(protocol.refreshPending).toHaveBeenCalledTimes(2);
   fireEvent.click(screen.getByRole('button', { name: 'Confirm private operation' }));
   expect(protocol.submit).toHaveBeenCalledExactlyOnceWith(prepared);
+});
+
+
+it('keeps original pending recovery available while the selected release and vault are unavailable', async () => {
+  Object.assign(workspace,{vault:null,protocol:null,scope:null,selection:null,loading:false,error:'Current deployment unavailable.'});
+  workspace.accountPending=[{hash:'66'.repeat(32),source:'fixture-public-account',pool:'old-pool',releaseId:'77'.repeat(32),releaseKey:'original',releaseLabel:'Original private pool',releaseStatus:'known',operation:'submit'}];
+  renderPod();
+  fireEvent.click(screen.getByRole('button',{name:'Check transaction status'}));
+  await waitFor(()=>expect(workspace.reconcilePending).toHaveBeenCalledExactlyOnceWith('66'.repeat(32)));
+  expect(protocol.reconcile).not.toHaveBeenCalled();expect(protocol.submit).not.toHaveBeenCalled();
+  expect(await screen.findByText(/Transaction .*: pending/)).toBeTruthy();
+});
+it('retains an unknown original profile visibly without offering a transaction retry',()=>{
+  workspace.accountPending=[{hash:'66'.repeat(32),source:'fixture-public-account',pool:'unrecognized-pool',releaseId:'77'.repeat(32),releaseKey:null,releaseLabel:null,releaseStatus:'unknown',operation:'submit'}];
+  renderPod();
+  expect(screen.getByText(/Unrecognized private pool/)).toBeTruthy();
+  expect((screen.getByRole('button',{name:'Check transaction status'}) as HTMLButtonElement).disabled).toBe(true);
+  expect(workspace.reconcilePending).not.toHaveBeenCalled();
+});
+it('uses only the selected release assets and hides new funding in recovery mode',()=>{
+  workspace.selection={...workspace.selection,policy:'recovery',assets:[manifest.config.assets[0]]};
+  workspace.releaseOptions=[{key:'original',label:'Original private pool',policy:'recovery',accounting:false},{key:'guarded',label:'Guarded private pool',policy:'funding',accounting:true}];
+  renderPod();
+  expect(screen.queryByRole('button',{name:'Add funds'})).toBeNull();
+  expect(screen.queryByRole('button',{name:'Send'})).toBeNull();
+  expect(screen.queryByRole('button',{name:'Save until later'})).toBeNull();
+  expect(screen.queryByRole('button',{name:'Prepare a new Pod key'})).toBeNull();
+  expect(screen.getByLabelText('Public destination')).toBeTruthy();
+  expect((screen.getByLabelText('Asset') as HTMLSelectElement).options.length).toBe(1);
+  fireEvent.change(screen.getByLabelText('Private pool'),{target:{value:'guarded'}});
+  expect(workspace.selectRelease).toHaveBeenCalledExactlyOnceWith('guarded');
+});
+it('clears imported recipient and creation fields when the profile changes with the same wallet',()=>{
+  const view=renderPod();
+  fireEvent.change(screen.getByLabelText('Amount'),{target:{value:'123'}});
+  workspace.scope={...scope,profileId:'99'.repeat(32)};
+  workspace.selection={...workspace.selection,key:'guarded',release:{scope:workspace.scope}};workspace.releaseKey='guarded';
+  view.rerender(<PrivateInstrumentPanel kind="pod" address="fixture-public-account" legacy={null}/>);
+  expect((screen.getByLabelText('Amount') as HTMLInputElement).value).toBe('1');
+});
+it('does not render a late recovery result for another account after unmount',async()=>{
+  let finish!:(value:unknown)=>void;workspace.reconcilePending.mockReturnValue(new Promise(resolve=>{finish=resolve}));
+  workspace.accountPending=[{hash:'66'.repeat(32),source:'fixture-public-account',pool:'old-pool',releaseId:'77'.repeat(32),releaseKey:'original',releaseLabel:'Original private pool',releaseStatus:'known',operation:'submit'}];
+  const view=renderPod();fireEvent.click(screen.getByRole('button',{name:'Check transaction status'}));
+  workspace.accountPending=[];
+  view.rerender(<PrivateInstrumentPanel kind="pod" address="different-public-account" legacy={null}/>);
+  await act(async()=>finish({hash:'66'.repeat(32),status:'confirmed',ledger:1001}));
+  expect(screen.queryByText(/Transaction .*: confirmed/)).toBeNull();expect(protocol.submit).not.toHaveBeenCalled();
+});
+
+it('does not claim an empty recovery journal before discovery completes',()=>{
+  workspace.pendingChecked=false;renderPod();
+  expect(screen.queryByText('No pending transaction recorded on this device.')).toBeNull();
+  expect(screen.getByText('Checking local recovery records…')).toBeTruthy();
+});
+it('ignores a late encrypted credential download after the selected profile changes',async()=>{
+  let finish!:(value:{blob:Blob;filename:string})=>void;
+  const handle=Object.freeze({...prepared,credentials:[{id:'credential-one',role:'claim',recipient:'77'}]});
+  protocol.prepare.mockResolvedValue(handle);protocol.exportCredential.mockReturnValue(new Promise(resolve=>{finish=resolve}));
+  const create=vi.fn().mockReturnValue('blob:late-credential');const revoke=vi.fn();
+  vi.stubGlobal('URL',class extends URL {static createObjectURL=create;static revokeObjectURL=revoke;});
+  const clicked=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});
+  const view=renderPod();await prepareDeposit();
+  fireEvent.change(screen.getByLabelText('claim credential password'),{target:{value:'temporary fixture password'}});
+  fireEvent.click(screen.getByRole('button',{name:'Download encrypted credential'}));
+  await waitFor(()=>expect(finish).toBeTypeOf('function'));
+  workspace.scope={...scope,profileId:'99'.repeat(32)};workspace.selection={...workspace.selection,key:'guarded',release:{scope:workspace.scope}};workspace.releaseKey='guarded';
+  view.rerender(<PrivateInstrumentPanel kind="pod" address="fixture-public-account" legacy={null}/>);
+  await act(async()=>finish({blob:new Blob(['encrypted']),filename:'old-profile.json'}));
+  expect(create).not.toHaveBeenCalled();expect(clicked).not.toHaveBeenCalled();clicked.mockRestore();
 });

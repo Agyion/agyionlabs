@@ -183,3 +183,19 @@ it('survives StrictMode replay with a live coordinator and retires each obsolete
   expect(current.dispose).not.toHaveBeenCalled();
   view.unmount();expect(current.dispose).toHaveBeenCalledOnce();expect(lock).toHaveBeenCalledOnce();
 });
+
+
+it('keeps the newest account pending refresh when an earlier read finishes late',async()=>{
+  const view=render(<PrivateWorkspaceProvider address="fixture-public-account"><Probe/></PrivateWorkspaceProvider>);
+  await waitFor(()=>expect(observed.vault).not.toBeNull());
+  await waitFor(()=>expect(boundary.pending).toHaveBeenCalled());
+  let finishOld!:(rows:unknown[])=>void;
+  boundary.pending.mockReturnValueOnce(new Promise(resolve=>{finishOld=resolve}));
+  const old=observed.refreshPending();
+  await waitFor(()=>expect(finishOld).toBeTypeOf('function'));
+  boundary.pending.mockResolvedValueOnce([]);
+  await act(async()=>{await observed.refreshPending()});
+  await act(async()=>{finishOld([{hash:'outdated'}]);await old});
+  expect(observed.accountPending).toEqual([]);
+  view.unmount();
+});
