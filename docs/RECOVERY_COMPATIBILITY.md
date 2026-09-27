@@ -33,6 +33,14 @@ Recovery displays the included epoch separately from the latest registration.
 An older saved terminal without this field remains readable and is not filled
 from mutable current state.
 
+Compatibility is one-way: the new reader accepts old records, while the old
+reader rejects a terminal containing the added field. Because it validates the
+whole journal, an older open tab then blocks marketplace history and writes
+before requesting a new signature. Refresh all marketplace tabs to the current
+build. A rollback must retain the compatible reader. Do not clear site storage:
+saved pending hashes remain necessary for recovery. The database name and
+version are unchanged, so existing tabs do not receive a version-change reload.
+
 This is a compatible reporting and recovery correction. It does not add atomic
 expected-epoch enforcement to the deployed contract.
 

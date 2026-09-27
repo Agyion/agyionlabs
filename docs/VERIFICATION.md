@@ -1,14 +1,14 @@
 # Verification checkpoint
 
-This record describes the development review on **27 September 2026**. The current website is Cloudflare version `bb24b068-0095-43e4-89d5-cc207717d950`, built from `1ffcbb3be814bf718dbd420e9ad5349d03d3f2d2`. The guarded private pool is the default for new Pod, Trigger and Envoy flows. The original private profile remains accessible for recovery with its unchanged identity; the public kernel and marketplace pins are unchanged. The [source manifest](../deployments/source-review-2026-09-27.json) and [private testnet checkpoint](PRIVATE_POOL_GUARDED_TESTNET.md) separate source review, actual chain transactions, website publication and remaining limits.
+This record describes the development review on **27 September 2026**. The current website is Cloudflare version `74556457-1e64-4fbc-a31b-c368cdccba08`, built from `ddeadf844baf05becb0e916d680bacdb5c9c7530`. The guarded private pool is the default for new Pod, Trigger and Envoy flows. The original private profile remains accessible for recovery with its unchanged identity; the public kernel and marketplace pins are unchanged. The [source manifest](../deployments/source-review-2026-09-27.json) and [private testnet checkpoint](PRIVATE_POOL_GUARDED_TESTNET.md) separate source review, actual chain transactions, website publication and remaining limits.
 
 ## Source review
 
 | Evidence | Files | Current lines |
 | --- | ---: | ---: |
-| Exact current bytes with complete source-read evidence | 455 | 48,315 |
+| Exact current bytes with complete source-read evidence | 455 | 48,483 |
 | Verified reviewed baseline plus completely reviewed differences | 101 | 22,789 |
-| Total first-party authored scope | 556 | 71,104 |
+| Total first-party authored scope | 556 | 71,272 |
 | Unresolved files or line ranges at this snapshot | 0 | 0 |
 
 The first row uses explicit complete reading ranges matched to each current file hash. It does not mean every file was read again when this manifest was generated. The second row is composed coverage: the previously reviewed baseline was checked against Git bytes, every difference was reviewed, and unchanged, changed and deleted ranges were reconciled. It is not a fresh full-file reread.
@@ -17,7 +17,9 @@ The manifest lists each file's relative path, SHA-256, line count and review met
 
 ## Executed verification and limits
 
-The current published release passed 34 HTTP checks, 14 UI checks covering all six instruments at desktop and mobile sizes, and nine real encrypted-vault recovery checks across both private profiles. All 103 public files, totaling 166,316,881 bytes, matched the local build. The complete local tree, including `_headers`, has SHA-256 `ef9305f0c45857b89184f2d882650099816ca9356def20d90af7ab13a261e64e`. The passing general-site and vault runs captured no JavaScript, console or request errors; the general-site run also captured no CSP violations. The general site and map checks used the installed Chrome; the passing vault run used Playwright-managed Chromium with the same assertions. They used no network interception, wallet connection or transaction.
+The current recovery compatibility release passed 34 HTTP and 14 UI checks across all six instruments at desktop and mobile sizes. All 103 public files, totaling 166,318,576 bytes, matched the frozen local build. The 104-file local tree including `_headers` has SHA-256 `34788c6835d0254736f3dd12754aab78066c502a91efdb0c91fff8ae5fb80431`. The passing direct Playwright-managed Chromium run captured no page, console, request or CSP errors and made no wallet request or transaction. The preceding installed-Chrome attempt passed 34 HTTP checks but failed initial browser navigation with ERR_NETWORK_CHANGED and completed no UI checks. It remains a failed run. The retry changed only the executable and import paths needed to reuse the same verification helpers; it preserved every assertion and used no network interception or TLS bypass. The [exact hosted source run](https://github.com/Agyion/agyionlabs/actions/runs/36324431982) passed both jobs. The complete local workspace run passed 1,306 checks with six default skips, and the changed real Chromium journal test passed separately. [Corrections and remaining limits](RECOVERY_COMPATIBILITY.md) distinguish the metadata regression from actual archival restoration. This release does not relabel the previous vault, map or wallet checks as newly executed.
+
+The preceding `bb24b068` website passed 34 HTTP checks, 14 UI checks covering all six instruments at desktop and mobile sizes, and nine real encrypted-vault recovery checks across both private profiles. All 103 public files, totaling 166,316,881 bytes, matched the local build. The complete local tree, including `_headers`, has SHA-256 `ef9305f0c45857b89184f2d882650099816ca9356def20d90af7ab13a261e64e`. The passing general-site and vault runs captured no JavaScript, console or request errors; the general-site run also captured no CSP violations. The general site and map checks used the installed Chrome; the passing vault run used Playwright-managed Chromium with the same assertions. They used no network interception, wallet connection or transaction.
 
 Earlier map checks against the preceding website passed eight assertions but captured two host network-change failures; a repeated map run captured three interrupted tile requests. Those diagnostics and the preceding website identity remain in the source manifest. The map source is unchanged in this private activation release; the prior map run is not relabeled as a new clean-network test.
 

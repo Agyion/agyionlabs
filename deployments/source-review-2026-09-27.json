@@ -1,64 +1,43 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T13:36:20.305281+00:00",
-  "sourceBaselineCommit": "1ffcbb3be814bf718dbd420e9ad5349d03d3f2d2",
+  "reviewedAt": "2026-09-27T14:17:20.421538+00:00",
+  "sourceBaselineCommit": "ddeadf844baf05becb0e916d680bacdb5c9c7530",
   "websiteRelease": {
-    "workerVersion": "bb24b068-0095-43e4-89d5-cc207717d950",
-    "sourceCommit": "1ffcbb3be814bf718dbd420e9ad5349d03d3f2d2",
+    "workerVersion": "74556457-1e64-4fbc-a31b-c368cdccba08",
+    "sourceCommit": "ddeadf844baf05becb0e916d680bacdb5c9c7530",
     "url": "https://agyionlabs.dev",
-    "verifiedAt": "2026-09-27T13:31:01.301Z",
-    "treeSha256": "ef9305f0c45857b89184f2d882650099816ca9356def20d90af7ab13a261e64e",
+    "verifiedAt": "2026-09-27T14:12:38.563Z",
+    "treeSha256": "34788c6835d0254736f3dd12754aab78066c502a91efdb0c91fff8ae5fb80431",
     "treeHashScope": "All 104 local files including _headers; all 103 public files separately matched",
     "files": 103,
-    "bytes": 166316881,
+    "bytes": 166318576,
     "runtimeChangesFromSourceBaseline": [],
     "contractPinsChanged": false,
     "browserChecks": {
       "http": 34,
       "ui": 14,
-      "liveVaultLifecycle": 9,
-      "map": 8,
-      "rpcTransport": "direct Chrome networking",
+      "rpcTransport": "direct Playwright-managed Chromium networking",
       "walletRequests": 0,
       "transactions": 0
     },
-    "vaultBrowserBoundary": "Playwright-managed Chromium with unchanged verification assertions, direct network, real local crypto and two unfunded fixture vaults. Only executable selection differs. No wallet, operator keys or chain transaction.",
-    "mapDiagnostics": {
-      "pageErrors": [],
-      "requestFailures": [],
-      "location": "Chrome emulated test coordinate, not operator location"
-    },
-    "earlierVaultCheck": {
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36324431982",
+    "limits": "No new wallet transaction, vault ceremony, map-specific test or archival restoration; previous dated receipts remain separate.",
+    "earlierBrowserCheck": {
       "status": "failed",
-      "completedChecks": 9,
+      "httpChecks": 34,
+      "uiChecks": 0,
+      "failure": {
+        "message": "page.goto: net::ERR_NETWORK_CHANGED at https://agyionlabs.dev/\nCall log:\n\u001b[2m  - navigating to \"https://agyionlabs.dev/\", waiting until \"domcontentloaded\"\u001b[22m\n",
+        "stack": "page.goto: net::ERR_NETWORK_CHANGED at https://agyionlabs.dev/\nCall log:\n\u001b[2m  - navigating to \"https://agyionlabs.dev/\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at /home/apo110/agyion/scripts/verify-production-release.mjs:77:13"
+      },
       "requestFailures": [
         {
-          "url": "https://soroban-testnet.stellar.org/",
-          "error": "net::ERR_NETWORK_CHANGED"
-        },
-        {
-          "url": "https://soroban-testnet.stellar.org/",
+          "url": "https://agyionlabs.dev/",
           "error": "net::ERR_NETWORK_CHANGED"
         }
-      ],
-      "consoleErrors": [
-        "Failed to load resource: net::ERR_NETWORK_CHANGED",
-        "Failed to load resource: net::ERR_NETWORK_CHANGED"
-      ],
-      "transactions": 0
+      ]
     },
-    "earlierVaultRetry": {
-      "status": "failed",
-      "completedChecks": 0,
-      "requestFailures": [
-        {
-          "url": "https://agyionlabs.dev/app/?tab=pod",
-          "error": "net::ERR_NETWORK_CHANGED"
-        }
-      ],
-      "transactions": 0
-    },
-    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36321991863"
+    "browserBoundary": "Same verification assertions and original helpers; executable changed to matching Playwright-managed Chromium. First installed-Chrome navigation ERR_NETWORK_CHANGED failure retained. No inferred root cause, interception or TLS bypass."
   },
   "undeployedContractCandidates": [
     {
@@ -76,11 +55,11 @@
   },
   "counts": {
     "files": 556,
-    "lines": 71104,
+    "lines": 71272,
     "byReviewKind": {
       "complete-source-read": {
         "files": 455,
-        "lines": 48315
+        "lines": 48483
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 101,
@@ -341,8 +320,8 @@
     },
     {
       "path": "app/app/components/market/FadeMarketPanel.tsx",
-      "sha256": "d13ded7f358b2943ac5cbe274f761faed32cb1bfcc01751d24ea1ed8fda7e941",
-      "lines": 115,
+      "sha256": "8b928fecce4d974cd68584654dcb5cc75e18d5227b8e5a3520ba795484b46fd8",
+      "lines": 117,
       "reviewKind": "complete-source-read"
     },
     {
@@ -377,8 +356,8 @@
     },
     {
       "path": "app/app/components/market/MerchantKeys.tsx",
-      "sha256": "e83dc670de2c2462c4289b8326b7e5a6c3e4491ea9627a0f3876df5709e47ea3",
-      "lines": 89,
+      "sha256": "433f33ef3430c4f32c090ee8ef9d254498908ca3c43b4d6d6a6f4b01c8283ca2",
+      "lines": 95,
       "reviewKind": "complete-source-read"
     },
     {
@@ -839,14 +818,14 @@
     },
     {
       "path": "app/tests/market-ui-safety.test.tsx",
-      "sha256": "0504b054211e9e2a6999aca898a08559a53303f8f4d41a8a403f837bacd1b7d3",
-      "lines": 115,
+      "sha256": "fb3f0f50f511ca2ce094c69c1be5ac28fc1b82ac00a1785cb5a25e3146333e3b",
+      "lines": 148,
       "reviewKind": "complete-source-read"
     },
     {
       "path": "app/tests/market-workspace.test.tsx",
-      "sha256": "f17d98d72b3ea9d5280e5ed8c2b260a5ec6acfaccb086960fb86117b7d82b0c1",
-      "lines": 52,
+      "sha256": "380ba033eeb80b5796478384bad448c52b1049b6db7473d9b3c770cb5f09a4b0",
+      "lines": 68,
       "reviewKind": "complete-source-read"
     },
     {
@@ -1241,14 +1220,14 @@
     },
     {
       "path": "contracts/private-pool/client/liability.test.ts",
-      "sha256": "b72188558a56240c9650e34c71f10f929b1d0ccfe426eb138ae6efb7ebe46f37",
-      "lines": 76,
+      "sha256": "ffe2e7b6646e43fdfb5fb77685821fc97fa8df72c2db0445cd4a73a3613ae405",
+      "lines": 93,
       "reviewKind": "complete-source-read"
     },
     {
       "path": "contracts/private-pool/client/liability.ts",
-      "sha256": "ab3a13e0887b6b88f44dc3f0f03a4789f3e2d042a303a392ae2bb3eff24423e2",
-      "lines": 91,
+      "sha256": "2b0a669f9dc0fbcb382ec2b992c0e0a5dffe39fbb512d18ccd0c436b977ed473",
+      "lines": 93,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2099,8 +2078,8 @@
     },
     {
       "path": "market/client-tests/lifecycle.test.ts",
-      "sha256": "1131a2d16e4d8ed05cf0ecd018b08ceb3c925e04da41b2a73608efd6293a69fb",
-      "lines": 54,
+      "sha256": "df66385c0be4067437061b7ca01b5831b7b925fc911b24793960ce7fab22177a",
+      "lines": 78,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2129,8 +2108,8 @@
     },
     {
       "path": "market/client-tests/transaction-safety.test.ts",
-      "sha256": "9519145972e1a3d512d4d9082cc98f39e565df56a0bce9f084c61da8e0c91562",
-      "lines": 62,
+      "sha256": "a98c1bc330999a82bb30de2453cc0f45934fe87d424cb6f4100aad025deed0e3",
+      "lines": 73,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2159,13 +2138,13 @@
     },
     {
       "path": "market/client/journal.ts",
-      "sha256": "64ab84a89705279ef85772566c40071c2b170dac74ee7e422129adeae8ad52b3",
-      "lines": 93,
+      "sha256": "9a16007a5ebd8c7a8230249fc79e16776a67744adc166b35b4660bd158527cb5",
+      "lines": 105,
       "reviewKind": "complete-source-read"
     },
     {
       "path": "market/client/lifecycle.ts",
-      "sha256": "85007a528bd1d4729d264772900493a1dae3b9172cb29fd32a17b4b601ea8fb6",
+      "sha256": "8733279530585e4035e5608091d041fee092c4f11d9d36e2326f0d4aefa73890",
       "lines": 72,
       "reviewKind": "complete-source-read"
     },
@@ -2183,8 +2162,8 @@
     },
     {
       "path": "market/client/protocol-types.ts",
-      "sha256": "5fc2cd23f4b0dc13e1787bd95e4ef166b0f4b96d584a72f4c5099789c8265f09",
-      "lines": 47,
+      "sha256": "8f10d81d89073b0c738fb4a30f30626c744055421c5ca333a7266f5556c891a3",
+      "lines": 52,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2213,8 +2192,8 @@
     },
     {
       "path": "market/client/transaction-safety.ts",
-      "sha256": "e98749fa9b0451dec73e396b519cd3b558b9543b330ce41f7bdf2508f1645da1",
-      "lines": 58,
+      "sha256": "555d854a81cadf36d7c6e7305472a9b1964c261a1e92262b157229cf820c1d25",
+      "lines": 60,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2291,8 +2270,8 @@
     },
     {
       "path": "market/tests/journal-browser.test.ts",
-      "sha256": "e19864fd150f0083dfbe6c68f3b65c3ced39ba2805143eb604da02636f6342e3",
-      "lines": 48,
+      "sha256": "7a4728e1fc674dd31fde908a8faf74546c8f8ccb41047a033416752e0577cbc6",
+      "lines": 86,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3746,6 +3725,90 @@
         ]
       },
       "sourceCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe"
+    },
+    {
+      "workerVersion": "bb24b068-0095-43e4-89d5-cc207717d950",
+      "sourceCommit": "1ffcbb3be814bf718dbd420e9ad5349d03d3f2d2",
+      "url": "https://agyionlabs.dev",
+      "verifiedAt": "2026-09-27T13:31:01.301Z",
+      "treeSha256": "ef9305f0c45857b89184f2d882650099816ca9356def20d90af7ab13a261e64e",
+      "treeHashScope": "All 104 local files including _headers; all 103 public files separately matched",
+      "files": 103,
+      "bytes": 166316881,
+      "runtimeChangesFromSourceBaseline": [],
+      "contractPinsChanged": false,
+      "browserChecks": {
+        "http": 34,
+        "ui": 14,
+        "liveVaultLifecycle": 9,
+        "map": 8,
+        "rpcTransport": "direct Chrome networking",
+        "walletRequests": 0,
+        "transactions": 0
+      },
+      "vaultBrowserBoundary": "Playwright-managed Chromium with unchanged verification assertions, direct network, real local crypto and two unfunded fixture vaults. Only executable selection differs. No wallet, operator keys or chain transaction.",
+      "mapDiagnostics": {
+        "pageErrors": [],
+        "requestFailures": [],
+        "location": "Chrome emulated test coordinate, not operator location"
+      },
+      "earlierVaultCheck": {
+        "status": "failed",
+        "completedChecks": 9,
+        "requestFailures": [
+          {
+            "url": "https://soroban-testnet.stellar.org/",
+            "error": "net::ERR_NETWORK_CHANGED"
+          },
+          {
+            "url": "https://soroban-testnet.stellar.org/",
+            "error": "net::ERR_NETWORK_CHANGED"
+          }
+        ],
+        "consoleErrors": [
+          "Failed to load resource: net::ERR_NETWORK_CHANGED",
+          "Failed to load resource: net::ERR_NETWORK_CHANGED"
+        ],
+        "transactions": 0
+      },
+      "earlierVaultRetry": {
+        "status": "failed",
+        "completedChecks": 0,
+        "requestFailures": [
+          {
+            "url": "https://agyionlabs.dev/app/?tab=pod",
+            "error": "net::ERR_NETWORK_CHANGED"
+          }
+        ],
+        "transactions": 0
+      },
+      "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36321991863"
     }
-  ]
+  ],
+  "recoveryCompatibility": {
+    "sourceCommit": "ddeadf844baf05becb0e916d680bacdb5c9c7530",
+    "report": "docs/RECOVERY_COMPATIBILITY.md",
+    "workspacePassed": 1306,
+    "defaultOptionalSkipped": 6,
+    "changedBrowserJournalExplicitlyPassed": 1,
+    "newChainTransactions": 0,
+    "findings": [
+      "Retain included merchant registration identity without resubmission or silent key scope changes",
+      "Accept restored liability metadata without weakening live-entry and snapshot checks"
+    ],
+    "liveLiabilityRead": {
+      "ledger": 4898801,
+      "assets": 2,
+      "amounts": [
+        "0",
+        "0"
+      ],
+      "restoration": false
+    },
+    "limits": [
+      "Merchant expected epoch is still not enforced atomically by the immutable contract",
+      "No application archival restoration workflow or actual archival integration test",
+      "No independent audit, production setup or separate trustee custody"
+    ]
+  }
 }
