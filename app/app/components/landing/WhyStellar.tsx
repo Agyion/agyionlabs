@@ -18,8 +18,8 @@ import {
 import { Eyebrow } from "../ui";
 
 const STATS = [
-  { k: "~5s", v: "ledger finality — a condition resolves while you watch" },
-  { k: "<0.001", v: "XLM per operation — conditions affordable at any amount" },
+  { k: "~5s", v: "ledger finality: a condition resolves while you watch" },
+  { k: "<0.001", v: "XLM per operation: conditions affordable at any amount" },
   { k: "Soroban", v: "Rust contracts, deterministic state machines" },
 ];
 

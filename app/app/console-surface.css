@@ -1,0 +1,111 @@
+/* A near-opaque reading surface lets a trace of the scene through. */
+.station-workspace {
+  --ink:#f2eee5; --muted:#b6b2aa; --faint:#aaa49a; --accent:#efb273;
+  --surface:#1c1d1e; --paper:#151617; --olive:#ded8cb;
+  --hairline:rgba(226,215,198,.13); --hairline-strong:rgba(226,215,198,.26);
+  --workspace-width:1080px;
+  width:min(var(--workspace-width),calc(100% - 64px));
+  top:calc(var(--station-top) + 18px); bottom:100px;
+  border:1px solid rgba(237,218,188,.2); border-radius:22px;
+  background:rgba(21,21,21,.94);
+  box-shadow:0 22px 80px rgba(0,0,0,.45),inset 0 1px rgba(255,238,212,.06);
+  transform:translate(-50%,20px) scale(.99);
+}
+.station-workspace[data-instrument=pod] {--workspace-width:960px}
+.station-workspace[data-instrument=ramp] {--workspace-width:960px}
+.station-workspace[data-instrument=ledger] {--workspace-width:1220px}
+.station-workspace:before,.station-workspace:after {content:none}
+.station-workspace-header {display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:18px 28px;gap:20px;background:#171819;border-color:var(--hairline)}
+.station-workspace-title {grid-column:2;grid-row:1;text-align:center;animation:none}
+.station-workspace-title h2 {font-size:28px;font-weight:550;letter-spacing:-.035em}
+.station-workspace-tools {grid-column:3;grid-row:1;justify-self:end;gap:8px;font-size:14px}
+.station-workspace-tools button {padding:0 13px;border:1px solid var(--hairline);border-radius:9px;background:#1d1e1f;transition:background .2s,border-color .2s,color .2s}
+.station-workspace-tools button:hover {background:#282624;border-color:var(--hairline-strong)}
+.station-workspace-tools button[aria-expanded=true] {color:var(--accent);border-color:#efb27366}
+.station-workspace-tools button[aria-label="Close instrument"] {padding:0 12px;gap:12px}
+.station-workspace-tools svg {height:18px;width:18px;stroke-width:1.5}
+.station-drawer-scroll {padding:28px 36px 36px;scrollbar-color:#57534c transparent;scrollbar-gutter:stable}
+.station-console {animation:workspace-content-in .34s var(--flight-ease) both}
+@keyframes workspace-content-in {from {opacity:0;transform:translateY(8px)} to {opacity:1;transform:none}}
+.station-workspace-footer {padding:10px 28px;background:#171819;color:#aaa69e;border-color:var(--hairline);font-size:14px}
+.station-help {border-radius:12px;background:#24221e;border-color:rgba(239,178,115,.24);padding:20px;margin-bottom:20px}
+.station-help li {font-size:16px;line-height:1.7}
+.station-help li>span {font-size:14px}
+.station-help p {font-size:16px;line-height:1.7}
+.protocol-status {background:#211f1b;border:1px solid rgba(234,184,126,.16);border-radius:9px;padding:14px 18px;font-size:16px;gap:20px}
+.protocol-status[data-readiness=incompatible] {border-color:rgba(234,184,126,.25)}
+.protocol-status .btn {min-height:44px;padding:9px 14px;font-size:14px}
+.transaction-activity {border-radius:10px;background:#1c1d1e}
+.station-console .field-label {color:#e0dbd2}
+.station-console .field-input {background:#111213;border-color:#48453f;border-radius:9px;color:var(--ink);padding:12px 14px}
+.station-console .field-input:focus {border-color:var(--accent);box-shadow:0 0 0 3px #efb27317}
+.station-console .field-input::placeholder {color:#99938a}
+.station-console {font-size:16px;line-height:1.6}
+.station-console .btn {border-radius:9px;font-size:16px;justify-content:center;text-align:center}
+.station-console .btn-primary .btn__icon {display:none}
+.instrument-wallet-note {background:none;border:0;padding:0;color:var(--muted);font-size:14px;margin:0}
+.instrument-notice {border-radius:10px;background:#24211d;border-left-color:var(--accent)}
+.station-console .instrument-context {border-color:var(--hairline)}
+
+/* Navigation stays in one place while each instrument owns its working layout. */
+.station-scene-footer {left:24px;right:24px;bottom:12px}
+.station-orbit-help {margin-bottom:14px;font-size:14px}
+.station-topbar .btn {font-size:14px}
+.station-dock {max-width:840px;padding:5px;gap:3px;background:rgba(17,19,21,.95);border:1px solid #c8beb029;border-radius:16px;text-shadow:none;box-shadow:0 8px 30px #0005}
+.station-dock button,.station-dock button:first-of-type {min-height:56px;align-items:center;justify-content:center;padding:8px 10px;gap:3px;border-radius:10px;text-align:center;color:#aaa8a1;transition:background .25s,color .25s}
+.station-dock button:hover {background:#252626;color:#f2eee5}
+.station-dock button[aria-selected=true] {background:#eab47c;color:#1b1712}
+.station-dock__name {padding:0;font-size:17px;font-weight:500}
+.station-dock__name:after {content:none}
+.station-dock button:is(:hover,:focus-visible) .station-dock__name {transform:none}
+.station-dock button:focus-visible {outline:2px solid #f6ddb3;outline-offset:2px}
+.station-vista__heading {padding:20px 24px;border:1px solid #d9c5a929;border-radius:16px;background:rgba(15,17,19,.9);text-shadow:none;max-width:290px}
+.station-vista__heading:before {content:none}
+.station-vista__heading h1 {font-size:42px}
+.station-kicker {margin-bottom:13px}
+.station-open-instrument {margin-top:18px}
+@media(max-width:850px) {
+  .station-workspace {width:calc(100% - 36px);top:calc(var(--station-top) + 12px);bottom:96px;border-radius:18px}
+  .station-drawer-scroll {padding:20px}
+  .station-workspace-header {padding:16px 20px}
+  .station-workspace-title h2 {font-size:28px}
+  .station-workspace-footer {padding-inline:20px}
+  .station-scene-footer {left:18px;right:18px;bottom:10px}
+}
+@media(max-width:600px) {
+  .station-workspace {width:calc(100% - 16px);top:calc(var(--station-top) + 8px);bottom:76px;border-radius:16px}
+  .station-workspace-header {padding:12px 15px;gap:10px;grid-template-columns:1fr auto 1fr}
+  .station-workspace-title h2 {font-size:26px}
+  .station-workspace-tools {display:contents}
+  .station-workspace-tools button[aria-controls="instrument-help"] {grid-column:1;grid-row:1;justify-self:start;font-size:14px}
+  .station-workspace-tools button[aria-label="Close instrument"] {grid-column:3;grid-row:1;justify-self:end}
+  .station-workspace-tools button {padding-inline:10px}
+  .station-workspace-tools button[aria-label="Close instrument"] {padding:0;width:44px}
+  .station-workspace-tools button[aria-controls="instrument-help"] {min-width:64px}
+  .station-drawer-scroll {padding:16px 13px 22px;scrollbar-gutter:auto}
+  .station-workspace-footer {padding:12px 15px;font-size:14px;gap:12px}
+  .station-console .field-input {font-size:16px;min-height:48px}
+  .protocol-status {flex-direction:row;align-items:center;gap:14px;padding:14px;font-size:14px}
+  .protocol-status p {line-height:1.5}
+  .protocol-status .btn {padding:9px 10px;min-height:44px;white-space:nowrap;font-size:14px}
+  .station-scene-footer {left:8px;right:8px;bottom:8px}
+  .station-dock {padding:4px;gap:1px;border-radius:13px}
+  .station-dock button,.station-dock button:first-of-type {min-height:50px;padding:8px 2px;border-radius:8px}
+  .station-dock__name {font-size:14px;letter-spacing:-.02em}
+  .station-vista__heading {padding:16px 18px;left:20px;top:calc(var(--station-top) + 20px);max-width:240px}
+  .station-vista__heading h1 {font-size:36px}
+  .station-intro {font-size:16px}
+  .station-orbit-help {margin-left:12px;margin-bottom:14px}
+  .station-help {padding:15px}
+}
+@media(max-height:640px) {
+  .station-workspace {top:calc(var(--station-top) + 8px);bottom:76px}
+  .station-dock button,.station-dock button:first-of-type {min-height:50px}
+  .station-workspace-header {padding-top:10px;padding-bottom:10px}
+}
+@media(prefers-reduced-motion:reduce) {.station-console {animation:none}}
+@media(max-width:350px) {
+  .station-dock {grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+  .station-dock button,.station-dock button:first-of-type {min-height:48px;padding:8px}
+  .station-workspace {bottom:132px}
+}

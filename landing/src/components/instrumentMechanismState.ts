@@ -20,13 +20,13 @@ export function mechanismResult(kind: DetailInstrument, action: MechanismAction,
   if (kind === 'fade') {
     const price = fadePrice(input.time)
     return price < 0 ? result('fade-pays', true, 'The direction changes.', `At ${price}, the pot pays ${Math.abs(price)} to the claimer on settlement.`, 'reverse')
-      : price === 0 ? result('fade-zero', true, 'A zero-price claim.', 'The claim costs zero; settlement still requires a transaction.')
+      : price === 0 ? result('fade-zero', true, 'A claim at zero price.', 'The claim costs zero; settlement still requires a transaction.')
       : result('fade-costs', true, 'The claimer pays.', `At +${price}, the claimer pays ${price} on settlement.`)
   }
   if (kind === 'pod') {
     if (!input.mature) return result('pod-time', false, 'The seal holds.', 'The unlock ledger has not been reached.')
-    if (!input.signed) return result('pod-signature', false, 'Authorization is missing.', 'A valid recipient-bound signature is required. The key stays local.')
-    return result('pod-open', true, 'Authorized for the recipient.', 'The unlock ledger and recipient-bound signature pass. The key is never revealed.')
+    if (!input.signed) return result('pod-signature', false, 'Authorization is missing.', 'A valid signature bound to the recipient is required. The key stays local.')
+    return result('pod-open', true, 'Authorized for the recipient.', 'The unlock condition and signature bound to the recipient both pass. The key is never revealed.')
   }
   if (kind === 'trigger') {
     if (input.evidence === 'invalid') return result('trigger-invalid', false, 'The proof does not pass.', 'An invalid oracle attestation leaves the escrow locked.')
@@ -40,7 +40,7 @@ export function mechanismResult(kind: DetailInstrument, action: MechanismAction,
     if (input.revoked) return result('envoy-revoked', false, 'Revoked. Request blocked.', 'The agent no longer has permission to claim under this mandate.')
     if (input.expired) return result('envoy-expired', false, 'The mandate has expired.', 'A request after expiry does not create a claim.')
     if (input.claims >= 50) return result('envoy-limit', false, 'The claim limit is reached.', 'This mandate has used all 50 permitted claims.')
-    if (input.positivePrice) return result('envoy-positive', false, 'Positive-price claim blocked.', 'Envoy can claim only zero or negative-price Fades; it cannot make this purchase.')
+    if (input.positivePrice) return result('envoy-positive', false, 'Claim at a positive price blocked.', 'Envoy can claim only Fades priced at zero or less; it cannot make this purchase.')
     return result('envoy-owner', true, 'The claim belongs to the owner.', `Request ${input.claims + 1} of 50 passes. The owner receives the Fade claim; the agent does not take custody.`)
   }
   if (kind === 'ramp') return result('ramp-mock', true, input.direction === 'in' ? 'TRY → test USDC.' : 'Test USDC → TRY.', 'A mock route only. No bank transfer, live rate or real currency settlement.', input.direction === 'in' ? 'forward' : 'reverse')

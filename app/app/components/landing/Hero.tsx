@@ -188,7 +188,7 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 1.05, ease: [1, 0, 0.3, 0.93] }}
           >
             Agyion locks money on Stellar, waits for a condition to be proven,
-            and the money executes itself — or quietly comes back.
+            and the money executes itself or quietly comes back.
           </motion.p>
           <motion.div
             className="mt-8"
@@ -233,7 +233,7 @@ export default function Hero() {
             ))}
           </motion.div>
           <p className="mt-3 text-[12px] text-muted">
-            The scene runs on its own clock — click an act to jump.
+            The scene runs on its own clock: click an act to jump.
           </p>
         </div>
 
@@ -378,7 +378,7 @@ export default function Hero() {
                 className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em]"
                 style={{ color: "var(--ember)", opacity: zeroPulse }}
               >
-                below zero — the seller now pays
+                below zero: the seller now pays
               </motion.div>
             </div>
 

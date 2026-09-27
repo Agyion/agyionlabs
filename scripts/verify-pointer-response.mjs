@@ -1,3 +1,4 @@
+import { waitForFonts } from './lib/browser-settle.mjs';
 /** Isolated QA: read the fixed stars' view basis so world animation cannot fake pointer motion. */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -97,7 +98,7 @@ try {
           proto.linkProgram = function(program) {
             const state = data(this);
             const source = (state.shaders.get(program) || []).map(shader => state.sources.get(shader) || '').join('\n');
-            if (/PointsMaterial/.test(source)) { state.stars.add(program); window.__pointerProbe.starProgramCount++; }
+            if (/PointsMaterial|AGYION_STAR_FIELD/.test(source)) { state.stars.add(program); window.__pointerProbe.starProgramCount++; }
             return linkProgram.call(this, program);
           };
           const getUniformLocation = proto.getUniformLocation;
@@ -117,7 +118,7 @@ try {
       try {
         await page.goto(`${base}${route === 'app' ? '/app/' : '/'}`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator(route === 'app' ? '.orbital-backdrop' : '.orbital-scene')).toHaveClass(/is-ready/, { timeout: 30000 });
-        await page.evaluate(() => document.fonts.ready);
+        await waitForFonts(page);
         await expect.poll(() => page.evaluate(() => window.__pointerProbe.matrix?.length ?? 0)).toBe(16);
         const originalUrl = page.url();
         // Outside both scene surfaces: no initial hover aim, no dock preview.
@@ -182,7 +183,7 @@ try {
               await page.getByRole('button', { name: 'Open Fade', exact: true }).click();
               await expect(page.locator('#panel-fade')).toBeVisible();
               await pot.fill('918.27');
-              await page.getByRole('button', { name: /^Instruments/ }).click();
+              await page.getByRole('button', { name: 'Close instrument', exact: true }).click();
               await expect(page.locator('.station-workspace')).toBeHidden();
               draft = await pot.inputValue();
               expect(draft).toBe('918.27');
@@ -249,3 +250,4 @@ try {
 } catch (error) {
   report.status = 'failed'; report.failure = { ...report.failure, message: error.message, stack: error.stack }; throw error;
 } finally { try { await persist(); } finally { await browser.close(); } }
+if (report.status !== 'passed') process.exitCode = 1;

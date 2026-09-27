@@ -10,11 +10,13 @@ const orbital = vi.hoisted(() => ({
 vi.mock('../../shared/space-scene', () => ({ createOrbitalScene: orbital.create }));
 import OrbitalBackdrop from '../app/components/app/OrbitalBackdrop';
 import { writeFlightHandoff } from '../../shared/flight-handoff';
+import { SKIP_FLIGHT_STORAGE_KEY } from '../../shared/flight-preference';
 
 let visibility: (entries: Array<{ isIntersecting: boolean }>) => void;
 beforeEach(() => {
   vi.clearAllMocks();
   sessionStorage.clear();
+  localStorage.clear();
   vi.stubGlobal('IntersectionObserver', class {
     constructor(callback: typeof visibility) { visibility = callback; }
     observe() {}
@@ -33,6 +35,19 @@ const saveFrame = (frame: { at: number; [key: string]: unknown }) => {
 const props = () => ({ selected: 'fade', reduced: false, onSelect: vi.fn(), onArrival: vi.fn(), exploreRequest: 0, panelOpen: false });
 
 describe('interactive orbital backdrop', () => {
+  it('ignores a saved arrival when launch animation is disabled and keeps ambient motion', async () => {
+    writeFlightHandoff(sessionStorage, { elapsed: 40, ringFocus: .2, yaw: 0, pitch: 0, zoom: 0 }, 'data:image/webp;base64,UklGRg==');
+    localStorage.setItem(SKIP_FLIGHT_STORAGE_KEY, '1');
+    const options = props();
+    const view = render(<OrbitalBackdrop {...options} />);
+    await waitFor(() => expect(orbital.create).toHaveBeenCalledOnce());
+    expect(orbital.create.mock.calls[0][1]).toMatchObject({ arrival: false, arrivalPose: undefined, reducedMotion: false, interactive: true });
+    expect(options.onArrival).not.toHaveBeenCalledWith(true);
+    expect(view.container.querySelector('.orbital-arrival-poster')).toBeNull();
+    expect(sessionStorage.getItem('agyion:arrival')).toBeNull();
+    expect(sessionStorage.getItem('agyion:flight-frame')).toBeNull();
+  });
+
   it('uses the fresh landing renderer hint without changing the arrival pose', async () => {
     const pose = { elapsed: 40, ringFocus: .2, yaw: 0, pitch: 0, zoom: 0 };
     writeFlightHandoff(sessionStorage, pose, undefined, Date.now(), { settled: true, softwareGraphics: true });

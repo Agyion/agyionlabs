@@ -1,0 +1,138 @@
+{
+  "review_date": "2026-09-27",
+  "scope": "Static HTML no-transform headers, exact release integrity and bounded production browser observations; pure tests only, no assembly/deployment/browser run by this reviewer. Overlapping tooling files must be deduplicated.",
+  "files": [
+    {
+      "path": "scripts/assemble-site.mjs",
+      "sha256": "d9b10bfb2e06dc11319027ab24c91a95778178f2a4cba93cc3ac946afd04946a",
+      "lines": 32,
+      "read_ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/site-headers.mjs",
+      "sha256": "11c9873aaf2558b057bc00dd1576e76f70f083b51438a17c2e7ef6050401eb77",
+      "lines": 37,
+      "read_ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/site-headers.test.mjs",
+      "sha256": "b4796670f4e52ada4af06ef7aad092405dbee66c3b90ac439a9705ffe0ee54e3",
+      "lines": 65,
+      "read_ranges": [
+        [
+          1,
+          65
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/release-integrity.mjs",
+      "sha256": "3fb0d97dd00978fc59edc4ef359c1575f43f531beb01d163407e9191189eb690",
+      "lines": 65,
+      "read_ranges": [
+        [
+          1,
+          65
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/release-integrity.test.mjs",
+      "sha256": "97379da7423f55198861028c746613727e45eeac5803ed706c24c8c09230231a",
+      "lines": 83,
+      "read_ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-production-release.mjs",
+      "sha256": "168a874d0c3ac85968a3966c9b7ef54b3db8884561cde4914e6b9cac14c18808",
+      "lines": 118,
+      "read_ranges": [
+        [
+          1,
+          118
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/browser-settle.mjs",
+      "sha256": "b904c4b9b9757160e56021920de23b1362f84ecfeaceb237fd6be0e4d52a3d9b",
+      "lines": 39,
+      "read_ranges": [
+        [
+          1,
+          39
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/browser-settle.test.mjs",
+      "sha256": "d81cd06a9c0e1ca678b50efe477a87a62ea66d5de3f82f8578d631e9a29722df",
+      "lines": 52,
+      "read_ranges": [
+        [
+          1,
+          52
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/preview-site.mjs",
+      "sha256": "dd9815e061bc30d787e870d740ec72f8d1d3660b25f2d03f1ccb08352502989d",
+      "lines": 26,
+      "read_ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/static-preview-headers.mjs",
+      "sha256": "59fea80acf35002daac207461ebc80f9ee35b58f241d9db3afddaed6a4c57a18",
+      "lines": 20,
+      "read_ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/static-preview-headers.test.mjs",
+      "sha256": "2b0efb727e5e56ecbd8ea0d2a699e5899ec249913c0c2dad41ce2577cc6b528e",
+      "lines": 47,
+      "read_ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "status": "complete-source-read"
+    }
+  ]
+}

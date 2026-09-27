@@ -217,6 +217,15 @@ fn state_checks(e: &Env, s: &PoolState, t: &Transition) -> Result<u64, Error> {
     {
         return Err(Error::InvalidBridge);
     }
+    // A SAC self-transfer leaves the reserve unchanged. Consuming private
+    // notes for such a withdrawal/fee would strand that value in the pool.
+    let pool = e.current_contract_address();
+    if t.bridge_account.as_ref() == Some(&pool) {
+        return Err(Error::InvalidBridge);
+    }
+    if t.fee_account.as_ref() == Some(&pool) {
+        return Err(Error::InvalidFee);
+    }
     // Nonces are exact unsigned128bit values. Other field checks are delegated
     // to the proof, including valid nonidentity subgroup ephemerals.
     for offset in [0u32, 28, 56, 69, 85] {

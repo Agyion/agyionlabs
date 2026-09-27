@@ -1,3 +1,5 @@
+import { SKIP_FLIGHT_STORAGE_KEY } from './flight-preference';
+
 // Finish the whole journey on the existing renderer before crossing documents.
 export const LAUNCH_DURATION_MS = 9800;
 export const ARRIVAL_DURATION_MS = 6200;
@@ -7,6 +9,8 @@ const MAX_FRAME_LENGTH = 2 * 1024 * 1024;
 
 export interface ArrivalPose {
   elapsed: number;
+  /** Independent gas phase lets the app flow faster without a handoff jump. */
+  flowTime?: number;
   ringFocus: number;
   yaw: number;
   pitch: number;
@@ -19,6 +23,7 @@ export function validArrivalPose(value: unknown): value is ArrivalPose {
   return [pose.elapsed, pose.ringFocus, pose.yaw, pose.pitch, pose.zoom]
     .every(number => typeof number === 'number' && Number.isFinite(number))
     && pose.elapsed >= 0 && pose.elapsed <= 1e7
+    && (pose.flowTime === undefined || (Number.isFinite(pose.flowTime) && pose.flowTime >= 0 && pose.flowTime <= 2e7))
     && Math.abs(pose.ringFocus) <= Math.PI && Math.abs(pose.yaw) <= Math.PI
     && Math.abs(pose.pitch) <= 1.13
     && pose.zoom >= Math.log(7.5 / 19) && pose.zoom <= Math.log(42 / 19);
@@ -69,7 +74,10 @@ export function readFlightHandoff(storage: Storage, now = Date.now()): { arrival
 // can paint. A one-shot observer places it only in its hydration-owned body root.
 // The component takes over once hydrated; eight seconds is a fail-open limit.
 export const FLIGHT_BRIDGE_SCRIPT = String.raw`(()=>{try{
-if(!/^\/app\/?$/.test(location.pathname)||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+if(!/^\/app\/?$/.test(location.pathname))return;
+let skip=false;try{skip=localStorage.getItem('${SKIP_FLIGHT_STORAGE_KEY}')==='1'}catch{}
+if(skip){try{sessionStorage.removeItem('agyion:arrival');sessionStorage.removeItem('agyion:flight-frame')}catch{}return}
+if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
 const m=JSON.parse(sessionStorage.getItem('agyion:arrival')||'null');
 const raw=sessionStorage.getItem('agyion:flight-frame');
 const now=Date.now();

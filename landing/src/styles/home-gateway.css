@@ -30,3 +30,7 @@
   .home-horizon__explore i, .home-colophon { transition: none; }
   .home-horizon__explore:hover i { transform: none; }
 }
+
+.wordmark-particles { position:absolute; inset:0; width:100%; height:100svh; z-index:3; pointer-events:none; }
+.is-launching .wordmark-particles { opacity:0; }
+@media (prefers-reduced-motion:reduce) { .wordmark-particles { display:none; } }

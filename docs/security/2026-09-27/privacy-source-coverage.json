@@ -1,0 +1,227 @@
+{
+  "scope": "Privacy owned runtime, four circuits and13 development scripts. Dependencies and every test implementation are not manually audited.",
+  "files": [
+    {
+      "file": "privacy/circuits/poseidon-encryption.circom",
+      "lines": 56,
+      "sha256": "c090ce7fe7ae288cf853a143051f1de5fb90d31a16f5fc5e0af47f369510aa65",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/circuits/primitives.circom",
+      "lines": 93,
+      "sha256": "e328210aa86370764782d5876bc31e135bd1e023821be870295d80bced69654d",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/circuits/revocation.circom",
+      "lines": 21,
+      "sha256": "53c7e30f85b9152a4738afbbad40aca9abc5a41173f8a6d5777f0f9cbf055817",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/circuits/transition.circom",
+      "lines": 280,
+      "sha256": "f2493373cd29535b64fb410953459de716e812566c291233dad08f47a7887bd5",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/browser-prover-entry.mjs",
+      "lines": 159,
+      "sha256": "cc91155979d82d073417194e2dd3d702336af1b9c4bf1d8a7f96c6e0fa3927eb",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/compile-circuits.mjs",
+      "lines": 24,
+      "sha256": "1ebc099ba7d1e3a2dfde0b1513a565d32a33a2b04e80063345b5faefce77e8cb",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/generate-host-fixtures.mjs",
+      "lines": 100,
+      "sha256": "528bbcdb94ee5e39058efe8469cd27eee2ddc81faa75f0014f6703c83d2ef86a",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/phase1-input.mjs",
+      "lines": 30,
+      "sha256": "6ce585b21d6fba53af409778b4eebc887c3aacb3f1e2834615f496a2226768e9",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/phase1-native-hashes.mjs",
+      "lines": 40,
+      "sha256": "27916a8f58585887fa285aaa562f0144dd9c0849bbb92be12a66ef7023df8689",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/phase1-native-loader.mjs",
+      "lines": 28,
+      "sha256": "cc448dc2fe67dc9caa6cc10398ebbeff11746667fab9f4a0158b6f5c4bcba8d9",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/phase1-sha256-chain.c",
+      "lines": 46,
+      "sha256": "87915504897527fba9d4cd86f82965e7901cf045c4ec2831b59f77fa6f376b20",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/prepare-development-keys.mjs",
+      "lines": 47,
+      "sha256": "22fa27eb230fc7df6f4fa7be6cebf33911c2d3674065da3b9f1d099115cda3fb",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/setup-development.mjs",
+      "lines": 28,
+      "sha256": "1ff135822c1b57512d12a774e88165212dc6f54e09ed40e2b4881dae72e218a4",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/verify-browser-prover.mjs",
+      "lines": 107,
+      "sha256": "e939039abf1c3e1b5804e68b67030466a8f27466ff736b54b6a8a3d777e4fcb8",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/verify-phase1-fast.mjs",
+      "lines": 40,
+      "sha256": "21fc680a511cd005856cd18dfa91f34ed20676498137b0f7b9ad1d05956c3257",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/verify-phase1.mjs",
+      "lines": 24,
+      "sha256": "e86c734d2841b42911cdb311541bba9076df8f3fe7d60c9215238f2d1e2ffb6a",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/scripts/write-prover-manifest.mjs",
+      "lines": 27,
+      "sha256": "c744ebf2502203f175e273d8012bd1add9db8d941eb04a4360d6dbbcba46df6a",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/archive.mjs",
+      "lines": 63,
+      "sha256": "0bf9841cff14173da66226a6f34321865b5f3b7bb5e13fbf3931a24bbe60c366",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/authorization.mjs",
+      "lines": 224,
+      "sha256": "7e7bc6b0ef63675bd926c0cd075ec56dc9f858bd5a157fbe1685e59f0b7efc36",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/backup.mjs",
+      "lines": 65,
+      "sha256": "eebf0aba9db92198f76870c08472817b05322c07f749bd5f1c57745700e44464",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/client.mjs",
+      "lines": 213,
+      "sha256": "0bb9cdaa7c34d453fde1adeaa301e47a6cbc5762b0e9902434517d433fa938e1",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/disclosure.mjs",
+      "lines": 52,
+      "sha256": "f240976cf984ffba0d2e17d143cb9016929dbe7ac884dbbdc12156234f0ae35c",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/encryption.mjs",
+      "lines": 49,
+      "sha256": "fd95008c9cb68a774aaf69edc4b5449f668b1f79cc84f70ad776e4e3f61ca666",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/identity.mjs",
+      "lines": 35,
+      "sha256": "c244460a813dd97bd51c5cf087fc657fd747904365176724cc25ca53a9f2f76b",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/index.mjs",
+      "lines": 4,
+      "sha256": "ec47bf38bcf0a9f059a049f68fa558606b172786ee604e2a11d3d7e2b3f9396b",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/model.mjs",
+      "lines": 215,
+      "sha256": "6e95584a8817b7d4f0c380a19c0e75c456e4a68b125b7f188602198439ac53c2",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/operator-store.mjs",
+      "lines": 118,
+      "sha256": "ef9ad44fd5b80d91744c720ec1297dbe943322a8ad7cf8eb491e3ddbde41f238",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/prover-worker-host.mjs",
+      "lines": 38,
+      "sha256": "49641a83e3bb76ebcc26c80e59ae0c73f08c5fbe7939b80a2531032200ecffe6",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/prover-worker.mjs",
+      "lines": 32,
+      "sha256": "460f6a512f116766610424bac43fc4e4c5ecc8aea0564621c87106697cf2d348",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/prover.mjs",
+      "lines": 149,
+      "sha256": "ea62d9412e0d95d59b950f4ca53cd918561418c68554b38f418bb312eea158cc",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/recovery.mjs",
+      "lines": 132,
+      "sha256": "37ab801af9acd67b9d4f6f5b77a63532fdef2a8400f45fcdb27abf15440e9dac",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/statement.mjs",
+      "lines": 116,
+      "sha256": "038b5079a69238822d3fd6188ba82a809891549a794966b5d049ace6188c2b80",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/threshold.mjs",
+      "lines": 254,
+      "sha256": "4d2e6b9a15edba906d2534b795a5d91e2d2ee688947ea14254948f1d901406cc",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/validation.mjs",
+      "lines": 82,
+      "sha256": "c91e4c35d902b6b18c87827dfa52088aff63568e1ca5b37d200318de3fc1ee54",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/vault.mjs",
+      "lines": 152,
+      "sha256": "d08925c2f4c10dbf240c017708632a598e17a88bd12fc4e4bb3896d951046c7b",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/verifier.mjs",
+      "lines": 14,
+      "sha256": "2f7350ba8ff00a3ab7b702b2d4bbc746a244c9daa613eb99f733652498567314",
+      "review": "all lines read; primary reviewer"
+    },
+    {
+      "file": "privacy/src/witness.mjs",
+      "lines": 158,
+      "sha256": "4a7f96c1c8e77ab817f94b5a4e7601d5da592b0bcd41901d0d395f3a7d541c03",
+      "review": "all lines read; primary reviewer"
+    }
+  ]
+}

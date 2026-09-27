@@ -65,6 +65,7 @@ function candidate(value:PublicSubmission,addresses:PublicAddresses,release:Pool
  const v=plain(value,['kind','proof','publicSignals','ciphertextDigest']);ensure(v.kind==='UnsubmittedPrivateTransition','LOCAL_SUBMISSION_REQUIRED');
  const intent=snapshotIntent({releaseId:release.scope.profileId,pool:release.pool,source,recordId:v.ciphertextDigest,publicSignals:v.publicSignals} as Parameters<typeof snapshotIntent>[0]);
  const fields=intent.publicSignals.map(BigInt),args=prepareSubmit(fields,v.proof as string,addresses);
+ ensure(args.transition.bridge_account!==release.pool&&args.transition.fee_account!==release.pool,'POOL_SELF_TRANSFER_FORBIDDEN');
  ensure(fields[0]===release.profile.domain&&fields[1]===release.profile.assetPolicyRoot&&fields[2]===release.profile.epoch&&fields[3]===release.profile.auditor[0]&&fields[4]===release.profile.auditor[1],'RELEASE_PROFILE_MISMATCH');
  if(args.transition.asset)ensure(assetField(StrKey.decodeContract(args.transition.asset).toString('hex'))===fields[17],'ASSET_ID_MISMATCH');
  if(args.transition.bridge_account)ensure(addressId(args.transition.bridge_account)===fields[19],'BRIDGE_ACCOUNT_MISMATCH');

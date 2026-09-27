@@ -443,6 +443,57 @@ fn real_fee_transfer_failure_rolls_back_prior_withdrawal_nullifier_and_archive()
     fee_failure_rollback(false);
 }
 #[test]
+fn pool_self_destinations_reject_without_consuming_private_value() {
+    self_destination_rejection(false);
+}
+#[test]
+#[cfg(feature = "wasm-tests")]
+fn real_wasm_pool_self_destinations_reject_without_consuming_private_value() {
+    self_destination_rejection(true);
+}
+fn self_destination_rejection(wasm: bool) {
+    let (e, asset, pool, host) = initialized(wasm);
+    let c = PrivatePoolClient::new(&e, &pool);
+    let funder = address(&e, &host["funder"]);
+    let recipient = address(&e, &host["recipient"]);
+    let fee = address(&e, &host["fee"]);
+    soroban_sdk::token::StellarAssetClient::new(&e, &asset).mint(&funder, &1000);
+    for name in ["01-deposit", "02-create-pod", "03-claim-pod"] {
+        submit_fixture(&e, &pool, &asset, &read(&format!("proofs/{name}.json")));
+    }
+    let fixture = read("proofs/04-withdraw-pod.json");
+    let t = transition(&e, &fixture, &asset);
+    let before = state_tuple(c.state());
+    let id = hash::ciphertext_digest(&e, &t.ciphertext);
+    for bridge in [true, false] {
+        let mut changed = t.clone();
+        if bridge {
+            changed.bridge_account = Some(pool.clone());
+        } else {
+            changed.fee_account = Some(pool.clone());
+        }
+        reset(&e);
+        // Empty proof makes the ordering explicit: these destinations reject
+        // before the verifier; this is not a forged accepted proof.
+        assert_eq!(c.try_submit(&changed, &Bytes::new(&e)),
+            Err(Ok(if bridge { Error::InvalidBridge } else { Error::InvalidFee })));
+        reset(&e);
+        assert_eq!(state_tuple(c.state()), before);
+        assert_eq!(balance(&e, &asset, &pool), 1000);
+        assert_eq!(balance(&e, &asset, &recipient), 0);
+        assert_eq!(balance(&e, &asset, &fee), 0);
+        assert!(!c.spent(&t.nullifiers.get(0).unwrap()));
+        assert!(c.record(&id).is_none());
+        assert_eq!(c.record_id_at(&3), None);
+    }
+    assert_eq!(submit_fixture(&e, &pool, &asset, &fixture), id);
+    assert_eq!(balance(&e, &asset, &pool), 600);
+    assert_eq!(balance(&e, &asset, &recipient), 395);
+    assert_eq!(balance(&e, &asset, &fee), 5);
+    assert!(c.spent(&t.nullifiers.get(0).unwrap()));
+    assert_eq!(c.record_id_at(&3), Some(id));
+}
+#[test]
 #[cfg(feature = "wasm-tests")]
 fn real_wasm_fee_failure_rolls_back_prior_withdrawal_nullifier_and_archive() {
     fee_failure_rollback(true);

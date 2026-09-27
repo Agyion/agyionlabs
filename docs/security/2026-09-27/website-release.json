@@ -1,0 +1,40 @@
+{
+  "createdAt": "2026-09-27T02:42:57.341102Z",
+  "worker": "agyion",
+  "domain": "https://agyionlabs.dev",
+  "deploymentId": "3fdb31d4-3fa2-4020-8c9c-1548efe01979",
+  "versions": [
+    {
+      "version_id": "f3cfa837-2703-49c2-895d-0ce71dd3a555",
+      "percentage": 100
+    }
+  ],
+  "rollbackVersion": "348580e9-2767-41fe-aa69-4fd9adb5347a",
+  "artifactTreeSha256": "6e094e9d1cb23d4cb0bfdd295d0a22dc90161ae0f09e619eecec855888ef5db1",
+  "artifactTreeAlgorithm": "SHA256 of sorted path + NUL + file SHA256 + LF",
+  "buildInputs": 401,
+  "artifacts": 180,
+  "publicContract": {
+    "network": "Test SDF Network ; September 2015",
+    "rpc": "https://soroban-testnet.stellar.org",
+    "id": "CBIIHFELPAKC2KJD4NCJSB32BQO5QUBNEKHBMISFB4MVDKBVM6AJSRXT",
+    "wasmSha256": "1e6643028d6b397b3a762d4b5312eaf20f2744407686c78122d27c5a4dd8d378",
+    "asset": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
+  },
+  "verification": {
+    "status": "passed",
+    "httpChecks": 34,
+    "uiChecks": 14,
+    "protocolStatus": {
+      "readiness": "ready",
+      "message": null,
+      "observedContractInstance": "CBIIHFELPAKC2KJD4NCJSB32BQO5QUBNEKHBMISFB4MVDKBVM6AJSRXT"
+    },
+    "pageErrors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "csp": [],
+    "reportSha256": "3e5c9833eea995a32bfa2e1d0ccc3b9717b1eca7221436065ffb30258ae7bef2"
+  },
+  "limits": "Read-only live browser checks. Testnet settlement evidence is separately recorded in testnet-receipts.json. No real extension wallet or Circle USDC-funded settlement in this release verification."
+}

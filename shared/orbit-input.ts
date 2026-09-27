@@ -1,5 +1,10 @@
+/** Shared landing/app pointer gain; zoom, keyboard and passive aim stay independent. */
+export const ORBIT_DRAG_SENSITIVITY = .375;
+
 export interface OrbitInputOptions {
   wheelZoom: boolean;
+  /** Scales pointer/touch camera travel on both axes, independently of zoom and keyboard steps. */
+  dragSensitivity?: number;
   /** Horizontal pointer/touch travel only; keyboard, pitch and zoom stay independent. */
   horizontalDragSensitivity?: number;
   canInteract: () => boolean;
@@ -52,7 +57,11 @@ export function bindOrbitInput(canvas: HTMLCanvasElement, options: OrbitInputOpt
   const orbit = (dx: number, dy: number) => {
     if (!dx && !dy) return;
     const bounds = canvas.getBoundingClientRect();
-    options.onOrbit(dx * Math.PI * 2 / Math.max(300, bounds.width) * (options.horizontalDragSensitivity ?? 1), dy * Math.PI / Math.max(300, bounds.height));
+    const sensitivity = options.dragSensitivity ?? 1;
+    options.onOrbit(
+      dx * Math.PI * 2 / Math.max(300, bounds.width) * sensitivity * (options.horizontalDragSensitivity ?? 1),
+      dy * Math.PI / Math.max(300, bounds.height) * sensitivity,
+    );
   };
   const pair = () => {
     const [first, second] = [...pointers.values()];
@@ -86,8 +95,8 @@ export function bindOrbitInput(canvas: HTMLCanvasElement, options: OrbitInputOpt
       return;
     }
     const previousPair = pointers.size > 1 ? pair() : null;
-    const dx = event.clientX - pointer.x;
-    const dy = event.clientY - pointer.y;
+    let dx = event.clientX - pointer.x;
+    let dy = event.clientY - pointer.y;
     pointer.x = event.clientX;
     pointer.y = event.clientY;
 
@@ -106,6 +115,10 @@ export function bindOrbitInput(canvas: HTMLCanvasElement, options: OrbitInputOpt
     if (!moved && Math.hypot(totalX, totalY) >= 6) {
       moved = true;
       nativeScroll = !options.wheelZoom && pointer.type === 'touch' && Math.abs(totalY) > Math.abs(totalX);
+      // Count the same physical travel whether the browser dispatches one
+      // coalesced move or many small moves before the drag threshold.
+      dx = totalX;
+      dy = totalY;
     }
     if (!moved || nativeScroll) return;
     orbit(dx, !options.wheelZoom && pointer.type === 'touch' ? 0 : dy);

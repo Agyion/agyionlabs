@@ -4,15 +4,33 @@
 
 Agyion is a conditional-payments application on Stellar (Soroban). One kernel contract, four condition templates, a sandbox fiat-rail integration on one side and a local proof ledger on the other. This repository is the Genesis Track MVP of the Rise In × Stellar Pro Hackathon (Istanbul, 19–20 September 2026): kernel contract + four templates + testnet + live demo.
 
-## Current source and release boundary — 26 September 2026
+## Current source and release boundary · 27 September 2026
 
-The current frontend was published on 26 September as Cloudflare version `90ff8d23-8b7a-4cc6-b4e3-bf66aebca29a`. The [current security and release report](docs/security/2026-09-26/REVIEW.md) records source coverage, verification and retained live CSP/RPC failures. The source implements **kernel protocol V3**, including recipient-bound Pod signatures instead of plaintext reveal, but no V3 kernel was deployed. The frontend therefore keeps old-kernel writes closed.
+The reviewed **kernel protocol V3** was deployed to Stellar testnet at
+`CBIIHFELPAKC2KJD4NCJSB32BQO5QUBNEKHBMISFB4MVDKBVM6AJSRXT`, with verified WASM
+SHA-256 `1e6643028d6b397b3a762d4b5312eaf20f2744407686c78122d27c5a4dd8d378`.
+The testnet smoke completed 17 checks and 23 confirmed transactions using fresh
+test identities and native XLM. This does not verify funded Circle testnet USDC
+flows, actual user-wallet interaction or real bank settlement. The
+[compatibility and release report](docs/security/2026-09-27/COMPATIBILITY_RELEASE.md)
+records the transaction evidence, frontend publication status and remaining
+limitations. The [26 September report](docs/security/2026-09-26/REVIEW.md) is a
+historical snapshot of the earlier deployment and its blocked writes.
 
-The source defaults to mock mode when no mode is configured. The Soroban client requires `protocol_version() == 3` and refuses protected operations against the older kernel. A fresh kernel deployment, matching public configuration and a rebuilt frontend are required before using V3 on chain. Existing locked funds remain under the earlier contract; no automatic migration exists. The current app's amounts, wallets and transaction links remain public. A separate [experimental private v2 profile](privacy/README.md) implements real proofs, a pinned testnet-only pool and M-of-N disclosure; it is locally tested and is not enabled or deployed in the app.
+The source defaults to mock mode when no mode is configured. The public Soroban
+app requires the reviewed WASM hash and validates RPC network, exact contract
+instance identity, code hash and `protocol_version() == 3` before enabling
+writes. Environment values are bundled at build time, so changing them requires
+a frontend rebuild and publication. Existing locked funds remain under their
+earlier contract; no automatic migration exists. The current app's amounts,
+wallets and transaction links remain public. A separate
+[experimental private v2 profile](privacy/README.md) implements real proofs,
+a pinned testnet-only pool and M-of-N disclosure; it is locally tested and is
+not enabled or deployed in the app.
 
 Start with [HANDOFF.md](HANDOFF.md), the [security protocol and migration
 notes](contracts/hak/SECURITY_PROTOCOL.md), and the [current review evidence and
-remaining limits](docs/security/2026-09-26/REVIEW.md). The historical
+remaining limits](docs/security/2026-09-27/COMPATIBILITY_RELEASE.md). The historical
 hackathon narrative and roadmap below should be read with those current limits.
 
 ## Historical hackathon testnet deployment — before this security revision
@@ -83,7 +101,7 @@ One kernel, four condition packs. Their methods and records are public; generic 
 
 ## Historical demo guide — the 5-minute jury run
 
-This is the earlier jury flow, preserved for context, **not current operating instructions or verification**. Its plaintext Pod claims and unconditional signed-export description are obsolete. For the current source, a separately authorized V3 deployment is required; use the [security protocol](contracts/hak/SECURITY_PROTOCOL.md). Proof Pack signatures are optional and do not prove settlement.
+This is the earlier jury flow, preserved for context, **not current operating instructions or verification**. Its plaintext Pod claims and unconditional signed-export description are obsolete. Use the [current compatibility report](docs/security/2026-09-27/COMPATIBILITY_RELEASE.md) and [security protocol](contracts/hak/SECURITY_PROTOCOL.md) for V3. Proof Pack signatures are optional and do not prove settlement.
 
 **0:00 — Wallet (1 min).** Install [Freighter](https://www.freighter.app/) → open its ⚙️ menu → switch network to **Testnet**.
 
@@ -181,7 +199,9 @@ cd app && npm install && npm run dev          # http://localhost:3000
 # To run against testnet:
 #   NEXT_PUBLIC_HAK_MODE=soroban
 #   NEXT_PUBLIC_HAK_CONTRACT_ID=<id from step 2>
+#   NEXT_PUBLIC_HAK_WASM_HASH=<verified SHA-256 from step 2>
 #   NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+#   NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
 # The On/Off-ramp tab works in both modes; it talks to the official hackathon
 # TR mock anchor (SEP-6). Override only if you run your own anchor:
 #   NEXT_PUBLIC_ANCHOR_URL=https://tr-mock-anchor.fly.dev   (default)
@@ -193,23 +213,26 @@ cd .. && npm run build                        # assembles landing + app into app
 **Deployment helper:** the default run only checks local tools/identity availability and prints
 its plan. `DRY_RUN=0` is the explicit operator action that runs the locked kernel
 tests, builds the exact `contracts/hak/target/wasm32v1-none/release/hak.wasm`,
-deploys on the hard-pinned Stellar testnet, and reads back `protocol_version()`
-with `--send no`. It prints the real `NEXT_PUBLIC_HAK_*`, RPC and network
-passphrase settings only after confirming version 3. An existing identity is
+deploys those exact bytes on the hard-pinned Stellar testnet with
+`--optimize=false`, fetches the deployed WASM with the CLI cache disabled, and
+requires its SHA-256 to equal the local artifact. It also reads back
+`protocol_version()` with `--send no`. It prints the real `NEXT_PUBLIC_HAK_*`,
+including the WASM hash, RPC and network passphrase settings only after both
+checks succeed. An existing identity is
 reused and must already hold enough testnet XLM for fees; if the default identity
 is absent, only `agyion-testnet-deployer` is created and funded with Friendbot.
 Missing custom aliases are rejected. No issuer, trustline, asset issuance, or
 asset-transfer steps run; the app already uses Circle testnet USDC. The helper
 does not overwrite existing contract aliases or migrate existing locked funds.
-The local security fixes still require a new deployment and an app rebuild;
-the earlier deployed kernel is not upgraded by editing this repository.
+Each changed kernel requires a new reviewed deployment and an app rebuild with
+its verified pins; editing this repository never upgrades an existing kernel.
 See [the V3 protocol and migration notes](contracts/hak/SECURITY_PROTOCOL.md).
 
 **Anchor:** the app integrates the official hackathon TR mock anchor (`https://tr-mock-anchor.fly.dev`) — a SEP-6 TRY↔USDC rail with SEP-10 auth, SEP-12 KYC and SEP-38 quotes; the bank leg is simulated by the sandbox. The self-host Anchor Platform quick-run (SEP-24 flow, also simulated) remains as an alternative in [anchor/README.md](anchor/README.md).
 
 ## Test evidence
 
-The [24 September audit record](docs/verification/2026-09-24-orbital-audit.md) records the earlier 47-test kernel and 11-test verifier runs. Those counts are a dated snapshot, not current V3 acceptance or deployment evidence. Read the [current dated security reports](docs/security/2026-09-26) and run the suites against the exact candidate before release. Local tests do not establish the absence of vulnerabilities.
+The [24 September audit record](docs/verification/2026-09-24-orbital-audit.md) records the earlier 47-test kernel and 11-test verifier runs. Those counts are a dated snapshot, not current V3 acceptance or deployment evidence. Read the [current dated security reports](docs/security/2026-09-27) and run the suites against the exact candidate before release. Local tests do not establish the absence of vulnerabilities.
 
 | Layer | Proof | Command |
 |---|---|---|

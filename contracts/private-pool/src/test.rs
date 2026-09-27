@@ -173,6 +173,28 @@ fn canonical_cipher_and_packed_outputs_are_required() {
     });
 }
 #[test]
+fn pool_itself_cannot_be_a_bridge_or_fee_destination() {
+    let e = Env::default();
+    e.ledger().set_sequence_number(110);
+    let pool = e.register(StorageFrame, ());
+    e.as_contract(&pool, || {
+        let (s, t) = sample(&e);
+        for kind in [1, 2] {
+            let mut changed = t.clone();
+            changed.bridge_kind = kind;
+            changed.bridge_account = Some(pool.clone());
+            if kind == 1 {
+                changed.nullifiers = soroban_sdk::vec![&e, hash::zero(&e), hash::zero(&e)];
+            }
+            assert_eq!(crate::state_checks(&e, &s, &changed), Err(Error::InvalidBridge));
+        }
+        let mut changed = t;
+        changed.fee_amount = 1;
+        changed.fee_account = Some(pool.clone());
+        assert_eq!(crate::state_checks(&e, &s, &changed), Err(Error::InvalidFee));
+    });
+}
+#[test]
 fn internal_fee_asset_and_addresses_are_bound_into_the_exact_vector() {
     let e = Env::default();
     let asset = Address::generate(&e);

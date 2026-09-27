@@ -1,0 +1,437 @@
+{
+  "scope": "Additional complete source reads during repository coverage reconciliation; no blanket test or visual QA implementation coverage",
+  "files": [
+    {
+      "file": ".gitignore",
+      "lines": 20,
+      "sha256": "6ca3df002daa8b9fba541af349f30d032df2e608085ae905a5fecf1bc480c191",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/.env.example",
+      "lines": 15,
+      "sha256": "aa08643588cd24c17583d4ad3ff16c090814e7380b2805a32db86a66a0719c4e",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/.eslintignore",
+      "lines": 2,
+      "sha256": "98382036df13888dc09f514007875b273d2a2e2e0fa9b5f6953fdeb7e31d7681",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/.eslintrc.json",
+      "lines": 3,
+      "sha256": "8d4a8d81dab1c22bcb28635249606f2e59fa816e8e58c56eecf6d2430949847a",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/.gitignore",
+      "lines": 36,
+      "sha256": "f37e7e1b90353a16ba7bec8979585311ee6d00311209391e5ab47162df4ca922",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/.npmrc",
+      "lines": 1,
+      "sha256": "a093bb2fed59d699b7f9a62a5203cc196054c624e9c39c6d908c9e7db5dd2464",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/app/layout.tsx",
+      "lines": 48,
+      "sha256": "db3f9b9e804fd20be957398371c06fdca554d9d4abe5024a6b287d9fdf1c65d7",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/lib/hak-bindings/.gitignore",
+      "lines": 2,
+      "sha256": "9ae8e02462ff393bb40e787f0a65e79d241ed4f74b32cc57c64acb4ac18fa3fc",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/lib/hak-bindings/package.json",
+      "lines": 17,
+      "sha256": "2a97df502f87d5928d705e775ff49c052d363ce314aa29b182f1424cffe6962e",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/lib/hak-bindings/tsconfig.json",
+      "lines": 98,
+      "sha256": "4e9d6c387e88404912c07eb6ce617701563c322751e84a9f4e61e3c47ef6fdb5",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/next.config.mjs",
+      "lines": 10,
+      "sha256": "bed956265316a769ff1d8fda744a05a56ab1a26e3cb6b9e1500ee5f9ed4c0c2d",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/package.json",
+      "lines": 41,
+      "sha256": "39a5515e2da55b768c18a2221e712b595417edbdb9a618bc688a817c1b01ddd0",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/postcss.config.mjs",
+      "lines": 8,
+      "sha256": "ac31e2a95ef64fe27ceb4124e101675273107aae2e33bc490b01d919e7f03646",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/public/favicon.svg",
+      "lines": 1,
+      "ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "sha256": "39f05901124d7cd5bb80ea7c82f658aff6ddd56022c0890fa298aeebc8546e35",
+      "review": "all lines manually read; static SVG paths, no script, external references or event handlers"
+    },
+    {
+      "file": "app/scripts/anchor-smoke.mjs",
+      "lines": 7,
+      "sha256": "ccda18f0b070b80b419f0a1de44feb2a08b5b52d40301d74cfb29c125d845af7",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/tailwind.config.ts",
+      "lines": 55,
+      "sha256": "f7f190b3a198eb40a347469ebe9c7c1efc281cea4d8c923f28cfafc9d541e644",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/tsconfig.json",
+      "lines": 27,
+      "sha256": "8986eda590a6c98b20db12c16a8a0ed4dd32fb177276f26ce642471e154edd67",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/vitest.config.mts",
+      "lines": 7,
+      "sha256": "5a50d0db0636d3a6fdb2502dffc5dee194f87f0a9a988ffebe5fa1eb8158bf1c",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "app/wrangler.toml",
+      "lines": 16,
+      "sha256": "0376b600940c6a28632ac10d59ac1f2ea3d40c49a30e91ed4aaf3ddbe26e48c8",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "contracts/hak/.gitignore",
+      "lines": 2,
+      "sha256": "7d8db252773a802ca99b229b422662d016c094e3d9bcc18110b94bca4bad53b2",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "contracts/private-pool/.gitignore",
+      "lines": 2,
+      "sha256": "2bc618e32b96c72b197cfde282d6fdfc171d99061a6c99fa2b086100c956c8ff",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "contracts/private-pool/Cargo.toml",
+      "lines": 24,
+      "sha256": "1968b5912d08c80519bc483c7b7c340e009eb787abd0bf862c9b93b183af74b2",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "contracts/private-pool/client/package.json",
+      "lines": 15,
+      "sha256": "b95cc5ac4a4b3874da41d8eb2a1de5c23707a231e864fd0dcc217fe03b910ed7",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "contracts/private-pool/client/tsconfig.json",
+      "lines": 12,
+      "sha256": "1c39cb4b6de445e390041e120dce4158e630cc9f1ec0dcca5d8b18e074e66935",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "contracts/zk-preimage/.gitignore",
+      "lines": 3,
+      "sha256": "29506b055189fa5f96f8af50ffc6d6b5c9355979b205586fb9db98b9ed9e9f68",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "contracts/zk-preimage/Cargo.toml",
+      "lines": 29,
+      "sha256": "67c774fe488820297f45e858903fdb7cb6fb2c88c0a42614e7c3ee73f8448bd5",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "docs/research/2026-09-25-crypto-design/board.js",
+      "lines": 47,
+      "sha256": "302e925a0d841766fac25401e1139f5dad37453fda648b3041a1c687b803b1b2",
+      "review": "all lines read; inventory reviewer; archived fixed-content research board, not shipped runtime"
+    },
+    {
+      "file": "landing/.gitignore",
+      "lines": 1,
+      "sha256": "16d30e4462189fb14dd611bdb708c510630c576a1f35b9383e89a4352da36c97",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "landing/eslint.config.js",
+      "lines": 23,
+      "sha256": "4efe97b16d1200fac0eaf07aa00930a8668b1f96a0be1891ace8c1e712ff0ccb",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "landing/package.json",
+      "lines": 41,
+      "sha256": "f4a3a7edacd05c9d2a883b8f5be79956929f51bc8f68e674c43760c9dcc2f646",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "landing/public/favicon.svg",
+      "lines": 1,
+      "ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "sha256": "39f05901124d7cd5bb80ea7c82f658aff6ddd56022c0890fa298aeebc8546e35",
+      "review": "all lines manually read; static SVG paths, no script, external references or event handlers"
+    },
+    {
+      "file": "landing/src/App.tsx",
+      "lines": 149,
+      "sha256": "f5f38e92272d855a24a1850d0ccaf1adf0eb05341ca2565acbbd7c9178342d6d",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "landing/src/config.ts",
+      "lines": 429,
+      "sha256": "bc222ce1803939c4d17b68b63af4b2b5e193f69966f3e69de8519dccca52870f",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "landing/tsconfig.app.json",
+      "lines": 26,
+      "sha256": "843e8bed50f8fabfea6b2f6f252a27de28fcd87e4e0e8817f35c549cfa2b405d",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "landing/tsconfig.json",
+      "lines": 7,
+      "sha256": "770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "landing/tsconfig.node.json",
+      "lines": 23,
+      "sha256": "088ef0ecec12d7315e1417c9e16b40f1fcc79535cfde3da3099e4b2649b6b933",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "landing/vite.config.ts",
+      "lines": 17,
+      "sha256": "88818286e3f34ea0e9706d5fc056569e73f4512c256efe8b8fbc7f893ca51a6b",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "package.json",
+      "lines": 17,
+      "sha256": "1521dad5756211202287bb4e3bd51daf80e99bd4c3d226a1c78e4899390c25e9",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "privacy/package.json",
+      "lines": 30,
+      "sha256": "eb7ae1dce23fe7b67adbca42e8613ad5cfe368059856343916e6a02d9924ac3f",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "scripts/app-asset-manifest.mjs",
+      "lines": 27,
+      "sha256": "2cad5bb5be6ecea94c234760426a2a6fd77f812b6b2d15b4ba06d5c7643746e2",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "scripts/assemble-site.mjs",
+      "lines": 32,
+      "ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "sha256": "d9b10bfb2e06dc11319027ab24c91a95778178f2a4cba93cc3ac946afd04946a",
+      "review": "all lines manually read; final site headers/release helper and tests reconciliation"
+    },
+    {
+      "file": "scripts/build_site.sh",
+      "lines": 35,
+      "sha256": "0ad2c3420bdc18496331d2a6e4aa50d68ea8d8b0e78d397e3694c2a4176a0896",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "scripts/preview-site.mjs",
+      "lines": 26,
+      "ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "sha256": "dd9815e061bc30d787e870d740ec72f8d1d3660b25f2d03f1ccb08352502989d",
+      "review": "all lines manually read; final preview header parser/tests and cross-document QA reconciliation"
+    },
+    {
+      "file": "scripts/release-expectations.mjs",
+      "lines": 31,
+      "sha256": "db219ab94861f9e744a0f32eebdeec74fc41bc9da98564c6cf7f50476e7b3fb9",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "scripts/release-integrity.mjs",
+      "lines": 65,
+      "ranges": [
+        [
+          1,
+          65
+        ]
+      ],
+      "sha256": "3fb0d97dd00978fc59edc4ef359c1575f43f531beb01d163407e9191189eb690",
+      "review": "all lines manually read; final site headers/release helper and tests reconciliation"
+    },
+    {
+      "file": "scripts/release-kernel-readback.mjs",
+      "lines": 28,
+      "sha256": "61092ac116ca61eab6f4b55793636aff4b5c027f0c24eacf585e54d9ae624748",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "scripts/setup.sh",
+      "lines": 80,
+      "sha256": "f5f945742cf1c88ca1c465efceb4beaa51f66ad8c3783b6efac36b89d10d340d",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "scripts/site-headers.mjs",
+      "lines": 37,
+      "ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "sha256": "11c9873aaf2558b057bc00dd1576e76f70f083b51438a17c2e7ef6050401eb77",
+      "review": "all lines manually read; final site headers/release helper and tests reconciliation"
+    },
+    {
+      "file": "scripts/static-preview-headers.mjs",
+      "lines": 20,
+      "ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "sha256": "59fea80acf35002daac207461ebc80f9ee35b58f241d9db3afddaed6a4c57a18",
+      "review": "all lines manually read; final preview header parser/tests and cross-document QA reconciliation"
+    },
+    {
+      "file": "scripts/tests/release-integrity.test.mjs",
+      "lines": 83,
+      "ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "sha256": "97379da7423f55198861028c746613727e45eeac5803ed706c24c8c09230231a",
+      "review": "all lines manually read; final site headers/release helper and tests reconciliation"
+    },
+    {
+      "file": "scripts/tests/site-headers.test.mjs",
+      "lines": 65,
+      "ranges": [
+        [
+          1,
+          65
+        ]
+      ],
+      "sha256": "b4796670f4e52ada4af06ef7aad092405dbee66c3b90ac439a9705ffe0ee54e3",
+      "review": "all lines manually read; final site headers/release helper and tests reconciliation"
+    },
+    {
+      "file": "scripts/tests/static-preview-headers.test.mjs",
+      "lines": 47,
+      "ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "sha256": "2b0efb727e5e56ecbd8ea0d2a699e5899ec249913c0c2dad41ce2577cc6b528e",
+      "review": "all lines manually read; final preview header parser/tests and cross-document QA reconciliation"
+    },
+    {
+      "file": "scripts/verify-private-journal.mjs",
+      "lines": 186,
+      "sha256": "b3faadb2e8d733e97680f7ffd83a5dcb03714c1fc953b4cf255534cbc0dfc9c4",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "scripts/verify-private-pool.mjs",
+      "lines": 68,
+      "sha256": "e6fcf4adfd7e346e26ba82bbe34a05fa7dd66d523965b940988c2ea2a29f6561",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "scripts/verify-production-release.mjs",
+      "lines": 118,
+      "ranges": [
+        [
+          1,
+          118
+        ]
+      ],
+      "sha256": "168a874d0c3ac85968a3966c9b7ef54b3db8884561cde4914e6b9cac14c18808",
+      "review": "all lines manually read; final site headers/release helper and tests reconciliation"
+    },
+    {
+      "file": "scripts/verify-testnet-kernel.mjs",
+      "lines": 183,
+      "sha256": "3d53f1418c62edf7c3f2f0d9061eb96b182cade8106f359e9867b6f3f343a6de",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "scripts/verify-wallet-modal.mjs",
+      "lines": 56,
+      "sha256": "a1898717c45b37c4f108379a95b2024349479cfc979726c43a1188441921ad8d",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "shared/flight-handoff.ts",
+      "lines": 94,
+      "sha256": "189bd60d3b3ed8ec051eb1a6e783e85437c8312e600e021714fc7fca584f3146",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "shared/flight-preference.ts",
+      "lines": 37,
+      "sha256": "ea3f39072a494479bc457d18e5aa2b17869d44ae8adfff721616a8efbf925d55",
+      "review": "all lines read; inventory reviewer"
+    },
+    {
+      "file": "tests/orbital-app.spec.mjs",
+      "lines": 282,
+      "ranges": [
+        [
+          1,
+          282
+        ]
+      ],
+      "sha256": "4527eef2e78c6891251663df0fbe1a7c8fd9a981f88e007d93fe1b52f648d7ab",
+      "review": "all lines manually read; final preview header parser/tests and cross-document QA reconciliation"
+    }
+  ]
+}

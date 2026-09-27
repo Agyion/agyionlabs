@@ -1,0 +1,397 @@
+{
+  "schema": "agyion-public-testnet-evidence-v1",
+  "finalRun": {
+    "schema": "agyion-testnet-kernel-integration-v1",
+    "at": "2026-09-27T02:17:02.124Z",
+    "contractId": "CBIIHFELPAKC2KJD4NCJSB32BQO5QUBNEKHBMISFB4MVDKBVM6AJSRXT",
+    "wasmSha256": "1e6643028d6b397b3a762d4b5312eaf20f2744407686c78122d27c5a4dd8d378",
+    "network": "Test SDF Network ; September 2015",
+    "rpc": "https://soroban-testnet.stellar.org",
+    "status": "passed",
+    "checks": [
+      {
+        "name": "Pinned testnet contract instance and actual WASM bytes match reviewed source artifact"
+      },
+      {
+        "name": "New dedicated test accounts funded and V3 read from actual deployment"
+      },
+      {
+        "name": "Second Fade claim rejected",
+        "simulationOnly": true,
+        "error": "HostError: Error(Contract, #2)"
+      },
+      {
+        "name": "Fade settlement replay rejected",
+        "simulationOnly": true,
+        "error": "HostError: Error(Contract, #2)"
+      },
+      {
+        "name": "Fade negative settlement preserves reserve and exact recipient payment"
+      },
+      {
+        "name": "Second Fade claim rejected",
+        "simulationOnly": true,
+        "error": "HostError: Error(Contract, #2)"
+      },
+      {
+        "name": "Fade settlement replay rejected",
+        "simulationOnly": true,
+        "error": "HostError: Error(Contract, #2)"
+      },
+      {
+        "name": "Fade positive settlement preserves reserve and exact recipient payment"
+      },
+      {
+        "name": "Pod signature cannot redirect recipient",
+        "simulationOnly": true,
+        "error": "HostError: Error(Crypto, InvalidInput)"
+      },
+      {
+        "name": "Pod second claim rejected",
+        "simulationOnly": true,
+        "error": "HostError: Error(Contract, #2)"
+      },
+      {
+        "name": "Pod V3 creation and recipient-bound opening settle exact amount once"
+      },
+      {
+        "name": "Trigger repeat attestation rejected",
+        "simulationOnly": true,
+        "error": "HostError: Error(Contract, #2)"
+      },
+      {
+        "name": "Trigger signed payout reaches fixed beneficiary once"
+      },
+      {
+        "name": "Trigger expired escrow refunds funder without funder submission"
+      },
+      {
+        "name": "Fade claimed but unconfirmed handoff refunds pot after deadline"
+      },
+      {
+        "name": "Revoked Envoy grant rejected on an otherwise open listing",
+        "simulationOnly": true,
+        "error": "HostError: Error(Contract, #11)"
+      },
+      {
+        "name": "Envoy agent claims only for grant owner and revocation blocks further use"
+      }
+    ],
+    "transactions": [
+      {
+        "method": "create_fade",
+        "hash": "2ffffc5b8ebcaaed45e8a67645f2f3882d5416f520f1bfe1d6821c448586eba7",
+        "account": "GBYEUJSQXDGSYAMEPFOEQUL3JDVB7A3CSLLA5VVARUCQ4L5MCUNOBFBL",
+        "status": "SUCCESS",
+        "maxFee": "716713",
+        "sendStatus": "PENDING",
+        "ledger": 4890371,
+        "feeCharged": "617534"
+      },
+      {
+        "method": "claim",
+        "hash": "015db17c0d0f648608b4aae6b214c77d1b486a10c43793a9bc2ba7f5fc77a0a4",
+        "account": "GA64ODOYN4B3ZJFDAE5GNVOAZ6PV6PLMSBHXOYOJB2FXPP2UDHWTELHN",
+        "status": "SUCCESS",
+        "maxFee": "35414",
+        "sendStatus": "PENDING",
+        "ledger": 4890372,
+        "feeCharged": "23423"
+      },
+      {
+        "method": "confirm_handoff",
+        "hash": "f25b76308fc253f6fac38724ca9244b36d435357214a5dd4a911c38d1573bae4",
+        "account": "GBJKPMUPCFHQJGYQJDIOEPCJMUHJ7IPJEXOMGBET5XAKK2J5N7QENVJY",
+        "status": "SUCCESS",
+        "maxFee": "31788",
+        "sendStatus": "PENDING",
+        "ledger": 4890373,
+        "feeCharged": "21900"
+      },
+      {
+        "method": "create_fade",
+        "hash": "ac4b490eb4787f816e568e6cdb16d3866224b2926288fa7d2ad64f949137aeb0",
+        "account": "GBYEUJSQXDGSYAMEPFOEQUL3JDVB7A3CSLLA5VVARUCQ4L5MCUNOBFBL",
+        "status": "SUCCESS",
+        "maxFee": "296036",
+        "sendStatus": "PENDING",
+        "ledger": 4890374,
+        "feeCharged": "251731"
+      },
+      {
+        "method": "claim",
+        "hash": "de91eec5ca35e69cfdbf64149663683ddf87aecbd43ba2067c6f21d7b3b2e6e9",
+        "account": "GA64ODOYN4B3ZJFDAE5GNVOAZ6PV6PLMSBHXOYOJB2FXPP2UDHWTELHN",
+        "status": "SUCCESS",
+        "maxFee": "35414",
+        "sendStatus": "PENDING",
+        "ledger": 4890375,
+        "feeCharged": "23423"
+      },
+      {
+        "method": "confirm_handoff",
+        "hash": "895ec9dd92f24f160dc0d2daff78c2295f7708c2b9c323871ebe3121a4a3c995",
+        "account": "GA64ODOYN4B3ZJFDAE5GNVOAZ6PV6PLMSBHXOYOJB2FXPP2UDHWTELHN",
+        "status": "SUCCESS",
+        "maxFee": "33273",
+        "sendStatus": "PENDING",
+        "ledger": 4890376,
+        "feeCharged": "23382"
+      },
+      {
+        "method": "create_pod",
+        "hash": "fc22b3d8f09ad03ed6c2b5773709989bccacd717509c4810b53dde81b637d1a8",
+        "account": "GBYEUJSQXDGSYAMEPFOEQUL3JDVB7A3CSLLA5VVARUCQ4L5MCUNOBFBL",
+        "status": "SUCCESS",
+        "maxFee": "204831",
+        "sendStatus": "PENDING",
+        "ledger": 4890377,
+        "feeCharged": "172420"
+      },
+      {
+        "method": "claim_pod",
+        "hash": "6ce024804373df52cf712137f5afeef158cfd61191ea45dc33a514d153dd0011",
+        "account": "GA64ODOYN4B3ZJFDAE5GNVOAZ6PV6PLMSBHXOYOJB2FXPP2UDHWTELHN",
+        "status": "SUCCESS",
+        "maxFee": "26880",
+        "sendStatus": "PENDING",
+        "ledger": 4890378,
+        "feeCharged": "17129"
+      },
+      {
+        "method": "create_trigger",
+        "hash": "4460f2250239f3891590578899a1e51e272c42b9d572dacf22936aeeed2be91d",
+        "account": "GBYEUJSQXDGSYAMEPFOEQUL3JDVB7A3CSLLA5VVARUCQ4L5MCUNOBFBL",
+        "status": "SUCCESS",
+        "maxFee": "235921",
+        "sendStatus": "PENDING",
+        "ledger": 4890379,
+        "feeCharged": "199403"
+      },
+      {
+        "method": "attest",
+        "hash": "e05a80655137fb1ca893a84cb59c952f37cdb3d54a6a56294119e8dd611eddc2",
+        "account": "GBJKPMUPCFHQJGYQJDIOEPCJMUHJ7IPJEXOMGBET5XAKK2J5N7QENVJY",
+        "status": "SUCCESS",
+        "maxFee": "25953",
+        "sendStatus": "PENDING",
+        "ledger": 4890380,
+        "feeCharged": "16203"
+      },
+      {
+        "method": "create_trigger",
+        "hash": "e006d987d140f7d906f50952db2a5ca4cd4e2f000fba93a6c25d604e689c7a1c",
+        "account": "GBYEUJSQXDGSYAMEPFOEQUL3JDVB7A3CSLLA5VVARUCQ4L5MCUNOBFBL",
+        "status": "SUCCESS",
+        "maxFee": "217697",
+        "sendStatus": "PENDING",
+        "ledger": 4890381,
+        "feeCharged": "183557"
+      },
+      {
+        "method": "refund_trigger",
+        "hash": "55683279c250ead47042c973c04e568cbee14f1b767046ddf055900320e62b36",
+        "account": "GBJKPMUPCFHQJGYQJDIOEPCJMUHJ7IPJEXOMGBET5XAKK2J5N7QENVJY",
+        "status": "SUCCESS",
+        "maxFee": "25300",
+        "sendStatus": "PENDING",
+        "ledger": 4890386,
+        "feeCharged": "15549"
+      },
+      {
+        "method": "create_fade",
+        "hash": "71fc63fbc88a229740665f610e5a28e6a417d673abfa2831e3497873bb05b1ee",
+        "account": "GBYEUJSQXDGSYAMEPFOEQUL3JDVB7A3CSLLA5VVARUCQ4L5MCUNOBFBL",
+        "status": "SUCCESS",
+        "maxFee": "296124",
+        "sendStatus": "PENDING",
+        "ledger": 4890387,
+        "feeCharged": "251819"
+      },
+      {
+        "method": "claim",
+        "hash": "b011dbbc0e345bf29590224ba80bb8577a3414c5341a11e6a3f59f94ef11e0d2",
+        "account": "GA64ODOYN4B3ZJFDAE5GNVOAZ6PV6PLMSBHXOYOJB2FXPP2UDHWTELHN",
+        "status": "SUCCESS",
+        "maxFee": "35420",
+        "sendStatus": "PENDING",
+        "ledger": 4890388,
+        "feeCharged": "23429"
+      },
+      {
+        "method": "refund",
+        "hash": "d577aeeb3dfac45e88cd310bff703adb3637334cedc8c56c2f6696a1d117e86d",
+        "account": "GBJKPMUPCFHQJGYQJDIOEPCJMUHJ7IPJEXOMGBET5XAKK2J5N7QENVJY",
+        "status": "SUCCESS",
+        "maxFee": "25472",
+        "sendStatus": "PENDING",
+        "ledger": 4890393,
+        "feeCharged": "15722"
+      },
+      {
+        "method": "create_mandate",
+        "hash": "d1912acb41f7af5e65aae976118c414881c3a7de285b50ad9d3eb72936eb7f10",
+        "account": "GA64ODOYN4B3ZJFDAE5GNVOAZ6PV6PLMSBHXOYOJB2FXPP2UDHWTELHN",
+        "status": "SUCCESS",
+        "maxFee": "230657",
+        "sendStatus": "PENDING",
+        "ledger": 4890394,
+        "feeCharged": "193629"
+      },
+      {
+        "method": "create_fade",
+        "hash": "00ddce443c65bf2696117660b7c70ef91bf7ce59c080f7c24031a683d83ce412",
+        "account": "GBYEUJSQXDGSYAMEPFOEQUL3JDVB7A3CSLLA5VVARUCQ4L5MCUNOBFBL",
+        "status": "SUCCESS",
+        "maxFee": "296170",
+        "sendStatus": "PENDING",
+        "ledger": 4890395,
+        "feeCharged": "251865"
+      },
+      {
+        "method": "envoy_claim",
+        "hash": "c0f8ef4d5cf344d83eb7be87deb5d272b2f916f8afa834cc4f673386fefca461",
+        "account": "GBJKPMUPCFHQJGYQJDIOEPCJMUHJ7IPJEXOMGBET5XAKK2J5N7QENVJY",
+        "status": "SUCCESS",
+        "maxFee": "38931",
+        "sendStatus": "PENDING",
+        "ledger": 4890396,
+        "feeCharged": "26939"
+      },
+      {
+        "method": "confirm_handoff",
+        "hash": "0e1bf4475afcfe14d443c54e62d0fb65d23ce5f81b350ee2339445cada1b274e",
+        "account": "GBJKPMUPCFHQJGYQJDIOEPCJMUHJ7IPJEXOMGBET5XAKK2J5N7QENVJY",
+        "status": "SUCCESS",
+        "maxFee": "31798",
+        "sendStatus": "PENDING",
+        "ledger": 4890397,
+        "feeCharged": "21910"
+      },
+      {
+        "method": "revoke_mandate",
+        "hash": "20206f5131955a2cef80414f7b7c95574700d46a2366960d42a81380e696ffb4",
+        "account": "GA64ODOYN4B3ZJFDAE5GNVOAZ6PV6PLMSBHXOYOJB2FXPP2UDHWTELHN",
+        "status": "SUCCESS",
+        "maxFee": "17074",
+        "sendStatus": "PENDING",
+        "ledger": 4890398,
+        "feeCharged": "7460"
+      },
+      {
+        "method": "create_fade",
+        "hash": "48d79d57d048b606dd52725b9ea7dc45045b920f347964cb205c4b486266f5f5",
+        "account": "GBYEUJSQXDGSYAMEPFOEQUL3JDVB7A3CSLLA5VVARUCQ4L5MCUNOBFBL",
+        "status": "SUCCESS",
+        "maxFee": "296170",
+        "sendStatus": "PENDING",
+        "ledger": 4890399,
+        "feeCharged": "251865"
+      },
+      {
+        "method": "claim",
+        "hash": "ee39520e9f7e001f6a42c102ed38dbf98e803d1eb0f5a0d31230f5b89eeccf99",
+        "account": "GA64ODOYN4B3ZJFDAE5GNVOAZ6PV6PLMSBHXOYOJB2FXPP2UDHWTELHN",
+        "status": "SUCCESS",
+        "maxFee": "35423",
+        "sendStatus": "PENDING",
+        "ledger": 4890400,
+        "feeCharged": "23432"
+      },
+      {
+        "method": "confirm_handoff",
+        "hash": "d1954ed3085a6fde7da94c7b5388f521adc3dd80cba0baa863820a98638ad527",
+        "account": "GBJKPMUPCFHQJGYQJDIOEPCJMUHJ7IPJEXOMGBET5XAKK2J5N7QENVJY",
+        "status": "SUCCESS",
+        "maxFee": "26224",
+        "sendStatus": "PENDING",
+        "ledger": 4890401,
+        "feeCharged": "16473"
+      }
+    ],
+    "accounts": {
+      "seller": "GBYEUJSQXDGSYAMEPFOEQUL3JDVB7A3CSLLA5VVARUCQ4L5MCUNOBFBL",
+      "recipient": "GA64ODOYN4B3ZJFDAE5GNVOAZ6PV6PLMSBHXOYOJB2FXPP2UDHWTELHN",
+      "relayer": "GBJKPMUPCFHQJGYQJDIOEPCJMUHJ7IPJEXOMGBET5XAKK2J5N7QENVJY"
+    },
+    "boundary": "Actual testnet transactions using dedicated local keypairs and native XLM SAC. No browser wallet, Circle USDC funding, SEP ramp, private ZK activation, mainnet or audit claim.",
+    "asset": {
+      "contractId": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "code": "XLM",
+      "amountPerPot": "10000000"
+    },
+    "finished": "2026-09-27T02:19:53.132Z"
+  },
+  "supersededRun": {
+    "contractId": "CDVLAU6DHK5HXO72WAMJWZD7V5NAOEUT2NQ6OJKJXJM4G4NPKEK2VGMQ",
+    "wasmSha256": "d06ada3ec51a6d4a47e599a1997a345e9316a717f3259b09bbdc1aa28e69f841",
+    "status": "failed",
+    "error": "Simulation confirm_handoff: HostError: Error(Auth, InvalidAction)\n\nEvent log (newest first):\n   0: [Diagnostic Event] contract:CDVLAU6DHK5HXO72WAMJWZD7V5NAOEUT2NQ6OJKJXJM4G4NPKEK2VGMQ, topics:[error, Error(Auth, InvalidAction)], data:\"escalating error to VM trap from failed host function call: call\"\n   1: [Diagnostic Event] contract:CDVLAU6DHK5HXO72WAMJWZD7V5NAOEUT2NQ6OJKJXJM4G4NPKEK2VGMQ, topics:[error, Error(Auth, InvalidAction)], data:[\"contract call failed\", transfer, [GBVYGX2T5EDKSUCNPGH7DLOHWPXLTOGXBKZOBDHGJ2ASQRXGXU5POBST, GBM7AX26NAAXWBWXAFG4366C53YFY6FHY4ELK5BUTZRV4NBCVFMZNMXS, 1000000]]\n   2: [Failed Diagnostic Event (not emitted)] contract:CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC, topics:[error, Error(Auth, InvalidAction)], data:[\"[recording authorization only] encountered authorization not tied to the root contract invocation for an address. Use `require_auth()` in the top invocation or enable non-root authorization.\", GBVYGX2T5EDKSUCNPGH7DLOHWPXLTOGXBKZOBDHGJ2ASQRXGXU5POBST]\n   3: [Diagnostic Event] contract:CDVLAU6DHK5HXO72WAMJWZD7V5NAOEUT2NQ6OJKJXJM4G4NPKEK2VGMQ, topics:[fn_call, CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC, transfer], data:[GBVYGX2T5EDKSUCNPGH7DLOHWPXLTOGXBKZOBDHGJ2ASQRXGXU5POBST, GBM7AX26NAAXWBWXAFG4366C53YFY6FHY4ELK5BUTZRV4NBCVFMZNMXS, 1000000]\n   4: [Diagnostic Event] topics:[fn_call, CDVLAU6DHK5HXO72WAMJWZD7V5NAOEUT2NQ6OJKJXJM4G4NPKEK2VGMQ, confirm_handoff], data:[2, 1790474913702, Bytes(c353796a414fdc53c1f53411785489349c70e0348e057af7f60899d5253fadb6f0d2517e9132747fcca9fd01f1ee039c04d51b161f6e886e810bf08a8de55100)]\n",
+    "transactions": [
+      {
+        "method": "create_fade",
+        "hash": "67763abc085710add00898ef64d48f7d38aeb7a392cac03b75d1764730fdab86",
+        "account": "GBM7AX26NAAXWBWXAFG4366C53YFY6FHY4ELK5BUTZRV4NBCVFMZNMXS",
+        "status": "SUCCESS",
+        "maxFee": "716892",
+        "sendStatus": "PENDING",
+        "ledger": 4890261,
+        "feeCharged": "617690"
+      },
+      {
+        "method": "claim",
+        "hash": "41719825dc3f44d6d48016f8903e023e54a840be84805fa4cd4c8bdf594f08c8",
+        "account": "GBVYGX2T5EDKSUCNPGH7DLOHWPXLTOGXBKZOBDHGJ2ASQRXGXU5POBST",
+        "status": "SUCCESS",
+        "maxFee": "35419",
+        "sendStatus": "PENDING",
+        "ledger": 4890262,
+        "feeCharged": "23427"
+      },
+      {
+        "method": "confirm_handoff",
+        "hash": "62b2745e84fbcd86839f0fd5e0d7136e77795b836241991fffce738d96b791c4",
+        "account": "GA2HYCP7ZRQ75VIWIQBEGSASWOMDM4QAUYJICSBWCJ6GYMG6NMFE6THI",
+        "status": "SUCCESS",
+        "maxFee": "31795",
+        "sendStatus": "PENDING",
+        "ledger": 4890263,
+        "feeCharged": "21907"
+      },
+      {
+        "method": "create_fade",
+        "hash": "2a4fe776fb4cfcb558779cda580d785fb9ec111b10b7b68fe93abc6935300670",
+        "account": "GBM7AX26NAAXWBWXAFG4366C53YFY6FHY4ELK5BUTZRV4NBCVFMZNMXS",
+        "status": "SUCCESS",
+        "maxFee": "296107",
+        "sendStatus": "PENDING",
+        "ledger": 4890264,
+        "feeCharged": "251793"
+      },
+      {
+        "method": "claim",
+        "hash": "a38384e21723c82591c7b6f0e0aaa8bbe09731b9b0d992e80a885e2cd3f8a9b8",
+        "account": "GBVYGX2T5EDKSUCNPGH7DLOHWPXLTOGXBKZOBDHGJ2ASQRXGXU5POBST",
+        "status": "SUCCESS",
+        "maxFee": "35419",
+        "sendStatus": "PENDING",
+        "ledger": 4890265,
+        "feeCharged": "23427"
+      }
+    ]
+  },
+  "supersededPotCleanup": {
+    "contract": "CDVLAU6DHK5HXO72WAMJWZD7V5NAOEUT2NQ6OJKJXJM4G4NPKEK2VGMQ",
+    "action": "refund",
+    "fadeId": "2",
+    "hash": "d33e5ff0ffa1c4953bdedd3b9437f6a36829b3c7177fd83b6a89f2a456b9bf2d",
+    "status": "SUCCESS",
+    "deadline": 4890295,
+    "ledger": 4890300,
+    "remainingContractTestXlm": "0"
+  },
+  "deployment": {
+    "uploadTransaction": "096ad0dc4665d2ca5ad5b23d84d84915b85f1c49c50275b6aa6ed276a5d563e4",
+    "deployTransaction": "1c96c27b4c89c1f01a7b136e7c6a22ad1c0b4852acc231d31c8b44c37fdb76bc"
+  }
+}

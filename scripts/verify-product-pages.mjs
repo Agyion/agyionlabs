@@ -1,3 +1,4 @@
+import { waitForFonts, waitForFrames } from './lib/browser-settle.mjs';
 /** Product-page regression harness, 2026-09-26. Uses its own browser, never the user's IAB. */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,7 +11,7 @@ const PRODUCTS = { fade: 'Fade', pod: 'Pod', trigger: 'Trigger', envoy: 'Envoy',
 const routes = (process.env.QA_ROUTES || Object.keys(PRODUCTS).join(',')).split(',').map(value => value.trim()).filter(Boolean);
 const widths = (process.env.QA_WIDTHS || '1440,768,390,320').split(',').map(Number);
 const motions = (process.env.QA_MOTIONS || 'no-preference,reduce').split(',');
-if (routes.some(route => !Object.hasOwn(PRODUCTS, route)) || widths.some(width => !Number.isSafeInteger(width) || width < 280) || motions.some(mode => !['no-preference', 'reduce'].includes(mode))) throw new Error('Invalid QA_ROUTES, QA_WIDTHS or QA_MOTIONS.');
+if (!routes.length || !widths.length || !motions.length || routes.some(route => !Object.hasOwn(PRODUCTS, route)) || widths.some(width => !Number.isSafeInteger(width) || width < 280) || motions.some(mode => !['no-preference', 'reduce'].includes(mode))) throw new Error('Invalid QA_ROUTES, QA_WIDTHS or QA_MOTIONS.');
 const executablePath = [process.env.CHROMIUM_PATH, '/opt/google/chrome/chrome', chromium.executablePath(), '/usr/bin/chromium'].filter(Boolean).find(candidate => fs.existsSync(candidate));
 if (!executablePath) throw new Error('Set CHROMIUM_PATH to an installed Chromium browser.');
 fs.mkdirSync(OUTPUT, { recursive: true });
@@ -68,7 +69,7 @@ async function ready(page, slug) {
   await expect(page.locator(`.product-page[data-instrument="${slug}"]`)).toBeVisible();
   await expect(page.locator('.product-wordmark')).toHaveAccessibleName(PRODUCTS[slug]);
   await expect(page.locator('#mechanism svg')).toHaveCount(1);
-  await page.evaluate(() => document.fonts.ready);
+  await waitForFonts(page);
   await expect(page.locator('.product-hero__aside')).toHaveCSS('opacity', '1');
   await expect(page.locator('.product-wordmark > span').first()).toHaveCSS('opacity', '1');
 }
@@ -322,12 +323,12 @@ try {
             await page.locator('.product-hero__explore').focus();
             await expect(page.locator('.product-hero__explore')).toBeFocused();
             await page.emulateMedia({ reducedMotion: 'reduce' });
-            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            await waitForFrames(page);
             await expect(page.locator('.orbital-scene canvas')).toHaveCount(0);
             await expect(page.locator('.orbital-scene')).not.toHaveClass(/is-ready/);
             expect(await oldCanvas.evaluate(element => element.isConnected)).toBe(false);
             await page.emulateMedia({ reducedMotion: 'no-preference' });
-            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            await waitForFrames(page);
             await expect(page.locator('.orbital-scene canvas')).toHaveCount(0);
             await expect(page.locator('.orbital-scene')).not.toHaveClass(/is-ready/);
             await page.locator('.product-hero__explore').focus();
@@ -378,11 +379,12 @@ try {
             await page.goBack(); await ready(page, slug);
             await (await navigationLink(page, 'Instruments')).click();
             await expect(page).toHaveURL(/\/instruments$/);
-            await expect(page.locator('.directory-item')).toHaveCount(6);
-            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-            for (const id of Object.keys(PRODUCTS)) await expect(page.locator(`.directory-item[href="/${id}"]`)).toBeVisible();
-            await page.locator(`.directory-item[href="/${slug}"]`).focus();
-            await expect(page.locator(`.directory-item[href="/${slug}"]`)).toBeFocused();
+            const directory = page.getByRole('navigation', { name: 'Choose an instrument', exact: true });
+            await expect(directory.getByRole('link')).toHaveCount(6);
+            await waitForFrames(page);
+            for (const id of Object.keys(PRODUCTS)) await expect(directory.locator(`a[href="/${id}"]`)).toBeVisible();
+            await directory.locator(`a[href="/${slug}"]`).focus();
+            await expect(directory.locator(`a[href="/${slug}"]`)).toBeFocused();
             await page.keyboard.press('Enter');
             await ready(page, slug);
             return layout;

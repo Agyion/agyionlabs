@@ -1,3 +1,4 @@
+import { waitForFonts } from './lib/browser-settle.mjs';
 /** Visual navigation/interaction QA. No wallet connection or transaction. */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -32,7 +33,7 @@ try {
     page.on('console', message => { if (message.type() === 'error') report.errors.push({ width, type: 'console', message: message.text(), location: message.location() }); });
     await page.goto(base, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('.orbital-scene')).toHaveClass(/is-ready/, { timeout: 30000 });
-    await page.evaluate(() => document.fonts.ready);
+    await waitForFonts(page);
     await shot(page, `${width}-hero`);
     const wordCount = await page.locator('.orbital-home').evaluate(el => el.innerText.trim().split(/\s+/).filter(Boolean).length);
     // The original homepage had roughly402 visible words; SVG numbers/labels count here too.

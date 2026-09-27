@@ -42,7 +42,7 @@ export default function WalletBar({ wallet }: { wallet: WalletState }) {
             </span>
           </span>
           {wallet.demo && (
-            <StateChip color="var(--ember)">demo key — testnet only</StateChip>
+            <StateChip color="var(--ember)">demo key: testnet only</StateChip>
           )}
           <GhostButton onClick={() => void wallet.disconnect()}>Disconnect</GhostButton>
         </>

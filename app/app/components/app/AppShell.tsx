@@ -21,12 +21,12 @@ import TransactionActivity from "./TransactionActivity";
 import OrbitalBackdrop from "./OrbitalBackdrop";
 
 const TABS = [
-  { id: "fade", label: "Fade", note: "Price curves" },
-  { id: "pod", label: "Pod", note: "Time capsules" },
-  { id: "trigger", label: "Trigger", note: "Event escrow" },
-  { id: "envoy", label: "Envoy", note: "Agent mandates" },
-  { id: "ramp", label: "Ramp", note: "Test anchor" },
-  { id: "ledger", label: "Ledger", note: "Transaction history" },
+  { id: "fade", label: "Fade", note: "Falling prices" },
+  { id: "pod", label: "Pod", note: "Timed savings" },
+  { id: "trigger", label: "Trigger", note: "Payment approvals" },
+  { id: "envoy", label: "Envoy", note: "Delegated claims" },
+  { id: "ramp", label: "Ramp", note: "Test transfers" },
+  { id: "ledger", label: "Ledger", note: "Receipts" },
 ] as const;
 const HELP = {
   fade: ["Set a falling price", "Claim at the current price", "Settle with venue proof"],
@@ -75,7 +75,6 @@ export default function AppShell() {
   const helpButton = useRef<HTMLButtonElement>(null);
   const [arrival, setArrival] = useState(false);
   const [panelOpen, setPanelOpen] = useState(() => queryTab !== null);
-  const [exploreRequest, setExploreRequest] = useState(0);
   const [selectionRequest, setSelectionRequest] = useState(0);
   const appRoot = useRef<HTMLElement>(null);
   const topbar = useRef<HTMLElement>(null);
@@ -137,10 +136,6 @@ export default function AppShell() {
     if (id !== tab) router.push(`/app/?tab=${id}`, { scroll: false });
   }, [router, tab]);
   const selected = TABS.find((t) => t.id === tab)!;
-  const explore = () => {
-    setPanelOpen(false);
-    setExploreRequest((request) => request + 1);
-  };
   const openConsole = () => {
     setPanelOpen(true);
     setSelectionRequest((request) => request + 1);
@@ -148,22 +143,18 @@ export default function AppShell() {
   };
 
   return (
-    <main ref={appRoot} className={`station-app ${arrival && !reduced ? "station-arriving" : ""} ${panelOpen ? "is-panel-open" : ""}`}>
+    <main ref={appRoot} data-protocol-readiness={readiness.status} className={`station-app ${arrival && !reduced ? "station-arriving" : ""} ${panelOpen ? "is-panel-open" : ""}`}>
       <button className="station-skip" type="button" onClick={openConsole}>Skip to console</button>
       <header ref={topbar} className="station-topbar">
         <a href="/" className="station-brand" aria-label="Agyion labs home">
           <svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="16" rx="14" ry="5" transform="rotate(-30 16 16)"/><circle cx="16" cy="16" r="8"/></svg>
           agyion<span>labs</span>
         </a>
-        <nav className="station-header-nav" aria-label="App navigation">
-          <a href="/">Overview</a>
-          <button type="button" onClick={explore}>Instruments <span aria-hidden="true">↗</span></button>
-        </nav>
         <WalletBar wallet={wallet} />
       </header>
 
       <section className="station-vista" id="orbit" aria-label="Orbital station">
-        <OrbitalBackdrop selected={tab} reduced={reduced} onSelect={select} onArrival={setArrival} exploreRequest={exploreRequest} selectionRequest={selectionRequest} panelOpen={panelOpen} />
+        <OrbitalBackdrop selected={tab} reduced={reduced} onSelect={select} onArrival={setArrival} exploreRequest={0} selectionRequest={selectionRequest} panelOpen={panelOpen} />
         <div className="station-vista__heading" aria-hidden={panelOpen}>
           <p className="station-kicker">{IS_MOCK ? "Local simulation" : "Stellar testnet"}</p>
           <div className="station-instrument-title" key={tab}>
@@ -192,7 +183,6 @@ export default function AppShell() {
                   event.preventDefault(); buttons.current[next]?.focus(); select(TABS[next].id);
                 }}>
                 <span className="station-dock__name">{t.label}</span>
-                <span className="station-dock__note">{t.note}</span>
               </button>
             ))}
           </nav>
@@ -201,11 +191,10 @@ export default function AppShell() {
       <aside ref={(element) => { workspace.current = element; if (element) element.inert = !panelOpen; }} className="station-workspace" data-instrument={tab} aria-label={`${selected.label} instrument`} aria-hidden={!panelOpen}>
         <div className="station-workspace-header">
           <div className="station-workspace-title" key={tab}>
-            <span className="station-workspace-kind">{selected.note}</span>
             <h2>{selected.label}</h2>
           </div>
           <div className="station-workspace-tools">
-            <button ref={helpButton} type="button" aria-label={`About ${selected.label}`} aria-expanded={helpOpen} aria-controls="instrument-help" onClick={() => setHelpOpen(open => !open)}>How it works <span aria-hidden="true">{helpOpen ? "−" : "+"}</span></button>
+            <button ref={helpButton} type="button" aria-label={`About ${selected.label}`} aria-expanded={helpOpen} aria-controls="instrument-help" onClick={() => setHelpOpen(open => !open)}>Help <span aria-hidden="true">{helpOpen ? "−" : "+"}</span></button>
             <button type="button" onClick={() => { setPanelOpen(false); buttons.current[TABS.findIndex((instrument) => instrument.id === tab)]?.focus(); }} aria-label="Close instrument">
               <span>Return to orbit</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
             </button>
@@ -232,8 +221,8 @@ export default function AppShell() {
         </div></TransactionAvailability.Provider>
         </div>
         <footer className="station-workspace-footer">
-          <p><span className="station-network-dot" aria-hidden="true" />{IS_MOCK ? "Local simulation · Ramp uses a separate testnet sandbox." : "Stellar testnet · Test assets only. Your wallet approves each transaction."}</p>
-          <a href="https://github.com/Agyion/agyionlabs" target="_blank" rel="noopener noreferrer">View source <span aria-hidden="true">↗</span></a>
+          <p><span className="station-network-dot" aria-hidden="true" />{IS_MOCK ? "Simulation · Test assets" : "Testnet · Test assets only"}</p>
+          <a href="https://github.com/Agyion/agyionlabs" target="_blank" rel="noopener noreferrer">Source <span aria-hidden="true">↗</span></a>
         </footer>
       </aside>
       </section>

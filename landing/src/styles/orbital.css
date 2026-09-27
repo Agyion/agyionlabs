@@ -31,6 +31,9 @@ body { background: var(--void); color: var(--starlight); }
 .orbital-nav__desktop a { color: #c6c7cc; white-space: nowrap; transition: color .18s; }
 .orbital-nav__desktop a:hover, .orbital-nav__desktop a[aria-current] { color: var(--accretion); }
 .orbital-nav__actions { display: flex; align-items: center; gap: 14px; }
+.orbital-nav__launch-controls { display:flex; align-items:center; gap:16px; }
+.orbital-nav--directory .flight-preference { margin:0; font-size:14px; white-space:nowrap; }
+.orbital-nav--directory .orbital-nav__launch { min-height:44px; }
 .orbital-nav__launch { border: 1px solid rgba(242, 238, 229, .27); border-radius: 5px; padding: 9px 15px; display: flex; gap: 18px; align-items: center; min-height: 44px; white-space: nowrap; transition: background .18s, border-color .18s; }
 .orbital-nav__launch:hover { background: var(--hull); border-color: var(--accretion); }
 .orbital-nav__launch span { color: var(--accretion); }
@@ -586,4 +589,29 @@ html.is-launching { overflow: hidden; }
   .orbital-nav__launch:hover span, .orbital-button:hover span,
   .orbital-text-link:hover span, .orbital-hero__scroll:hover span,
   .orbital-utilities__links a:hover > span { transform: none; }
+}
+
+/* Keep navigation legible on narrow screens without shrinking the brand. */
+.orbital-nav__desktop,.orbital-nav__launch,.orbital-nav__toggle {font-size:14px}
+.orbital-nav__launch .orbital-nav__launch-full,.orbital-nav__launch .orbital-nav__launch-short {color:inherit}
+.orbital-nav__launch-short {display:none}
+@media(max-width:600px) {
+  .orbital-nav__launch .orbital-nav__launch-full,.orbital-nav__launch .orbital-nav__launch-arrow {display:none}
+  .orbital-nav__launch-short {display:inline}
+  .orbital-nav__launch {min-width:44px;min-height:44px;padding:8px 10px;justify-content:center;font-size:14px}
+  .orbital-nav__toggle {min-width:54px;font-size:14px}
+}
+
+/* Keep the directory's single launch and its preference together at the top. */
+@media(max-width:1000px) {
+  .orbital-nav--directory {display:grid;grid-template-columns:1fr auto;gap:8px 14px}
+  .orbital-nav--directory .orbital-brand {grid-column:1;grid-row:1;justify-self:start}
+  .orbital-nav--directory .orbital-nav__desktop {grid-column:2;grid-row:1;margin:0;justify-self:end}
+  .orbital-nav--directory .orbital-nav__actions {display:contents}
+  .orbital-nav--directory .orbital-nav__toggle {grid-column:2;grid-row:1;justify-self:end}
+  .orbital-nav--directory .orbital-nav__launch-controls {grid-column:1/-1;grid-row:2;justify-self:end;gap:14px}
+  .orbital-nav--directory .orbital-nav__launch-full {display:inline}
+  .orbital-nav--directory .orbital-nav__launch-short,.orbital-nav--directory .orbital-nav__launch-arrow {display:none}
+  .instrument-collection .collection-intro {padding-top:168px}
+  .instrument-collection #directory-title {scroll-margin-top:54px}
 }

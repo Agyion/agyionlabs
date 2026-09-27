@@ -70,7 +70,7 @@ export function useWallet(): WalletState {
       if (attempt !== operation.current) return;
       if (r.walletNetwork !== CONFIG.networkPassphrase) {
         await disconnectKit().catch(() => void 0);
-        throw new Error("Wallet is not on Stellar testnet — switch networks before signing.");
+        throw new Error("Wallet is not on Stellar testnet: switch networks before signing.");
       }
       setAddress(r.address);
       setLabel(r.walletName);

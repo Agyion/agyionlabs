@@ -55,8 +55,8 @@ export default function LedgerPanel({ wallet }: { wallet: WalletState }) {
       const pack = await buildProofPack(wallet.address);
       downloadProofPack(pack);
       setNotice(pack.signature
-        ? `Proof Pack downloaded — signed by ${pack.signer?.slice(0, 8)}… (checksum ${pack.checksum.slice(0, 12)}…)`
-        : "Proof Pack downloaded — unsigned local history with an integrity checksum. A connected wallet does not sign this export.");
+        ? `Proof Pack downloaded: signed by ${pack.signer?.slice(0, 8)}… (checksum ${pack.checksum.slice(0, 12)}…)`
+        : "Proof Pack downloaded: unsigned local history with an integrity checksum. A connected wallet does not sign this export.");
     } catch (e) {
       setError(humanizeError(e));
     } finally {
@@ -82,14 +82,14 @@ export default function LedgerPanel({ wallet }: { wallet: WalletState }) {
         {error && <ErrorNote>{error}</ErrorNote>}
       </div>
       <dl className="ledger-register" aria-label="Local record summary">
-        <div><dt>Records</dt><dd>{entries.length}</dd></div>
-        <div><dt>Hashes recorded</dt><dd>{entries.filter((entry) => entry.txHash != null).length}</dd></div>
-        <div><dt>Source</dt><dd>This browser<small>Local history</small></dd></div>
+        <div className="ledger-register__count"><dt>Records</dt><dd>{entries.length}</dd></div>
+        <div className="ledger-register__hashes"><dt>Hashes recorded</dt><dd>{entries.filter((entry) => entry.txHash != null).length}</dd></div>
+        <div className="ledger-register__source"><dt>Source</dt><dd>This browser</dd></div>
       </dl>
       {entries.length === 0 ? (
         <div className="ledger-empty">
           <svg viewBox="0 0 94 110" aria-hidden="true"><path d="M17 12h42l18 18v68H17z"/><path d="M59 12v19h18M29 47h35M29 60h35M29 73h20"/><circle cx="66" cy="82" r="17" fill="var(--surface)"/><path d="M60 82h12m-6-6v12"/></svg>
-          <div><h3>No activity recorded yet</h3><p>Instrument actions and recorded transaction hashes appear here.</p><Link href="/app/?tab=fade">Create a Fade <span aria-hidden="true">→</span></Link></div>
+          <div><h4>No activity recorded yet</h4><Link href="/app/?tab=fade">Create a Fade <span aria-hidden="true">→</span></Link></div>
         </div>
       ) : (
         <div className="ledger-register-entries" aria-label="Recorded activity">
@@ -115,7 +115,7 @@ function LedgerRow({ entry, open, onToggle, reduced }: {
       <button type="button" className="ledger-entry__button" onClick={onToggle} aria-expanded={open} aria-controls={`record-detail-${entry.seq}`} aria-label={`Record ${entry.seq}: ${entry.template} ${entry.action.replaceAll("_", " ")}, ${entry.amount != null ? `${formatMinor(BigInt(entry.amount))} ${CONFIG.assetCode}, ` : ""}${entry.status}. Details`}>
         <span><strong>{entry.template} #{entry.refId}</strong><small>{entry.action.replaceAll("_", " ")}</small></span>
         <span><strong>#{entry.seq}</strong><small>{entry.ts.slice(0, 19).replace("T", " ")}</small></span>
-        <span className="ledger-entry__amount">{entry.amount != null ? `${formatMinor(BigInt(entry.amount))} ${CONFIG.assetCode}` : "—"}</span>
+        <span className="ledger-entry__amount">{entry.amount != null ? `${formatMinor(BigInt(entry.amount))} ${CONFIG.assetCode}` : "Not recorded"}</span>
         <span><StatusChip status={entry.status} /></span>
         <span className="ledger-entry__arrow" aria-hidden="true">+</span>
       </button>

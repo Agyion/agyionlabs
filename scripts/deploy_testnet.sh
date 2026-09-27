@@ -66,8 +66,10 @@ fi
 
 print_config() {
   local contract_id="$1"
+  local wasm_hash="$2"
   printf '\nNEXT_PUBLIC_HAK_MODE=soroban\n'
   printf 'NEXT_PUBLIC_HAK_CONTRACT_ID=%s\n' "$contract_id"
+  printf 'NEXT_PUBLIC_HAK_WASM_HASH=%s\n' "$wasm_hash"
   printf 'NEXT_PUBLIC_SOROBAN_RPC_URL=%s\n' "$TESTNET_RPC"
   printf 'NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE="%s"\n' "$TESTNET_PASSPHRASE"
   printf 'NEXT_PUBLIC_HAK_ASSET_CODE=USDC\n'
@@ -85,10 +87,10 @@ if [[ "$DRY_RUN" == '1' ]]; then
     say '3. Reuse the selected identity; it must already have enough testnet XLM for fees.'
   fi
   say '4. Deploy the new kernel on the pinned testnet network; preserve existing contract aliases.'
-  say '5. Read protocol_version with --send no; require 3 before printing app configuration.'
+  say '5. Fetch deployed bytes and require an exact SHA-256 match; read protocol_version with --send no and require 3 before printing app configuration.'
   say 'No issuer, trustline or asset-transfer steps are needed; the app uses Circle testnet USDC.'
   say 'Configuration template (replace the placeholder only after successful deployment):'
-  print_config '<new-v3-testnet-contract-id>'
+  print_config '<new-v3-testnet-contract-id>' '<verified-wasm-sha256>'
   say 'To execute this plan explicitly: DRY_RUN=0 ./scripts/deploy_testnet.sh'
   exit 0
 fi
@@ -99,7 +101,8 @@ CARGO_TARGET_DIR="$CONTRACT_DIR/target" cargo test --manifest-path "$MANIFEST" -
 say 'Building the kernel with the supported Stellar build pipeline.'
 CARGO_TARGET_DIR="$CONTRACT_DIR/target" stellar_cmd contract build --manifest-path "$MANIFEST" --locked
 [[ -s "$WASM_FILE" ]] || die "Build did not produce the expected kernel: $WASM_FILE"
-say "WASM SHA-256: $(sha256sum "$WASM_FILE" | cut -d ' ' -f1)"
+WASM_HASH="$(sha256sum "$WASM_FILE" | cut -d ' ' -f1)"
+say "WASM SHA-256: $WASM_HASH"
 
 if [[ -z "$DEPLOYER_ADDRESS" ]]; then
   say "Creating dedicated testnet identity: $DEDICATED_ALIAS"
@@ -113,10 +116,19 @@ fi
 # Deliberately omit --alias: deployment must not overwrite an existing mapping.
 say 'Deploying a new kernel to testnet.'
 CONTRACT_ID="$(stellar_cmd contract deploy --wasm "$WASM_FILE" \
-  --source-account "$DEPLOYER_ALIAS" "${NETWORK_ARGS[@]}")"
+  --optimize=false --source-account "$DEPLOYER_ALIAS" "${NETWORK_ARGS[@]}")"
 CONTRACT_ID="$(printf '%s' "$CONTRACT_ID" | tr -d '[:space:]')"
 [[ "$CONTRACT_ID" =~ ^C[A-Z2-7]{55}$ ]] || die 'Deploy did not return a valid contract ID; inspect the CLI result before proceeding.'
 say "Deployed contract: $CONTRACT_ID"
+READBACK_DIR="$(mktemp -d)"
+trap 'rm -rf -- "$READBACK_DIR"' EXIT
+if ! stellar_cmd --no-cache contract fetch --id "$CONTRACT_ID" \
+  "${NETWORK_ARGS[@]}" --out-file "$READBACK_DIR/kernel.wasm"; then
+  die "Deployment $CONTRACT_ID exists, but code readback failed. Do not configure the app until verified."
+fi
+[[ -s "$READBACK_DIR/kernel.wasm" ]] || die 'Deployed code readback is empty.'
+READBACK_HASH="$(sha256sum "$READBACK_DIR/kernel.wasm" | cut -d ' ' -f1)"
+[[ "$READBACK_HASH" == "$WASM_HASH" ]] || die "Deployment $CONTRACT_ID does not match the tested WASM. App configuration was not emitted."
 if ! PROTOCOL_VERSION="$(stellar_cmd contract invoke --id "$CONTRACT_ID" \
   --source-account "$DEPLOYER_ADDRESS" "${NETWORK_ARGS[@]}" \
   --send no -- protocol_version)"; then
@@ -124,6 +136,6 @@ if ! PROTOCOL_VERSION="$(stellar_cmd contract invoke --id "$CONTRACT_ID" \
 fi
 PROTOCOL_VERSION="$(printf '%s' "$PROTOCOL_VERSION" | tr -d '[:space:]')"
 [[ "$PROTOCOL_VERSION" == '3' ]] || die "Deployment $CONTRACT_ID did not report protocol version 3. App configuration was not emitted."
-say 'Verified protocol version 3. Rebuild the app with these public settings:'
-print_config "$CONTRACT_ID"
+say 'Verified exact deployed WASM and protocol version 3. Rebuild the app with these public settings:'
+print_config "$CONTRACT_ID" "$WASM_HASH"
 say 'Existing contracts and locked funds remain unchanged; this is a new testnet deployment.'

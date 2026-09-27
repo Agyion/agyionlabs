@@ -1,0 +1,12 @@
+.flight-preference { display:inline-flex; align-items:center; gap:9px; width:fit-content; min-height:44px; margin-top:4px; padding:7px 0; color:#bcb5ac; font:12px/1.4 var(--font-body); cursor:pointer; pointer-events:auto; }
+.immersive-intro > .flight-preference, .product-hero__aside > .flight-preference { display:flex; }
+.immersive-intro > .flight-preference { padding-inline:8px; background:rgba(7,9,13,.88); color:#e4dfd6; }
+.flight-preference input { width:16px; height:16px; margin:0; accent-color:#e8b77b; cursor:pointer; }
+.flight-preference:has(input:focus-visible) { outline:2px solid #e8b77b; outline-offset:4px; }
+.flight-preference:hover { color:#f2eee5; }
+.product-hero__aside .flight-preference { margin-block:2px 8px; }
+.directory-footer .flight-preference { margin:0; }
+@media(max-width:600px) {
+  .immersive-intro > .flight-preference { grid-column:2; grid-row:3; justify-self:end; margin-top:0; }
+  .flight-preference { font-size:12px; }
+}

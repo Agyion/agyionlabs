@@ -81,7 +81,11 @@ test('Pod requires both secrets, matured interval and fixed recipient with a sin
   assert.equal(evaluateTransition(t).kind, 'ValidTransitionModel');
   assert.throws(() => evaluateTransition({ ...t, podSecrets: [22n, 0n] }));
   const early = { ...t, core: t.core.slice() }; early.core[6] = 99n; assert.throws(() => evaluateTransition(early));
-  assert.throws(() => evaluateTransition(transition(pod, cash(100n, 12n), 1n)));
+  const redirected = transition(pod, cash(100n, 12n), 1n);
+  // Keep the Pod secret valid so removing recipient validation cannot be
+  // masked by an unrelated POD_CONDITION rejection.
+  redirected.podSecrets[0] = 21n;
+  assert.throws(() => evaluateTransition(redirected), { code: 'CASH_DESTINATION' });
 });
 
 test('Trigger refund is strictly after deadline and cannot use beneficiary authority', () => {
@@ -134,11 +138,14 @@ test('Envoy final use returns unspent value to owner and cannot expand cap or re
   t.outNotes[1] = cash(60n); t.outNotes[1][18]++;
   t.core[15] = noteCommitment(t.outNotes[1]); t.revokePaths[0] = new SparseMerkleTree(128).path(333n);
   assert.equal(evaluateTransition(t).kind, 'ValidTransitionModel');
-  const redirected = { ...t, outNotes: [t.outNotes[0], cash(60n, 44n)], core: t.core.slice() };
-  redirected.core[15] = noteCommitment(redirected.outNotes[1]); assert.throws(() => evaluateTransition(redirected));
-  const cap = { ...t, outNotes: [cash(41n, 33n), cash(59n)], core: t.core.slice() };
+  // Preserve fresh output rho values so REUSED_OUTPUT_RHO cannot mask the
+  // destination and cap protections these two cases are meant to exercise.
+  const redirected = structuredClone(t); redirected.outNotes[1][5] = ownerHash(44n);
+  redirected.core[15] = noteCommitment(redirected.outNotes[1]);
+  assert.throws(() => evaluateTransition(redirected), { code: 'CASH_DESTINATION' });
+  const cap = structuredClone(t); cap.outNotes[0][3] = 41n; cap.outNotes[1][3] = 59n;
   cap.core[14] = noteCommitment(cap.outNotes[0]); cap.core[15] = noteCommitment(cap.outNotes[1]);
-  assert.throws(() => evaluateTransition(cap));
+  assert.throws(() => evaluateTransition(cap), { code: 'ENVOY_CAP' });
 });
 
 test('Envoy agent cannot divert its recipient allowance into an arbitrary public pool fee', () => {

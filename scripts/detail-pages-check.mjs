@@ -1,3 +1,4 @@
+import { waitForFonts, waitForFrames } from './lib/browser-settle.mjs';
 /** Interactive detail-route QA. Run only with the shared browser/GPU lease. */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -51,13 +52,13 @@ async function pixelDifference(page, before, after) {
   }, [before.toString('base64'), after.toString('base64')]);
 }
 
-const paint = page => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+const paint = page => waitForFrames(page);
 const ready = async page => {
   await expect(page.locator('.detail-world')).toBeVisible();
   await expect(page.locator('.orbital-scene')).toHaveClass(/is-ready/, { timeout: 60000 });
   await expect(page.locator('.orbital-scene__canvas canvas')).toHaveCount(1);
   await expect(page.locator('.orbital-scene__canvas canvas')).toBeVisible();
-  await page.evaluate(() => document.fonts.ready);
+  await waitForFonts(page);
   await expect(page.locator('#main')).toHaveCSS('opacity', '1');
 };
 async function raster(page, core) {

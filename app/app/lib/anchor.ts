@@ -401,9 +401,12 @@ export async function transactionStatus(
   const body = (await anchorFetch(`/sep6/transaction?id=${encodeURIComponent(id)}`, token)) as {
     transaction?: Record<string, unknown>;
   };
-  const tx = body.transaction ?? {};
+  const tx = body?.transaction;
+  if (!tx || typeof tx !== "object" || tx.id !== id || !str(tx.status)) {
+    throw new AnchorError("anchor", "Anchor transaction status does not match the requested transfer.");
+  }
   return {
-    id: str(tx.id) ?? id,
+    id,
     kind: str(tx.kind) ?? "",
     status: str(tx.status) ?? "unknown",
     amountIn: str(tx.amount_in),

@@ -1,6 +1,12 @@
-/** Public UI only. No wallet, transaction, or simulated settlement. */
+/** DEPRECATED: the old home-gallery checkbox trial was removed.
+ * Its selectors below are historical evidence, not current product acceptance.
+ * Use landing/tests/e2e/matrix.mjs for canonical navigation and
+ * scripts/verify-instrument-examples.mjs for the current product examples.
+ * Neither replacement claims to test the retired three-checkbox interaction.
+ */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
+throw new Error('Retired Pod trial harness: use the canonical matrix and instrument-example checks; the old checkbox trial is no longer part of the product.');
 const output = 'artifacts/verification/research-fixes/pod-trial';
 await mkdir(output, { recursive: true });
 const report = { checks: [], screenshots: [], errors: [], status: 'running' };

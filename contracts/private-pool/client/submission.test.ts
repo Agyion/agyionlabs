@@ -89,6 +89,17 @@ test('invalid real proof/public vector and copied reader/release never reach sig
  assert.throws(()=>createTestnetSubmissionLifecycle({...h.options,release:{...h.release}}));
  assert.throws(()=>createTestnetSubmissionLifecycle({...h.options,reader:{...h.reader}}));assert.equal(h.signs,0);assert.equal(h.sends,0);
 });
+test('pool self-destinations reject before local verification, signing or durable reservations',async()=>{
+ for(const kind of ['withdrawal','fee'] as const){
+  const h=await harness(),fields=[...h.candidate.publicSignals];
+  fields[17]='1';
+  if(kind==='withdrawal'){fields[16]='2';fields[18]='1';fields[19]='1';}
+  else{fields[20]='1';fields[21]='1';}
+  const addresses={asset:h.f.manifest.config.assets[0],bridgeAccount:kind==='withdrawal'?h.release.pool:null,feeAccount:kind==='fee'?h.release.pool:null};
+  await assert.rejects(h.client.submit({...h.candidate,publicSignals:fields},addresses),/POOL_SELF_TRANSFER_FORBIDDEN/);
+  assert.equal(h.verifications,0);assert.equal(h.signs,0);assert.equal(h.sends,0);assert.equal(h.journal.rows.size,0);
+ }
+});
 test('fee, simulation return/auth/restoration and mutable simulation argument are checked before signing',async()=>{
  for(const variant of ['fee','retval','auth','restore','mutation'] as const){
   const h=await harness();h.hooks.simulation=tx=>{const s=simulation();

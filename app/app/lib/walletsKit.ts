@@ -1,18 +1,16 @@
 /**
  * walletsKit.ts — Stellar Wallets Kit integration (SPEC §4)
  *
- * One connect button → kit auth modal (Freighter, xBull, LOBSTR,
- * WalletConnect) → signing flows into the TransactionSigner abstraction
+ * One connect button → kit auth modal (currently Freighter) → signing flows into the TransactionSigner abstraction
  * (wallet.ts registerSigner is the injection point).
  *
  * Scenarios:
  *  (a) No Freighter extension: the modal shows an install label/link
  *      (init authModal.showInstallLabel).
- *  (b) Mobile: the WalletConnect module connects via deep-link/QR
- *      (NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID required; otherwise the module
- *      is not listed).
- *  (c) In-app wallet browser (LOBSTR etc.): detected via isPlatformWrapper()
- *      and connected directly, no modal.
+ *  (b) xBull, LOBSTR and WalletConnect are not offered: the retained adapters
+ *      cannot report the active network. Configuring a target chain is not
+ *      evidence of the wallet's active network. Never relax verification to
+ *      make these adapters appear supported.
  *  (d) Test secret-key mode stays in wallet.ts (demo note shown in the UI).
  *
  * The kit loads lazily, client-side only: the preact/twind modal never
@@ -35,33 +33,14 @@ let disconnecting: Promise<void> | null = null;
 function loadKit(): Promise<KitModule> {
   if (!loading) {
     loading = (async () => {
-      const [sdk, types, freighter, xbull, lobstr, wc] = await Promise.all([
+      const [sdk, types, freighter] = await Promise.all([
         import("@agyion/stellar-wallets-kit/sdk"),
         import("@agyion/stellar-wallets-kit/types"),
         import("@agyion/stellar-wallets-kit/modules/freighter"),
-        import("@agyion/stellar-wallets-kit/modules/xbull"),
-        import("@agyion/stellar-wallets-kit/modules/lobstr"),
-        import("@agyion/stellar-wallets-kit/modules/wallet-connect"),
       ]);
       const modules = [
         new freighter.FreighterModule(),
-        new xbull.xBullModule(),
-        new lobstr.LobstrModule(),
       ];
-      if (CONFIG.walletConnectProjectId) {
-        modules.push(
-          new wc.WalletConnectModule({
-            projectId: CONFIG.walletConnectProjectId,
-            metadata: {
-              name: "Agyion",
-              description: "Money with conditions — lock, prove, execute or return",
-              url: window.location.origin,
-              icons: [],
-            },
-            allowedChains: [wc.WalletConnectTargetChain.TESTNET],
-          }),
-        );
-      }
       sdk.StellarWalletsKit.init({
         network: types.Networks.TESTNET,
         modules,
@@ -152,7 +131,7 @@ export async function connectWithKit(): Promise<KitConnectResult> {
   const sdk = await loadKit();
   assertAttempt();
 
-  // Scenario (c): in-app browsers like LOBSTR auto-detected
+  // Only explicitly supported modules may participate in wrapper discovery.
   const supported = await sdk.StellarWalletsKit.refreshSupportedWallets().catch(() => []);
   assertAttempt();
   const wrapper = supported.find((w) => w.isPlatformWrapper && w.isAvailable);

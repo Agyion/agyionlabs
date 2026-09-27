@@ -13,13 +13,25 @@
     "lobstr",
     "wallet-connect"
   ],
-  "modifications": "Package identity, exports and reachable dependencies narrowed; one reviewed authModal readiness patch, with all remaining runtime/declaration files unchanged.",
+  "modifications": "Package identity, exports and reachable dependencies narrowed; three reviewed modal readiness and cached metadata patches, with all remaining runtime/declaration files unchanged.",
   "patches": [
+    {
+      "file": "esm/state/values.js",
+      "reason": "Bound and validate untrusted cached public session/path metadata before creating state signals; malformed cache must not poison module initialization.",
+      "originalSha256": "3dcb52bda51afb996bbbd5417fc7f26b2591609750cd561aab444eb7356c8662",
+      "patchedSha256": "0e8caa51399025aa14e0f3a92c17b2d08f0fcd483dca86ac9ad085a5fd7d20d6"
+    },
     {
       "file": "esm/sdk/kit.js",
       "reason": "Complete provider availability before rendering authModal so its first visible close cannot precede the close-event subscription.",
       "originalSha256": "97a32644eb15dcbc59897742642075677df7a78489d5b7d68dcd07835e0dd5fb",
       "patchedSha256": "a7fc479f0065b6eb84f7756103b9135d0b5b71be82e6af0c543a92bc376e2ffc"
+    },
+    {
+      "file": "esm/components/pages/auth-options.page.js",
+      "reason": "Treat malformed or excessive cached provider ordering as empty metadata so the wallet chooser remains usable.",
+      "originalSha256": "092e80bbae9f58db4b7b5e6d7abda5c10f90e79c4443970fa6eb8ca165f0bb15",
+      "patchedSha256": "a196ea74ca482f9f560f22976decbbcccec126a5063435cf3bcf090f47f0132f"
     }
   ],
   "files": {
@@ -30,7 +42,7 @@
     "esm/components/mod.d.ts": "9b32cc1809b3816f65d41ec57a798facd919928deff4c127fdfc571e899d01f2",
     "esm/components/mod.js": "9b32cc1809b3816f65d41ec57a798facd919928deff4c127fdfc571e899d01f2",
     "esm/components/pages/auth-options.page.d.ts": "b57f9c22647033c90f1e8bb65371ade17efe348df1a98f5e5e9eeae9389d1490",
-    "esm/components/pages/auth-options.page.js": "092e80bbae9f58db4b7b5e6d7abda5c10f90e79c4443970fa6eb8ca165f0bb15",
+    "esm/components/pages/auth-options.page.js": "a196ea74ca482f9f560f22976decbbcccec126a5063435cf3bcf090f47f0132f",
     "esm/components/pages/hw-accounts-fetcher.page.d.ts": "f2c4e0d4539b6c0cde014c6901e2c82c1af0f98f67a88002e4fcea4d12248e49",
     "esm/components/pages/hw-accounts-fetcher.page.js": "ecc174a386a3aaab6787a6c71ecc64f511ec314a3a3152b37eebe588a71bf056",
     "esm/components/pages/profile.page.d.ts": "c1f3a1996d2f986fb7d52c197d57e5ec5126a3aeef6aa1eef06afa4653a6e20e",
@@ -100,7 +112,7 @@
     "esm/state/mod.d.ts": "d5044618c39f02b40e5bf1a7c54c5d4ac03f0c81b79800c622dcde16944ea04b",
     "esm/state/mod.js": "d5044618c39f02b40e5bf1a7c54c5d4ac03f0c81b79800c622dcde16944ea04b",
     "esm/state/values.d.ts": "0f2e016341a8e907128e337d62ca6fadfa4f6a0ebac6c04cb88e989cd72c7060",
-    "esm/state/values.js": "3dcb52bda51afb996bbbd5417fc7f26b2591609750cd561aab444eb7356c8662",
+    "esm/state/values.js": "0e8caa51399025aa14e0f3a92c17b2d08f0fcd483dca86ac9ad085a5fd7d20d6",
     "esm/types/components.d.ts": "ce7fecac3ad0e501e414919f279b2f22cdbb8627bb0bcbe9af7b71205d6da773",
     "esm/types/components.js": "4e16bbd5a5e376ebb017d61c8003aa8b28aa6315337687c1ae70ab45edca94b7",
     "esm/types/mod.d.ts": "f705851d75eb35a2325dd34128399040fa1838af7ab03d3170631a1493d2fc15",

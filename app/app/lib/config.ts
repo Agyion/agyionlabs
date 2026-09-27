@@ -15,6 +15,8 @@ export const CONFIG = {
   mode,
   rpcUrl: process.env.NEXT_PUBLIC_SOROBAN_RPC_URL ?? "https://soroban-testnet.stellar.org",
   contractId: process.env.NEXT_PUBLIC_HAK_CONTRACT_ID ?? "",
+  /** Exact reviewed/deployed kernel bytes; required by the public Soroban application. */
+  contractWasmHash: process.env.NEXT_PUBLIC_HAK_WASM_HASH ?? "",
   networkPassphrase:
     process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE ??
     "Test SDF Network ; September 2015",
@@ -40,7 +42,7 @@ export const CONFIG = {
   anchorSigningKey: process.env.NEXT_PUBLIC_ANCHOR_SIGNING_KEY ?? "",
   /** stroop-benzeri minor unit: 7 ondalık (SPEC §3.1) */
   decimals: 7,
-  /** WalletConnect modülü için Reown/WalletConnect project ID; boşsa modül modal'da listelenmez */
+  /** Reserved for a verified WalletConnect adapter; the current adapter is not offered. */
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "",
 } as const;
 

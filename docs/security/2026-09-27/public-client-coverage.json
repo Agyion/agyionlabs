@@ -1,0 +1,449 @@
+{
+  "at": "2026-09-27T02:12:44.794418+00:00",
+  "scope": "Public app libraries, all app panel source, anchor/verifier tracked docs/config",
+  "files": [
+    {
+      "file": "app/app/lib/accountOps.ts",
+      "sha256": "03f27a908fa275135daabc8ba081e4339310f757fcfee4aba03da4f09ed8ba51",
+      "lines": 172,
+      "reviewedRanges": [
+        [
+          1,
+          172
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/anchor.ts",
+      "sha256": "0ed62df613d68bf6781cdc0247dcdc66c901a2420337557a12f21e564bb403b5",
+      "lines": 440,
+      "reviewedRanges": [
+        [
+          1,
+          440
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/anchorPayments.ts",
+      "sha256": "d326509b31eb4a7b74d74ebaf94c8bd87f4eea610f7af08b292c94785dc59a8f",
+      "lines": 88,
+      "reviewedRanges": [
+        [
+          1,
+          88
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/client.ts",
+      "sha256": "4a255835d6030e3e8fe85c1291cb5678fd9c549c6eb953018cce4433e9d3564e",
+      "lines": 57,
+      "reviewedRanges": [
+        [
+          1,
+          57
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/config.ts",
+      "sha256": "637c7b3195036bcb57b8084cdacef4aa01a0bb7f3f764ae88c3a105e66cfe96f",
+      "lines": 49,
+      "reviewedRanges": [
+        [
+          1,
+          49
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/errors.ts",
+      "sha256": "3150cce4e3d1089e1107b5bdb95ed12d4e9090589d3c053fb766123bb3d57d36",
+      "lines": 75,
+      "reviewedRanges": [
+        [
+          1,
+          75
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/format.ts",
+      "sha256": "593a60367e455ea7adcee0457c2d109eee61f36c6aba8ca13a00cb72ab4549cd",
+      "lines": 58,
+      "reviewedRanges": [
+        [
+          1,
+          58
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/hakClient.ts",
+      "sha256": "3827f23f78e2dc05d9e50025c5b56431ea3ca3e8429c8e0f8e04f4b92bdad0d2",
+      "lines": 1304,
+      "reviewedRanges": [
+        [
+          1,
+          1304
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/instrumentActivity.ts",
+      "sha256": "9934d8f6284e600c10f747968a8c47dc23fb11945e8d2ac68f19dcf5fcecff52",
+      "lines": 5,
+      "reviewedRanges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/ledgerLog.ts",
+      "sha256": "35eb5f373c552f50fe2ee4cf4e4d397009c5bbf1d08ae1512eb2b3ddb333efc9",
+      "lines": 271,
+      "reviewedRanges": [
+        [
+          1,
+          271
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/recoveryStorage.ts",
+      "sha256": "817e9983f004e0c12c0dd8b80c65a1d41f31640537e6558dd14bfc4d10a98c7a",
+      "lines": 48,
+      "reviewedRanges": [
+        [
+          1,
+          48
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/signers.ts",
+      "sha256": "2c30afa104d50622a7cb8305e7876cbbdbb4810104637c3321c239cfc8415bdf",
+      "lines": 121,
+      "reviewedRanges": [
+        [
+          1,
+          121
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/transactionReceipts.ts",
+      "sha256": "9ad9d38f6d9f010b04fe10b8942688d03cea653269ade98f06289ed0cbe69828",
+      "lines": 152,
+      "reviewedRanges": [
+        [
+          1,
+          152
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/useLedger.ts",
+      "sha256": "1894cb0719f64d3ea7b0b472c07343f84347942aab561fc559613469d37a4e0a",
+      "lines": 46,
+      "reviewedRanges": [
+        [
+          1,
+          46
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/useProtocolReadiness.ts",
+      "sha256": "b496d29a22e9de11f510520258a8d1b8a3cb603d1c1654c11a95c9d3a3d2d99c",
+      "lines": 17,
+      "reviewedRanges": [
+        [
+          1,
+          17
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/useWallet.ts",
+      "sha256": "be8fdb5d0e6122255c2e70041350bf939a12b01e0b07cb0523ff4a71a4e51ecc",
+      "lines": 121,
+      "reviewedRanges": [
+        [
+          1,
+          121
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/venueIdentity.ts",
+      "sha256": "d5e4f640089f2a4e2b7c5847563b568def10e6bd9425afb0456a3cb45c2ee1f7",
+      "lines": 44,
+      "reviewedRanges": [
+        [
+          1,
+          44
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/wallet.ts",
+      "sha256": "0ada5957fdd06090a10051c59c3ee9e1e58b0bee032da43fa4cc02016765dc0e",
+      "lines": 172,
+      "reviewedRanges": [
+        [
+          1,
+          172
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/lib/walletsKit.ts",
+      "sha256": "98fef619b43d6f04a4d98727ce8dbd69a43780a421b12e51bdb1c2544d8a4d1d",
+      "lines": 174,
+      "reviewedRanges": [
+        [
+          1,
+          174
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/AppShell.tsx",
+      "sha256": "3689b944e014901594c3b519556e0246990cc06f88ba4632b9ae802985fa11ef",
+      "lines": 231,
+      "reviewedRanges": [
+        [
+          1,
+          231
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/EnvoyPanel.tsx",
+      "sha256": "44fc1bfc2a84cd8e1007e5d500d0a265ace05a8ea843fda87582aa0ead660021",
+      "lines": 732,
+      "reviewedRanges": [
+        [
+          1,
+          732
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/FadePanel.tsx",
+      "sha256": "fb17224e093791d1403a2cc8e1e0cd44c0b46a3483770a12141ebb3dcf5c27e0",
+      "lines": 949,
+      "reviewedRanges": [
+        [
+          1,
+          949
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/LedgerPanel.tsx",
+      "sha256": "def19894bf8d052d00a508092e48e3bd2856d3f9ff2608aba53d098ecf6ed052",
+      "lines": 138,
+      "reviewedRanges": [
+        [
+          1,
+          138
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/OrbitalBackdrop.tsx",
+      "sha256": "3b7d4481d783b27e691f9db4696cd2a1480bd8214c56b16d924285ae3cc4fe3c",
+      "lines": 213,
+      "reviewedRanges": [
+        [
+          1,
+          213
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/PodPanel.tsx",
+      "sha256": "4506c985f3305d0eb843da6143cb20667a89b75dff926707a2472cf253f052c4",
+      "lines": 376,
+      "reviewedRanges": [
+        [
+          1,
+          376
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/ProtocolStatus.tsx",
+      "sha256": "902787e99a15da04e97a7aa7c526cd567cc2c769454ae5da020d67b50c4ab93d",
+      "lines": 14,
+      "reviewedRanges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/RampPanel.tsx",
+      "sha256": "e3ae4ee508bcc7ff61911dfb71725bd0944d9b4c53d867db064cfecede5cf5e7",
+      "lines": 396,
+      "reviewedRanges": [
+        [
+          1,
+          396
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/TransactionActivity.tsx",
+      "sha256": "0ec73ebdddd0244e52fed78d3d39737c2bf1cb1eb6c3869177a71293bea91395",
+      "lines": 80,
+      "reviewedRanges": [
+        [
+          1,
+          80
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/TriggerPanel.tsx",
+      "sha256": "0e01bb07409f21d9ec44a1917cd3d92765c0b07e499d0c2323f7f0d7f067174c",
+      "lines": 472,
+      "reviewedRanges": [
+        [
+          1,
+          472
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/WalletBar.tsx",
+      "sha256": "bbd473d3b48cbfa965d9d96e9dd30245ed10fcfbe59f01daa233bb47ce997c26",
+      "lines": 101,
+      "reviewedRanges": [
+        [
+          1,
+          101
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/instrumentPresentation.tsx",
+      "sha256": "ff8641d4e1efd9c0bbac1a8a61da802a03136d0c3ace65a6307e75b960cc4341",
+      "lines": 80,
+      "reviewedRanges": [
+        [
+          1,
+          80
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/panelControls.tsx",
+      "sha256": "00742dc3a7fa1a168db937883ebe18680439d468fed37b10ade81d2f92cc7ccf",
+      "lines": 76,
+      "reviewedRanges": [
+        [
+          1,
+          76
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "app/app/components/app/panelValidation.ts",
+      "sha256": "d5a291543aa8744b1959c9564919daf2f46b980283fb7a07f13aad423100f094",
+      "lines": 22,
+      "reviewedRanges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "reviewKind": "manual full source read; boundary and call-path review"
+    },
+    {
+      "file": "anchor/README.md",
+      "sha256": "fa7d10d128c5c24fce7ba52e1f593a99e61ec2269446df7af7862f45bc9e18b5",
+      "lines": 67,
+      "reviewedRanges": [
+        [
+          1,
+          67
+        ]
+      ],
+      "reviewKind": "manual full read; documentation/configuration only, no service runtime present"
+    },
+    {
+      "file": "anchor/assets.yaml",
+      "sha256": "351c2f0f2806eadf343401b9a35d87231dada85853f134219ff115d62a7c08ef",
+      "lines": 103,
+      "reviewedRanges": [
+        [
+          1,
+          103
+        ]
+      ],
+      "reviewKind": "manual full read; documentation/configuration only, no service runtime present"
+    },
+    {
+      "file": "verifier/README.md",
+      "sha256": "bb7d77cb84c9f10ae151e0865b5813360115c17cf2f8353b52db2b4e9dc6e197",
+      "lines": 21,
+      "reviewedRanges": [
+        [
+          1,
+          21
+        ]
+      ],
+      "reviewKind": "manual full read; documentation/configuration only, no service runtime present"
+    }
+  ],
+  "totals": {
+    "files": 36,
+    "lines": 7485
+  },
+  "excluded": [
+    "app/lib/hak-bindings generated implementation: ABI verified separately by parent",
+    "app/vendor/stellar-wallets-kit: delegated to vendor reviewer",
+    "Transitive node_modules dependencies: not manually reviewed",
+    "app components outside components/app and shared rendering engine: outside assigned runtime scope"
+  ],
+  "limits": "Line coverage means source was read; not proof of every scenario, no vulnerability absence claim, no independent audit. No wallet, transport broadcast, contract deployment or shared app/site build performed by this reviewer."
+}

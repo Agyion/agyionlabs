@@ -22,7 +22,7 @@ import { CONFIG, IS_MOCK } from "../../lib/config";
 import { ErrorNote, Field, FilledButton, GhostButton, OkNote, StateChip, TextInput } from "../ui";
 import { RecordLoader, WalletPrerequisite } from "./panelControls";
 import { durationLedgers, ledgerDeadline } from "./panelValidation";
-import { DraftSummary, PodSeal, draftAmount, draftDelay } from "./instrumentPresentation";
+import { PodSeal, draftDelay } from "./instrumentPresentation";
 
 /** Invalidate pending local work and clear credentials on close, wallet change or unmount. */
 function usePodSecretLifetime(address: string | null, clear: () => void) {
@@ -78,7 +78,6 @@ export default function PodPanel({ wallet }: { wallet: WalletState }) {
 
   return (
     <div className="instrument-panel panel-pod">
-      <WalletPrerequisite address={wallet.address} />
           <CreatePod
             wallet={wallet}
             onCreated={(id) => void refresh(id)}
@@ -186,7 +185,7 @@ function CreatePod({
       );
       if (!current()) return;
       setCreatedId(id);
-      setNotice(`Pod #${id} buried. Keep the saved secret; its public key is on-chain.`);
+      setNotice(`Pod #${id} buried. Keep the saved secret; its public key is on the network.`);
       logEntry({
         ledger: now,
         template: "pod",
@@ -206,22 +205,29 @@ function CreatePod({
   };
 
   return (
-    <div className="instrument-layout">
-    <section className="instrument-main instrument-section">
-      <header><h3>Bury a Pod</h3></header>
-      <p className="instrument-disclosure">Amounts and addresses are public. Your secret stays on this device and signs each claim.</p>
-      <div className="instrument-fields">
+    <div className="pod-builder">
+    <section className="pod-amount-vault workbench-surface" aria-label="Bury a Pod">
+      <header className="workbench-heading"><h3>Save until later</h3></header>
+      <div className="pod-vault-amount">
         <Field label={`Amount (${CONFIG.assetCode})`}>
           <TextInput value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" disabled={busy || submitted} />
         </Field>
-        <Field label="Unlock in (minutes)" hint="Converted to a ledger height at creation">
+      </div>
+      <div className="pod-unlock-setting">
+        <Field label="Unlock in (minutes)" hint={draftDelay(minutes, "Unlock time", 10)}>
           <TextInput value={minutes} onChange={(e) => setMinutes(e.target.value)} inputMode="numeric" disabled={busy || submitted} />
         </Field>
       </div>
+      <p className="instrument-disclosure">Amounts and addresses are public.</p>
+    </section>
+    <section className="pod-key-desk workbench-surface" aria-label="Claim key backup">
+      <h4>Save your claim key</h4>
+      <PodSeal prepared={Boolean(seed)} saved={secretSaved} />
+      {!seed && <div className="pod-key-prepare"><p>Save the key outside this page. Without it, funds cannot be claimed.</p><GhostButton onClick={prepare}>Prepare pod secret</GhostButton></div>}
       {seed && (
         <div className="pod-secret-vault">
-          <div className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: "var(--accent)" }}>
-            Your Pod secret — save before submitting
+          <div className="pod-secret-label" style={{ color: "var(--accent)" }}>
+            Your Pod secret: save before submitting
           </div>
           <TextInput aria-label="Generated Pod secret" value={seed} readOnly autoComplete="off" spellCheck={false} className="mt-2" />
           <p className="mt-2 text-[12px] text-muted">
@@ -246,18 +252,14 @@ function CreatePod({
           )}
         </div>
       )}
-      <div className="instrument-actions">
-        {!seed && <GhostButton onClick={prepare}>Prepare pod secret</GhostButton>}
+    </section>
+      <div className="workbench-commit pod-commit">
+        {createdId != null && <p>Created Pod #{createdId.toString()}</p>}
+        <WalletPrerequisite address={wallet.address} />
         <FilledButton transaction onClick={() => void create()} disabled={busy || submitted || !secretSaved || !seed || (!IS_MOCK && !wallet.address)}>
           {busy ? "Burying…" : "Bury the pod"}
         </FilledButton>
       </div>
-    </section>
-    <DraftSummary title="Unlock conditions" visual={<PodSeal prepared={Boolean(seed)} saved={secretSaved} />} rows={[
-      { label: "Amount to lock", value: draftAmount(amount) },
-      { label: "Unlock after", value: draftDelay(minutes, "Unlock time", 10) },
-      ...(createdId != null ? [{ label: "Created Pod", value: `#${createdId}` }] : []),
-    ]} />
     </div>
   );
 }
@@ -303,16 +305,16 @@ function PodCard({
       if (!current()) return;
       setSeed("");
       logEntry({ ledger: height, template: "pod", action: "claim_pod", refId: pod.id.toString(),
-        amount: pod.amount.toString(), status: "executed", detail: "recipient-bound signature verified — capsule opened", txHash: null });
-      setNotice(`Pod #${pod.id} opened — ${formatMinor(pod.amount)} ${CONFIG.assetCode} released.`);
+        amount: pod.amount.toString(), status: "executed", detail: "signature verified for the selected recipient: capsule opened", txHash: null });
+      setNotice(`Pod #${pod.id} opened: ${formatMinor(pod.amount)} ${CONFIG.assetCode} released.`);
       onChanged();
     } catch (e) { if (current()) setError(humanizeError(e)); }
     finally { if (current()) setBusy(false); }
   };
 
   return (
-    <div className="instrument-record">
-      <div className="instrument-layout">
+    <div className="instrument-record pod-loaded-record">
+      <div className="instrument-layout pod-loaded-layout">
         <aside className="instrument-aside pod-readiness order-2" aria-label={`Pod ${pod.id} opening conditions`}>
           <div className="pod-readiness__seal" data-open={opened} aria-hidden="true">
             <svg viewBox="0 0 320 240"><ellipse cx="160" cy="120" rx="120" ry="78" className="diagram-guide"/><path d="m127 65 33-18 33 18v110l-33 18-33-18Z" className="diagram-body"/><path d="m127 65 33 18 33-18m-33 18v110M127 108l33 18 33-18" className="diagram-line"/><g className="pod-readiness__rings"><ellipse cx="160" cy="98" rx="76" ry="25"/><ellipse cx="160" cy="142" rx="76" ry="25"/></g><path d="M29 120h51m160 0h51" className="diagram-guide"/></svg>

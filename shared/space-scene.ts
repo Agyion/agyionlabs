@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import { bindOrbitInput } from './orbit-input';
+import { bindOrbitInput, ORBIT_DRAG_SENSITIVITY } from './orbit-input';
 import { applyStationFlightPose, arrivalCameraDistance, freeOrbitFraming, ModuleCameraRig, zoomFreeOrbit } from './module-camera';
 import { createSceneCompositor } from './scene-compositor';
+import { createStarField } from './star-field';
 import { createLensTexture, createAccretionTexture, holeVertex, holeFragment, accretionVertex, accretionFragment } from './black-hole';
 import { ARRIVAL_DURATION_MS, LAUNCH_DURATION_MS, writeFlightHandoff } from './flight-handoff';
 import type { ArrivalPose } from './flight-handoff';
@@ -13,6 +14,15 @@ import type { ExhibitId } from './instrument-orbit';
 export type Mode = 'landing' | 'station';
 
 export type { ArrivalPose } from './flight-handoff';
+
+/** Host-relative coordinates. The scene reuses this object; copy values to retain a frame. */
+export interface HoleProjection {
+  x: number;
+  y: number;
+  /** Critical-curve radius as a fraction of the host height. */
+  radius: number;
+  visible: boolean;
+}
 
 export interface OrbitalSceneOptions {
   mode: Mode;
@@ -27,6 +37,7 @@ export interface OrbitalSceneOptions {
   onSelect?: (id: string) => void;
   onExhibitSelect?: (id: ExhibitId) => void;
   onReady?: () => void;
+  onHoleProjection?: (projection: Readonly<HoleProjection>) => void;
   onArrivalComplete?: () => void;
   onError?: (error: unknown) => void;
 }
@@ -240,32 +251,7 @@ export function createOrbitalScene(
   undersideLight.position.set(-3, -8, 3);
   scene.add(undersideLight);
 
-  // Distant pinpoints stay fixed in the world; there is no looping star flight.
-  const random = seededRandom(20260924);
-  const starCount = 1000;
-  const starPositions = new Float32Array(starCount * 3);
-  const starColors = new Float32Array(starCount * 3);
-  for (let index = 0; index < starCount; index += 1) {
-    const polar = Math.acos(2 * random() - 1);
-    const azimuth = random() * Math.PI * 2;
-    const distance = 1700 + random() * 1500;
-    starPositions[index * 3] = distance * Math.sin(polar) * Math.cos(azimuth);
-    starPositions[index * 3 + 1] = distance * Math.cos(polar);
-    starPositions[index * 3 + 2] = distance * Math.sin(polar) * Math.sin(azimuth);
-    const brightness = .3 + random() * .7;
-    starColors[index * 3] = brightness;
-    starColors[index * 3 + 1] = brightness * (.8 + random() * .15);
-    starColors[index * 3 + 2] = brightness * (.74 + random() * .26);
-  }
-  const starsGeometry = own(new THREE.BufferGeometry());
-  starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-  starsGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-  const starsMaterial = own(new THREE.PointsMaterial({
-    size: 1.1, transparent: true, opacity: .5,
-    vertexColors: true, sizeAttenuation: true, depthWrite: false,
-  }));
-  const stars = new THREE.Points(starsGeometry, starsMaterial);
-  background.add(stars);
+  const stars = own(createStarField(fullPixelRatio));
 
   const accretionTexture = own(createAccretionTexture());
   const holeMaterial = own(new THREE.ShaderMaterial({
@@ -283,7 +269,7 @@ export function createOrbitalScene(
   hole.renderOrder = 1;
   background.add(hole);
   const foregroundMaterial = own(new THREE.ShaderMaterial({
-    uniforms: {uTime:{value:0},uFlow:{value:accretionTexture},uOpacity:{value:1},uHoleScreen:{value:new THREE.Vector2()},uHoleRadius:{value:0},uAspect:{value:1}},
+    uniforms: {uTime:{value:0},uFlow:{value:accretionTexture},uOpacity:{value:1},uHoleScreen:{value:new THREE.Vector2()},uHoleRadius:{value:0},uHoleDepth:{value:0},uAspect:{value:1}},
     vertexShader: accretionVertex, fragmentShader: accretionFragment,
     transparent:true, depthWrite:false, side:THREE.DoubleSide,
   }));
@@ -701,6 +687,7 @@ export function createOrbitalScene(
   // A settled handoff restores its world clock without starting another flight.
   const arrivalPose = mode === 'station' && !reducedMotion ? options.arrivalPose : undefined;
   let elapsed = arrivalPose?.elapsed ?? 0;
+  let flowTime = arrivalPose?.flowTime ?? elapsed * 1.35;
   let ready = false;
   let hasPresented = false;
   let selected = 0;
@@ -741,7 +728,7 @@ export function createOrbitalScene(
   const orbitOffset = new THREE.Vector3();
   const viewTarget = new THREE.Vector3();
   const cameraGoal = new THREE.Vector3();
-  const moduleCamera = new ModuleCameraRig(station, pickTargets.filter((_, index) => index % 2 === 0), 2.47);
+  const moduleCamera = new ModuleCameraRig(station, pickTargets.filter((_, index) => index % 2 === 0), 2.47, hole.position);
   const canAim = () => Boolean(options.interactive && finePointer?.matches && !workspaceOpen && !moduleCamera.focused
     && launchStart === null && !launchDone && (!arriving || flightInterrupted || arrivalTime >= arrivalDuration));
   const raycaster = new THREE.Raycaster();
@@ -753,11 +740,13 @@ export function createOrbitalScene(
   const diskAxis = new THREE.Vector3();
   const diskCenterScreen = new THREE.Vector3();
   const diskCenterCamera = new THREE.Vector3();
+  const holeProjection: HoleProjection = { x: 0, y: 0, radius: 0, visible: false };
   const exhibitStageCenter = new THREE.Vector3();
   const diskAxisScreen = new THREE.Vector3();
   const keyDirection = new THREE.Vector3();
   const packetCurve = new THREE.QuadraticBezierCurve3(packetStart, packetControl, packetEnd);
-  const compositor = own(createSceneCompositor(renderer, background, softwareGraphics));
+  const compositor = own(createSceneCompositor(renderer, background, softwareGraphics, stars.scene));
+  stars.setOcclusion(compositor.backgroundTexture);
   const smooth = (value: number) => value * value * (3 - 2 * value);
   const damp = (value: number, target: number, delta: number, speed = 7) =>
     reducedMotion ? target : THREE.MathUtils.lerp(value, target, 1 - Math.exp(-speed * delta));
@@ -885,13 +874,28 @@ export function createOrbitalScene(
     holeMaterial.uniforms.uDiskRoll.value = -Math.atan2((diskAxisScreen.y - diskCenterScreen.y) * height, (diskAxisScreen.x - diskCenterScreen.x) * width);
     holeMaterial.uniforms.uDiskSide.value = diskView.y < 0 ? -1 : 1;
     holeMaterial.uniforms.uInclination.value = THREE.MathUtils.clamp(Math.abs(Math.atan2(diskView.y, Math.hypot(diskView.x, diskView.z))), .008, 1.5);
-    holeMaterial.uniforms.uTime.value = elapsed;
-    foregroundMaterial.uniforms.uTime.value = elapsed;
+    // Retain one physical flow clock across the lensed disk and nearby gas.
+    // This does not retime the camera, station rotation, or connecting flight.
+    holeMaterial.uniforms.uTime.value = flowTime;
+    foregroundMaterial.uniforms.uTime.value = flowTime;
     foregroundMaterial.uniforms.uOpacity.value = mode === 'landing' ? smooth(blend) : 1;
     accretionPlane.visible = foregroundMaterial.uniforms.uOpacity.value > 0;
     foregroundMaterial.uniforms.uHoleScreen.value.set(diskCenterScreen.x, diskCenterScreen.y);
     foregroundMaterial.uniforms.uHoleRadius.value = diskCenterCamera.z < 0 ? 230 * camera.projectionMatrix.elements[5] / -diskCenterCamera.z : 0;
+    foregroundMaterial.uniforms.uHoleDepth.value = -diskCenterCamera.z;
     foregroundMaterial.uniforms.uAspect.value = aspect;
+    if (options.onHoleProjection) {
+      holeProjection.x = (diskCenterScreen.x + 1) * .5;
+      holeProjection.y = (1 - diskCenterScreen.y) * .5;
+      holeProjection.radius = foregroundMaterial.uniforms.uHoleRadius.value * .5;
+      holeProjection.visible = diskCenterCamera.z < 0
+        && diskCenterScreen.z >= -1 && diskCenterScreen.z <= 1
+        && holeProjection.x + holeProjection.radius / aspect > 0
+        && holeProjection.x - holeProjection.radius / aspect < 1
+        && holeProjection.y + holeProjection.radius > 0
+        && holeProjection.y - holeProjection.radius < 1;
+      options.onHoleProjection(holeProjection);
+    }
     packetEnd.set(hole.position.x, hole.position.y, hole.position.z + 1);
   };
 
@@ -956,7 +960,7 @@ export function createOrbitalScene(
       try {
         let data: string | undefined;
         try { data = renderer.domElement.toDataURL('image/webp', .9); } catch { /* Pose still connects the flight. */ }
-        writeFlightHandoff(sessionStorage, {elapsed, ringFocus: shortest(ringFocus), yaw: shortest(yaw), pitch, zoom}, data, Date.now(), { settled: true, softwareGraphics });
+        writeFlightHandoff(sessionStorage, {elapsed, flowTime, ringFocus: shortest(ringFocus), yaw: shortest(yaw), pitch, zoom}, data, Date.now(), { settled: true, softwareGraphics });
       } catch { /* A frame handoff is optional; navigation must always continue. */ }
     }
     container.dataset.flightPhase = 'handoff';
@@ -965,7 +969,10 @@ export function createOrbitalScene(
 
   const update = (delta: number, now: number) => {
     if (arrivalStart === null) arrivalStart = now - arrivalTime * 1000;
-    elapsed += reducedMotion || now < arrivalStart ? 0 : Math.min(delta, (now - arrivalStart) / 1000);
+    const advance = reducedMotion || now < arrivalStart ? 0 : Math.min(delta, (now - arrivalStart) / 1000);
+    elapsed += advance;
+    // Integrate a separate clock: 25% faster in the app, continuous on arrival.
+    flowTime += advance * 1.35 * (mode === 'station' ? 1.25 : 1);
     // Manual input ends camera travel, while the remaining roll and engine fade
     // continue on their existing clock without an abrupt visual reset.
     arrivalTime = reducedMotion || !arriving ? arrivalDuration : Math.min(arrivalDuration, Math.max(0, (now - arrivalStart) / 1000));
@@ -1037,6 +1044,7 @@ export function createOrbitalScene(
     width = Math.max(1, bounds.width); height = Math.max(1, bounds.height);
     renderer.setSize(width, height, false);
     compositor.resize();
+    stars.resize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     positionWorld();
@@ -1083,6 +1091,7 @@ export function createOrbitalScene(
   };
   const releaseInput = options.interactive ? bindOrbitInput(renderer.domElement, {
     wheelZoom: mode === 'station',
+    dragSensitivity: ORBIT_DRAG_SENSITIVITY,
     get horizontalDragSensitivity() { return mode === 'station' ? .25 : 1; },
     canInteract: () => !disposed && !contextLost && !renderFailed && launchStart === null && !launchDone,
     onOrbit: (horizontal, vertical) => {

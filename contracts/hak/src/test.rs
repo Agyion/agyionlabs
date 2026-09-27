@@ -19,6 +19,9 @@ use soroban_sdk::{
 
 use crate::{Agyion, AgyionClient, Error};
 
+#[path = "review_test.rs"]
+mod review;
+
 struct Setup {
     env: Env,
     client: AgyionClient<'static>,
@@ -2364,10 +2367,15 @@ fn assert_fade_ten_serialized_claimants(
         env.mock_auths(&[MockAuth {
             address: winner,
             invoke: &MockAuthInvoke {
-                contract: &asset,
-                fn_name: "transfer",
-                args: (winner.clone(), seller.clone(), 15_i128).into_val(env),
-                sub_invokes: &[],
+                contract,
+                fn_name: "confirm_handoff",
+                args: (id, 7_u64, signature.clone()).into_val(env),
+                sub_invokes: &[MockAuthInvoke {
+                    contract: &asset,
+                    fn_name: "transfer",
+                    args: (winner.clone(), seller.clone(), 15_i128).into_val(env),
+                    sub_invokes: &[],
+                }],
             },
         }]);
     }

@@ -60,14 +60,12 @@ export class ModuleCameraRig {
   private readonly station: THREE.Object3D;
   private readonly anchors: readonly THREE.Object3D[];
   private readonly ringRadius: number;
+  private readonly backdrop: THREE.Vector3;
   private selected: number | null = null;
   private initialized = false;
   private readonly center = new THREE.Vector3();
   private readonly scale = new THREE.Vector3();
-  private readonly stationRotation = new THREE.Quaternion();
   private readonly normal = new THREE.Vector3();
-  private readonly up = new THREE.Vector3();
-  private readonly outward = new THREE.Vector3();
   private readonly goalPosition = new THREE.Vector3();
   private readonly goalTarget = new THREE.Vector3();
   private readonly currentTarget = new THREE.Vector3();
@@ -79,10 +77,11 @@ export class ModuleCameraRig {
   private readonly right = new THREE.Vector3();
   private readonly screenUp = new THREE.Vector3();
 
-  constructor(station: THREE.Object3D, anchors: readonly THREE.Object3D[], ringRadius: number) {
+  constructor(station: THREE.Object3D, anchors: readonly THREE.Object3D[], ringRadius: number, backdrop: THREE.Vector3) {
     this.station = station;
     this.anchors = anchors;
     this.ringRadius = ringRadius;
+    this.backdrop = backdrop;
   }
 
   get focused() { return this.selected !== null; }
@@ -97,20 +96,16 @@ export class ModuleCameraRig {
     const { freePosition, freeTarget, panel, small, delta, snap, direct = false } = frame;
     this.station.getWorldPosition(this.center);
     this.station.getWorldScale(this.scale);
-    this.station.getWorldQuaternion(this.stationRotation);
     const radius = this.ringRadius * Math.max(this.scale.x, this.scale.y, this.scale.z);
     const selectedAnchor = this.selected === null ? null : this.anchors[this.selected];
     if (selectedAnchor) {
       selectedAnchor.getWorldPosition(this.goalTarget);
-      this.normal.set(0, 0, 1).applyQuaternion(this.stationRotation);
-      this.up.set(0, 1, 0).applyQuaternion(this.stationRotation);
-      this.outward.copy(this.goalTarget).sub(this.center);
-      this.outward.addScaledVector(this.normal, -this.outward.dot(this.normal)).normalize();
-      // The deployed camera uses offsets 28 / 7.5 / 19 on a radius-12 ring.
-      this.goalPosition.copy(this.goalTarget)
-        .addScaledVector(this.outward, radius * 28 / 12)
-        .addScaledVector(this.up, radius * 7.5 / 12)
-        .addScaledVector(this.normal, radius * 19 / 12);
+      // Travel to the real rotating bay from one common viewing side. The
+      // ring's outward vector would orbit the eye around the hull and turn
+      // away from the black hole as the selected bay moves to the far side.
+      this.normal.copy(this.center).sub(this.backdrop).normalize();
+      if (this.normal.lengthSq() < .001) this.normal.set(0, 0, 1);
+      this.goalPosition.copy(this.goalTarget).addScaledVector(this.normal, radius * 3.8);
     } else {
       this.goalPosition.copy(freePosition);
       this.goalTarget.copy(freeTarget);

@@ -1,6 +1,18 @@
 import { test, expect } from '@playwright/test';
 import { assertReleaseCsp } from '../scripts/release-integrity.mjs';
 
+async function watchCspViolations(page) {
+  const violations = [];
+  await page.exposeFunction('__recordOrbitalCsp', violation => violations.push(violation));
+  await page.addInitScript(() => {
+    document.addEventListener('securitypolicyviolation', event => window.__recordOrbitalCsp({
+      documentURI: event.documentURI, blockedURI: event.blockedURI, directive: event.violatedDirective,
+    }));
+  });
+  // The Node-owned log survives a document handoff and iframe recreation.
+  return async () => structuredClone(violations);
+}
+
 async function readyScene(page) {
   await expect(page.locator('.orbital-backdrop')).toHaveClass(/is-ready/);
   await expect(page.locator('.orbital-canvas canvas')).toBeVisible();
@@ -148,27 +160,43 @@ test('graphics recovery preserves the completed escape instead of replaying it',
 });
 
 test('combined site launches the console and serves real missing-asset errors', async ({page, request}) => {
-  const violations=[]; await page.addInitScript(()=>{window.__csp=[];document.addEventListener('securitypolicyviolation',e=>window.__csp.push(e.violatedDirective))});
+  const readViolations = await watchCspViolations(page);
   await page.goto('/');
   await expect(page.getByRole('heading',{level:1})).toHaveText(/^agyion\s*labs$/i);
   await page.getByRole('link',{name:'Launch app',exact:true}).first().click();
   // The complete9.8-second departure precedes the document handoff.
   await expect(page.locator('#tab-fade')).toBeVisible({ timeout: 15000 });
   await expect(page.locator('.orbital-backdrop')).toHaveClass(/is-ready/);
-  expect(await page.evaluate(()=>window.__csp)).toEqual(violations);
+  expect(await readViolations()).toEqual([]);
   const missing=await request.get('/assets/nonexistent.js');expect(missing.status()).toBe(404);
   const headers=(await request.get('/app/')).headers();
   expect(headers['x-frame-options']).toBe('DENY');expect(headers['x-content-type-options']).toBe('nosniff');expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
   assertReleaseCsp(headers['content-security-policy']);
 });
 
+test('CSP diagnostics retain a real blocked script across document navigation', async ({ page }) => {
+  const readViolations = await watchCspViolations(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.evaluate(() => {
+    const script = document.createElement('script');
+    script.textContent = 'window.__orbitalUnexpectedInlineExecution = true;';
+    document.head.append(script);
+  });
+  await expect.poll(async () => (await readViolations()).filter(event => event.blockedURI === 'inline').length).toBe(1);
+  expect(await page.evaluate(() => window.__orbitalUnexpectedInlineExecution)).toBeUndefined();
+  const before = await readViolations();
+  await page.goto('/app/');
+  expect(await readViolations()).toEqual(expect.arrayContaining(before));
+});
+
 test('wallet selection opens without CSP or application errors', async ({page}) => {
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.addInitScript(()=>{window.__csp=[];document.addEventListener('securitypolicyviolation',e=>window.__csp.push(e.violatedDirective))});
+  const readViolations = await watchCspViolations(page);
   await page.goto('/app/');
   await page.getByRole('button',{name:'Connect wallet',exact:true}).click();
   await expect(page.getByText('Freighter',{exact:true}).first()).toBeVisible({timeout:20000});
-  expect(errors).toEqual([]);expect(await page.evaluate(()=>window.__csp)).toEqual([]);
+  expect(errors).toEqual([]);expect(await readViolations()).toEqual([]);
 });
 
 test('shader compilation failure preserves the static view and console', async ({page}) => {
@@ -224,7 +252,7 @@ test('keyboard camera controls work on the focused canvas and Home restores the 
   await expect.poll(async () => initial.equals(await sceneRaster(page)), { message: 'Home restores the initial orbit', timeout: 10000 }).toBe(true);
 });
 
-test('instrument selection moves the camera and Instruments returns to the open scene', async ({ page }) => {
+test('instrument selection moves the camera and closing returns to the open scene', async ({ page }) => {
   await staticScene(page, '/app/?tab=fade');
   const fade = await sceneRaster(page);
   await page.locator('#tab-pod').click();
@@ -232,15 +260,15 @@ test('instrument selection moves the camera and Instruments returns to the open 
   await page.mouse.move(2, 2);
   await expectSceneChanged(page, fade, 'Selecting a module must move its 3D view, not only replace the form');
   const pod = await sceneRaster(page);
-  await page.getByRole('button', { name: /^Instruments/ }).click();
+  await page.getByRole('button', { name: 'Close instrument', exact: true }).click();
   await expect(page.locator('.station-workspace')).toBeHidden();
-  await expectSceneChanged(page, pod, 'Instruments must return the camera to exploration');
+  await expectSceneChanged(page, pod, 'Closing must return the camera to exploration');
   await expect(page.locator('#tab-pod')).toHaveAttribute('aria-selected', 'true');
 });
 
 test('closing and reopening an instrument preserves its unsent form draft', async ({ page }) => {
   await staticScene(page, '/app/?tab=pod');
-  const amount = page.getByLabel('Amount (USDC)', { exact: true });
+  const amount = page.locator('#panel-pod').getByRole('textbox', { name: /^Amount \([^)]+\)$/ });
   const minutes = page.getByLabel('Unlock in (minutes)', { exact: false });
   await amount.fill('731.25'); await minutes.fill('13');
   await page.getByRole('button', { name: 'Close instrument', exact: true }).click();
@@ -248,7 +276,7 @@ test('closing and reopening an instrument preserves its unsent form draft', asyn
   await page.locator('#tab-pod').click();
   await expect(page.locator('#panel-pod')).toBeVisible();
   await expect(amount).toHaveValue('731.25'); await expect(minutes).toHaveValue('13');
-  await page.getByRole('button', { name: /^Instruments/ }).click();
+  await page.getByRole('button', { name: 'Close instrument', exact: true }).click();
   await page.getByRole('button', { name: /^Open Pod/ }).click();
   await expect(amount).toHaveValue('731.25'); await expect(minutes).toHaveValue('13');
 });

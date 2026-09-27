@@ -41,7 +41,6 @@ try {
   await page.waitForTimeout(1500);await shot(`module-${id}`);
  }
  await page.getByRole('button',{name:'Close instrument',exact:true}).click();
- await page.getByRole('button',{name:/^Instruments/}).click();
  await page.waitForTimeout(1600);
  const canvas=await page.locator('.orbital-canvas canvas').boundingBox();
  await page.mouse.move(canvas.width*.6,canvas.y+canvas.height*.48);await page.mouse.down();
@@ -59,7 +58,6 @@ try {
  await expect(page.locator('.station-app')).not.toHaveClass(/station-arriving/);
  await page.waitForTimeout(1600);await shot('08-mobile-module');
  await page.getByRole('button',{name:'Close instrument',exact:true}).click();
- await page.getByRole('button',{name:/^Instruments/}).click();
  await page.waitForTimeout(1600);await shot('09-mobile-orbit');
  checks={viewportFits:await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),
   noBrowserErrors:errors.length===0,noFailedRequests:requestFailures.length===0};

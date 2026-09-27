@@ -1,16 +1,40 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FLIGHT_BRIDGE_SCRIPT, readFlightHandoff, writeFlightHandoff } from '../../shared/flight-handoff';
+import { FLIGHT_BRIDGE_SCRIPT, readFlightHandoff, writeFlightHandoff, validArrivalPose } from '../../shared/flight-handoff';
+import { SKIP_FLIGHT_STORAGE_KEY } from '../../shared/flight-preference';
 
 const pose = { elapsed: 48, ringFocus: .1, yaw: -.08, pitch: .12, zoom: 0 };
 const image = 'data:image/webp;base64,UklGRg==';
 beforeEach(() => {
   sessionStorage.clear();
+  localStorage.clear();
   const root = document.createElement('div'); root.id = 'agyion-flight-bridge-root'; document.body.appendChild(root);
 });
 afterEach(() => { document.getElementById('agyion-flight-bridge-root')?.remove(); document.getElementById('agyion-flight-bridge')?.remove(); vi.restoreAllMocks(); });
 
 describe('cross-document flight handoff', () => {
+  it('carries an independent gas clock and still accepts earlier handoffs without one', () => {
+    writeFlightHandoff(sessionStorage, { ...pose, flowTime: 77 }, image, 10000);
+    expect(readFlightHandoff(sessionStorage, 10010).pose).toEqual({ ...pose, flowTime: 77 });
+    expect(validArrivalPose(pose)).toBe(true);
+    for (const flowTime of [-1, NaN, Infinity, 20000001, '77', null]) {
+      expect(validArrivalPose({ ...pose, flowTime })).toBe(false);
+    }
+  });
+
+  it('clears an old flight before first paint when the saved skip preference is enabled', () => {
+    writeFlightHandoff(sessionStorage, pose, image);
+    localStorage.setItem(SKIP_FLIGHT_STORAGE_KEY, '1');
+    const schedule = vi.fn();
+    new Function('window', 'document', 'location', 'sessionStorage', 'setTimeout', FLIGHT_BRIDGE_SCRIPT)(
+      { matchMedia: () => ({ matches: false }) }, document, { pathname: '/app/' }, sessionStorage, schedule,
+    );
+    expect(document.getElementById('agyion-flight-bridge')).toBeNull();
+    expect(sessionStorage.getItem('agyion:arrival')).toBeNull();
+    expect(sessionStorage.getItem('agyion:flight-frame')).toBeNull();
+    expect(schedule).not.toHaveBeenCalled();
+  });
+
   it('commits a paired frame and pose and consumes them once', () => {
     writeFlightHandoff(sessionStorage, pose, image, 10000);
     expect(readFlightHandoff(sessionStorage, 10010)).toEqual({ arrival: true, pose, image });

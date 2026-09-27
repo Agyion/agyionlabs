@@ -1,3 +1,6 @@
+import { waitForFonts } from './lib/browser-settle.mjs';
+// Historical physical home-gallery harness. Its removed exhibit selectors are
+// not current acceptance; use landing/tests/e2e/matrix.mjs for canonical routes.
 /** Actual WebGL interactions and current-render evidence; no wallet or chain writes. */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -26,13 +29,13 @@ try {
    for(const proto of [WebGLRenderingContext.prototype,WebGL2RenderingContext.prototype]) {
     const source=proto.shaderSource;proto.shaderSource=function(shader,text){data(this).sources.set(shader,text);return source.call(this,shader,text)};
     const attach=proto.attachShader;proto.attachShader=function(program,shader){const d=data(this),list=d.shaders.get(program)||[];list.push(shader);d.shaders.set(program,list);return attach.call(this,program,shader)};
-    const link=proto.linkProgram;proto.linkProgram=function(program){const d=data(this);if((d.shaders.get(program)||[]).some(s=>(d.sources.get(s)||'').includes('PointsMaterial')))d.stars.add(program);return link.call(this,program)};
+    const link=proto.linkProgram;proto.linkProgram=function(program){const d=data(this);if((d.shaders.get(program)||[]).some(s=>/PointsMaterial|AGYION_STAR_FIELD/.test(d.sources.get(s)||'')))d.stars.add(program);return link.call(this,program)};
     const location=proto.getUniformLocation;proto.getUniformLocation=function(program,name){const result=location.call(this,program,name);if(result&&name==='modelViewMatrix'&&data(this).stars.has(program))data(this).uniforms.set(result,true);return result};
     const matrix=proto.uniformMatrix4fv;proto.uniformMatrix4fv=function(location,transpose,value){if(data(this).uniforms.has(location))state.matrix=Array.from(value);return matrix.call(this,location,transpose,value)};
     for(const name of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced']) {const draw=proto[name];proto[name]=function(...args){if(frame)frame.draws++;return draw.apply(this,args)}}
    }
   });
-  await page.goto(base,{waitUntil:'networkidle'});await expect(page.locator('.orbital-scene')).toHaveClass(/is-ready/);await page.evaluate(()=>document.fonts.ready);
+  await page.goto(base,{waitUntil:'networkidle'});await expect(page.locator('.orbital-scene')).toHaveClass(/is-ready/);await waitForFonts(page);
   const shot=async name=>{const file=`${output}/${label}-${name}.png`;await page.screenshot({path:file,animations:'disabled'});report.screenshots.push(file)};
   await shot('initial');
   if(reduced) {

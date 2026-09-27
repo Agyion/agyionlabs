@@ -81,6 +81,14 @@ ledger deadline and handoff window bound validity. Trigger currently trusts
 the fixed owner, at most 50 claims; its monetary caps do not authorize spending.
 Neither attestation nor disclosure M-of-N is implemented in this kernel.
 
+Positive-price Fade handoff explicitly requires the claimant's authorization at
+the root `confirm_handoff` call before its nested token transfer. This makes the
+authorization tree compatible with the RPC's default recording mode and binds
+the claimant's approval to this exact handoff. The venue signature alone cannot
+spend claimant funds. Negative/zero-price handoff and Envoy settlement do not add
+claimant authorization. The earlier V3 artifact omitted the root requirement;
+deploy the reviewed replacement bytes, not only any contract returning version 3.
+
 Trigger creation rejects the kernel's own address as beneficiary, before the
 token deposit or record allocation. A self-transfer would otherwise leave the
 reserve in the kernel while marking the escrow executed, with no later withdrawal

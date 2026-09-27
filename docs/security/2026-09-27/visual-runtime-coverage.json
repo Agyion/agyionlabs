@@ -1,0 +1,922 @@
+[
+  {
+    "path": "app/app/components/landing/Compliance.tsx",
+    "lines": [
+      1,
+      90
+    ],
+    "sha256": "f97322ebd6a1abd1c8d2dad1a2f225a91de6e0f0a3c32cd365403870edfae7f0",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/components/landing/CtaFooter.tsx",
+    "lines": [
+      1,
+      68
+    ],
+    "sha256": "042a88faf16d83f05643f008de502acc0e5458d1e486c822600de8ce85594eae",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/components/landing/Cursor.tsx",
+    "lines": [
+      1,
+      68
+    ],
+    "sha256": "bd4401ddf447d159c71cb47738c92714c192424f422da3861a568913b9b71177",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/components/landing/Hero.tsx",
+    "lines": [
+      1,
+      455
+    ],
+    "sha256": "019390cfddb7a002716740286efd943abe4066faa7a2bed0348d34bcaa34db18",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/components/landing/HowItWorks.tsx",
+    "lines": [
+      1,
+      330
+    ],
+    "sha256": "3c81f6fb499c277e0f4336398c0a6132a954eb4ddaa2e2255d95dc7be63a595f",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/components/landing/Lifeline.tsx",
+    "lines": [
+      1,
+      76
+    ],
+    "sha256": "dde1530b52955f215ef83c450a7712d0b349284349755785438903875c160d3b",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/components/landing/Nav.tsx",
+    "lines": [
+      1,
+      70
+    ],
+    "sha256": "a71c55ca7ec9c837e3ceaa858f3cbbdfa8e6dd0b4ebd0a1a13c28a69190c53df",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/components/landing/PageWipe.tsx",
+    "lines": [
+      1,
+      39
+    ],
+    "sha256": "cd27837b6a001477ca5b779a14399856545f4e1affd3f52c767dd2c457ab1a0b",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/components/landing/TemplateCards.tsx",
+    "lines": [
+      1,
+      338
+    ],
+    "sha256": "dfb29d26d84e5baab44ca70604cf3b0757f4128f61f6d0c7d759bc460b4d8f10",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/components/landing/WhyStellar.tsx",
+    "lines": [
+      1,
+      149
+    ],
+    "sha256": "e695b8c2d15f5ac81fe04323414e3c32a45e8cf5e78b5fb1987a1be3026faa7e",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/console-surface.css",
+    "lines": [
+      1,
+      111
+    ],
+    "sha256": "39eb49ef199651cca9322ba07415aa9f8fff350c71a478fc76a3a7427ce1f8cb",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/globals.css",
+    "lines": [
+      1,
+      547
+    ],
+    "sha256": "b5e62bf91d135e6bb3e808fd6fdef94ca1b265e36f8229c1703c735386a77c4b",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/instrument-workspaces.css",
+    "lines": [
+      1,
+      234
+    ],
+    "sha256": "733c8fc59568fdf8d7aaed2733cc33499e4514cd6a7116d7f868dadbc11d9a23",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "app/app/orbital.css",
+    "lines": [
+      1,
+      421
+    ],
+    "sha256": "5b6d8f46229b8795f2cda1a5ac0086520087f9125b5efccbe524ab8054f05409",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/Cursor.tsx",
+    "lines": [
+      1,
+      165
+    ],
+    "sha256": "f47875d591d8f5a47276a7d682040535b2c17286408ef0f1018ac08e91caa5d9",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/DepthGauge.tsx",
+    "lines": [
+      1,
+      80
+    ],
+    "sha256": "da000ab9403e6074809d9eea98bf77fac83b15c896e569ef0967dba04ee8a0b0",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/DetailWorld.tsx",
+    "lines": [
+      1,
+      61
+    ],
+    "sha256": "ae0153cd325f05d11de9bf4ac5284c5467ff585b221630ecfafd96eca42ec13e",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/DiveBand.tsx",
+    "lines": [
+      1,
+      6
+    ],
+    "sha256": "a9a9f56d12b3b64009285602bbc1ea822e7cc0402f5d1c3f6b60a7048eff6f1f",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/ExampleArtwork.tsx",
+    "lines": [
+      1,
+      295
+    ],
+    "sha256": "8f08c380d74a944e4f38bae958459cbace1541444b117f3115448b9141fa8ff7",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/FlightPreference.tsx",
+    "lines": [
+      1,
+      13
+    ],
+    "sha256": "be123d522a4d51756755c7513ea39c5e4bc735395c62fbac523a3dd319835897",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/Footer.tsx",
+    "lines": [
+      1,
+      11
+    ],
+    "sha256": "10b6ddcc4622a6e3c04584f66f53288ae6d57db60825283bfe993e7b0d62d492",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/HowItWorksDialog.tsx",
+    "lines": [
+      1,
+      90
+    ],
+    "sha256": "ca80ebc23a7ef35a0e6b6f830e0d25b0b6c514c09bece04059b5442b2ade84d0",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/InstrumentExample.tsx",
+    "lines": [
+      1,
+      159
+    ],
+    "sha256": "635d9351cfa2496ee4255ceed651eba25648b0d0e083ad5acce8ed3cc4003201",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/InstrumentExplorer.tsx",
+    "lines": [
+      1,
+      119
+    ],
+    "sha256": "a29e33d8979fbfd018a664596cc667a0c9aef1a5858a2120e83f2ce3adef449e",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/InstrumentMechanism.tsx",
+    "lines": [
+      1,
+      304
+    ],
+    "sha256": "b22a4ab7f5965579af36ae75acd70ddbbb00ba541ffabb82eb78ddb7b12df0e0",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/InstrumentObject.tsx",
+    "lines": [
+      1,
+      55
+    ],
+    "sha256": "0a1b5fe23b744b919bbc4d3a3e299aabb896aa24a1f04b6924d14ed514644dba",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/LedgerHero.tsx",
+    "lines": [
+      1,
+      48
+    ],
+    "sha256": "81e341bfebe24b252a764ed0633300626f9ba314de42f3537539b61631921685",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/Loader.tsx",
+    "lines": [
+      1,
+      35
+    ],
+    "sha256": "45a1cd198834f3af175341e167c39332e8d248b9ef84afa474b20593cab56d3c",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/NavPill.tsx",
+    "lines": [
+      1,
+      101
+    ],
+    "sha256": "02ea8f708345ab803c3d7b7409c145927e32b0b7daf7b2e441f5468c5f68ce76",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/Noise.tsx",
+    "lines": [
+      1,
+      119
+    ],
+    "sha256": "0b537ef45c1f2d8ca705fc9f3e3e808ec2046d9a151e8e721fad21add9583ed0",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/OrbitalScene.tsx",
+    "lines": [
+      1,
+      342
+    ],
+    "sha256": "693b65dae6271133e11abf99293429c381bfe5b78a32fae6f4aa68e8f6d37776",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/PodConditionTrial.tsx",
+    "lines": [
+      1,
+      36
+    ],
+    "sha256": "746bfa52c394fc697b042a22a8bf958f05b1512b28231067abfa478ddd6b8d4c",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/ScrollProgress.tsx",
+    "lines": [
+      1,
+      17
+    ],
+    "sha256": "19579f564ad962ce586802343fe996d0f437804cb123b074cc38744eb7c26660",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/WordMarquee.tsx",
+    "lines": [
+      1,
+      34
+    ],
+    "sha256": "8d6c5d4774b61eea34d2d4f1f0506559269cd394b468cc2e8b0f5657698e2bd4",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/WordmarkParticles.tsx",
+    "lines": [
+      1,
+      118
+    ],
+    "sha256": "f815b9173659f91eb25a9742fa571df520bc1b40409d8781189b4a79262cd081",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/instrumentExamples.ts",
+    "lines": [
+      1,
+      114
+    ],
+    "sha256": "9263410d4592e563046f1bcaf550a86bcfb9adf18e262aa4a6e2b440d5889a5c",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/instrumentMechanismState.ts",
+    "lines": [
+      1,
+      55
+    ],
+    "sha256": "0ec6285e1b792a8ca717e8cb255e5ffe336d626b1f80e8c64d8f81842f2ed6a3",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/components/podTrial.ts",
+    "lines": [
+      1,
+      22
+    ],
+    "sha256": "f83f517b4970b848408db7e812e08d0ea22aaacefcaf80be0d39b68fc6c7716d",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/lib/dino.ts",
+    "lines": [
+      1,
+      95
+    ],
+    "sha256": "01074bc6cdd7c27842c75b6c88ea9cd515fd0bfefb0ed1aa08cbf0956a9031ea",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/lib/fluid.ts",
+    "lines": [
+      1,
+      186
+    ],
+    "sha256": "53dfec8b1df184c911ba93eb71b8be8d077dbf50fa976070594134073ade1c13",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/lib/motion.ts",
+    "lines": [
+      1,
+      28
+    ],
+    "sha256": "e4bb55f70b6eb6e8dd2d3e30b26ea1b34e9737cbbd7f6aeb2be7ffba8d6ea88d",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/lib/reveal.ts",
+    "lines": [
+      1,
+      21
+    ],
+    "sha256": "5e29af174b32caa2e71aadb6d9cc54c3c60bd5dcd655e508525b08eb5e9ab11f",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/lib/routeScroll.ts",
+    "lines": [
+      1,
+      5
+    ],
+    "sha256": "fba9d108bc1a6eda0e9e7feecc06a6995611f4171d5bbd9be5702e7e6843adf9",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/lib/scramble.ts",
+    "lines": [
+      1,
+      34
+    ],
+    "sha256": "f5e4ccea5d6ff2b0c1d1b63d4295039d1def963bc75919274c85f054428fcbf2",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/lib/smoothScroll.ts",
+    "lines": [
+      1,
+      74
+    ],
+    "sha256": "7c372fb8d0dceff47b717d7b65fd051987625be71674b3894f3b986fdb0dc7bd",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/About.tsx",
+    "lines": [
+      1,
+      224
+    ],
+    "sha256": "08db371038314ae90bc54360a37f3a5efbbd01ce51ecb6063b55a3c183e0dd84",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/Blog.tsx",
+    "lines": [
+      1,
+      135
+    ],
+    "sha256": "b5d9e27195287f4141029da13e9c3fa952413b1550846e58cffd6109f99e98f1",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/BlogPost.tsx",
+    "lines": [
+      1,
+      35
+    ],
+    "sha256": "ccd99b1c1383e047deca4dcde9e91abe008cfd02e75e5dbc245a48929929e8cb",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/Contact.tsx",
+    "lines": [
+      1,
+      225
+    ],
+    "sha256": "3b8fdecdc30b7dbc56a530a09d59c067c577644f46dfc3af6778c7da3a28de54",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/Home.tsx",
+    "lines": [
+      1,
+      38
+    ],
+    "sha256": "39ecffce31181d5b98c345f19d5eb9344839256a17f965e8dcc2be854863744a",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/Instrument.tsx",
+    "lines": [
+      1,
+      79
+    ],
+    "sha256": "2db2e35f49a4038623a6428618b19d147f3871d290dd1de76c2205a466a8a70e",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/Instruments.tsx",
+    "lines": [
+      1,
+      27
+    ],
+    "sha256": "4b18724c08d67aab6fb3ee22ac1b97507973e022ad8f37ad3a968fb6bc24964c",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/Lab.tsx",
+    "lines": [
+      1,
+      255
+    ],
+    "sha256": "3bd39a579d958f0a7574199c3f9bcc9c37de06692d5f60c097925d500de62c7d",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/Ledger.tsx",
+    "lines": [
+      1,
+      18
+    ],
+    "sha256": "1dffa721387372c255db125e685c4e52b17f9b01fbe2b87fb7a5d11d0a40e92f",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/NotFound.tsx",
+    "lines": [
+      1,
+      264
+    ],
+    "sha256": "090c9280c83fce181a19c67dba99389e2dbe91b27788820759c2bbb2197cf05b",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/Ramp.tsx",
+    "lines": [
+      1,
+      18
+    ],
+    "sha256": "b63366acf3ffb8fa1b25a850a74928f4b3e632f47e27aeda86402bd49bbdccea",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/Work.tsx",
+    "lines": [
+      1,
+      74
+    ],
+    "sha256": "1695959fd80c33854af84e9ba15292193fdc8e9093c68b3dc0611ddddd76521f",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/WorkDetail.tsx",
+    "lines": [
+      1,
+      112
+    ],
+    "sha256": "10ea54d8429175114e9f1655eebc5925161df423e45bd405086b1a0c4bdbc056",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/pages/instruments-data.ts",
+    "lines": [
+      1,
+      208
+    ],
+    "sha256": "a648d2f2fbfef7941ef653678db46374b49a72be6bb90c47c2fb1cc9a256abbe",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/about.css",
+    "lines": [
+      1,
+      405
+    ],
+    "sha256": "3ee582ba433c7a710f28732baad75cbaeed4e8aba2f8f5297419ffd27a512cd1",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/base.css",
+    "lines": [
+      1,
+      286
+    ],
+    "sha256": "661935cf576a480c694821f0be71f421d01c08c63a785adccb0e6afcbae5c317",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/blog.css",
+    "lines": [
+      1,
+      255
+    ],
+    "sha256": "379deed7c0d0241cb5ed40197ec529f780ff86ea52438d8e60e28adf005269e3",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/chrome.css",
+    "lines": [
+      1,
+      643
+    ],
+    "sha256": "5814e4ece59d690203bcc7a1efe762532b1c1b450c1e1dda843368805231c489",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/contact.css",
+    "lines": [
+      1,
+      310
+    ],
+    "sha256": "bbf81e40dc7a3f2b5dd262de88489dc5bc3f0e5060dee6b202700c58fe5867a6",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/cursor.css",
+    "lines": [
+      1,
+      132
+    ],
+    "sha256": "bca3ab2f0178e179e97f05dfe85f833516e37e361837c19664b81e71b9c77e71",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/detail-world.css",
+    "lines": [
+      1,
+      144
+    ],
+    "sha256": "a89166791f3e2e351216cdb03621f00abb34f4e67d81bc7e0c65c42a69bcc2e1",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/flight-preference.css",
+    "lines": [
+      1,
+      12
+    ],
+    "sha256": "11464eea926d057352b526197502e0b9a290a4db9386e428d615e7d5987754aa",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/home-gateway.css",
+    "lines": [
+      1,
+      36
+    ],
+    "sha256": "d06622c253d6002654c1ca91b8b1f40e838c75bfb7fe1552b89581049f229f84",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/home-hero.css",
+    "lines": [
+      1,
+      505
+    ],
+    "sha256": "20348a082aee4dd1e9ec5bcc18f6583eaa0d0505c536c6ff48d4af39e8a9c60d",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/home.css",
+    "lines": [
+      1,
+      730
+    ],
+    "sha256": "204ccfaacfb3e521c8fdcd7f0ea8226fd82020e41314474e6be38940b7eb4b29",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/instrument-example.css",
+    "lines": [
+      1,
+      91
+    ],
+    "sha256": "3a7907537a9849abc35556216204b0d0f612fdc512c95a0906e7da7e24a3fa9c",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/instrument-mechanism.css",
+    "lines": [
+      1,
+      170
+    ],
+    "sha256": "a88da78c82e405f4ce724690d4b01b959ac13213a509942a2518de6a1a9bec96",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/instrument-surfaces.css",
+    "lines": [
+      1,
+      170
+    ],
+    "sha256": "5fef649fb4abc7c0d1543a8e54097f26fade8ab558722811b4b637b794d2bb08",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/lab.css",
+    "lines": [
+      1,
+      352
+    ],
+    "sha256": "69126ebe1ce9af5abbd5b3b26cb3300fc64de3cca6a4f0cfc260e00b6d523dea",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/nav.css",
+    "lines": [
+      1,
+      590
+    ],
+    "sha256": "ee4923c7218e86336ad8b9ec684b91cb332268a10fa1570974f5ccf7780ac7ab",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/notfound.css",
+    "lines": [
+      1,
+      269
+    ],
+    "sha256": "ac90f4c89b3391d642c8fe3db46e84c27fc154de364bf3edcfc0162479d6e695",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/orbital.css",
+    "lines": [
+      1,
+      617
+    ],
+    "sha256": "4334a28774b46178cb299da55b3fda2ff5d62407cf8da1da222e13decf01c0bb",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/pages.css",
+    "lines": [
+      1,
+      155
+    ],
+    "sha256": "05440781838cd97bdea0ad85a74f6c35c7e60d74e2311381a43578e215cccab9",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/pod-trial.css",
+    "lines": [
+      1,
+      30
+    ],
+    "sha256": "9177a135a390716185055213604af1fe36521e35b97bca06a152fdcd45ff4508",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/product-pages.css",
+    "lines": [
+      1,
+      128
+    ],
+    "sha256": "d48fa537c1252456de789d0e6865d2b9d0c0158f8e44546cd1a6db65631761d2",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/product-route-transition.css",
+    "lines": [
+      1,
+      22
+    ],
+    "sha256": "43fe22fad8c7776ad9b232d552f514e206b4bf18ccd50964f48456b64f10b437",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/styles/work.css",
+    "lines": [
+      1,
+      378
+    ],
+    "sha256": "503674fc58e5e72e701eaca3efe8d52760ba569bf85bf3c79c02a792f515fc13",
+    "category": "style-security-surface",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "landing/src/types.ts",
+    "lines": [
+      1,
+      601
+    ],
+    "sha256": "0208a07cd1bb125b575a27aed85be4c816c9c0ea3be6028511773302dd4c49ed",
+    "category": "type-definitions",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "shared/black-hole.ts",
+    "lines": [
+      1,
+      263
+    ],
+    "sha256": "050a0290439fa7de938d38cbbd98438b41cec843ce4fd9d38dee881d655d9998",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "shared/flight-path.ts",
+    "lines": [
+      1,
+      26
+    ],
+    "sha256": "905edc1b3a3ea179da92d6e8e2448a5af612788e6e1b7c71ed14c94c5538e0bb",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "shared/instrument-orbit.ts",
+    "lines": [
+      1,
+      272
+    ],
+    "sha256": "f865b6c7d72105fa4192426bf40ec023be68f88375c6f2d15ef9cd74379a8ad6",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "shared/module-camera.ts",
+    "lines": [
+      1,
+      157
+    ],
+    "sha256": "ed68221fd510d970b8ee64d97ef96d446ca0e925e484c1259ff0c944f6f8a03d",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "shared/orbit-input.ts",
+    "lines": [
+      1,
+      204
+    ],
+    "sha256": "7cb6a01af5831d7e370225f8d01b370880b97693acadb0050e06a5e96749f5ad",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "shared/pointer-aim.ts",
+    "lines": [
+      1,
+      47
+    ],
+    "sha256": "5933663a862ba1766785b545b6882ff650f21f0d2df4770e69b17c5593539bc5",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "shared/scene-compositor.ts",
+    "lines": [
+      1,
+      43
+    ],
+    "sha256": "1790c74c15a634640e3689f6a00246161ace986dafd5052cf5f7560cc037ad42",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "shared/space-scene.ts",
+    "lines": [
+      1,
+      1273
+    ],
+    "sha256": "a95f217b32beb3be6c67871cab05576cf0c10fca4a6718963e88224bb663a4e0",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  },
+  {
+    "path": "shared/star-field.ts",
+    "lines": [
+      1,
+      105
+    ],
+    "sha256": "5679129f7ec61dad1e2db774739e2934b1fa9a127db32ca989e9980c5d077649",
+    "category": "runtime-source",
+    "review": "full-line-source-read"
+  }
+]

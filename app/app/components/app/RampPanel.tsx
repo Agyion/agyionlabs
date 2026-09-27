@@ -121,6 +121,7 @@ function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionV
       assertCurrentSession();
       await fn();
     } catch (e) {
+      if (isCurrentSession() && e instanceof AnchorError && e.kind === "auth") setToken(null);
       if (isCurrentSession()) setError(
         e instanceof AnchorError
           ? e.message
@@ -192,25 +193,26 @@ function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionV
       })
       .catch(() =>
         setBalanceNote(
-          "No funded testnet account for this key yet — friendbot funding is a separate step. The ramp itself does not require it.",
+          "No funded testnet account for this key yet: friendbot funding is a separate step. The ramp itself does not require it.",
         ),
       );
   }, [wallet.address]);
 
   const ensureAuth = useCallback(async (): Promise<string> => {
     assertCurrentSession();
-    if (token) return token;
+    // authenticate owns expiry/session validation and safely reuses a valid token.
+    // A component's display state must never bypass that validation on later actions.
     if (!signer) {
       throw new AnchorError(
         "auth",
-        "Connect a wallet in the top bar first — SEP-10 needs a signer.",
+        "Connect a wallet in the top bar first: SEP-10 needs a signer.",
       );
     }
     const t = await authenticate(signer);
     assertCurrentSession();
     setToken(t);
     return t;
-  }, [token, signer, assertCurrentSession]);
+  }, [signer, assertCurrentSession]);
 
   const doAuth = () =>
     run("auth", async () => {
@@ -240,7 +242,7 @@ function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionV
       assertCurrentSession();
       setWithdraw({ ...w, requestedAmount, destinationIban });
       setStatusRecord(null);
-      setNotice("Withdrawal registered — send the USDC payment with the exact memo below.");
+      setNotice("Withdrawal registered: send the USDC payment with the exact memo below.");
     });
 
   const doStatus = () =>
@@ -268,7 +270,7 @@ function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionV
         throw new AnchorError("auth", "Connect a wallet first.");
       const hash = await createAssetTrustline(signer, wallet.address);
       assertCurrentSession();
-      setNotice(`USDC trustline created (tx ${hash.slice(0, 12)}…) — deposits can now land.`);
+      setNotice(`USDC trustline created (tx ${hash.slice(0, 12)}…): deposits can now land.`);
     });
 
   const doSendPayment = () =>
@@ -299,17 +301,33 @@ function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionV
 
   return (
     <div className="instrument-panel panel-ramp">
-      <div className="instrument-notice"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 9v5m0-9v1"/></svg><p>Sandbox only: bank transfers and TRY payouts are simulated; USDC uses Stellar testnet.{IS_MOCK ? " Separate from local instrument simulation." : ""}</p></div>
       <div className="instrument-feedback">{error && <ErrorNote>{error}</ErrorNote>}{recoveryError && <ErrorNote>{recoveryError} Payment is disabled until recovery is readable.</ErrorNote>}{notice && <OkNote>{notice}</OkNote>}</div>
-      <div className="instrument-layout">
-        <div className="instrument-main">
+      <div className="ramp-desk">
+        <div className="ramp-converter workbench-surface">
+          <header className="workbench-heading"><h3>Transfer</h3></header>
+          <div className="instrument-notice"><p>Sandbox only: bank transfers and TRY payouts are simulated; USDC uses Stellar testnet.{IS_MOCK ? " Separate from local instrument simulation." : ""}</p></div>
           <div className="ramp-switch" role="group" aria-label="Transfer direction">
             <button type="button" aria-pressed={direction === "deposit"} onClick={() => { if (direction !== "deposit") invalidateQuote(); setDirection("deposit"); }}>Deposit</button>
             <button type="button" aria-pressed={direction === "withdraw"} onClick={() => { if (direction !== "withdraw") invalidateQuote(); setDirection("withdraw"); }}>Withdraw</button>
           </div>
           <ExchangeRoute direction={direction} amount={direction === "deposit" ? depAmount : wdAmount} />
-          <section className="instrument-section" aria-label="Deposit terms" hidden={direction !== "deposit"}>
+          <section className="instrument-section ramp-deposit-terms" aria-label="Deposit terms" hidden={direction !== "deposit"}>
             <Field label="TRY amount"><TextInput value={depAmount} onChange={(e) => { invalidateQuote(); setDepAmount(e.target.value); }} inputMode="decimal" /></Field>
+          <section className="ramp-quote">
+            {direction === "deposit" && <>
+              <GhostButton onClick={() => void requestQuote(depAmount)} disabled={quoteBusy}>{quoteBusy ? "Estimating…" : "Refresh estimate"}</GhostButton>
+              {quoteError && <ErrorNote>{quoteError}</ErrorNote>}
+              {quote?.value ? <>
+                <div className="ramp-rate">1 USDC ≈ {Number(quote.value.price).toFixed(2)} TRY</div>
+                <dl className="instrument-summary"><div><dt>Estimated amount</dt><dd>{Number(quote.value.buyAmount).toFixed(2)} USDC</dd></div>{quote.value.feeTotal && <div><dt>Estimated fee</dt><dd>{quote.value.feeTotal} {quote.value.feeAsset === "iso4217:TRY" ? "TRY" : quote.value.feeAsset}</dd></div>}</dl>
+                <p className="instrument-disclosure">Indicative only; not a booked rate.</p>
+                <details className="instrument-technical"><summary>Estimate details</summary>
+                  <dl className="instrument-summary"><div><dt>Direction</dt><dd>{quote.direction}</dd></div><div><dt>Requested amount</dt><dd>{quote.requestedAmount} TRY</dd></div></dl>
+                  <p>The price endpoint supplies no expiry. Requested at <time dateTime={quote.requestedAt}>{new Date(quote.requestedAt).toLocaleTimeString()}</time>. Refresh before relying on this estimate.</p>
+                </details>
+              </> : null}
+            </>}
+          </section>
             <div className="instrument-actions"><FilledButton onClick={doDeposit} disabled={busy !== null || !signer || !wallet.address}>{busy === "deposit" ? "Requesting…" : "Get deposit instructions"}</FilledButton></div>
             {!wallet.address && <p className="instrument-disclosure">Connect a wallet to continue.</p>}
             {deposit && <div className="ramp-receipt">
@@ -318,11 +336,12 @@ function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionV
               <p className="instrument-disclosure">{deposit.how}</p>{deposit.message && <p className="instrument-disclosure">{deposit.message}</p>}
             </div>}
           </section>
-          <section className="instrument-section" aria-label="Withdrawal terms" hidden={direction !== "withdraw"}>
+          <section className="instrument-section ramp-withdraw-terms" aria-label="Withdrawal terms" hidden={direction !== "withdraw"}>
             <div className="instrument-fields">
               <Field label={`Amount (${CONFIG.assetCode})`}><TextInput value={wdAmount} onChange={(e) => setWdAmount(e.target.value)} inputMode="decimal" /></Field>
               <div className="instrument-field-wide"><Field label="Destination IBAN (TRY)"><TextInput value={wdIban} onChange={(e) => setWdIban(e.target.value)} /></Field></div>
             </div>
+            <p className="ramp-withdraw-estimate">No USDC to TRY estimate is available from this price endpoint. Registering a withdrawal fixes its USDC amount and payment memo; the sandbox simulates the TRY payout.</p>
             <div className="instrument-actions"><FilledButton onClick={doWithdraw} disabled={busy !== null || !signer || !wallet.address}>{busy === "withdraw" ? "Registering…" : "Register withdrawal"}</FilledButton></div>
             {!wallet.address && <p className="instrument-disclosure">Connect a wallet to continue.</p>}
             {withdraw && <div className="ramp-receipt">
@@ -345,23 +364,11 @@ function RampSession({ wallet, sessionVersion }: { wallet: WalletState; sessionV
             {status ? <div className="ramp-receipt"><Row k="ID" v={status.id} /><Row k="Kind" v={status.kind} /><Row k="Status" v={status.status} />{status.amountIn && <Row k="In" v={status.amountIn} />}{status.amountOut && <Row k="Out" v={status.amountOut} />}{status.message && <p className="instrument-disclosure">{status.message}</p>}</div> : <p className="instrument-empty">Refresh to check this transfer with the anchor.</p>}
           </section>}
         </div>
-        <aside className="instrument-aside">
-          <section className="instrument-preview">
-            <h3>{direction === "deposit" ? "TRY → USDC estimate" : "Withdrawal estimate"}</h3>
-            {direction === "deposit" ? <>
-              <p className="instrument-disclosure">Indicative only; not a booked rate. The price endpoint supplies no expiry.</p>
-              <GhostButton onClick={() => void requestQuote(depAmount)} disabled={quoteBusy}>{quoteBusy ? "Estimating…" : "Refresh estimate"}</GhostButton>
-              {quoteError && <ErrorNote>{quoteError}</ErrorNote>}
-              {quote?.value ? <>
-                <div className="ramp-rate">1 USDC ≈ {Number(quote.value.price).toFixed(2)} TRY</div>
-                <dl className="instrument-summary"><div><dt>Direction</dt><dd>{quote.direction}</dd></div><div><dt>Requested amount</dt><dd>{quote.requestedAmount} TRY</dd></div><div><dt>Estimated amount</dt><dd>{Number(quote.value.buyAmount).toFixed(2)} USDC</dd></div>{quote.value.feeTotal && <div><dt>Estimated fee</dt><dd>{quote.value.feeTotal} {quote.value.feeAsset === "iso4217:TRY" ? "TRY" : quote.value.feeAsset}</dd></div>}</dl>
-                <p className="instrument-disclosure">Requested at <time dateTime={quote.requestedAt}>{new Date(quote.requestedAt).toLocaleTimeString()}</time>. Refresh before relying on this estimate.</p>
-              </> : !quoteBusy && !quoteError && <p className="instrument-empty">Refresh for the current TRY amount.</p>}
-            </> : <p className="instrument-disclosure">No USDC-to-TRY estimate is available from this price endpoint. Registering a withdrawal fixes its USDC amount and payment memo; the sandbox simulates the TRY payout.</p>}
-          </section>
+        <aside className="ramp-account-desk">
+
           <section className="ramp-account">
             <h3>Your account</h3>
-            <dl className="instrument-summary"><div><dt>Wallet</dt><dd>{wallet.address ? shortAddress(wallet.address) : "Not connected"}</dd></div><div><dt>Anchor session</dt><dd>{token ? "SEP-10 authenticated" : "Not connected"}</dd></div><div><dt>Testnet balance</dt><dd>{balance ?? "—"}</dd></div></dl>
+            <dl className="instrument-summary"><div><dt>Wallet</dt><dd>{wallet.address ? shortAddress(wallet.address) : "Not connected"}</dd></div><div><dt>Anchor session</dt><dd>{token ? "SEP-10 authenticated" : "Not connected"}</dd></div><div><dt>Testnet balance</dt><dd>{balance ?? "Not available"}</dd></div></dl>
             {balanceNote && <p className="mt-3">{balanceNote}</p>}
             {!token && <div className="instrument-actions"><GhostButton onClick={doAuth} disabled={busy !== null || !signer || !wallet.address}>{busy === "auth" ? "Authenticating…" : "Connect to anchor (SEP-10)"}</GhostButton></div>}
             <details className="instrument-technical"><summary>Testnet setup & anchor details</summary>

@@ -70,7 +70,7 @@ function PodScene({ input }: { input: MechanismInputs }) {
     <circle className="im-seal" data-motion="seal" cx="500" cy="266" r="33" /><path className="im-lock-mark" data-motion="seal-mark" d="M484 279V260H516V279ZM490 260V251C490 237 510 237 510 251V260" />
     <g className={input.mature ? 'im-condition im-condition--on' : 'im-condition'}><circle cx="442" cy="90" r="4" /><text x="456" y="96">UNLOCK LEDGER</text></g>
     <text className="im-annotation" x="303" y="232" textAnchor="middle">SIGNATURE</text>
-    <Parcel /><Cross x={500} y={266} /><Stamp>TIMELOCK + RECIPIENT-BOUND SIGNATURE · PROTOCOL V3</Stamp>
+    <Parcel /><Cross x={500} y={266} /><Stamp>TIMELOCK + SIGNATURE BOUND TO RECIPIENT · PROTOCOL V3</Stamp>
   </>
 }
 function TriggerScene() {

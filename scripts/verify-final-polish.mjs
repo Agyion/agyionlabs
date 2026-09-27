@@ -1,3 +1,4 @@
+import { waitForFonts } from './lib/browser-settle.mjs';
 /** Final visual/control checks. Wallet fragments are explicitly synthetic SSR fixtures; no signing. */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -34,7 +35,7 @@ try {
   };
   await page.goto(`${base}/app/?tab=fade`,{waitUntil:'domcontentloaded'});
   await expect(page.locator('.orbital-backdrop')).toHaveClass(/is-ready/,{timeout:60000});
-  await page.evaluate(()=>document.fonts.ready);
+  await waitForFonts(page);
   const topbarMarkup=await page.locator('.station-topbar').evaluate(n=>n.outerHTML);
   for(const [id,name]of Object.entries(names)){
    await page.locator(`#tab-${id}`).click();await expect(page.locator(`#panel-${id}`)).toBeVisible();
@@ -83,7 +84,7 @@ try {
     const fragment=await readFile(`artifacts/verification/2026-09-26-polish/fixtures/${fixture}.html`,'utf8');
     const fixtureTopbar=await page.evaluate(({markup,fragment})=>{const dom=new DOMParser().parseFromString(markup,'text/html');dom.querySelector('.wallet-bar').outerHTML=fragment;return dom.body.innerHTML},{markup:topbarMarkup,fragment});
     await page.route(`**/__${fixture}`,r=>r.fulfill({contentType:'text/html; charset=utf-8',body:`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${styles.map(h=>`<link rel="stylesheet" href="${h}">`).join('')}<body><main class="station-app">${fixtureTopbar}</main></body>`}));
-    await page.goto(`${base}/__${fixture}`);await page.evaluate(()=>document.fonts.ready);await fit();await buttons(page.locator('.station-topbar'),`${fixture} synthetic layout`);await capture(fixture);
+    await page.goto(`${base}/__${fixture}`);await waitForFonts(page);await fit();await buttons(page.locator('.station-topbar'),`${fixture} synthetic layout`);await capture(fixture);
    }
   }
   await page.close();

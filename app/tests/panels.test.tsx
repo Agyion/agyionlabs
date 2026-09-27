@@ -84,7 +84,7 @@ describe('read-only instrument drafts', () => {
     ['-0.009', '-0.009 USDC'],
     ['0.0000001', '0.0000001 USDC'],
     ['1200', '1,200 USDC'],
-    ['NaN', '—'],
+    ['NaN', 'Enter a valid amount'],
   ])('keeps draft display precision for %s', (input, expected) => {
     expect(draftAmount(input)).toBe(expected);
   });
@@ -185,10 +185,10 @@ describe('read-only instrument drafts', () => {
     boundary.listEntries.mockReturnValue([entry, { ...entry, seq: 2, txHash: 'ab'.repeat(32) }]);
     render(<LedgerPanel wallet={connected} />);
     const summary = screen.getByLabelText('Local record summary');
-    expect(Array.from(summary.querySelectorAll('dd')).map((node) => node.textContent)).toEqual(['2', '1', 'This browserLocal history']);
+    expect(Array.from(summary.querySelectorAll('dd')).map((node) => node.textContent)).toEqual(['2', '1', 'This browser']);
     expect(summary.textContent).not.toMatch(/verified|confirmed/i);
     fireEvent.click(screen.getByRole('button', { name: 'Clear history' }));
-    expect(Array.from(summary.querySelectorAll('dd')).map((node) => node.textContent)).toEqual(['0', '0', 'This browserLocal history']);
+    expect(Array.from(summary.querySelectorAll('dd')).map((node) => node.textContent)).toEqual(['0', '0', 'This browser']);
     expect(boundary.buildProofPack).not.toHaveBeenCalled();
   });
 
@@ -340,12 +340,13 @@ describe('create duration validation in mock mode', () => {
 });
 
 describe('record loading', () => {
-  it.each([{ name: 'Pod', Panel: PodPanel, label: /load pod by id/i }, { name: 'Envoy', Panel: EnvoyPanel, label: /load mandate by id/i }])('$name rejects a malformed ID visibly without calling the client', async ({ Panel, label }) => {
+  it.each([{ name: 'Pod', Panel: PodPanel, label: /load pod by id/i, method: 'get_pod' as const }, { name: 'Envoy', Panel: EnvoyPanel, label: /load mandate by id/i, method: 'get_mandate' as const }])('$name rejects a malformed ID visibly without calling the client', async ({ Panel, label, method }) => {
     render(<Panel wallet={connected} />);
     fireEvent.change(screen.getByLabelText(label), { target: { value: 'not-an-id' } });
     fireEvent.click(screen.getByRole('button', { name: /^load$/i }));
     expect((await screen.findByRole('alert')).textContent).toMatch(/id/i);
     expect((screen.getByRole('button', { name: /^load$/i }) as HTMLButtonElement).disabled).toBe(false);
+    expect(client[method]).not.toHaveBeenCalled();
   });
 
   it.each([{ name: 'Pod', Panel: PodPanel, label: /load pod by id/i }, { name: 'Envoy', Panel: EnvoyPanel, label: /load mandate by id/i }])('$name catches a synchronous missing-wallet error and allows retry', async ({ Panel, label }) => {
@@ -482,7 +483,7 @@ describe('Fade preview control', () => {
     expect(slider.getAttribute('aria-valuenow')).not.toBe('1000');
     fireEvent.pointerUp(slider);
     expect(slider.getAttribute('aria-valuenow')).toBe('1000');
-    expect(screen.getByText('now — drag me')).toBeTruthy();
+    expect(screen.getByText('now: drag me')).toBeTruthy();
   });
 });
 
@@ -500,6 +501,19 @@ describe('Proof Pack feedback', () => {
 
 describe('Ramp wallet and payment boundaries', () => {
   const withSigner = () => { boundary.signer = { address: async () => 'GCONNECTED', signTransaction: vi.fn() }; };
+  it('revalidates cached authentication before a subsequent action', async () => {
+    withSigner();
+    boundary.authenticate.mockResolvedValueOnce('session-a').mockResolvedValueOnce('fresh-session');
+    render(<RampPanel wallet={connected} />);
+    fireEvent.click(screen.getByRole('button', { name: /get deposit instructions/i }));
+    await screen.findByText('Bank A');
+    fireEvent.click(screen.getByRole('button', { name: /^withdraw$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /register withdrawal/i }));
+    await screen.findByRole('button', { name: /send 20 USDC/i });
+    expect(boundary.authenticate).toHaveBeenCalledTimes(2);
+    expect(boundary.withdrawTry).toHaveBeenCalledWith('fresh-session', '20', 'TR330006100519786457841326');
+  });
+
   it('refreshes the selected withdrawal after a deposit already exists', async () => {
     withSigner();
     render(<RampPanel wallet={connected} />);
@@ -712,7 +726,7 @@ describe('Envoy visible scope and local runner lifecycle', () => {
   it('puts the nonpositive price scope, claim count, expiry and fixed recipient above monetary fields', () => {
     render(<EnvoyPanel wallet={connected} />);
     const scope = screen.getByRole('region', { name: 'Claim permission' });
-    expect(scope.textContent).toMatch(/zero or negative/i);
+    expect(scope.textContent).toMatch(/zero or a negative price/i);
     expect(scope.textContent).toMatch(/50/);
     expect(scope.textContent).toMatch(/Valid for/);
     expect(scope.textContent).toMatch(/Recipient/);
@@ -756,7 +770,7 @@ describe('Envoy visible scope and local runner lifecycle', () => {
     fireEvent.click(screen.getByRole('button', { name: /stop agent/i }));
     await act(async () => { finish(fade); });
     expect(client.envoy_claim).not.toHaveBeenCalled();
-    expect(screen.getByText(/Stopped locally. The on-chain mandate remains active/i)).toBeTruthy();
+    expect(screen.getByText(/Stopped locally. The mandate on the network remains active/i)).toBeTruthy();
   });
   it('reports an already requested claim honestly after leaving and never submits another automatically', async () => {
     const view = await load();
@@ -781,6 +795,6 @@ describe('Envoy visible scope and local runner lifecycle', () => {
     fireEvent.click(screen.getByRole('button', { name: /run the agent/i }));
     await act(async () => { await vi.advanceTimersByTimeAsync(4000); });
     expect(client.envoy_claim).not.toHaveBeenCalled();
-    expect(screen.getAllByText(/only zero or negative/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/only claims at zero or a negative price/i).length).toBeGreaterThan(0);
   });
 });

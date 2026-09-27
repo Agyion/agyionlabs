@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as Three from 'three';
+const flowGraphics = vi.hoisted(() => ({ samples: [] as number[][] }));
 const graphics = vi.hoisted(() => ({ model: null as Three.Object3D | null, gpuName: '', rendererOptions: [] as Array<{ antialias?: boolean }>, disposed: 0, contextsLost: 0, frames: [] as Array<{ eye: number[]; rotation: number[]; ship: number[]; ring: number[]; exhibits: Array<{ id: string; visible: boolean; screen: number[] }>; previews: Array<{ id: string; visible: boolean; opacity: number; matrix: number[] }>; anchors: Array<{ id: string; matrix: number[] }> }> }));
 vi.mock('three', async importOriginal => {
   const actual = await importOriginal<typeof Three>();
@@ -20,8 +21,14 @@ vi.mock('../../shared/black-hole', async importOriginal => {
   const three = await import('three');
   return { ...actual, createLensTexture: () => new three.DataTexture(), createAccretionTexture: () => new three.DataTexture() };
 });
-vi.mock('../../shared/scene-compositor', () => ({ createSceneCompositor: () => ({
+vi.mock('../../shared/scene-compositor', () => ({ createSceneCompositor: (_renderer: unknown, background: Three.Scene) => ({
   resize() {}, dispose() {}, render(scene: Three.Scene, camera: Three.PerspectiveCamera) {
+    const clocks: number[] = [];
+    background.traverse(object => {
+      const material = (object as Three.Mesh).material as Three.ShaderMaterial | undefined;
+      if (material?.uniforms?.uTime) clocks.push(material.uniforms.uTime.value);
+    });
+    flowGraphics.samples.push(clocks);
     scene.updateMatrixWorld(true);
     const ship = scene.children.find(child => child.type === 'Group')!;
     const ring = ship.children.find(child => child.type === 'Group')!;
@@ -38,6 +45,7 @@ vi.mock('../../shared/scene-compositor', () => ({ createSceneCompositor: () => (
   },
 }) }));
 import { createOrbitalScene } from '../../shared/space-scene';
+import type { HoleProjection } from '../../shared/space-scene';
 import * as THREE from 'three';
 import { ARRIVAL_DURATION_MS, ARRIVAL_REVEAL_MS, LAUNCH_DURATION_MS, readFlightHandoff } from '../../shared/flight-handoff';
 
@@ -45,6 +53,7 @@ let callbacks: Map<number, FrameRequestCallback>;
 let nextId: number;
 const scenes: ReturnType<typeof createOrbitalScene>[] = [];
 beforeEach(() => {
+  flowGraphics.samples.length = 0;
   vi.useFakeTimers(); callbacks = new Map(); nextId = 0; graphics.frames.length = 0; sessionStorage.clear();
   graphics.gpuName = ''; graphics.rendererOptions.length = 0; graphics.disposed = 0; graphics.contextsLost = 0;
   graphics.model = null;
@@ -72,6 +81,114 @@ const expectSamePose = (actual: ReturnType<typeof latest>, expected: ReturnType<
 };
 
 describe('visible connecting flight', () => {
+  it('advances both app gas layers 25 percent faster while leaving the landing rate unchanged', () => {
+    const landing = create({ mode: 'landing' });
+    step(16); step(100);
+    const landingClock = flowGraphics.samples.at(-1)!;
+    expect(landingClock).toHaveLength(2);
+    expect(landingClock[0]).toBeCloseTo(.135, 8);
+    expect(landingClock[1]).toBeCloseTo(landingClock[0], 10);
+    landing.scene.dispose();
+    create({ mode: 'station' });
+    step(16); step(100);
+    const appClock = flowGraphics.samples.at(-1)!;
+    expect(appClock[0]).toBeCloseTo(landingClock[0] * 1.25, 8);
+    expect(appClock[1]).toBeCloseTo(appClock[0], 10);
+  });
+
+  it('retains the recorded gas phase on arrival and freezes it for the reveal interval', () => {
+    create({ mode: 'station', arrival: true, arrivalPose: { elapsed: 40, flowTime: 57, ringFocus: 0, yaw: 0, pitch: 0, zoom: 0 }, arrivalRevealMs: 450 });
+    expect(flowGraphics.samples.at(-1)).toEqual([57, 57]);
+    step(16); step(100);
+    expect(flowGraphics.samples.at(-1)).toEqual([57, 57]);
+    step(250); step(200);
+    expect(flowGraphics.samples.at(-1)![0]).toBeGreaterThan(57);
+    expect(flowGraphics.samples.at(-1)![0]).toBe(flowGraphics.samples.at(-1)![1]);
+  });
+
+  it.each([
+    { mode: 'landing' as const, pointerType: 'mouse', width: 1440, height: 900, horizontal: .375 },
+    { mode: 'landing' as const, pointerType: 'touch', width: 390, height: 844, horizontal: .375 },
+    { mode: 'station' as const, pointerType: 'mouse', width: 1440, height: 900, horizontal: .09375 },
+    { mode: 'station' as const, pointerType: 'touch', width: 390, height: 844, horizontal: .09375 },
+  ])('uses 50-percent increased $pointerType camera travel in $mode at $width px', viewport => {
+    // Freeze ambient ship drift so the measured angle isolates input gain.
+    // Reduced motion changes damping, not the pointer sensitivity setting.
+    const { host } = create({ mode: viewport.mode, interactive: true, showExhibits: false, reducedMotion: true }, viewport);
+    const canvas = host.querySelector('canvas')!;
+    canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: viewport.width, height: viewport.height } as DOMRect);
+    const angles = () => {
+      const frame = latest();
+      const offset = new THREE.Vector3(...frame.eye).sub(new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().fromArray(frame.ship)));
+      return { yaw: Math.atan2(offset.x, offset.z), pitch: Math.asin(offset.y / offset.length()) };
+    };
+    for (let frame = 0; frame < 30; frame++) step(100);
+    const before = angles();
+    for (const [type, x, y] of [['pointerdown', 80, 200], ['pointermove', 280, 300], ['pointerup', 280, 300]] as const) {
+      const event = new MouseEvent(type, { clientX: x, clientY: y, button: 0 });
+      Object.defineProperties(event, { pointerType: { value: viewport.pointerType }, pointerId: { value: 1 } });
+      canvas.dispatchEvent(event);
+    }
+    for (let frame = 0; frame < 30; frame++) step(100);
+    const after = angles();
+    expect(after.yaw - before.yaw).toBeCloseTo(200 / viewport.width * Math.PI * 2 * viewport.horizontal, 8);
+    expect(after.pitch - before.pitch).toBeCloseTo(viewport.mode === 'landing' && viewport.pointerType === 'touch' ? 0 : 100 / viewport.height * Math.PI * .375, 8);
+  });
+
+  it('reports the projected hole in host coordinates without changing the scene pose', () => {
+    const viewport = { width: 1440, height: 900 };
+    const baseline = create({ mode: 'landing', showExhibits: false, reducedMotion: true }, viewport);
+    const expectedPose = latest();
+    baseline.scene.dispose();
+    const projections: Array<Readonly<HoleProjection>> = [];
+    const { scene } = create({
+      mode: 'landing', showExhibits: false, reducedMotion: true,
+      onHoleProjection: value => projections.push(value),
+    }, viewport);
+    expectSamePose(latest(), expectedPose);
+    const first = { ...projections.at(-1)! };
+    const verifyProjection = () => {
+      const projection = projections.at(-1)!;
+      const camera = new THREE.PerspectiveCamera(44, viewport.width / viewport.height, .1, 4000);
+      camera.position.fromArray(latest().eye);
+      camera.quaternion.fromArray(latest().rotation);
+      camera.updateMatrixWorld(true);
+      const center = new THREE.Vector3(-240, -10, -600);
+      const worldRadius = new THREE.Vector3(0, 230, 0).applyQuaternion(camera.quaternion).add(center);
+      const screen = center.project(camera);
+      const rim = worldRadius.project(camera);
+      expect(projection.x * viewport.width).toBeCloseTo((screen.x + 1) * viewport.width / 2, 7);
+      expect(projection.y * viewport.height).toBeCloseTo((1 - screen.y) * viewport.height / 2, 7);
+      expect(projection.radius * viewport.height).toBeCloseTo((rim.y - screen.y) * viewport.height / 2, 7);
+      expect([projection.x, projection.y, projection.radius].every(Number.isFinite)).toBe(true);
+      expect(projection.visible).toBe(true);
+    };
+    verifyProjection();
+    viewport.width /= 2; viewport.height /= 2;
+    scene.refreshLayout();
+    verifyProjection();
+    expect(projections.at(-1)).toBe(projections[0]);
+    expect(projections.at(-1)!.x).toBeCloseTo(first.x, 9);
+    expect(projections.at(-1)!.y).toBeCloseTo(first.y, 9);
+    expect(projections.at(-1)!.radius).toBeCloseTo(first.radius, 9);
+  });
+
+  it('keeps projected particle destinations attached while the user orbits', () => {
+    const projections: HoleProjection[] = [];
+    const { host } = create({ mode: 'landing', interactive: true, showExhibits: false, onHoleProjection: value => projections.push({ ...value }) });
+    const first = projections.at(-1)!;
+    const canvas = host.querySelector('canvas')!;
+    canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 1440, height: 900 } as DOMRect);
+    for (const [type, x] of [['pointerdown', 700], ['pointermove', 1000], ['pointerup', 1000]] as const) {
+      const event = new MouseEvent(type, { clientX: x, clientY: 400, button: 0 });
+      Object.defineProperties(event, { pointerType: { value: 'mouse' }, pointerId: { value: 1 } });
+      canvas.dispatchEvent(event);
+    }
+    step(16); step(100);
+    expect(projections.length).toBeGreaterThan(1);
+    expect(projections.at(-1)!.x).not.toBeCloseTo(first.x, 3);
+    expect(projections.at(-1)!.radius).toBeGreaterThan(0);
+  });
   it('has continuous solid connections from hub to all four wheel spokes and between neighboring bay hatches', () => {
     create({ mode: 'station', reducedMotion: true });
     const solids: Array<{ geometry: Three.BufferGeometry; inverse: Three.Matrix4 }> = [];
@@ -286,6 +403,7 @@ describe('visible connecting flight', () => {
     step(LAUNCH_DURATION_MS / 2); await launch;
     expect(host.dataset.flightPhase).toBe('handoff');
     const landing = latest(); const saved = readFlightHandoff(sessionStorage);
+    const landingGas = [...flowGraphics.samples.at(-1)!];
     expect(saved.arrival).toBe(true); expect(saved.settled).toBe(true); expect(saved.pose).toBeDefined();
     expect(callbacks.size).toBe(0);
     const complete = vi.fn();
@@ -295,6 +413,7 @@ describe('visible connecting flight', () => {
       app.scene.setPanelOpen(true, { focus: false });
     }
     const arrival = latest();
+    expect(flowGraphics.samples.at(-1)).toEqual(landingGas);
     expectSamePose(arrival, landing);
     expect(app.host.dataset.flightPhase).toBe('interactive');
     step(ARRIVAL_REVEAL_MS + 1000);

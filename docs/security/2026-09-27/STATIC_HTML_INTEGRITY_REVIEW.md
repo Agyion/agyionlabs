@@ -1,0 +1,26 @@
+# Static HTML response integrity review, 2026-09-27
+
+The public release check observed Cloudflare JavaScript Detections and Web Analytics injections blocked by the existing CSP. This patch adds `Cache-Control: no-transform` only to known HTML document routes and aliases, preserving the reviewed HTML and script-hash policy. It does not change application code, HTML, CSP, zone/WAF/Bot settings, wallet behavior or contracts.
+
+## Basis and scope
+
+Cloudflare documents that `no-transform` prevents JavaScript Detections injection and leaves `cf.bot_management.js_detection.passed` missing for those requests. This can affect custom rules which depend on that signal; no such rule is disabled or modified here. The previous strict CSP already prevented the injected script from running. Production verification must still confirm availability with the actual zone configuration. [JavaScript Detections](https://developers.cloudflare.com/cloudflare-challenges/challenge-types/javascript-detections/)
+
+Cloudflare also documents that this response directive prevents automatic Web Analytics beacon injection. Consequently automatic analytics is unavailable on these HTML responses. This is intentional response integrity enforcement, not an analytics success claim. [Web Analytics FAQ](https://developers.cloudflare.com/web-analytics/faq/)
+
+Static Assets applies all matching `_headers` rules and joins duplicate values with commas. Its default asset cache policy is `public, max-age=0, must-revalidate`. Therefore adding another full cache policy over `/app/*` would be ambiguous. The existing `/app/*` revalidation block remains byte-for-byte unchanged; `/app/` and `/app/index.html` add only `no-transform`. Other known document paths receive the complete policy. Immutable `/_next/static/*` and `/assets/*` caching and `/app-assets.json` revalidation remain unchanged. Unknown routes and non-HTML resources receive no new header rule. [Static Assets headers](https://developers.cloudflare.com/workers/static-assets/headers/)
+
+The builder covers `/`, `/index.html`, `/app` and its slash/index aliases, `/404` aliases, and all seven explicit instrument document routes and their aliases. It emits 34 rules; the tested assembled CSP produces a longest line of 1,175 characters, below Cloudflare's 100-rule/2,000-character limits. This is coverage of known successful document assets, not a promise about every arbitrary 404 response or future route. New document routes must update the builder and its route regression.
+
+## Verification
+
+- Before correction, the extracted unchanged header builder failed the HTML no-transform regression; two unrelated caching/security tests passed. Evidence: `artifacts/security/2026-09-27-compatibility/client/site-headers-red.log`.
+- After correction, all 26 tooling tests passed, including three header-builder tests, three preview parser tests and six release-integrity tests. The header tests model Cloudflare's documented all-match/comma-join behavior and check every declared HTML alias, no conflicting/duplicate cache directives, unchanged asset policies and unchanged security headers. Evidence: `site-headers-all-tools-final.log` in the same directory.
+- Local preview previously overwrote matching header fields and treated a comment as a route. Three regression cases reproduced these failures. Its extracted parser now ignores comments and comma-joins matching fields case-insensitively, matching the documented Cloudflare behavior for the exact/trailing-splat rules this builder emits. This is not a general implementation of every Cloudflare placeholder/unset syntax. Evidence: `preview-headers-red.log`; the final tooling log records all three cases passing.
+- Pure generation against the current assembled artifact preserved all 10 HTML SHA-256 values and the exact existing CSP (`c79ca70009dbb3a0a8b91eec400a22887171d6187b2e0f1787afc7a615dd5db2`). All existing header blocks are an identical prefix of the candidate. No shared build artifact was written. Evidence: `site-headers-integrity.json` and `site-headers-candidate.txt`.
+- The production verifier now requires the exact four-directive HTML cache policy and exact deployed HTML bytes. Historical recognition of a known JSD bootstrap remains available only for historical evidence; the current release path does not normalize or permit it. The strict browser check still fails on CSP events, console/page errors and failed requests.
+- The production verifier uses the previously reviewed Node-bounded font/animation/frame helpers. A stalled browser observation fails within the helper's 10-second bound rather than hanging or silently passing. Pure helper tests are part of the 26-test run; no browser was launched for this subtask.
+
+Assembly, publishing, actual edge header delivery and the final strict browser run belong to the parent release task. Unit tests model header matching; they are not evidence that Cloudflare has applied this configuration. The parent must inspect actual returned cache values, exact HTML bodies and zero injected-JavaScript CSP events before calling the release clean.
+
+Exact source hashes/read ranges are in `static-html-integrity-coverage.json`. This supplement updates the assembly snapshot in `platform-entry-coverage.json`; tooling reviewers separately refresh their overlapping manifest entries.

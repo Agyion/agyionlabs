@@ -14,17 +14,18 @@ function fixture() {
   const frame = { viewWidth: 18, viewHeight: 12, blend: 1, escape: 1, small: false, elapsed: 17, reducedMotion: false, ringPhase: .12 };
   applyStationFlightPose(station, ring, frame);
   const camera = new THREE.PerspectiveCamera(38, 1.44, .1, 180);
-  const rig = new ModuleCameraRig(station, anchors, 2.47);
+  const backdrop = new THREE.Vector3(-240, -10, -600);
+  const rig = new ModuleCameraRig(station, anchors, 2.47, backdrop);
   const pose = { freePosition: station.position.clone().add(new THREE.Vector3(0, 0, 19)), freeTarget: station.position.clone(), panel: 0, small: false, delta: 1 / 60, snap: true };
   const matrices = () => { station.updateMatrixWorld(true); return [...station.matrixWorld.elements, ...ring.matrixWorld.elements, ...anchors.flatMap(anchor => anchor.matrixWorld.elements)]; };
-  return { station, ring, anchors, frame, camera, rig, pose, matrices };
+  return { station, ring, anchors, frame, camera, rig, pose, matrices, backdrop };
 }
 
 describe('physical module camera travel', () => {
-  it('keeps the complete spacecraft transform fixed at a fixed time while each bay gets a distinct camera sector', () => {
+  it('moves to each physical bay without rotating the spacecraft or circling away from the background', () => {
     const { station, ring, anchors, frame, camera, rig, pose, matrices } = fixture();
     const world = matrices();
-    const sectors: THREE.Vector3[] = [];
+    const positions: THREE.Vector3[] = [];
     for (let index = 0; index < anchors.length; index += 1) {
       rig.select(index);
       applyStationFlightPose(station, ring, frame);
@@ -34,14 +35,14 @@ describe('physical module camera travel', () => {
       const projected = anchor.clone().project(camera);
       expect(Math.abs(projected.x)).toBeLessThan(1e-6);
       expect(Math.abs(projected.y)).toBeLessThan(1e-6);
-      sectors.push(camera.position.clone().sub(station.position).normalize());
+      positions.push(camera.position.clone());
     }
-    for (let index = 0; index < sectors.length; index += 1) {
-      expect(sectors[index].dot(sectors[(index + 1) % sectors.length])).toBeLessThan(.9);
+    for (let index = 0; index < positions.length; index += 1) {
+      expect(positions[index].distanceTo(positions[(index + 1) % positions.length])).toBeGreaterThan(1);
     }
   });
 
-  it('flies around the outside of the station when selecting the opposite bay', () => {
+  it('travels outside the hull to the opposite bay without a position shortcut through the station', () => {
     const { camera, rig, station, pose } = fixture();
     rig.select(0); rig.update(camera, pose);
     const start = camera.position.clone();
@@ -53,8 +54,50 @@ describe('physical module camera travel', () => {
       distanceTravelled += camera.position.distanceTo(previous);
       expect(camera.position.distanceTo(station.position)).toBeGreaterThan(2.47 * 1.4);
     }
-    expect(camera.position.distanceTo(start)).toBeGreaterThan(10);
+    expect(camera.position.distanceTo(start)).toBeGreaterThan(3);
     expect(distanceTravelled).toBeGreaterThan(camera.position.distanceTo(start));
+  });
+
+  it.each([
+    { width: 1440, height: 1000, small: false },
+    { width: 390, height: 844, small: true },
+    { width: 320, height: 844, small: true },
+  ])('retains the black hole during all six bay selections and continuous ring motion at $width px', viewport => {
+    const { station, ring, anchors, frame, camera, rig, pose, matrices, backdrop } = fixture();
+    camera.aspect = viewport.width / viewport.height;
+    camera.fov = 44; camera.far = 4000; camera.updateProjectionMatrix();
+    const assertBackdrop = () => {
+      // The scene applies this roll after the rig has chosen its look target.
+      camera.rotateZ(.07); camera.updateMatrixWorld(true);
+      const depth = backdrop.clone().applyMatrix4(camera.matrixWorldInverse).z;
+      const projected = backdrop.clone().project(camera);
+      expect(depth).toBeLessThan(0);
+      expect(Math.abs(projected.x)).toBeLessThan(.9);
+      expect(Math.abs(projected.y)).toBeLessThan(.9);
+      expect(projected.z).toBeGreaterThan(-1);
+      expect(projected.z).toBeLessThan(1);
+    };
+    // Sample the complete revolution, not only the default ring phase.
+    for (const elapsed of [0, 30, 70, 110, 140]) {
+      for (const panel of [0, .5, 1]) for (let index = 0; index < anchors.length; index++) {
+        applyStationFlightPose(station, ring, { ...frame, elapsed });
+        const world = matrices();
+        rig.select(index); rig.update(camera, { ...pose, panel, small: viewport.small });
+        assertBackdrop(); expect(matrices()).toEqual(world);
+      }
+    }
+    // The travel itself must keep the background, not only its settled endpoint.
+    let elapsed = 140;
+    for (const index of [0, 3, 1, 5, 2, 4]) {
+      rig.select(index);
+      for (let tick = 0; tick < 120; tick++) {
+        elapsed += 1 / 60;
+        applyStationFlightPose(station, ring, { ...frame, elapsed });
+        rig.update(camera, { ...pose, panel: 1, small: viewport.small, snap: false });
+        assertBackdrop();
+        expect(camera.position.distanceTo(station.position)).toBeGreaterThan(7.49);
+      }
+    }
   });
 
   it('frames the desktop drawer and mobile sheet through the camera without rescaling or rotating the ship', () => {

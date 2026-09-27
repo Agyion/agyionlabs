@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { createOrbitalScene } from "../../../../shared/space-scene";
 import { ARRIVAL_REVEAL_MS, readFlightHandoff } from "../../../../shared/flight-handoff";
+import { readSkipFlightPreference } from "../../../../shared/flight-preference";
 import type { ArrivalPose } from "../../../../shared/flight-handoff";
 
 type SceneHandle = ReturnType<typeof createOrbitalScene>;
@@ -55,7 +56,8 @@ export default function OrbitalBackdrop({ selected, reduced, onSelect, onArrival
     if (!arrivalRead.current) {
       arrivalRead.current = true;
       try {
-        const flight = readFlightHandoff(window.sessionStorage);
+        const saved = readFlightHandoff(window.sessionStorage);
+        const flight = readSkipFlightPreference() ? { arrival: false } : saved;
         settledRef.current = flight.arrival && flight.settled === true && !reduced;
         arrivalRef.current = flight.arrival && !settledRef.current && !reduced;
         arrivalPoseRef.current = flight.pose;

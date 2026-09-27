@@ -1,4 +1,7 @@
-/** Real CTA departures, destination preservation and native/reduced-motion behavior.
+/** Historical home-gallery CTA departure harness. The landing exhibit selectors
+ * below predate the canonical directory. Use landing/tests/e2e/matrix.mjs for
+ * current homepage/directory routes; these legacy cases are not current release
+ * acceptance. Detail-only runs retain the original recorded motion assertions.
  * The matrix accelerates only the landing scene's performance/rAF clock. It does
  * not stub the launch handler, scene, navigation, app, storage or network. Real
  * recordings remain unaccelerated and are the only duration/visual evidence.
@@ -18,12 +21,15 @@ const only = process.env.JOURNEY_CASES?.split(',');
 if (!['all', 'real', 'matrix', 'fallbacks'].includes(scope)) throw new Error('JOURNEY_SCOPE must be all, real, matrix or fallbacks');
 const viewport = mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 };
 const realCases = new Set(['landing-pod', 'landing-fade', 'landing-envoy', 'detail-fade', 'detail-pod', 'directory-generic']);
-const cases = [
+const availableCases = [
   ...['fade', 'pod', 'trigger', 'envoy'].map(id => ({ name: `landing-${id}`, route: '/', id })),
   ...['fade', 'pod', 'trigger', 'envoy', 'ramp', 'ledger'].map(id => ({ name: `detail-${id}`, route: `/${id}`, id })),
   { name: 'detail-generic', route: '/ledger', id: null },
   { name: 'directory-generic', route: '/instruments', id: null },
-].filter(test => !only || only.includes(test.name));
+];
+if (only && only.some(name => !availableCases.some(test => test.name === name))) throw new Error('JOURNEY_CASES contains an unknown or empty case');
+const cases = availableCases.filter(test => !only || only.includes(test.name));
+if (scope !== 'fallbacks' && !cases.some(test => scope === 'all' || (scope === 'real' ? realCases.has(test.name) : !realCases.has(test.name)))) throw new Error('JOURNEY_CASES selects no cases for JOURNEY_SCOPE');
 await mkdir(output, { recursive: true });
 const report = { at: new Date().toISOString(), base, viewport, scope, appScriptDelayMs: appDelayMs, status: 'running', cases: [], fallbacks: [], failures: [], consoleErrors: [], pageErrors: [], requestFailures: [], rawConsoleErrors: [], rawRequestFailures: [], expectedInjectedDiagnostics: [], csp: [], note: 'Real recordings establish observed flow and timing, not smooth/native GPU performance. Accelerated matrix results establish routing/lifecycle only. All network diagnostics are retained and gated.' };
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/opt/google/chrome/chrome', headless: true, args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--use-angle=swiftshader'] });
@@ -268,13 +274,13 @@ async function runReducedMotion(route) {
 
 /** Discover the dynamic entry from the actual served HTML/import graph. */
 async function discoverSceneChunk() {
-  const htmlResponse = await fetch(`${base}/pod`);
+  const htmlResponse = await fetch(`${base}/pod`, { signal: AbortSignal.timeout(10000) });
   if (!htmlResponse.ok) throw new Error(`Detail HTML returned ${htmlResponse.status}`);
   const html = await htmlResponse.text();
   const entry = [...html.matchAll(/<script\b(?=[^>]*\btype=["']module["'])[^>]*\bsrc=["']([^"']+)["']/g)][0]?.[1];
   if (!entry) throw new Error('No module entry in the served detail HTML');
   const entryURL = new URL(entry, base).href;
-  const entryResponse = await fetch(entryURL);
+  const entryResponse = await fetch(entryURL, { signal: AbortSignal.timeout(10000) });
   if (!entryResponse.ok) throw new Error(`Landing entry returned ${entryResponse.status}`);
   const source = await entryResponse.text();
   const imports = [...source.matchAll(/import\(["']([^"']*space-scene[^"']*\.js)["']\)/g)].map(match => new URL(match[1], entryURL).href);

@@ -16,7 +16,11 @@ const sortedWallet = computed(() => {
     let usedWalletsIds;
     try {
         const record = globalThis?.localStorage.getItem(LocalStorageKeys.usedWalletsIds);
-        usedWalletsIds = record ? JSON.parse(record) : [];
+        usedWalletsIds = record && record.length <= 16384 ? JSON.parse(record) : [];
+        if (!Array.isArray(usedWalletsIds) || usedWalletsIds.length > 128 ||
+            !usedWalletsIds.every((id) => typeof id === "string" && id.length > 0 && id.length <= 64)) {
+            usedWalletsIds = [];
+        }
     }
     catch (e) {
         console.error(e);

@@ -21,7 +21,7 @@
  */
 
 import { Buffer } from "buffer";
-import { Address, Keypair, StrKey, rpc } from "@stellar/stellar-sdk";
+import { Address, Keypair, StrKey, rpc, xdr } from "@stellar/stellar-sdk";
 import {
   Client as BindingsClient,
   type Fade as ChainFade,
@@ -407,7 +407,7 @@ export class MockAgyionClient implements AgyionClient {
     if (slope_den <= 0n || slope_num < 0n)
       throw new AgyionError(AgyionErrorCode.InvalidCurve, "Invalid decay curve");
     if (!Number.isInteger(duration_ledgers) || duration_ledgers <= 0 || !Number.isInteger(handoff_window) || handoff_window <= 0 || duration_ledgers > 1_000_000 || handoff_window > 1_000_000)
-      throw new AgyionError(AgyionErrorCode.InvalidInput, "Handoff window must be non-zero");
+      throw new AgyionError(AgyionErrorCode.InvalidInput, "Handoff window must be nonzero");
     const start = await this.currentLedger();
     if (!validLedger(start + duration_ledgers + handoff_window + 1))
       throw new AgyionError(AgyionErrorCode.InvalidInput, "Refund ledger exceeds the contract horizon");
@@ -553,7 +553,7 @@ export class MockAgyionClient implements AgyionClient {
     if (rec.state !== POD_STATE.Buried)
       throw new AgyionError(AgyionErrorCode.InvalidState, "Pod already opened");
     if ((await this.currentLedger()) < rec.unlock_ledger)
-      throw new AgyionError(AgyionErrorCode.Locked, "Pod is still buried — unlock ledger not reached");
+      throw new AgyionError(AgyionErrorCode.Locked, "Pod is still buried: unlock ledger not reached");
     if (!rawEd25519Verify(rec.claim_pubkey, podClaimPayload(pod_id, recipient), hexToBuffer(signature, 64)))
       throw new AgyionError(AgyionErrorCode.BadSignature, "Pod claim signature could not be verified");
     rec.state = POD_STATE.Opened;
@@ -648,7 +648,7 @@ export class MockAgyionClient implements AgyionClient {
     valid_until: number,
   ): Promise<bigint> {
     if (max_per_tx <= 0n || daily_cap <= 0n || max_per_tx > daily_cap)
-      throw new AgyionError(AgyionErrorCode.InvalidAmount, "Caps must be positive and per-tx <= daily");
+      throw new AgyionError(AgyionErrorCode.InvalidAmount, "Caps must be positive and the limit per transaction must not exceed the daily cap");
     const now = await this.currentLedger();
     requireLedger(valid_until);
     hexToBuffer(agent_pubkey, 32);
@@ -698,18 +698,18 @@ export class MockAgyionClient implements AgyionClient {
     const price = priceAtLedger(fade, now);
     if (price > 0n) throw new AgyionError(AgyionErrorCode.InvalidInput, "Envoy may only claim at zero or below");
     if (price > m.max_per_tx)
-      throw new AgyionError(AgyionErrorCode.CapExceeded, "Price above max_per_tx — the contract said no");
+      throw new AgyionError(AgyionErrorCode.CapExceeded, "Price above max_per_tx: the contract said no");
     // day window rollover
     if (now >= m.window_start + LEDGERS_PER_DAY) {
       m.window_start = now;
       m.daily_used = 0n;
     }
     if (m.daily_used + price > m.daily_cap)
-      throw new AgyionError(AgyionErrorCode.CapExceeded, "Daily cap would be exceeded — the contract said no");
+      throw new AgyionError(AgyionErrorCode.CapExceeded, "Daily cap would be exceeded: the contract said no");
     // Claim-count cap (mirrors envoy.rs MAX_CLAIMS_PER_MANDATE, audit v2 fix):
     // the active bound under the price<=0 restriction.
     if (m.claims_used >= MAX_CLAIMS_PER_MANDATE)
-      throw new AgyionError(AgyionErrorCode.CapExceeded, `Claim limit reached (${MAX_CLAIMS_PER_MANDATE} per mandate) — the contract said no`);
+      throw new AgyionError(AgyionErrorCode.CapExceeded, `Claim limit reached (${MAX_CLAIMS_PER_MANDATE} per mandate): the contract said no`);
 
     // Zero-or-below claims spend no owner funds; daily_used stays unchanged.
     m.claims_used += 1;
@@ -764,6 +764,8 @@ export interface SorobanConfig {
   signer?: TransactionSigner;
   /** Optional SDK policy; the single-token application always pins this address. */
   expectedAssetContractId?: string;
+  /** Public app requires a reviewed WASM pin; reusable SDK callers may omit it. */
+  expectedContractWasmHash?: string;
 }
 
 function hexToBuffer(hex: string, expected?: number): Buffer {
@@ -850,6 +852,9 @@ export class SorobanAgyionClient implements AgyionClient {
   private intent: TransactionIntent | null = null;
 
   constructor(private cfg: SorobanConfig) {
+    if (cfg.expectedContractWasmHash !== undefined && !/^[a-f0-9]{64}$/.test(cfg.expectedContractWasmHash)) {
+      throw new AgyionError(AgyionErrorCode.InvalidInput, "The reviewed contract WASM hash must be 64 lowercase hexadecimal characters.");
+    }
     if (cfg.expectedAssetContractId !== undefined && !StrKey.isValidContract(cfg.expectedAssetContractId)) {
       throw new AgyionError(AgyionErrorCode.InvalidInput, "The supported asset must be a valid token contract address.");
     }
@@ -941,6 +946,26 @@ export class SorobanAgyionClient implements AgyionClient {
 
   async protocolReadiness(): Promise<ProtocolReadiness> {
     try {
+      if (this.cfg.expectedContractWasmHash !== undefined) {
+        const network = await this.server.getNetwork();
+        if (network.passphrase !== this.cfg.networkPassphrase) return "incompatible";
+        const key = xdr.LedgerKey.contractData(new xdr.LedgerKeyContractData({
+          contract: new Address(this.cfg.contractId).toScAddress(),
+          key: xdr.ScVal.scvLedgerKeyContractInstance(),
+          durability: xdr.ContractDataDurability.persistent(),
+        }));
+        const response = await this.server.getLedgerEntries(key);
+        if (response.entries.length !== 1 || !Number.isSafeInteger(response.latestLedger) || response.latestLedger <= 0) return "unavailable";
+        const entry = response.entries[0];
+        if (!entry.key.toXDR().equals(key.toXDR()) || entry.val.switch().name !== "contractData" ||
+          typeof entry.lastModifiedLedgerSeq !== "number" || !Number.isSafeInteger(entry.lastModifiedLedgerSeq) || entry.lastModifiedLedgerSeq <= 0 || entry.lastModifiedLedgerSeq > response.latestLedger) return "unavailable";
+        const data = entry.val.contractData();
+        if (!data.contract().toXDR().equals(key.contractData().contract().toXDR()) ||
+          !data.key().toXDR().equals(key.contractData().key().toXDR()) ||
+          data.durability().name !== "persistent" || data.val().switch().name !== "scvContractInstance") return "unavailable";
+        const executable = data.val().instance().executable();
+        if (executable.switch().name !== "contractExecutableWasm" || executable.wasmHash().toString("hex") !== this.cfg.expectedContractWasmHash) return "incompatible";
+      }
       const c = await this.bindings();
       const version = await c.protocol_version();
       return version.result === 3 ? "ready" : Number.isSafeInteger(version.result) ? "incompatible" : "unavailable";
@@ -958,7 +983,7 @@ export class SorobanAgyionClient implements AgyionClient {
   private async writable(): Promise<BindingsClient> {
     this.assertSession();
     const readiness = await this.protocolReadiness();
-    if (readiness === "incompatible") throw new Error("This kernel needs the v3 security upgrade. Transactions are disabled for this deployment.");
+    if (readiness === "incompatible") throw new Error("This kernel is incompatible with the reviewed V3 deployment configuration. Transactions are disabled.");
     if (readiness !== "ready") throw new AgyionError(AgyionErrorCode.RpcError, "Cannot check kernel readiness. Transactions are disabled until the RPC is available; retry the readiness check.");
     this.assertSession();
     return this.bindings();
@@ -1007,7 +1032,7 @@ export class SorobanAgyionClient implements AgyionClient {
       const ledger = outcome.ledger;
       updateTransactionAttempt(hash, intent, { status: outcome.status === "SUCCESS" ? "success" : "failed", ledger });
       if (outcome.status !== "SUCCESS") throw new AgyionError(AgyionErrorCode.RpcError,
-        `Transaction ${hash} failed on-chain. Review its result before retrying.`);
+        `Transaction ${hash} failed on the network. Review its result before retrying.`);
       const creating = action.startsWith("create_");
       let result: T;
       try { result = sent.result.unwrap(); }

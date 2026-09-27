@@ -6,8 +6,10 @@ import { CONFIG } from '../app/lib/config';
 
 vi.mock('../app/lib/config', () => ({ IS_MOCK: false, CONFIG: {
   mode: 'soroban', assetCode: 'USDC', decimals: 7,
+  assetAddress: 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5',
   assetContractId: 'CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA',
   contractId: 'CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5',
+  contractWasmHash: '12'.repeat(32),
   rpcUrl: 'https://example.invalid', networkPassphrase: 'Test SDF Network ; September 2015',
 } }));
 

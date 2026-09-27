@@ -29,7 +29,7 @@ it('late old-account reconciliation cannot replace a new account view',async()=>
 it('keeps unavailable and incompatible readiness distinct and links disabled actions to status',()=>{
  const retry=vi.fn();const {rerender}=render(<ProtocolStatus readiness={{status:'unavailable',retry}}/>);
  expect(screen.getByRole('status').id).toBe('protocol-availability');expect(screen.getByText(/Network unavailable/)).toBeTruthy();
- rerender(<ProtocolStatus readiness={{status:'incompatible',retry}}/>);expect(screen.getByText(/Contract v3 deployment/)).toBeTruthy();
+ rerender(<ProtocolStatus readiness={{status:'incompatible',retry}}/>);expect(screen.getByText(/Read only\. Deployment verification failed\./)).toBeTruthy();
  rerender(<ProtocolStatus readiness={{status:'ready',retry}}/>);expect(screen.queryByRole('status')).toBeNull();
 });
 it('keeps a recovery warning and a read-only retry visible when stored attempts are unreadable',async()=>{

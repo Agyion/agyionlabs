@@ -13,7 +13,7 @@ const ROWS: [string, string, string][] = [
   ["State transitions", "visible", "lock → claim → execute / return"],
   ["Signatures", "visible", "ed25519 proofs, verifiable by anyone"],
   ["Wallet addresses", "visible", "public transfers can be linked to people"],
-  ["Pod v3 claim key", "local", "public key and recipient-bound signature on-chain"],
+  ["Pod v3 claim key", "local", "public key and signature bound to the recipient on the network"],
   ["Agent scope", "visible", "mandate limits are public by design"],
 ];
 
@@ -30,9 +30,9 @@ export default function Compliance() {
           <div className="mt-8 space-y-5 text-[17px] leading-[1.65] text-muted">
             <p>
               Every rule is a public parameter. Amounts, deadlines, decay curves,
-              spending caps — anyone can read them, anyone can audit that the
+              spending caps: anyone can read them, anyone can audit that the
               contract did exactly what it said. That is the point of putting
-              conditions on-chain.
+              conditions on the network.
             </p>
             <p>
               Addresses and transfer amounts are public. A wallet address can
@@ -40,8 +40,8 @@ export default function Compliance() {
               anonymous or encrypted balances.
             </p>
             <p>
-              Protocol v3 signs Pod claims locally and submits a recipient-bound
-              signature. The saved bearer key remains private. A separate ZK
+              Protocol v3 signs Pod claims locally and submits a signature bound
+              to the recipient. The saved bearer key remains private. A separate ZK
               system with threshold disclosure is under development.
             </p>
           </div>

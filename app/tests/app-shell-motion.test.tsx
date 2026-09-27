@@ -4,13 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { hydrateRoot, type Root } from 'react-dom/client';
+import type { AgyionClient, ProtocolReadiness } from '../app/lib/hakClient';
 
-const route = vi.hoisted(() => ({ search: '', push: vi.fn(), address: null as string | null }));
+const route = vi.hoisted(() => ({ search: '', push: vi.fn(), address: null as string | null, client: null as AgyionClient | null }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: route.push }), useSearchParams: () => new URLSearchParams(route.search) }));
 vi.mock('../app/lib/useWallet', () => ({ useWallet: () => ({ address: route.address }) }));
 vi.mock('../app/lib/config', () => ({ IS_MOCK: true }));
-vi.mock('../app/lib/client', () => ({ getClient: () => null }));
-vi.mock('../app/components/app/ProtocolStatus', () => ({ default: () => null }));
+vi.mock('../app/lib/client', () => ({ getClient: () => route.client }));
 vi.mock('../app/components/app/TransactionActivity', () => ({ default: () => null }));
 vi.mock('../app/components/app/WalletBar', () => ({ default: () => null }));
 vi.mock('../app/components/app/FadePanel', () => ({ default: () => <input aria-label="Draft amount" defaultValue="100" /> }));
@@ -30,6 +30,7 @@ beforeEach(() => {
   reduced = true;
   route.search = '';
   route.address = null;
+  route.client = null;
   route.push.mockReset();
   listeners.clear();
   Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({
@@ -52,6 +53,27 @@ function setReduced(value: boolean) {
 }
 
 describe('AppShell motion and instrument interaction', () => {
+  it.each(['ready', 'unavailable', 'incompatible'] as const)('exposes real hook readiness through checking to %s even when its banner is absent', async (status) => {
+    let finish!: (status: ProtocolReadiness) => void;
+    const check = new Promise<ProtocolReadiness>(resolve => { finish = resolve; });
+    route.client = { protocolReadiness: () => check } as AgyionClient;
+    route.search = 'tab=fade';
+    render(<AppShell />);
+    const shell = screen.getByRole('main');
+    expect(shell.getAttribute('data-protocol-readiness')).toBe('checking');
+    await act(async () => { finish(status); });
+    expect(shell.getAttribute('data-protocol-readiness')).toBe(status);
+    expect(document.getElementById('protocol-availability') === null).toBe(status === 'ready');
+    // Closing the workspace cannot hide the diagnostic readiness state.
+    fireEvent.click(screen.getByRole('button', { name: 'Close instrument' }));
+    expect(shell.getAttribute('data-protocol-readiness')).toBe(status);
+  });
+
+  it('exposes unavailable when there is no configured client', () => {
+    render(<AppShell />);
+    expect(screen.getByRole('main').getAttribute('data-protocol-readiness')).toBe('unavailable');
+  });
+
   it('hydrates without a motion button and applies the operating system preference', async () => {
     const container = document.createElement('div');
     document.body.append(container);
@@ -131,14 +153,18 @@ describe('AppShell motion and instrument interaction', () => {
     expect(document.activeElement?.id).toBe('tab-pod');
   });
 
-  it('routes picked 3D modules to the same instrument and connects Instruments to explore', () => {
+  it('routes picked 3D modules to their instrument and closes through the retained orbit control', () => {
     render(<AppShell />);
     fireEvent.click(screen.getByRole('button', { name: 'Select Pod module' }));
     expect(route.push).toHaveBeenCalledWith('/app/?tab=pod', { scroll: false });
     expect(screen.getByTestId('backdrop').getAttribute('data-open')).toBe('true');
-    fireEvent.click(screen.getByRole('button', { name: /Instruments/ }));
+    expect(screen.queryByRole('navigation', { name: 'App navigation' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Overview' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Instruments/ })).toBeNull();
+    expect(screen.getAllByRole('tab')).toHaveLength(6);
+    fireEvent.click(screen.getByRole('button', { name: 'Close instrument' }));
     expect(screen.getByTestId('backdrop').getAttribute('data-open')).toBe('false');
-    expect(screen.getByTestId('backdrop').getAttribute('data-explore')).toBe('1');
+    expect(screen.getByTestId('backdrop').getAttribute('data-explore')).toBe('0');
   });
 
   it('previews a focused dock bay without navigating or opening its form', () => {

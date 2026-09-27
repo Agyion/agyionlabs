@@ -45,7 +45,7 @@ await page.addInitScript(() => {
     }
     return contextState.get(gl);
   }
-  const labelSource = (source) => (source.includes('diskImage(') || (source.includes('uniform vec3 uHolePos') && source.includes('uniform float uHoleR'))) ? 'disk' : source.includes('varying vec2 vDisk') ? 'gas-plane' : source.includes('uniform bool uExtract') ? 'bloom' : source.includes('uniform sampler2D uFrame') ? 'composite' : source.includes('MeshDepthMaterial') ? 'shadow' : source.includes('PointsMaterial') ? 'stars' : 'geometry';
+  const labelSource = (source) => (source.includes('diskImage(') || (source.includes('uniform vec3 uHolePos') && source.includes('uniform float uHoleR'))) ? 'disk' : source.includes('varying vec2 vDisk') ? 'gas-plane' : source.includes('uniform bool uExtract') ? 'bloom' : source.includes('uniform sampler2D uFrame') ? 'composite' : source.includes('MeshDepthMaterial') ? 'shadow' : (source.includes('PointsMaterial') || source.includes('AGYION_STAR_FIELD')) ? 'stars' : 'geometry';
   for (const proto of [WebGLRenderingContext.prototype, WebGL2RenderingContext.prototype]) {
     const bindFramebuffer = proto.bindFramebuffer;
     proto.bindFramebuffer = function (target, framebuffer) {

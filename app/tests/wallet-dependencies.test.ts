@@ -10,7 +10,7 @@ const json = (file: string) => JSON.parse(read(file));
 const packageName = (specifier: string) => specifier.startsWith('@') ? specifier.split('/').slice(0, 2).join('/') : specifier.split('/')[0];
 
 describe('selected wallet dependency boundary', () => {
-  it('contains the verified selected import closure and only the declared modal readiness patch', () => {
+  it('contains the verified selected import closure and only the declared modal and cache patches', () => {
     const provenance = json('PROVENANCE.json');
     const pkg = json('package.json');
     const pending = Object.values(pkg.exports).map((entry) => (entry as { import: string }).import);
@@ -34,14 +34,19 @@ describe('selected wallet dependency boundary', () => {
     expect(seen.has('esm/components/pages/auth-options.page.js')).toBe(true);
     expect(pkg.name).toBe('@agyion/stellar-wallets-kit');
     expect(provenance.upstream.version).toBe('2.7.0');
-    expect(pkg.version).toBe('2.7.0-agyion.2');
-    expect(provenance.patches).toEqual([{
-      file: 'esm/sdk/kit.js',
-      reason: expect.any(String),
-      originalSha256: '97a32644eb15dcbc59897742642075677df7a78489d5b7d68dcd07835e0dd5fb',
-      patchedSha256: provenance.files['esm/sdk/kit.js'],
-    }]);
-    expect(provenance.patches[0].originalSha256).not.toBe(provenance.patches[0].patchedSha256);
+    expect(pkg.version).toBe('2.7.0-agyion.3');
+    const originals = {
+      'esm/sdk/kit.js': '97a32644eb15dcbc59897742642075677df7a78489d5b7d68dcd07835e0dd5fb',
+      'esm/state/values.js': '3dcb52bda51afb996bbbd5417fc7f26b2591609750cd561aab444eb7356c8662',
+      'esm/components/pages/auth-options.page.js': '092e80bbae9f58db4b7b5e6d7abda5c10f90e79c4443970fa6eb8ca165f0bb15',
+    };
+    expect(provenance.patches.map((patch: { file: string }) => patch.file).sort()).toEqual(Object.keys(originals).sort());
+    for (const [file, originalSha256] of Object.entries(originals)) {
+      expect(provenance.patches.find((patch: { file: string }) => patch.file === file)).toEqual({
+        file, reason: expect.any(String), originalSha256, patchedSha256: provenance.files[file],
+      });
+      expect(originalSha256).not.toBe(provenance.files[file]);
+    }
   });
 
   it('physically excludes unsupported wallet modules and their vulnerable dependency chains', async () => {

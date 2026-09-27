@@ -248,6 +248,10 @@ pub fn confirm_handoff(env: &Env, fade_id: u64, ts: u64, sig: BytesN<64>) -> Res
     if price > 0 {
         // Positive price: the claimant pays the price to the seller; the pot
         // also goes to the seller.
+        // Root the payment authorization at this handoff, so the default RPC
+        // recording mode can produce the claimant's full invocation tree.
+        // A venue signature alone still cannot authorize claimant spending.
+        claimant.require_auth();
         token.transfer(&claimant, &fade.seller, &price);
         token.transfer(&contract, &fade.seller, &fade.pot);
     } else {

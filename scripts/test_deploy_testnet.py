@@ -18,6 +18,7 @@ STUB = '''#!/usr/bin/env python3
 import json, os, pathlib, sys
 args = sys.argv[1:]
 name = pathlib.Path(sys.argv[0]).name
+if args[:1] == ['--no-cache']: args = args[1:]
 with open(os.environ['STUB_LOG'], 'a') as log:
     log.write(json.dumps([name, *args]) + '\\n')
 if name == 'cargo':
@@ -42,6 +43,10 @@ elif args[:2] == ['contract', 'build']:
     path.write_bytes(b'\\x00asm\\x01\\x00\\x00\\x00')
 elif args[:2] == ['contract', 'deploy']:
     print('CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM')
+elif args[:2] == ['contract', 'fetch']:
+    if os.environ.get('STUB_FETCH_FAIL') == '1': sys.exit(94)
+    target = pathlib.Path(args[args.index('--out-file') + 1])
+    target.write_bytes(b'wrong-code' if os.environ.get('STUB_FETCH_WRONG') == '1' else pathlib.Path(os.environ['STUB_WASM']).read_bytes())
 elif args[:2] == ['contract', 'invoke']:
     print(os.environ.get('STUB_PROTOCOL_VERSION', '3'))
 else:
@@ -146,6 +151,31 @@ class DeployHelperTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn(f'NEXT_PUBLIC_HAK_CONTRACT_ID={CONTRACT}', result.stdout)
         self.assertIn(CONTRACT, result.stdout + result.stderr)
+
+    def test_published_pin_requires_identical_fetched_wasm(self):
+        result, calls = self.run_script(DRY_RUN='0')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        deploy = next(call for call in calls if call[1:3] == ['contract', 'deploy'])
+        self.assertIn('--optimize=false', deploy, 'Deployment must preserve the tested bytes.')
+        fetch = next((call for call in calls if call[1:3] == ['contract', 'fetch']), None)
+        self.assertIsNotNone(fetch, 'The actual deployed code must be fetched, not just its version.')
+        self.assertEqual(fetch[fetch.index('--id') + 1], CONTRACT)
+        self.assertEqual(fetch[fetch.index('--rpc-url') + 1], RPC)
+        import hashlib
+        digest = hashlib.sha256(self.wasm.read_bytes()).hexdigest()
+        self.assertIn(f'NEXT_PUBLIC_HAK_WASM_HASH={digest}', result.stdout)
+
+    def test_mismatched_deployed_code_never_emits_ready_configuration(self):
+        result, _ = self.run_script(DRY_RUN='0', STUB_FETCH_WRONG='1')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn(f'NEXT_PUBLIC_HAK_CONTRACT_ID={CONTRACT}', result.stdout)
+        self.assertNotIn('NEXT_PUBLIC_HAK_WASM_HASH=', result.stdout)
+
+    def test_failed_code_readback_never_emits_ready_configuration(self):
+        result, _ = self.run_script(DRY_RUN='0', STUB_FETCH_FAIL='1')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn(f'NEXT_PUBLIC_HAK_CONTRACT_ID={CONTRACT}', result.stdout)
+        self.assertNotIn('NEXT_PUBLIC_HAK_WASM_HASH=', result.stdout)
 
 
 if __name__ == '__main__':

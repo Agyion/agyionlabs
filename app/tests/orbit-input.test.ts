@@ -1,19 +1,19 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { bindOrbitInput } from '../../shared/orbit-input';
+import { bindOrbitInput, ORBIT_DRAG_SENSITIVITY } from '../../shared/orbit-input';
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { cleanups.splice(0).forEach((cleanup) => cleanup()); document.body.replaceChildren(); });
 
-function setup(wheelZoom = true, horizontalDragSensitivity = 1) {
+function setup(wheelZoom = true, horizontalDragSensitivity = 1, dragSensitivity = 1, width = 1000, height = 600) {
   const canvas = document.createElement('canvas');
   document.body.append(canvas);
-  vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({ x: 0, y: 0, left: 0, top: 0, right: 1000, bottom: 600, width: 1000, height: 600, toJSON: () => ({}) });
+  vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({ x: 0, y: 0, left: 0, top: 0, right: width, bottom: height, width, height, toJSON: () => ({}) });
   const captures = new Set<number>();
   canvas.setPointerCapture = vi.fn((id) => { captures.add(id); });
   canvas.hasPointerCapture = (id) => captures.has(id);
   canvas.releasePointerCapture = vi.fn((id) => { captures.delete(id); });
-  const options = { wheelZoom, horizontalDragSensitivity, canInteract: vi.fn(() => true), onOrbit: vi.fn(), onZoom: vi.fn(), onPick: vi.fn(), onHover: vi.fn(), onAim: vi.fn(), onReset: vi.fn() };
+  const options = { wheelZoom, horizontalDragSensitivity, dragSensitivity, canInteract: vi.fn(() => true), onOrbit: vi.fn(), onZoom: vi.fn(), onPick: vi.fn(), onHover: vi.fn(), onAim: vi.fn(), onReset: vi.fn() };
   const dispose = bindOrbitInput(canvas, options);
   cleanups.push(dispose);
   function pointer(type: string, x: number, y: number, id = 1, pointerType = 'mouse') {
@@ -25,6 +25,82 @@ function setup(wheelZoom = true, horizontalDragSensitivity = 1) {
 }
 
 describe('orbital scene input', () => {
+  it.each(['mouse', 'touch', 'pen'])('increases the current landing and app %s drag response by 50 percent on desktop and mobile', pointerType => {
+    for (const width of [390, 1440]) for (const station of [false, true]) {
+      const before = setup(station, station ? .25 : 1, .25, width, 844);
+      const after = setup(station, station ? .25 : 1, ORBIT_DRAG_SENSITIVITY, width, 844);
+      for (const { pointer } of [before, after]) {
+        pointer('pointerdown', 50, 150, 1, pointerType);
+        pointer('pointermove', 250, 250, 1, pointerType);
+        pointer('pointerup', 250, 250, 1, pointerType);
+      }
+      const previous = before.options.onOrbit.mock.calls[0];
+      const current = after.options.onOrbit.mock.calls[0];
+      expect(current[0]).toBeCloseTo(previous[0] * 1.5, 12);
+      expect(current[1]).toBeCloseTo(previous[1] * 1.5, 12);
+      // A 200 px phone drag moves ~69.2° on landing and ~17.3° in app.
+      // Landing touch still preserves vertical native page scrolling.
+      expect(current[0]).toBeCloseTo(200 / width * Math.PI * 2 * (station ? .09375 : .375), 12);
+      expect(after.options.onOrbit).toHaveBeenCalledTimes(1);
+      expect(after.options.onPick).not.toHaveBeenCalled();
+    }
+  });
+
+  it.each(['mouse', 'touch'])('keeps slow sampled and coalesced %s drags identical across the movement threshold', pointerType => {
+    const totals: number[][] = [];
+    for (const samples of [[140], [102, 104, 106, 120, 140]]) {
+      const { pointer, options } = setup(true, .25, ORBIT_DRAG_SENSITIVITY, 390, 844);
+      pointer('pointerdown', 100, 100, 1, pointerType);
+      for (const x of samples) pointer('pointermove', x, 100 + (x - 100) / 2, 1, pointerType);
+      pointer('pointerup', 140, 120, 1, pointerType);
+      totals.push(options.onOrbit.mock.calls.reduce((sum, [yaw, pitch]) => [sum[0] + yaw, sum[1] + pitch], [0, 0]));
+      expect(options.onPick).not.toHaveBeenCalled();
+    }
+    expect(totals[1][0]).toBeCloseTo(totals[0][0], 12);
+    expect(totals[1][1]).toBeCloseTo(totals[0][1], 12);
+  });
+
+  it('increases two-finger camera travel by 50 percent while retaining pinch zoom and accessible keyboard increments', () => {
+    const before = setup(true, .25, .25), after = setup(true, .25, ORBIT_DRAG_SENSITIVITY);
+    for (const { pointer } of [before, after]) {
+      pointer('pointerdown', 100, 100, 1, 'touch'); pointer('pointerdown', 200, 100, 2, 'touch');
+      pointer('pointermove', 260, 130, 2, 'touch');
+      pointer('pointerup', 260, 130, 2, 'touch'); pointer('pointerup', 100, 100, 1, 'touch');
+    }
+    for (const axis of [0, 1]) expect(after.options.onOrbit.mock.calls[0][axis]).toBeCloseTo(before.options.onOrbit.mock.calls[0][axis] * 1.5, 12);
+    expect(after.options.onZoom.mock.calls[0][0]).toBe(before.options.onZoom.mock.calls[0][0]);
+    after.canvas.focus(); after.canvas.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', cancelable: true }));
+    expect(after.options.onOrbit).toHaveBeenLastCalledWith(.07, 0);
+  });
+
+  it('locks a vertical landing touch gesture to native scrolling even if it later turns sideways', () => {
+    const { canvas, pointer, options } = setup(false, 1, ORBIT_DRAG_SENSITIVITY, 390, 844);
+    pointer('pointerdown', 100, 100, 1, 'touch');
+    pointer('pointermove', 101, 104, 1, 'touch');
+    pointer('pointermove', 102, 110, 1, 'touch');
+    pointer('pointermove', 260, 112, 1, 'touch');
+    pointer('pointerup', 260, 112, 1, 'touch');
+    expect(options.onOrbit).not.toHaveBeenCalled();
+    expect(options.onPick).not.toHaveBeenCalled();
+    expect(canvas.style.touchAction).toBe('pan-y');
+  });
+
+  it.each([false, true])('retains wheel, passive aim and keyboard behavior with the new scene gain (station=%s)', station => {
+    const samples = [setup(station, station ? .25 : 1, .25), setup(station, station ? .25 : 1, ORBIT_DRAG_SENSITIVITY)];
+    const wheelPrevented: boolean[] = [];
+    for (const { canvas, pointer } of samples) {
+      pointer('pointermove', 750, 150);
+      const wheel = new WheelEvent('wheel', { deltaY: 100, cancelable: true });
+      canvas.dispatchEvent(wheel); wheelPrevented.push(wheel.defaultPrevented);
+      canvas.focus();
+      for (const key of ['ArrowLeft', 'ArrowUp', '+', '-', 'Home']) canvas.dispatchEvent(new KeyboardEvent('keydown', { key, cancelable: true }));
+    }
+    for (const callback of ['onAim', 'onHover', 'onOrbit', 'onZoom', 'onReset'] as const) {
+      expect(samples[1].options[callback].mock.calls).toEqual(samples[0].options[callback].mock.calls);
+    }
+    expect(wheelPrevented).toEqual([station, station]);
+  });
+
   it.each(['mouse', 'touch', 'pen'])('reduces horizontal %s dragging to a quarter while keeping vertical travel and click discrimination', pointerType => {
     const { pointer, options } = setup(true, .25);
     pointer('pointerdown', 100, 100, 1, pointerType);

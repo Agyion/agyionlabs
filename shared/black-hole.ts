@@ -175,7 +175,9 @@ export const holeFragment = /* glsl */ `
     float photonWidth = max(.0035, pixelWidth * .75);
     float photonDistance = (impact - 1.004) / photonWidth;
     float outside = smoothstep(1. - pixelWidth * .5, 1. + pixelWidth * .5, impact);
-    float photon = exp(-photonDistance * photonDistance) * outside * .32;
+    // The critical rim lies behind the nearest disk intersection.
+    // Adding it unconditionally draws a complete bright ring through that gas.
+    float photon = exp(-photonDistance * photonDistance) * outside * .32 * (1. - nearImage.a);
     // Broad haze stays restrained and outside the black shadow.
     float halo = exp(-max(impact - 1., 0.) * 20.) * outside * .022;
     float edge = (1. - smoothstep(2.5, 3., abs(p.x)))
@@ -215,16 +217,25 @@ export const accretionFragment = /* glsl */ `
   uniform float uOpacity;
   uniform vec2 uHoleScreen;
   uniform float uHoleRadius;
+  uniform float uHoleDepth;
   uniform float uAspect;
   const float PI = 3.14159265359;
   void main() {
     float radius = length(vDisk);
     if(radius < 190. || radius > 1220.) discard;
     float alpha = smoothstep(190.,210.,radius) * (1.-smoothstep(850.,1220.,radius)) * uOpacity;
-    // Near the critical curve the curved-ray image owns the disk. An unbent
-    // world plane there would cut a second, visibly false hole into the shadow.
+    // Keep the curved-ray image around the hole, but let the physically nearer
+    // outer gas pass in front of it. Masking the entire projected circle also
+    // removed foreground gas and left an impossible black lower semicircle.
     vec2 screenOffset = (vProjected.xy / vProjected.w - uHoleScreen) * vec2(uAspect, 1.);
-    if (uHoleRadius > 0.) alpha *= smoothstep(1.08, 1.55, length(screenOffset) / uHoleRadius);
+    if (uHoleRadius > 0.) {
+      float curvedImage = smoothstep(1.08, 1.55, length(screenOffset) / uHoleRadius);
+      float inFront = 1. - smoothstep(uHoleDepth - 4., uHoleDepth + 4., vProjected.w);
+      // Inner gas is still represented by curved rays, avoiding a second flat
+      // inner edge. Only the approaching outer disk takes over the foreground.
+      float outerForeground = inFront * smoothstep(230., 300., radius);
+      alpha *= mix(curvedImage, 1., outerForeground);
+    }
     if (alpha <= 0.) discard;
     float angle = atan(vDisk.y, vDisk.x);
     float flow = angle / (2. * PI) + uTime * .009 / pow(max(radius / 160., 1.), 1.5);

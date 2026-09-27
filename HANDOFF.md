@@ -1,12 +1,127 @@
 # Agyion — current local handoff
 
-Updated 2026-09-27 (Europe/Istanbul). Working branch: `codex/orbital-redesign-security`.
+Updated 2026-09-27 (Europe/Istanbul). Working branch: `main`. New commits use the verified `agyion-foundation` account.
 The original handoff is preserved in `docs/archive/HANDOFF-before-orbital-revision.md`.
 Its mint landing, missing `/mnt/agents/output/app` source, frontend-only mock,
 8-second docking sequence and live-verification claims describe the earlier
 production bundle. They are not instructions or evidence for this revision.
 
-**Current website release (27 September, 02:23:30 Istanbul):** the user explicitly
+**Current backend and website checkpoint (27 September, 05:42:57 Istanbul):**
+Version `f3cfa837-2703-49c2-895d-0ce71dd3a555` is at 100% traffic. Public testnet
+contract `CBIIHFELPAKC2KJD4NCJSB32BQO5QUBNEKHBMISFB4MVDKBVM6AJSRXT`
+has actual WASM SHA256 `1e6643028d6b397b3a762d4b5312eaf20f2744407686c78122d27c5a4dd8d378`,
+protocol 3 and 23 matching ABI entries. Dedicated native-XLM testnet verification
+passed 17 checks and 23 included transactions. Final live browser verification
+passed 34 HTTP/artifact and 14 UI checks, observed matching testnet and contract
+responses, and reported ready with zero page, console, network or CSP errors.
+The earlier Cloudflare injection conflict is fixed using no-transform on HTML,
+with the CSP unchanged. Circle testnet USDC metadata was read back, but USDC
+funding, a real wallet approval and fiat payout were not demonstrated.
+The authored source inventory records 400 files and 55,092 lines fully read by
+the review team, with generated/vendor/dependency categories kept explicit.
+The experimental private implementation is still not activated in this published
+checkpoint. Its contract and client self-destination defect was fixed and tested.
+See `docs/security/2026-09-27/COMPATIBILITY_RELEASE.md` for actual findings,
+receipts, final tests, failed earlier runs and remaining limits. This is an
+internal defensive review, not an independent audit or a no-exploit guarantee.
+
+**New active work requested after this checkpoint:** continue on main, retire the
+other branch without losing history, rename active protocol code to Agyion,
+remove the redundant left instrument launcher, improve README and integrate the
+private flow into the app with honest testnet/setup boundaries. Those changes
+are not included in the release evidence above until separately verified.
+
+**Previous website release (27 September, 04:47:50 Istanbul):** directory-only
+header refinement published to `https://agyionlabs.dev/instruments`, Worker
+`agyion`, version `169750d6-6647-4c13-9db7-9b94cf8d88e8`, confirmed at 100% traffic.
+Rollback version: `c004d8e9-5b0b-4cec-821f-24e3642347f3`. Instruments now has one
+Launch app link in the header. Its existing remembered Skip animation checkbox
+is beside that link; both duplicate footer controls are removed. On narrow
+screens the pair occupies a second header row without shrinking text. Header
+clearance, menu access and 44px control height were checked, including the
+1000/1001px breakpoint. Landing lint and build passed. Initial six-width checks
+found a 42px tablet launch target; its scoped correction passed a fresh 768px
+follow-up. Live desktop/mobile UI checks and 13 artifact/header checks passed. Strict live
+diagnostics retain the known Cloudflare injected-script CSP conflicts, with no
+JavaScript exception or RPC failure in this run. Evidence is recorded in
+`docs/verification/2026-09-27-directory-header-release.md`. Runtime changes are
+limited to NavPill, Instruments and orbital.css. The source/asset manifest is in
+`artifacts/verification/2026-09-27-directory-header-release/manifest.json`, tree
+`b6f143c0e63806bf3212219b7ab4bd549a834a8451e573202e2ec39a5346ed43`.
+Earlier app/camera/backend boundaries below remain unchanged.
+
+**Previous website release (27 September, 04:36:42 Istanbul):** the explicitly
+authorized frontend update is published at `https://agyionlabs.dev/`, Worker
+`agyion`, version `c004d8e9-5b0b-4cec-821f-24e3642347f3`, confirmed at 100% traffic.
+Rollback version: `8b79160d-6429-447f-ba82-1075598dfca2`. This release uses the
+reviewed dirty working tree; HEAD alone is not its source identifier. The source
+and asset manifest is in `artifacts/verification/2026-09-27-distinct-workspaces-release/manifest.json`.
+Artifact tree: `1dd204a78ee3d085c988fad82817b7e7d556c2c91a568549403083b1c5469ae9`.
+
+Catalog/detail copy is shorter, form typography is readable, repeated labels are
+removed, and the six instruments have distinct task layouts. The Fade price
+connector is centered across its actual input column. The common app window is
+94% opaque; text/controls retain full opacity. Mouse/touch camera drag is now 1.5
+times the previous quarter-sensitivity setting: landing yaw/pitch .375, app yaw
+.09375 and pitch .375. Module selection travels to real rotating bays from a
+common black-hole-facing side, keeping the hole in frame without rotating the
+ship to fake the selection. Manual orbit remains independent. App gas flow is
+25% faster, with its phase preserved through launch. Earlier skip preference,
+filtered stars, favicon variants, examples and homepage refinements below are
+included in this release.
+
+Final application tests: 610 passed; both production builds passed. The relevant
+landing suite passed 89 and lint, and six unchanged release-tool tests passed.
+Final browser checks include 44 app structure/typography checks, all 105 unique
+example cases across the documented wide/narrow runs, 16 extreme Ledger amount
+checks, five arrow/window widths, 14 module-camera cases, six input cases and 25
+navigation cases. Raw reports retain external testnet network diagnostics where
+present; these are not blanket clean-browser or security claims. Production
+verification passed 34 HTTP/artifact assertions and 14 UI assertions with no
+application page exception. Its strict diagnostic result remains failed for four
+Cloudflare injected-script CSP events and two external Soroban network failures;
+these are preserved in the release report, not treated as clean passes. See
+`docs/verification/2026-09-27-distinct-workspaces-release.md` and
+`docs/verification/2026-09-27-final-orbit.md` for evidence and limits. No wallet
+was connected and no transaction or contract was deployed. The incompatible
+configured testnet kernel remains write-gated; the private profile and broad
+security review remain separate and incomplete.
+
+**Historical controls checkpoint (27 September, now included in the release above):** app header
+Overview/Instruments links and the duplicate homepage header launch are removed;
+the instrument dock remains. A remembered Skip animation checkbox bypasses the
+flight without disabling the interactive background. Old flight frames are cleared
+before first paint. Dragging now uses one quarter of its previous sensitivity on
+both axes, including the app's existing horizontal reduction; landing native
+vertical touch scrolling, zoom and keyboard controls are retained. Stars now use
+display-resolution, filtered pixel coverage instead of upscaled square points.
+Final source checks passed 602 app, 89 landing and six tooling tests, both builds
+and landing lint. Browser checks passed 25 navigation cases, two final mobile
+contrast cases and all six mouse/touch measurement cases. The input run's strict
+diagnostics remain FAILED solely for an external Soroban `ERR_NETWORK_CHANGED`
+request; its behavior checks passed. Local preview remains port 4292. Evidence is recorded
+in `docs/verification/2026-09-27-navigation-and-orbit-controls.md`; this is not a
+new Cloudflare release, native-device performance benchmark or backend audit.
+
+**Historical examples preview (27 September, now included in the release above):** six instrument
+pages now have source-checked everyday examples, distinct illustrations, four
+explicit user-driven stages, a failure path and reset. The directory introduces
+each example. Reachable site prose has been cleaned of em/en dashes. Homepage
+How it works modal/links are removed; its old hash replaces to `/instruments`.
+A wordmark-to-hole particle experiment tracks actual letter outlines and the
+camera projection. The app black-hole foreground depth mask now covers the lower
+rear image correctly; disk flow is 1.35 times faster without retiming the camera,
+Endurance or flight. Matching PNG/ICO favicon alternatives are ready; Google
+recrawl has not been requested or established. Local preview is port 4292.
+Fresh checks: 584 app, 89 landing, six tooling, 105 example interactions,
+12 mobile note visibility, 13 homepage refinements, four black-hole browser checks,
+and 62 navigation checks passed. Both builds and landing lint passed. Browser
+checks include screenshot inspection and fault/reduced-motion behavior; they
+are not native GPU performance evidence, a live deployment, or a security audit.
+See `docs/verification/2026-09-27-examples-and-orbit-preview.md` and its linked
+reports. Runtime changes remain in the working tree for user preview.
+
+**Previous website release (27 September, 02:23:30 Istanbul):** the user explicitly
 requested publication of the pending changes and keeping the app logo on both
 surfaces. Runtime source `04b5647` is now published to `https://agyionlabs.dev/`,
 Cloudflare Worker `agyion`, version `8b79160d-6429-447f-ba82-1075598dfca2`, deployment
@@ -38,7 +153,7 @@ Free reservation/no-show and fair allocation remain explicit protocol design
 work; no new deposit, slashing or batch-selection rule was introduced.
 
 Backend correctness, contracts, fund safety and the separate private profile
-remain the main focus; this catalog request does not reopen general redesign.
+remain open work. Subsequent user-requested presentation refinements are recorded above.
 The preceding local continuation fixes Fade's frozen-price display, foreign-token mislabelling,
 duplicate creation after a confirmed result loses its record ID, invalid mode
 configuration, and false trustline success. The full app suite passed 560 tests;

@@ -1,3 +1,4 @@
+import { waitForFonts } from './lib/browser-settle.mjs';
 /** Focused layout supplement. Header size changes are isolated DOM fixtures; no wallet or transaction actions. */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -132,7 +133,7 @@ try {
     try {
       await page.goto(`${base}/app/?tab=fade`);
       await expect(page.locator('.orbital-backdrop')).toHaveClass(/is-ready/, { timeout: 30000 });
-      await page.evaluate(() => document.fonts.ready);
+      await waitForFonts(page);
       if (label === 'desktop') {
         for (const [id, action] of [['fade', 'Lock the pot'], ['trigger', 'Lock the escrow'], ['envoy', 'Grant mandate']]) {
           diagnostics.phase = `${id} primary visibility`;
@@ -203,3 +204,4 @@ try {
 } catch (error) {
   report.status = 'failed'; report.failure = { ...report.failure, message: error.message, stack: error.stack }; throw error;
 } finally { try { await persist(); } finally { await browser.close(); } }
+if (report.status !== 'passed') process.exitCode = 1;

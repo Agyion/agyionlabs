@@ -18,8 +18,6 @@ export default function App() {
   const location = useLocation()
   const navigationType = useNavigationType()
   const previousLocationKey = useRef(location.key)
-  const previousPathname = useRef(location.pathname)
-  const previousHash = useRef(location.hash)
   const scrollPositions = useRef(new Map<string, { x: number; y: number; product?: string }>())
 
   useLayoutEffect(() => {
@@ -29,11 +27,7 @@ export default function App() {
   useLayoutEffect(() => {
     cancelProductTransitionForRoute(location.pathname)
     const navigated = previousLocationKey.current !== location.key
-    const samePage = previousPathname.current === location.pathname
-    const leavingExplanation = previousHash.current === '#how-it-works' && location.hash !== '#how-it-works'
     previousLocationKey.current = location.key
-    previousPathname.current = location.pathname
-    previousHash.current = location.hash
     const offReveals = initReveals()
     const positions = scrollPositions.current
     const positionKey = routeScrollKey({ key: location.key, pathname: location.pathname, search: location.search, hash: location.hash })
@@ -47,13 +41,6 @@ export default function App() {
     document.addEventListener('focusin', rememberPosition)
     const frame = window.requestAnimationFrame(() => {
       const anchor = location.hash ? document.getElementById(location.hash.slice(1)) : null
-      // The dialog owns focus restoration; opening/closing it must not move
-      // the page's scroll position under the modal.
-      if (location.pathname === '/' && (location.hash === '#how-it-works' || leavingExplanation) && document.querySelector('.orbital-home--immersive')) {
-        if (!samePage) window.scrollTo({ top: 0, behavior: 'instant' })
-        rememberPosition()
-        return
-      }
       if (restored) {
         window.scrollTo({ top: restored.y, left: restored.x, behavior: 'instant' })
         const product = restored.product && /^(fade|pod|trigger|envoy)$/.test(restored.product) ? document.querySelector<HTMLElement>(`[data-product-route-link="${restored.product}"]`) : null

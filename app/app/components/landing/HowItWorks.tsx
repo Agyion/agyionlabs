@@ -16,13 +16,13 @@ const STAGES = [
     id: "lock",
     label: "Lock",
     title: "Money enters the rule",
-    body: "A seller, a funder, or a future you locks funds into the contract with a condition attached. The money stays on-chain — no custodian, no escrow agent, just the rule.",
+    body: "A seller, a funder, or a future you locks funds into the contract with a condition attached. The money stays on the network: no custodian, no escrow agent, just the rule.",
   },
   {
     id: "wait",
     label: "Wait",
     title: "Time is a parameter, not a promise",
-    body: "A Fade listing's price decays ledger by ledger; a Pod sits buried until its unlock horizon. Waiting is not idle — it is the contract doing exactly what it was told.",
+    body: "A Fade listing's price decays ledger by ledger; a Pod sits buried until its unlock horizon. Waiting is not idle: it is the contract doing exactly what it was told.",
   },
   {
     id: "prove",
@@ -34,7 +34,7 @@ const STAGES = [
     id: "execute",
     label: "Execute or return",
     title: "Two exits, zero discretion",
-    body: "Proven — the money executes itself: claimant paid, beneficiary released, agent settled. Unproven when the deadline lands — it returns to where it came from. The contract does not negotiate.",
+    body: "When proven, the money executes itself: claimant paid, beneficiary released, agent settled. If unproven when the deadline lands, it returns to where it came from. The contract does not negotiate.",
   },
 ] as const;
 
@@ -172,7 +172,7 @@ function DecayPlayground() {
     <div ref={box} className="mt-6 rounded-xl border bg-cream p-5" style={{ borderColor: "var(--hairline)" }}>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div className="text-[12px] font-semibold uppercase tracking-[0.12em] text-muted">
-          Playable — decay rate
+          Playable: decay rate
         </div>
         <div
           className="tnum font-serif text-[34px] leading-none"
@@ -210,7 +210,7 @@ function DecayPlayground() {
         <span className="tnum" style={{ color: beadBelow ? "#F2A65A" : "var(--accent)" }}>
           {bead.p.toLocaleString("en-US")}.00
         </span>{" "}
-        TRY{beadBelow ? " — below zero" : ""}
+        TRY{beadBelow ? ": below zero" : ""}
       </div>
       <input
         type="range"
@@ -222,9 +222,9 @@ function DecayPlayground() {
         aria-label="Decay rate in TRY per tick"
       />
       <div className="mt-1 flex justify-between font-mono text-[11px] text-muted">
-        <span>gentle — 1/tick</span>
+        <span>gentle: 1/tick</span>
         <span className="tnum">{rate} TRY / tick</span>
-        <span>steep — 16/tick</span>
+        <span>steep: 16/tick</span>
       </div>
     </div>
   );
@@ -253,8 +253,8 @@ function LockDemo() {
         />
       </svg>
       <p className="text-[14px] leading-relaxed text-muted">
-        The seal closes once. From that ledger on, the pot answers to the rule —
-        not to the seller, not to us.
+        The seal closes once. From that ledger on, the pot follows the rule.
+        Neither the seller nor we can change it.
       </p>
     </div>
   );

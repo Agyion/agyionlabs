@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { buildAppAssetManifest } from './app-asset-manifest.mjs';
+import { buildSiteHeaders } from './site-headers.mjs';
 const root=fileURLToPath(new URL('..',import.meta.url));
 const site=path.join(root,process.argv.includes('--demo') ? 'artifacts/mock-site' : 'app/site');
 await rm(site,{recursive:true,force:true});await mkdir(site,{recursive:true});
@@ -27,24 +28,5 @@ for(const file of ['index.html','app/index.html','404.html']) {
 }
 const csp=`default-src 'self'; script-src 'self' ${[...hashes].join(' ')}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-src https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`;
 if(csp.length+30>2000) throw new Error('CSP exceeds Cloudflare _headers line limit');
-await writeFile(path.join(site,'_headers'),`/*
-  Content-Security-Policy: ${csp}
-  X-Content-Type-Options: nosniff
-  X-Frame-Options: DENY
-  Referrer-Policy: no-referrer
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Strict-Transport-Security: max-age=31536000
-
-/_next/static/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/assets/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/app/*
-  Cache-Control: public, max-age=0, must-revalidate
-
-/app-assets.json
-  Cache-Control: public, max-age=0, must-revalidate
-`);
+await writeFile(path.join(site,'_headers'),buildSiteHeaders(csp));
 console.log(`Combined site ready (${hashes.size} inline script hashes; ${csp.length} CSP characters).`);

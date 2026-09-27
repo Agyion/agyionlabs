@@ -1,10 +1,12 @@
 /** Actual bundled wallet chooser under the release CSP. No provider is selected or connected. */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
-const base = process.env.APP_BASE_URL || 'http://127.0.0.1:4192';
+import { releaseExpectations, readinessPattern } from './release-expectations.mjs';
+const expected = releaseExpectations({ ...process.env, PUBLIC_BASE_URL: process.env.APP_BASE_URL || process.env.PUBLIC_BASE_URL || 'http://127.0.0.1:4192' });
+const base = expected.base;
 const output = process.env.WALLET_QA_OUTPUT || 'artifacts/verification/product-pages/wallet-modal';
 await mkdir(output, { recursive: true });
-const report = { base, at: new Date().toISOString(), status: 'running', checks: [], diagnostics: [], errors: [], csp: [], noWalletSelected: true };
+const report = { base, expected, at: new Date().toISOString(), status: 'running', checks: [], diagnostics: [], errors: [], csp: [], noWalletSelected: true };
 const browser = await chromium.launch({ executablePath: '/opt/google/chrome/chrome', headless: true, args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--use-angle=swiftshader'] });
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
@@ -15,14 +17,14 @@ try {
   await page.addInitScript(() => document.addEventListener('securitypolicyviolation', event => window.__walletCSP({ directive: event.violatedDirective, blockedURI: event.blockedURI })));
   await page.goto(`${base}/app/?tab=fade`, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('.orbital-backdrop')).toHaveClass(/is-ready/, { timeout: 60000 });
-  await expect(page.locator('#protocol-availability')).toHaveAttribute('data-readiness', /incompatible|unavailable/, { timeout: 30000 });
+  await expect(page.locator('main.station-app')).toHaveAttribute('data-protocol-readiness', readinessPattern(expected.readiness), { timeout: 30000 });
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: width === 1440 ? 1000 : 844 });
     await page.getByRole('button', { name: 'Connect wallet', exact: true }).click();
     const chooser = page.locator('.stellar-wallets-kit');
     await expect(chooser.getByRole('heading', { name: 'Connect Wallet', exact: true })).toBeVisible();
-    for (const wallet of ['Freighter', 'xBull', 'LOBSTR']) await expect(chooser.getByText(wallet, { exact: true })).toBeVisible();
-    await expect(chooser.getByText('HOT', { exact: true })).toHaveCount(0);
+    await expect(chooser.getByText('Freighter', { exact: true })).toBeVisible();
+    for (const wallet of ['xBull', 'LOBSTR', 'WalletConnect', 'HOT']) await expect(chooser.getByText(wallet, { exact: true })).toHaveCount(0);
     const box = await chooser.locator('section').first().boundingBox();
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(width + 1);

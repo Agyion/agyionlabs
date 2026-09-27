@@ -56,7 +56,7 @@ describe('classic transaction boundary', () => {
     expect(error.message).toContain(signedHash);
     expect(error.message).toMatch(/could not be confirmed/);
     expect(error.message).toMatch(/check.*before retrying|do not.*until.*check/i);
-    expect(error.message).not.toMatch(/nothing.*sent|failed on-chain/i);
+    expect(error.message).not.toMatch(/nothing.*sent|failed on-chain|failed on the network/i);
     expect(horizon.submitTransaction).toHaveBeenCalledOnce();
     expect(signer.signTransaction).toHaveBeenCalledOnce();
   });

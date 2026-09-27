@@ -141,3 +141,21 @@ describe('retained upstream wallet modal', () => {
     expect(document.querySelector('.stellar-wallets-kit')).toBeNull();
   });
 });
+
+describe('application wallet availability', () => {
+  it('offers only adapters that can verify the active network', async () => {
+    const { connectWithKit, disconnectKit } = await import('../app/lib/walletsKit');
+    const connecting = connectWithKit();
+    // Attach immediately: closing in cleanup must never leave an unhandled rejection.
+    const outcome = connecting.catch(error => error);
+    try {
+      await vi.waitFor(() => expect(document.querySelector('.stellar-wallets-kit li p')).not.toBeNull());
+      expect([...document.querySelectorAll('.stellar-wallets-kit li p')].map(node => node.textContent)).toEqual(['Freighter']);
+    } finally {
+      const close = document.querySelectorAll<HTMLButtonElement>('.stellar-wallets-kit header button');
+      close[close.length - 1]?.click();
+      await outcome;
+      await disconnectKit();
+    }
+  });
+});

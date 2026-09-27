@@ -1,0 +1,446 @@
+{
+  "review_date": "2026-09-27",
+  "scope": "Platform entry, static deployment/config and landing navigation/data boundaries; exact source snapshots, not generated release output or dependency internals. Some build files were independently covered by TOOLING_REVIEW; inventory aggregation must deduplicate paths.",
+  "files": [
+    {
+      "path": "app/.env.example",
+      "sha256": "aa08643588cd24c17583d4ad3ff16c090814e7380b2805a32db86a66a0719c4e",
+      "lines": 15,
+      "read_ranges": [
+        [
+          1,
+          15
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/app/layout.tsx",
+      "sha256": "db3f9b9e804fd20be957398371c06fdca554d9d4abe5024a6b287d9fdf1c65d7",
+      "lines": 48,
+      "read_ranges": [
+        [
+          1,
+          48
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/app/page.tsx",
+      "sha256": "8b0b630ebd9379d0dbe15148fe2458e4bcf933e02ff3e235e4d06ca79df0d00c",
+      "lines": 35,
+      "read_ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/app/app/page.tsx",
+      "sha256": "b75806d52c1862742fec935a8b468dc023777ece75cbdbe16896ae031b44be6a",
+      "lines": 10,
+      "read_ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/ui.tsx",
+      "sha256": "d904b0fd182eea8a71540e15f1b30e14debad2c4b1bea22ac2ec0528af7d51ab",
+      "lines": 338,
+      "read_ranges": [
+        [
+          1,
+          338
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/lib/zk.ts",
+      "sha256": "e60179b21d744d48b40f0b2bc5b6e57ed52b6eedbc3997c78402467dc09d9823",
+      "lines": 235,
+      "read_ranges": [
+        [
+          1,
+          235
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/lib/hak-bindings/src/index.ts",
+      "sha256": "16f4276e3a77c0949c63d750675f483ffd0ebc2c909bfecd15acbde24651c508",
+      "lines": 314,
+      "read_ranges": [
+        [
+          1,
+          314
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/lib/hak-bindings/package.json",
+      "sha256": "2a97df502f87d5928d705e775ff49c052d363ce314aa29b182f1424cffe6962e",
+      "lines": 17,
+      "read_ranges": [
+        [
+          1,
+          17
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/lib/hak-bindings/README.md",
+      "sha256": "876372369fe3a0ae84fd2f2db6ebd576f922cbbe4ccf4205e14c2d9148012264",
+      "lines": 36,
+      "read_ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/lib/hak-bindings/tsconfig.json",
+      "sha256": "4e9d6c387e88404912c07eb6ce617701563c322751e84a9f4e61e3c47ef6fdb5",
+      "lines": 98,
+      "read_ranges": [
+        [
+          1,
+          98
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/lib/hak-bindings/.gitignore",
+      "sha256": "9ae8e02462ff393bb40e787f0a65e79d241ed4f74b32cc57c64acb4ac18fa3fc",
+      "lines": 2,
+      "read_ranges": [
+        [
+          1,
+          2
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/next.config.mjs",
+      "sha256": "bed956265316a769ff1d8fda744a05a56ab1a26e3cb6b9e1500ee5f9ed4c0c2d",
+      "lines": 10,
+      "read_ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/wrangler.toml",
+      "sha256": "0376b600940c6a28632ac10d59ac1f2ea3d40c49a30e91ed4aaf3ddbe26e48c8",
+      "lines": 16,
+      "read_ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "shared/flight-handoff.ts",
+      "sha256": "189bd60d3b3ed8ec051eb1a6e783e85437c8312e600e021714fc7fca584f3146",
+      "lines": 94,
+      "read_ranges": [
+        [
+          1,
+          94
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "shared/flight-preference.ts",
+      "sha256": "ea3f39072a494479bc457d18e5aa2b17869d44ae8adfff721616a8efbf925d55",
+      "lines": 37,
+      "read_ranges": [
+        [
+          1,
+          37
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/src/App.tsx",
+      "sha256": "f5f38e92272d855a24a1850d0ccaf1adf0eb05341ca2565acbbd7c9178342d6d",
+      "lines": 149,
+      "read_ranges": [
+        [
+          1,
+          149
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/src/main.tsx",
+      "sha256": "c8ab650cb6f3d5bb3fc88e0d25d22a64c85ae1ef8f707da5ff3018569a226f67",
+      "lines": 17,
+      "read_ranges": [
+        [
+          1,
+          17
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/src/lib/api.ts",
+      "sha256": "9d13257808032919f908fe6799d14403e6bfdda980342b029e6c0a5f9d88036b",
+      "lines": 35,
+      "read_ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/src/lib/captcha.ts",
+      "sha256": "570bdd196234dfa6530f7f364b2f6df74cc3a9354fbb1843994c556ce1422d85",
+      "lines": 43,
+      "read_ranges": [
+        [
+          1,
+          43
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/src/lib/url.ts",
+      "sha256": "bad3de17b68843357e47db0a3a09d08a44276d86c1efd6ee5efe9b71cd2e1631",
+      "lines": 19,
+      "read_ranges": [
+        [
+          1,
+          19
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/src/lib/validateConfig.ts",
+      "sha256": "465fb4a9d467ffb47d7342cb98baa9004fc4e434944add0ac55cb442329f5750",
+      "lines": 272,
+      "read_ranges": [
+        [
+          1,
+          272
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/src/lib/appAssetWarmup.ts",
+      "sha256": "4baeac0ee8e75f5b890497de811fc254ae14492edbb7ee36dc27d88bdc0a708f",
+      "lines": 60,
+      "read_ranges": [
+        [
+          1,
+          60
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/productNavigation.ts",
+      "sha256": "1162847f8fd0d78efabee2e2865c0360ded9f1a08654f821928e9fb7e474a5ab",
+      "lines": 10,
+      "read_ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/ProductRouteLink.tsx",
+      "sha256": "b74d5b85f128a84a6a898747db03d670deb6ed1b30c3e46f19dbdcd845f21d0a",
+      "lines": 22,
+      "read_ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/productRouteTransition.ts",
+      "sha256": "453ce9114f7358fd1462744974315461ce54670cf6f4b49e6dc6648c7841dac7",
+      "lines": 103,
+      "read_ranges": [
+        [
+          1,
+          103
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/vite.config.ts",
+      "sha256": "88818286e3f34ea0e9706d5fc056569e73f4512c256efe8b8fbc7f893ca51a6b",
+      "lines": 17,
+      "read_ranges": [
+        [
+          1,
+          17
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "package.json",
+      "sha256": "1521dad5756211202287bb4e3bd51daf80e99bd4c3d226a1c78e4899390c25e9",
+      "lines": 17,
+      "read_ranges": [
+        [
+          1,
+          17
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/package.json",
+      "sha256": "39a5515e2da55b768c18a2221e712b595417edbdb9a618bc688a817c1b01ddd0",
+      "lines": 41,
+      "read_ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "landing/package.json",
+      "sha256": "f4a3a7edacd05c9d2a883b8f5be79956929f51bc8f68e674c43760c9dcc2f646",
+      "lines": 41,
+      "read_ranges": [
+        [
+          1,
+          41
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/build_site.sh",
+      "sha256": "0ad2c3420bdc18496331d2a6e4aa50d68ea8d8b0e78d397e3694c2a4176a0896",
+      "lines": 35,
+      "read_ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/assemble-site.mjs",
+      "sha256": "d9b10bfb2e06dc11319027ab24c91a95778178f2a4cba93cc3ac946afd04946a",
+      "lines": 32,
+      "read_ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/app-asset-manifest.mjs",
+      "sha256": "2cad5bb5be6ecea94c234760426a2a6fd77f812b6b2d15b4ba06d5c7643746e2",
+      "lines": 27,
+      "read_ranges": [
+        [
+          1,
+          27
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "docs/cuzdan-baglantisi.md",
+      "sha256": "4261d9b2b3173f5bc48257844299874c0420b0db300c79bf336c25a084899a57",
+      "lines": 31,
+      "read_ranges": [
+        [
+          1,
+          31
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "README.md",
+      "sha256": "dd5a22c78a19d9f244d95e0266b7f781a016a5434d9c668a6713d1d34076005f",
+      "lines": 304,
+      "read_ranges": [
+        [
+          1,
+          304
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "scripts/deploy_testnet.sh",
+      "sha256": "26d36c8d8b4724a495210ec5f4c9141225e55f83e2bdee6284fa9c0c17eb0615",
+      "lines": 141,
+      "read_ranges": [
+        [
+          1,
+          141
+        ]
+      ],
+      "status": "complete-source-read"
+    },
+    {
+      "path": "app/tests/zk-artifacts.test.ts",
+      "sha256": "2ebc57667a5177b8476a7a6822efb5a727573331a9ffbf32e1de09f76e515aff",
+      "lines": 89,
+      "read_ranges": [
+        [
+          1,
+          89
+        ]
+      ],
+      "status": "complete-source-read"
+    }
+  ],
+  "file_count": 36,
+  "line_count": 2828,
+  "not_claimed": [
+    "Runtime proof of the new production deployment",
+    "All transitive dependency source",
+    "Renderer/CSS source owned by sibling reviewer",
+    "Final .env.local and generated app/site output owned by parent"
+  ]
+}

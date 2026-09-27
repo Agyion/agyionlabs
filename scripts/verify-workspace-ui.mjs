@@ -1,3 +1,4 @@
+import { waitForFonts } from './lib/browser-settle.mjs';
 /** Local workspace QA. No wallet connection, signing or transaction submission. */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -120,7 +121,7 @@ try {
     try {
       await page.goto(`${base}/app/?tab=fade`);
       await expect(page.locator('.orbital-backdrop')).toHaveClass(/is-ready/, { timeout: 30000 });
-      await page.evaluate(() => document.fonts.ready);
+      await waitForFonts(page);
       for (const id of tabs) {
         diagnostics.phase = `${id} initial form`;
         await check(`${width}px ${id}: initial content and bounds`, async () => {
@@ -261,6 +262,7 @@ try {
   } finally { diagnostics.phase = 'context teardown'; await context.close(); }
 
   const failedChecks = report.checks.filter(result => result.status !== 'passed');
+  expect(report.checks.length, 'QA_CHECK_FILTER must select at least one actual check').toBeGreaterThan(0);
   const runtimeFailures = report.pages.flatMap(page => [
     ...page.consoleErrors, ...page.pageErrors, ...page.requestFailures, ...page.httpErrors,
   ].map(error => ({ page: page.label, ...error })));

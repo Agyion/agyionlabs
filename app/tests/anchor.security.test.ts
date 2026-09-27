@@ -1,6 +1,6 @@
 import { Account, Asset, Keypair, Networks, Operation, StellarToml, Transaction, TransactionBuilder, WebAuth } from '@stellar/stellar-sdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { authenticate, clearAnchorSession, depositTry, withdrawTry } from '../app/lib/anchor';
+import { authenticate, clearAnchorSession, depositTry, withdrawTry, transactionStatus } from '../app/lib/anchor';
 import { registerSigner, unregisterSigner } from '../app/lib/wallet';
 import type { TransactionSigner } from '../app/lib/hakClient';
 
@@ -122,5 +122,19 @@ describe('anchor session isolation', () => {
     const calls = vi.mocked(fetch).mock.calls.length;
     await expect(depositTry(bearer, other.publicKey(), '1')).rejects.toThrow(/account|session/i);
     expect(vi.mocked(fetch).mock.calls.length).toBe(calls);
+  });
+});
+
+
+describe('anchor transfer status identity', () => {
+  it.each([{ transaction: { id: 'another-withdrawal', status: 'completed' } }, { transaction: { status: 'completed' } }, { transaction: null }, null])('rejects an unbound provider status %j', async body => {
+    const bearer = await authenticate(signer);
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify(body)));
+    await expect(transactionStatus(bearer, 'requested-transfer')).rejects.toThrow(/transaction|transfer|response|status/i);
+  });
+  it('accepts status only for the requested transfer', async () => {
+    const bearer = await authenticate(signer);
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ transaction: { id: 'requested-transfer', kind: 'withdrawal', status: 'completed' } })));
+    await expect(transactionStatus(bearer, 'requested-transfer')).resolves.toMatchObject({ id: 'requested-transfer', status: 'completed' });
   });
 });

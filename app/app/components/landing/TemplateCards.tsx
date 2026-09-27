@@ -17,7 +17,7 @@ const CARDS = [
     id: "fade",
     name: "Fade",
     tag: "Declining price",
-    body: "A price that walks backwards from the moment it is listed. Claim early and pay more; wait and pay less — past zero, the seller pays you. The last hour belongs to the patient.",
+    body: "A price that walks backwards from the moment it is listed. Claim early and pay more; wait and pay less. Past zero, the seller pays you. The last hour belongs to the patient.",
     media: "fade.png",
     alt: "Hourglass sand falling as a declining price",
   },
@@ -41,7 +41,7 @@ const CARDS = [
     id: "envoy",
     name: "Envoy",
     tag: "Agent mandate",
-    body: "Delegate bounded spending to an agent key: per-transaction ceiling, daily cap, expiry — enforced by the contract, not by trust. Revocation is one click, always.",
+    body: "Delegate bounded spending to an agent key with a ceiling per transaction, daily cap and expiry. The contract enforces those terms. Revocation is one click, always.",
     media: "envoy.png",
     alt: "Concentric limit rings bounding an agent orbit",
   },
@@ -220,7 +220,7 @@ function PodMotion({ active }: { active: boolean }) {
         />
       </div>
       <div className="tnum mt-1 font-mono text-[11px] text-muted">
-        {Math.round(y * 100)}% buried — unlock horizon ahead
+        {Math.round(y * 100)}% buried: unlock horizon ahead
       </div>
     </div>
   );

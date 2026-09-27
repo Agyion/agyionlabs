@@ -27,7 +27,7 @@ import { CONFIG, IS_MOCK } from "../../lib/config";
 import { ErrorNote, Field, FilledButton, GhostButton, OkNote, StateChip, TextInput } from "../ui";
 import { RecordLoader, WalletPrerequisite } from "./panelControls";
 import { durationLedgers, ledgerDeadline } from "./panelValidation";
-import { ConditionGate, DraftSummary, draftAmount, draftDelay } from "./instrumentPresentation";
+import { ConditionGate, draftDelay } from "./instrumentPresentation";
 
 interface AttestEvent {
   ts: string;
@@ -75,7 +75,6 @@ export default function TriggerPanel({ wallet }: { wallet: WalletState }) {
 
   return (
     <div className="instrument-panel panel-trigger">
-      <WalletPrerequisite address={wallet.address} />
           <CreateTrigger
             wallet={wallet}
             onCreated={(id) => void refresh(id)}
@@ -183,7 +182,7 @@ function CreateTrigger({
         ts: new Date().toISOString(),
         source: "contract",
         status: "pending",
-        note: `escrow #${id} locked — awaiting attestation`,
+        note: `escrow #${id} locked: awaiting attestation`,
       });
       setNotice(`Trigger #${id} locked. The attester key can now decide its fate.`);
       onCreated(id);
@@ -195,44 +194,44 @@ function CreateTrigger({
   };
 
   return (
-    <div className="instrument-layout">
-    <section className="instrument-main instrument-section">
-      <header><h3>Lock a conditional escrow</h3></header>
-      <div className="instrument-fields">
-        <Field label={`Amount (${CONFIG.assetCode})`}>
-          <TextInput value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" />
-        </Field>
-        <Field label="Deadline (minutes)" hint="Refund becomes available after this deadline">
-          <TextInput value={minutes} onChange={(e) => setMinutes(e.target.value)} inputMode="numeric" />
-        </Field>
-        <div className="instrument-field-wide">
+    <section className="trigger-agreement workbench-surface" aria-label="Lock a conditional escrow">
+      <header className="workbench-heading"><h3>Set payment conditions</h3></header>
+      <div className="trigger-clause">
+        <div className="trigger-clause__content"><div className="trigger-recipient-fields">
         <Field label="Beneficiary (G…)" hint={IS_MOCK ? "Empty = a demo address" : "Empty = your connected wallet"}>
           <TextInput value={beneficiary} onChange={(e) => setBeneficiary(e.target.value)} className="font-mono text-[12px]" placeholder="G…" />
         </Field>
-        </div>
+        <Field label={`Amount (${CONFIG.assetCode})`}>
+          <TextInput value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" />
+        </Field>
+        </div></div>
       </div>
-      <div className="instrument-section">
-        <Field label="Attester pubkey (hex)" hint="Choose a trusted signer. Generated keys are for demos.">
+      <div className="trigger-clause">
+        <div className="trigger-clause__content">
+        <Field label="Attester pubkey (hex)">
           <div className="instrument-inline-control">
             <TextInput value={attesterPub} onChange={(e) => setAttesterPub(e.target.value)} className="font-mono text-[12px]" />
             <GhostButton onClick={generateAttester}>Generate demo key</GhostButton>
           </div>
         </Field>
+        <p className="trigger-clause__note">Choose a trusted signer. The contract verifies their signature, not the event itself.</p>
+        </div>
       </div>
-      <div className="instrument-actions">
+      <div className="trigger-clause">
+        <div className="trigger-clause__content">
+          <div className="trigger-expiry-fields"><Field label="Deadline (minutes)" hint={draftDelay(minutes, "Deadline", 10)}>
+            <TextInput value={minutes} onChange={(e) => setMinutes(e.target.value)} inputMode="numeric" />
+          </Field></div>
+        </div>
+      </div>
+      <div className="trigger-outcomes"><ConditionGate keySet={Boolean(attesterPub.trim())} beneficiary={beneficiary.trim() ? shortAddress(beneficiary.trim()) : IS_MOCK ? "the demo beneficiary" : wallet.address ? shortAddress(wallet.address) : "the beneficiary you choose"} /></div>
+      <div className="workbench-commit">
+        <WalletPrerequisite address={wallet.address} />
         <FilledButton transaction onClick={() => void create()} disabled={busy || (!IS_MOCK && !wallet.address)}>
           {busy ? "Locking…" : "Lock the escrow"}
         </FilledButton>
       </div>
     </section>
-    <DraftSummary title="Escrow terms" visual={<ConditionGate keySet={Boolean(attesterPub.trim())} beneficiary={beneficiary.trim() ? shortAddress(beneficiary.trim()) : IS_MOCK ? "the demo beneficiary" : wallet.address ? shortAddress(wallet.address) : "the beneficiary you choose"} />} rows={[
-      { label: "Amount to lock", value: draftAmount(amount) },
-      { label: "Beneficiary", value: beneficiary.trim() ? shortAddress(beneficiary.trim()) : IS_MOCK ? "Demo address" : wallet.address ? shortAddress(wallet.address) : "Connect a wallet or enter an address" },
-      { label: "Deadline after", value: draftDelay(minutes, "Deadline", 10) },
-    ]}>
-      <p>The contract verifies the attester&apos;s signature, not the real-world event.</p>
-    </DraftSummary>
-    </div>
   );
 }
 
@@ -331,16 +330,16 @@ function TriggerActions({
         refId: trigger.id.toString(),
         amount: trigger.amount.toString(),
         status: "executed",
-        detail: "attester signature verified — beneficiary paid",
+        detail: "attester signature verified: beneficiary paid",
         txHash: null,
       });
       pushEvent({
         ts: new Date().toISOString(),
         source: shortHex(trigger.attester_pubkey),
         status: "executed",
-        note: `escrow #${trigger.id} executed — sig verified`,
+        note: `escrow #${trigger.id} executed: sig verified`,
       });
-      setNotice(`Escrow #${trigger.id} executed — ${formatMinor(trigger.amount)} ${CONFIG.assetCode} to the beneficiary.`);
+      setNotice(`Escrow #${trigger.id} executed: ${formatMinor(trigger.amount)} ${CONFIG.assetCode} to the beneficiary.`);
       onChanged();
     } catch (e) {
       pushEvent({
@@ -367,14 +366,14 @@ function TriggerActions({
         refId: trigger.id.toString(),
         amount: trigger.amount.toString(),
         status: "returned",
-        detail: "deadline passed without attestation — returned to funder",
+        detail: "deadline passed without attestation: returned to funder",
         txHash: null,
       });
       pushEvent({
         ts: new Date().toISOString(),
         source: "contract",
         status: "failed",
-        note: `escrow #${trigger.id} refunded — deadline rule`,
+        note: `escrow #${trigger.id} refunded: deadline rule`,
       });
       setNotice(`Escrow #${trigger.id} refunded to the funder.`);
       onChanged();

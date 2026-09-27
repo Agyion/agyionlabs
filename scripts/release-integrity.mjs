@@ -7,6 +7,13 @@ const digest = value => createHash('sha256').update(value).digest('hex');
 const jsdTemplate = `<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'@@RAY@@',t:'@@TIME@@'};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>`;
 const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const jsdPattern = new RegExp(escapeRegex(jsdTemplate).replace('@@RAY@@', '([0-9a-f]{16})').replace('@@TIME@@', '([A-Za-z0-9+/]{14}==)'), 'g');
+const reviewedScriptSource = token => {
+  if (["'self'", "'none'", "'wasm-unsafe-eval'"].includes(token)) return true;
+  const hash = token.match(/^'sha(256|384|512)-([A-Za-z0-9+/]+={0,2})'$/);
+  if (!hash) return false;
+  const bytes = Buffer.from(hash[2], 'base64');
+  return bytes.length === Number(hash[1]) / 8 && bytes.toString('base64') === hash[2];
+};
 
 export function compareReleaseBody(actual, expected, html = false) {
   if (actual.equals(expected)) return { applicationBody: actual, edgeInjection: null };
@@ -35,10 +42,24 @@ export function assertReleaseCsp(header) {
     if (!/^[a-z][a-z0-9-]*$/.test(name) || directives.has(name)) throw new Error('Malformed or duplicate release CSP directive.');
     directives.set(name, tokens);
     if (name === 'default-src' || name === 'script-src' || name.startsWith('script-src-')) {
-      if (tokens.some(token => ["'unsafe-inline'", "'unsafe-eval'", "'wasm-unsafe-eval'"].includes(token.toLowerCase()))) throw new Error(`Unsafe script permission in ${name}.`);
+      if (tokens.some(token => ["'unsafe-inline'", "'unsafe-eval'"].includes(token.toLowerCase()))) throw new Error(`Unsafe script permission in ${name}.`);
+      // A keyword-only check would accept an injected wildcard or remote host.
+      // WASM compilation is separate from JavaScript string evaluation and is
+      // needed by the wallet SDK; it does not add another script origin.
+      if (tokens.some(token => !reviewedScriptSource(token)) || (tokens.includes("'none'") && tokens.length !== 1)) throw new Error(`Unreviewed script source in ${name}.`);
     }
   }
   if (!directives.get('script-src')?.length) throw new Error('Release CSP requires an explicit script-src.');
   const ancestors = directives.get('frame-ancestors');
   if (ancestors?.length !== 1 || ancestors[0].toLowerCase() !== "'none'") throw new Error('Release CSP must forbid framing.');
+}
+
+/** HTML must retain the reviewed bytes and revalidate on every subsequent use. */
+export function assertHtmlCacheControl(header) {
+  if (typeof header !== 'string' || /[\r\n]/.test(header)) throw new Error('Missing or malformed HTML Cache-Control.');
+  const directives = header.split(',').map(value => value.trim().toLowerCase());
+  const expected = ['public', 'max-age=0', 'must-revalidate', 'no-transform'];
+  if (directives.length !== expected.length || new Set(directives).size !== directives.length || expected.some(value => !directives.includes(value))) {
+    throw new Error('HTML Cache-Control must contain exactly public, max-age=0, must-revalidate, no-transform.');
+  }
 }

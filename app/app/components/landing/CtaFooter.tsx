@@ -55,12 +55,12 @@ export default function CtaFooter() {
         <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-4 px-6 pb-10 pt-4 md:flex-row md:items-center">
           <div className="font-serif text-[18px] text-ink">Agyion</div>
           <p className="max-w-[52ch] text-[12px] leading-relaxed text-muted">
-            Colophon — DM Serif Display, Inter, IBM Plex Mono. Terracotta, sand,
-            cream, charcoal-brown. Built on Stellar testnet with Soroban; TRY
+            Colophon: DM Serif Display, Inter, IBM Plex Mono. Terracotta, sand,
+            cream, charcoal brown. Built on Stellar testnet with Soroban; TRY
             is a demo token, not legal tender. Mock mode stores nothing but your
             browser.
           </p>
-          <div className="font-mono text-[12px] text-muted">lock · wait · prove · execute-or-return</div>
+          <div className="font-mono text-[12px] text-muted">lock · wait · prove · execute or return</div>
         </div>
       </footer>
     </>

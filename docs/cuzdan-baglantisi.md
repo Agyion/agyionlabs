@@ -1,6 +1,16 @@
 # Cüzdan Bağlantısı — Kim, Nereden, Nasıl?
 (19 Eylül 2026)
 
+> 27 Eylül 2026 güncel durum: Aşağıdaki senaryo haritası ilk tasarım planıdır.
+> Uygulama şu anda yalnızca Freighter adaptörünü sunar ve bağlantı ile imzalama
+> sırasında Stellar testnet ağını doğrular. Mevcut xBull, LOBSTR ve WalletConnect
+> adaptörleri etkin ağı doğrulayamadığı için uygulamada kullanıma açık değildir;
+> WalletConnect proje kimliği girmek bu desteği etkinleştirmez. Mobil QR/deep-link
+> ve cüzdan içi tarayıcı akışları için çalışıyor iddiasında bulunulmamalıdır.
+> Test anahtarı yalnızca testnet içindir ve mevcut sayfanın belleğinde tutulur.
+> [Güncel istemci incelemesi](security/2026-09-27/PUBLIC_CLIENT_FULL_REVIEW.md)
+> bu sınırı ve doğrulama kanıtlarını açıklar.
+
 ## Senaryo haritası
 
 | Kullanıcı nereden açıyor | Ne olur |

@@ -8,6 +8,7 @@ import path from 'node:path'
 import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { chromium, expect } from '@playwright/test'
+import { waitForFonts, waitForFrames } from '../../../scripts/lib/browser-settle.mjs'
 
 const BASE = (process.env.BASE_URL || 'http://127.0.0.1:4173').replace(/\/$/, '')
 const OUTPUT = path.resolve(process.env.QA_OUTPUT_DIR || '/tmp/agyion-landing-qa')
@@ -22,7 +23,7 @@ const executablePath = candidates.find(candidate => fs.existsSync(candidate))
 if (!executablePath) throw new Error('Chromium is required. Set CHROMIUM_PATH or install the Playwright browser.')
 fs.mkdirSync(OUTPUT, { recursive: true })
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
-const SOURCES = ['landing/tests/e2e/matrix.mjs', 'landing/src/App.tsx', 'landing/src/pages/Home.tsx', 'landing/src/pages/Instruments.tsx', 'landing/src/components/NavPill.tsx', 'landing/src/components/Footer.tsx', 'landing/src/components/HowItWorksDialog.tsx', 'landing/src/components/OrbitalScene.tsx', 'landing/src/styles/home-gateway.css', 'landing/src/styles/orbital.css']
+const SOURCES = ['scripts/lib/browser-settle.mjs', 'landing/tests/e2e/matrix.mjs', 'landing/src/App.tsx', 'landing/src/pages/Home.tsx', 'landing/src/pages/Instruments.tsx', 'landing/src/components/NavPill.tsx', 'landing/src/components/Footer.tsx', 'landing/src/components/OrbitalScene.tsx', 'landing/src/components/DetailWorld.tsx', 'landing/src/components/InstrumentExample.tsx', 'landing/src/components/ExampleArtwork.tsx', 'landing/src/components/instrumentExamples.ts', 'landing/src/styles/instrument-example.css', 'landing/src/styles/product-pages.css', 'landing/src/styles/home-gateway.css', 'landing/src/styles/orbital.css']
 const sourceHashes = () => SOURCES.map(file => ({ file, sha256: createHash('sha256').update(fs.readFileSync(path.join(ROOT, file))).digest('hex') }))
 const report = { version: 3, base: BASE, scope: SCOPE, widths: WIDTHS, motions: MOTIONS, sourcesAtStart: sourceHashes(), status: 'running', startedAt: new Date().toISOString(), checks: [], skippedChecks: [], pages: [], screenshots: [], failure: null,
   limits: 'SwiftShader checks interaction correctness and saved appearance, not native GPU performance. The flight destination is an isolated same-origin fixture; app behavior has its own suite.' }
@@ -79,7 +80,7 @@ async function homeReady(page) {
   await expect(page.locator('.orbital-scene')).toHaveClass(/is-ready/, { timeout: 30000 })
   await expect(page.locator('.orbital-scene canvas')).toHaveCount(1)
   await expect(page.locator('.orbital-fallback')).toBeHidden()
-  await page.evaluate(() => document.fonts.ready)
+  await waitForFonts(page)
 }
 async function navigationLink(page, name) {
   const desktop = page.getByRole('navigation', { name: 'Main navigation', exact: true })
@@ -95,16 +96,6 @@ async function visibleFocus(page) {
       && getComputedStyle(active).visibility !== 'hidden' && !active.closest('[inert]')
   }), { message: 'Navigation must leave focus on a visible, usable target rather than body or a hidden menu' }).toBe(true)
 }
-async function focusReturned(page, opener) {
-  if (await opener.isVisible()) await expect(opener).toBeFocused()
-  else {
-    await visibleFocus(page)
-    await expect.poll(() => page.evaluate(() => {
-      const active = document.activeElement
-      return active?.id === 'home' || active?.id === 'main' || active?.matches('.orbital-nav__toggle')
-    })).toBe(true)
-  }
-}
 async function canonicalLinks(page, active = false) {
   await expect(page.locator('a[href="/#instruments"], a[href="#instruments"]')).toHaveCount(0)
   const links = page.locator('.orbital-nav a[href="/instruments"]')
@@ -117,7 +108,7 @@ async function canonicalLinks(page, active = false) {
 async function directoryReady(page) {
   await expect(page).toHaveURL(/\/instruments$/)
   await expect(page.locator('.instrument-directory')).toBeVisible()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Money, with conditions.')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Instruments')
   const directory = page.getByRole('navigation', { name: 'Choose an instrument', exact: true })
   await expect(directory).toHaveCount(1)
   await expect(directory.getByRole('link')).toHaveCount(6)
@@ -170,7 +161,7 @@ async function installCameraProbe(page) {
       const source = proto.shaderSource, attach = proto.attachShader, link = proto.linkProgram, location = proto.getUniformLocation, matrix = proto.uniformMatrix4fv
       proto.shaderSource = function (shader, text) { state(this).sources.set(shader, text); return source.call(this, shader, text) }
       proto.attachShader = function (program, shader) { const s = state(this), list = s.shaders.get(program) || []; list.push(shader); s.shaders.set(program, list); return attach.call(this, program, shader) }
-      proto.linkProgram = function (program) { const s = state(this); if (/PointsMaterial/.test((s.shaders.get(program) || []).map(shader => s.sources.get(shader) || '').join('\n'))) s.stars.add(program); return link.call(this, program) }
+      proto.linkProgram = function (program) { const s = state(this); if (/PointsMaterial|AGYION_STAR_FIELD/.test((s.shaders.get(program) || []).map(shader => s.sources.get(shader) || '').join('\n'))) s.stars.add(program); return link.call(this, program) }
       proto.getUniformLocation = function (program, name) { const item = location.call(this, program, name); if (item) state(this).uniforms.set(item, { name, star: state(this).stars.has(program) }); return item }
       proto.uniformMatrix4fv = function (item, transpose, values, ...rest) { const uniform = item && state(this).uniforms.get(item); if (uniform?.star && uniform.name === 'modelViewMatrix') window.__landingProbe.matrix = Array.from(values).slice(rest[0] || 0, (rest[0] || 0) + 16); return matrix.call(this, item, transpose, values, ...rest) }
     }
@@ -259,11 +250,11 @@ try {
       await capture(page, `directory-${width}-${motion}.png`)
     })
     await check(`${label}: directory link, native detail route and immediate Back restore directory position`, async () => {
-      const detailLink = page.locator('.directory-item[href="/pod"]')
+      const detailLink = page.getByRole('navigation', { name: 'Choose an instrument', exact: true }).locator('a[href="/pod"]')
       const native = await nativeModifiers(detailLink)
       await detailLink.focus()
       await detailLink.scrollIntoViewIfNeeded()
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+      await waitForFrames(page)
       const before = await page.evaluate(() => scrollY)
       await page.keyboard.press('Enter')
       await expect(page.locator('.product-page[data-instrument="pod"]')).toBeVisible()
@@ -291,47 +282,11 @@ try {
       await expect(page.getByRole('navigation', { name: 'Mobile navigation', exact: true })).toBeHidden()
       await directoryReady(page)
     })
-    await check(`${label}: How returns to Home with Escape and Close, trapping and restoring focus`, async () => {
-      // How is still hosted by Home when opened from the standalone directory.
-      await (await navigationLink(page, 'How it works')).click()
-      await expect(page.getByRole('dialog', { name: 'How it works', exact: true })).toBeVisible()
-      await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
-      await page.keyboard.press('Escape')
-      await expect(page).toHaveURL(/\/#home$/)
-      await homeReady(page)
-      await visibleFocus(page)
-      await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
-      await (await navigationLink(page, 'Home')).click()
-      await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
-      for (const method of ['Escape', 'Close']) {
-        const opener = await navigationLink(page, 'How it works')
-        await opener.click()
-        await expect(page).toHaveURL(/\/#how-it-works$/)
-        const dialog = page.getByRole('dialog', { name: 'How it works', exact: true })
-        await expect(dialog).toBeVisible()
-        expect(await dialog.evaluate(element => element.matches(':modal'))).toBe(true)
-        const close = dialog.getByRole('button', { name: 'Close', exact: true })
-        await expect(close).toBeFocused()
-        await expect(dialog.getByRole('tab')).toHaveCount(3)
-        await dialog.getByRole('tab', { name: 'Result', exact: true }).click()
-        await expect(dialog.getByRole('tabpanel')).toContainText('Claims and refunds require a transaction.')
-        await page.keyboard.press('Tab')
-        expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBe(true)
-        await page.keyboard.press('Shift+Tab')
-        expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBe(true)
-        if (method === 'Escape') await page.keyboard.press('Escape')
-        else await close.click()
-        await expect(dialog).toBeHidden()
-        await expect(page).toHaveURL(/\/#home$/)
-        await focusReturned(page, opener)
-        await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
-      }
-      await (await navigationLink(page, 'How it works')).click()
-      await expect(page.getByRole('dialog')).toBeVisible()
-      await page.goBack()
-      await expect(page).toHaveURL(/\/#home$/)
-      await expect(page.getByRole('dialog')).toBeHidden()
-      await visibleFocus(page)
+    await check(`${label}: no obsolete How modal links or dialog`, async () => {
+      await expect(page.getByRole('link', { name: 'How it works', exact: true })).toHaveCount(0)
+      await expect(page.getByRole('dialog', { name: 'How it works', exact: true })).toHaveCount(0)
+      await expect(page.locator('a[href="/#how-it-works"], a[href="#how-it-works"]')).toHaveCount(0)
+      await directoryReady(page)
     })
     await check(`${label}: legacy hash replaces its history entry with the canonical catalog`, async () => {
       await page.goto(`${BASE}/fade`, { waitUntil: 'domcontentloaded' })
@@ -352,7 +307,7 @@ try {
   }
 
   if (SCOPE === 'routes') {
-    report.skippedChecks.push({ name: 'Dedicated reduced-motion orbit, six detail mechanism controls, app flights, motion-change and no-WebGL fixtures', reason: 'Outside focused route/history scope' })
+    report.skippedChecks.push({ name: 'Dedicated reduced-motion orbit, six everyday examples, app flights, motion-change and no-WebGL fixtures', reason: 'Outside focused route/history scope' })
   } else {
 
   const reduced = await browser.newContext({ viewport: { width: 360, height: 800 }, reducedMotion: 'reduce' })
@@ -386,10 +341,10 @@ try {
     await page.keyboard.press('Enter')
     await expect(page.locator('#main')).toBeFocused()
   })
-  for (const slug of PRODUCTS) await check(`/${slug}: product mechanism, native destination, keyboard controls and scene teardown`, async () => {
+  for (const slug of PRODUCTS) await check(`/${slug}: everyday example, native destination, keyboard controls and scene teardown`, async () => {
     await page.goto(`${BASE}/instruments`, { waitUntil: 'domcontentloaded' })
     await directoryReady(page)
-    await page.locator(`.directory-item[href='/${slug}']`).focus()
+    await page.getByRole('navigation', { name: 'Choose an instrument', exact: true }).locator(`a[href='/${slug}']`).focus()
     await page.keyboard.press('Enter')
     await expect(page).toHaveURL(new RegExp(`/${slug}$`))
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
@@ -398,16 +353,18 @@ try {
     await canonicalLinks(page, true)
     await expect(page.locator('.orbital-scene canvas')).toHaveCount(0)
     await expect(detail.locator('.product-launch')).toHaveAttribute('href', `/app/?tab=${slug}`)
-    const mechanism = detail.locator(`.instrument-mechanism[data-mechanism='${slug}']`)
-    await expect(mechanism.locator('svg')).toHaveCount(1)
-    const action = { fade: 'claim', pod: 'open', trigger: 'submit', envoy: 'request', ramp: 'bridge', ledger: 'bundle' }[slug]
-    const outcome = { fade: 'fade-pays', pod: 'pod-time', trigger: 'trigger-payout', envoy: 'envoy-ungranted', ramp: 'ramp-mock', ledger: 'ledger-reference' }[slug]
-    await mechanism.locator(`[data-action='${action}']`).focus()
+    const example = detail.locator(`.instrument-example[data-example='${slug}']`)
+    await expect(example.locator('svg')).toHaveCount(1)
+    await expect(example).toHaveAttribute('data-stage', '0')
+    await expect(example).toHaveAttribute('data-status', 'ready')
+    await example.locator('[data-action="next"]').focus()
     await page.keyboard.press('Enter')
-    await expect(mechanism).toHaveAttribute('data-outcome', outcome)
-    await mechanism.locator('[data-action="reset"]').focus()
+    await expect(example).toHaveAttribute('data-stage', '1')
+    await expect(example).toHaveAttribute('data-status', 'step')
+    await example.locator('[data-action="reset"]').focus()
     await page.keyboard.press('Enter')
-    await expect(mechanism).toHaveAttribute('data-outcome', 'ready')
+    await expect(example).toHaveAttribute('data-stage', '0')
+    await expect(example).toHaveAttribute('data-status', 'ready')
     await expect(detail.locator('.product-limits')).not.toHaveAttribute('open', '')
     await detail.locator('.product-limits summary').focus()
     await page.keyboard.press('Enter')
@@ -415,68 +372,59 @@ try {
     await page.keyboard.press('Enter')
     await expect(detail.locator('.product-limits')).not.toHaveAttribute('open', '')
     await noOverflow(page)
-    const outgoing = await mechanism.locator('svg').elementHandle()
+    const outgoing = await example.locator('svg').elementHandle()
     await page.getByRole('link', { name: 'Agyion Labs home', exact: true }).first().click()
     await homeReady(page)
     await expect.poll(() => outgoing.evaluate(element => element.isConnected)).toBe(false)
     await outgoing.dispose()
   })
-  await check('Directory and next-product links support keyboard, route history and distinct mechanism scenes', async () => {
+  await check('Directory and next-product links support keyboard, route history and distinct example scenes', async () => {
     await page.setViewportSize({ width: 1440, height: 1000 })
     await page.goto(`${BASE}/instruments`, { waitUntil: 'domcontentloaded' })
     await directoryReady(page)
-    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
-    await page.locator('.directory-item[href="/fade"]').focus()
-    await expect(page.locator('.directory-item[href="/fade"]')).toBeFocused()
+    await waitForFrames(page)
+    await page.getByRole('navigation', { name: 'Choose an instrument', exact: true }).locator('a[href="/fade"]').focus()
+    await expect(page.getByRole('navigation', { name: 'Choose an instrument', exact: true }).locator('a[href="/fade"]')).toBeFocused()
     await page.keyboard.press('Enter')
     await expect(page).toHaveURL(/\/fade$/)
-    const fadeScene = await page.locator('[data-mechanism="fade"] svg').elementHandle()
+    const fadeScene = await page.locator('[data-example="fade"] svg').elementHandle()
     await capture(page, 'product-fade-before-next-pod.png')
     await page.getByRole('link', { name: 'Explore Pod', exact: true }).focus()
     await page.keyboard.press('Enter')
     await expect(page).toHaveURL(/\/pod$/)
-    await expect(page.locator('[data-mechanism="pod"] svg')).toHaveCount(1)
+    await expect(page.locator('[data-example="pod"] svg')).toHaveCount(1)
+    await expect(page.locator('[data-example="pod"]')).toHaveAttribute('data-stage', '0')
     await expect.poll(() => fadeScene.evaluate(element => element.isConnected)).toBe(false)
     await fadeScene.dispose()
     await expect(page.locator('.orbital-scene canvas')).toHaveCount(0)
     await page.goBack()
     await expect(page).toHaveURL(/\/fade$/)
-    await expect(page.locator('[data-mechanism="fade"]')).toHaveAttribute('data-outcome', 'ready')
+    await expect(page.locator('[data-example="fade"]')).toHaveAttribute('data-status', 'ready')
+    await expect(page.locator('[data-example="fade"]')).toHaveAttribute('data-stage', '0')
     await page.setViewportSize({ width: 360, height: 800 })
     await page.getByRole('link', { name: 'Agyion Labs home', exact: true }).first().click()
     await homeReady(page)
     return { fromDirectory: 'fade', next: 'pod', back: 'fade' }
   })
-  await check('Same-document How hash opens without scroll and restores the existing visible focus', async () => {
-    const opener = await page.evaluateHandle(() => document.activeElement)
-    expect(await opener.evaluate(element => element instanceof HTMLElement && element !== document.body && element.getClientRects().length > 0)).toBe(true)
+  await check('Legacy How hash replaces itself with the canonical examples directory', async () => {
+    await page.goto(`${BASE}/fade`, { waitUntil: 'domcontentloaded' })
+    await expect(page.locator('.product-page[data-instrument="fade"]')).toBeVisible()
     await page.goto(`${BASE}/#how-it-works`, { waitUntil: 'domcontentloaded' })
-    const dialog = page.getByRole('dialog', { name: 'How it works', exact: true })
-    await expect(dialog).toBeVisible()
-    expect(await dialog.evaluate(element => element.matches(':modal'))).toBe(true)
-    await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeFocused()
-    await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(3)
-    await page.keyboard.press('Escape')
-    await expect(dialog).toBeHidden()
-    await expect(page).toHaveURL(/#home$/)
-    await expect.poll(() => opener.evaluate(element => element === document.activeElement && element.isConnected && element.getClientRects().length > 0)).toBe(true)
-    await opener.dispose()
+    await directoryReady(page)
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await page.goBack()
+    await expect(page).toHaveURL(/\/fade$/)
+    await page.goForward()
+    await directoryReady(page)
   })
   for (const directWidth of [1440, 360]) {
     const directContext = await browser.newContext({ viewport: { width: directWidth, height: 800 }, reducedMotion: 'reduce' })
-    const { page: directPage, diagnostic: directDiagnostic } = await trackedPage(directContext, `${directWidth}px fresh direct How URL`)
-    await check(`${directWidth}px: fresh direct How URL focuses Close and restores visible Home navigation`, async () => {
+    const { page: directPage, diagnostic: directDiagnostic } = await trackedPage(directContext, `${directWidth}px fresh legacy How URL`)
+    await check(`${directWidth}px: fresh legacy How URL opens the examples directory without a modal`, async () => {
       await directPage.goto(`${BASE}/#how-it-works`, { waitUntil: 'networkidle' })
-      const dialog = directPage.getByRole('dialog', { name: 'How it works', exact: true })
-      await expect(dialog).toBeVisible()
-      expect(await dialog.evaluate(element => element.matches(':modal'))).toBe(true)
-      await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeFocused()
-      await expect.poll(() => directPage.evaluate(() => scrollY)).toBeLessThan(3)
-      await directPage.keyboard.press('Escape')
-      await expect(dialog).toBeHidden()
-      await expect(directPage).toHaveURL(/#home$/)
-      if (directWidth === 1440) await expect(directPage.locator('#home')).toBeFocused()
-      else await expect(directPage.getByRole('button', { name: 'Open navigation menu', exact: true })).toBeFocused()
+      await directoryReady(directPage)
+      await expect(directPage.getByRole('dialog')).toHaveCount(0)
+      await expect(directPage.getByRole('link', { name: 'How it works', exact: true })).toHaveCount(0)
       clean(directDiagnostic)
     })
     await directContext.close()
@@ -578,7 +526,7 @@ try {
     await gateway(fallbackPage).focus()
     await fallbackPage.keyboard.press('Enter')
     await directoryReady(fallbackPage)
-    await fallbackPage.locator('.directory-item[href="/trigger"]').click()
+    await fallbackPage.getByRole('navigation', { name: 'Choose an instrument', exact: true }).locator('a[href="/trigger"]').click()
     await expect(fallbackPage.locator('.product-page[data-instrument="trigger"]')).toBeVisible()
     await expect(fallbackPage.locator('.product-launch')).toHaveAttribute('href', '/app/?tab=trigger')
     await canonicalLinks(fallbackPage, true)

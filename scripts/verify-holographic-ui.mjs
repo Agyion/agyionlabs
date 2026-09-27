@@ -1,3 +1,4 @@
+import { waitForFrames } from './lib/browser-settle.mjs';
 /** User-visible exploration and projected workspace regressions. Never signs or submits. */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -43,14 +44,14 @@ async function sceneRaster(page) {
   const scroll = await page.evaluate(() => ({ x: scrollX, y: scrollY }));
   try {
     await page.evaluate(() => window.scrollTo({ left: 0, top: 0, behavior: 'instant' }));
-    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
+    await waitForFrames(page);
     // The viewport stays fixed while the mobile exploration layout can grow.
     // Hide HTML paint without changing layout, so text and document height
     // cannot manufacture evidence of physical product movement in the world.
     return await page.screenshot({ clip: { x: 0, y: 0, ...viewport }, style: 'body *, body *::before, body *::after { transition:none !important; animation:none !important; visibility:hidden !important } canvas { visibility:visible !important; outline:none !important }' });
   } finally {
     await page.evaluate(position => window.scrollTo({ left: position.x, top: position.y, behavior: 'instant' }), scroll);
-    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
+    await waitForFrames(page);
   }
 }
 
@@ -200,9 +201,9 @@ try {
       if (scope !== 'landing') {
         await page.goto(`${base}/app/?tab=fade`, { waitUntil: 'domcontentloaded' });
         await appReady();
-        const readReadiness = () => page.evaluate(() => document.querySelector('.protocol-status')?.getAttribute('data-readiness') ?? 'ready');
-        await expect.poll(readReadiness, { timeout: 20000 }).not.toBe('checking');
-        const readinessState = await readReadiness();
+        const readiness = page.locator('main.station-app');
+        await expect(readiness).toHaveAttribute('data-protocol-readiness', /^(ready|unavailable|incompatible)$/, { timeout: 20000 });
+        const readinessState = await readiness.getAttribute('data-protocol-readiness');
         record('observed live protocol readiness', { readiness: readinessState });
         const workspace = page.locator('.station-workspace');
         for (const id of Object.keys(names)) {

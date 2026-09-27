@@ -1,3 +1,4 @@
+import { waitForFrames } from './lib/browser-settle.mjs';
 /** Normal-motion document handoff and direct-input checks. No wallet or transactions. */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -181,7 +182,7 @@ try {
     if (scrollExploration) {
       await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
       await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0);
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await waitForFrames(page);
     }
     result.checks.explorationBeforeLaunch = await page.evaluate(() => window.__captureFlightGeometry('exploration-settled-before-launch'));
     await shot('01b-exploration-settled');
@@ -289,7 +290,6 @@ try {
   if (!recheck) {
     await shot('06-module-interruption');
     await page.getByRole('button', { name: 'Close instrument', exact: true }).click();
-    await page.getByRole('button', { name: /^Instruments/ }).click();
     await expect(page.locator('.station-workspace')).toBeHidden();
   }
   await expect(page.getByRole('button', { name: /^(Pause motion|Resume motion)$/ })).toHaveCount(0);
@@ -297,7 +297,7 @@ try {
   if (!recheck) expect(result.consoleErrors).toEqual([]);
   // A focused repeat retains every console/network error without repeating the
   // original broad error gate; it never labels such a run as error-free.
-  result.status = result.consoleErrors.length ? 'checks-passed-with-console-errors' : 'passed';
+  result.status = result.consoleErrors.length || result.requestFailures.length ? 'checks-passed-with-runtime-diagnostics' : 'passed';
 } catch (error) {
   failure = error;
   result.status = 'failed'; result.failure = { message: error.message, stack: error.stack, url: page.url() };
@@ -313,3 +313,4 @@ try {
 }
 console.log(JSON.stringify({ status: result.status, output, checks: result.checks, errors: result.pageErrors, consoleErrors: result.consoleErrors, requestFailures: result.requestFailures, csp: result.csp }));
 if (failure) throw failure;
+if (result.status !== 'passed') process.exitCode = 1;

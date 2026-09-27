@@ -1,7 +1,8 @@
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
 import { useNavigate } from 'react-router'
-import type { OrbitalSceneHandle } from '../../../shared/space-scene'
+import type { OrbitalSceneHandle, HoleProjection } from '../../../shared/space-scene'
 import { clearFlightHandoff, LAUNCH_DURATION_MS } from '../../../shared/flight-handoff'
+import { readSkipFlightPreference } from '../../../shared/flight-preference'
 import { warmAppAssets } from '../lib/appAssetWarmup'
 
 const motionQuery = '(prefers-reduced-motion: reduce)'
@@ -53,7 +54,8 @@ function OrbitalFallback() {
 
 type ExhibitId = 'fade' | 'pod' | 'trigger' | 'envoy'
 
-export default function OrbitalScene({ initialExhibit, initialExhibitView = false, exhibitStage, exhibitLinks = false, showExhibits = true, flightOnly = false }: {
+export default function OrbitalScene({ initialExhibit, initialExhibitView = false, exhibitStage, exhibitLinks = false, showExhibits = true, flightOnly = false, holeProjection }: {
+  holeProjection?: RefObject<HoleProjection | null>
   initialExhibit?: ExhibitId
   initialExhibitView?: boolean
   exhibitStage?: 0 | 1 | 2
@@ -97,6 +99,12 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
     let scrollFrame = 0
     let launchTimeout = 0
     let prefetch: HTMLLinkElement | null = null
+    const failRenderer = () => {
+      rendererReady = false
+      rendererFailed = true
+      if (holeProjection) holeProjection.current = null
+      setReadyForMotion(null)
+    }
     const onExhibit = (event: Event) => {
       if (launching) return
       const id = (event as CustomEvent<{ id?: unknown }>).detail?.id
@@ -147,7 +155,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
     const onIntent = (event: Event) => {
       if (!appLink(event)) return
       prefetchApp()
-      if (flightOnly && !reducedMotion) prepareScene()
+      if (flightOnly && !reducedMotion && !readSkipFlightPreference()) prepareScene()
     }
     const completeNavigation = () => {
       if (cancelled || navigationCommitted || !launching || !launchDestination.current) return
@@ -166,8 +174,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
         if (standaloneHome) handle.setMode('landing')
         handle.refreshLayout()
       } catch {
-        rendererFailed = true
-        setReadyForMotion(null)
+        failRenderer()
         completeNavigation()
         return
       }
@@ -193,7 +200,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
       if (appLink(event) && !launching) {
         try { clearFlightHandoff(sessionStorage) } catch { /* Private storage does not block navigation. */ }
       }
-      if (!appLink(event) || reducedMotion || rendererFailed) return
+      if (!appLink(event) || reducedMotion || readSkipFlightPreference() || rendererFailed) return
       event.preventDefault()
       if (launching) return
       launching = true
@@ -221,16 +228,14 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
         handle?.setPaused(true)
         handle?.setMode('landing')
       } catch {
-        rendererFailed = true
-        setReadyForMotion(null)
+        failRenderer()
       }
       // Resetting a live renderer completes its old frame bridge. A cancelled
       // departure must not leave that synthetic completion for the next page.
       try { clearFlightHandoff(sessionStorage) } catch { /* Storage is optional. */ }
       setDeparting(false)
       try { handle?.refreshLayout() } catch {
-        rendererFailed = true
-        setReadyForMotion(null)
+        failRenderer()
       }
       updatePause()
     }
@@ -264,6 +269,11 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
         if (cancelled) return
         handle = createOrbitalScene(mount, {
           mode: 'landing',
+          onHoleProjection: holeProjection ? value => {
+            if (cancelled || rendererFailed) return
+            if (holeProjection.current) Object.assign(holeProjection.current, value)
+            else holeProjection.current = { ...value }
+          } : undefined,
           reducedMotion,
           interactive: !flightOnly,
           showExhibits,
@@ -276,7 +286,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
             if (['fade', 'pod', 'trigger', 'envoy', 'ramp', 'ledger'].includes(id)) navigate(`/${id}`)
           },
           onReady: () => { if (!cancelled) { rendererReady = true; rendererFailed = false; setReadyForMotion(reducedMotion); startFlight(); updatePause() } },
-          onError: () => { if (!cancelled) { rendererReady = false; rendererFailed = true; setReadyForMotion(null); completeNavigation() } },
+          onError: () => { if (!cancelled) { failRenderer(); completeNavigation() } },
         })
         if (cancelled) { handle.dispose(); return }
         sceneRef.current = handle
@@ -287,7 +297,7 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
         updateProgress()
         startFlight()
       }).catch(() => {
-        if (!cancelled) { rendererReady = false; rendererFailed = true; setReadyForMotion(null); completeNavigation() }
+        if (!cancelled) { failRenderer(); completeNavigation() }
       })
     }
     if (!flightOnly) prepareScene()
@@ -313,8 +323,9 @@ export default function OrbitalScene({ initialExhibit, initialExhibitView = fals
       prefetch?.remove()
       handle?.dispose()
       sceneRef.current = null
+      if (holeProjection) holeProjection.current = null
     }
-  }, [reducedMotion, navigate, exhibitLinks, showExhibits, flightOnly])
+  }, [reducedMotion, navigate, exhibitLinks, showExhibits, flightOnly, holeProjection])
 
   useEffect(() => {
     stageRef.current = exhibitStage

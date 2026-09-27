@@ -1,3 +1,4 @@
+import { waitForFonts } from './lib/browser-settle.mjs';
 /** Scroll each section into view before capturing the complete landing page. */
 import { chromium, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -25,7 +26,7 @@ try {
     page.on('requestfailed', request => requestFailures.push({ url: request.url(), error: request.failure()?.errorText }));
     await page.goto('http://127.0.0.1:4192/');
     await expect(page.locator('.orbital-scene')).toHaveClass(/is-ready/, { timeout: 30000 });
-    await page.evaluate(() => document.fonts.ready);
+    await waitForFonts(page);
     const rows = page.locator('.orbital-instrument,.orbital-process__steps li');
     const rowCount = await rows.count();
     expect(rowCount, 'Four instruments and three process rows are present').toBe(7);

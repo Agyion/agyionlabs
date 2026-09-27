@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { Link, useLocation } from 'react-router'
+import FlightPreference from './FlightPreference'
 
 const sections = [
   { id: 'home', label: 'Home' },
   { id: 'instruments', label: 'Instruments' },
-  { id: 'how-it-works', label: 'How it works' },
 ] as const
 
 export default function NavPill() {
@@ -13,6 +13,7 @@ export default function NavPill() {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const headerRef = useRef<HTMLElement>(null)
   const location = useLocation()
+  const isDirectory = /^\/instruments\/?$/.test(location.pathname)
 
   useEffect(() => {
     let frame = 0
@@ -27,8 +28,6 @@ export default function NavPill() {
         for (const section of sections) {
           if ((document.getElementById(section.id)?.getBoundingClientRect().top ?? Infinity) <= threshold) current = section.id
         }
-        if (window.scrollY > 0 && window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2 && document.getElementById('how-it-works')) current = 'how-it-works'
-        if (location.pathname === '/' && location.hash === '#how-it-works') current = 'how-it-works'
       }
       setActive(current)
       headerRef.current?.classList.toggle('is-scrolled', window.scrollY > 40)
@@ -78,19 +77,22 @@ export default function NavPill() {
   const currentSection = (id: string) => id === 'instruments' && /^\/(instruments|fade|pod|trigger|envoy|ramp|ledger)$/.test(location.pathname) ? 'page' as const : location.pathname === '/' && active === id ? 'location' as const : undefined
 
   return (
-    <header className="orbital-nav" data-surface={location.pathname === '/' ? 'home' : 'detail'} ref={headerRef}>
+    <header className={`orbital-nav${isDirectory ? ' orbital-nav--directory' : ''}`} data-surface={location.pathname === '/' ? 'home' : 'detail'} ref={headerRef}>
       <Link to="/" className="orbital-brand" aria-label="Agyion Labs home" onClick={closeMenu}>
         <svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="16" rx="14" ry="5" transform="rotate(-30 16 16)" /><circle cx="16" cy="16" r="8" /></svg>
         agyion<span className="orbital-brand__suffix">labs</span>
       </Link>
       <nav className="orbital-nav__desktop" aria-label="Main navigation">
-        {sections.map(section => <Link key={section.id} to={sectionHref(section.id)} aria-current={currentSection(section.id)} aria-haspopup={section.id === 'how-it-works' ? 'dialog' : undefined} aria-controls={section.id === 'how-it-works' ? 'how-it-works-dialog' : undefined} onClick={event => visitSection(event, section.id)}>{section.label}</Link>)}
+        {sections.map(section => <Link key={section.id} to={sectionHref(section.id)} aria-current={currentSection(section.id)} onClick={event => visitSection(event, section.id)}>{section.label}</Link>)}
       </nav>
-      <div className="orbital-nav__actions"><a className="orbital-nav__launch" href="/app/">Launch app <span aria-hidden="true">↗</span></a>
+      <div className="orbital-nav__actions">{location.pathname !== '/' && <div className="orbital-nav__launch-controls">
+        {isDirectory && <FlightPreference />}
+        <a className="orbital-nav__launch" href="/app/" aria-label="Launch app"><span className="orbital-nav__launch-full">Launch app</span><span className="orbital-nav__launch-short" aria-hidden="true">App</span><span className="orbital-nav__launch-arrow" aria-hidden="true">↗</span></a>
+      </div>}
         <button className="orbital-nav__toggle" ref={buttonRef} type="button" aria-expanded={open} aria-controls="orbital-mobile-menu" aria-label={open ? 'Close navigation menu' : 'Open navigation menu'} onClick={() => setOpen(value => !value)}>Menu <span aria-hidden="true">{open ? '−' : '+'}</span></button>
       </div>
       <nav className="orbital-nav__mobile" id="orbital-mobile-menu" aria-label="Mobile navigation" hidden={!open}>
-        {sections.map(section => <Link key={section.id} to={sectionHref(section.id)} aria-current={currentSection(section.id)} aria-haspopup={section.id === 'how-it-works' ? 'dialog' : undefined} aria-controls={section.id === 'how-it-works' ? 'how-it-works-dialog' : undefined} onClick={event => visitSection(event, section.id)}>{section.label}<span aria-hidden="true">↘</span></Link>)}
+        {sections.map(section => <Link key={section.id} to={sectionHref(section.id)} aria-current={currentSection(section.id)} onClick={event => visitSection(event, section.id)}>{section.label}<span aria-hidden="true">↘</span></Link>)}
         <Link to="/ramp" aria-current={location.pathname === '/ramp' ? 'page' : undefined} onClick={closeMenu}>Ramp <span aria-hidden="true">↗</span></Link>
         <Link to="/ledger" aria-current={location.pathname === '/ledger' ? 'page' : undefined} onClick={closeMenu}>Ledger <span aria-hidden="true">↗</span></Link>
       </nav>

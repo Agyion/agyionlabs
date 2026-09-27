@@ -23,7 +23,7 @@ import { CONFIG, IS_MOCK } from "../../lib/config";
 import { ErrorNote, Field, FilledButton, GhostButton, OkNote, StateChip, TextInput } from "../ui";
 import { WalletPrerequisite } from "./panelControls";
 import { durationLedgers, ledgerDeadline } from "./panelValidation";
-import { DraftSummary, draftAmount, draftDelay, formatDraftMinor } from "./instrumentPresentation";
+import { formatDraftMinor } from "./instrumentPresentation";
 
 type ClaimConfirmation = { claimant: string; ledger: number | null };
 
@@ -102,7 +102,7 @@ export default function FadePanel({ wallet }: { wallet: WalletState }) {
 
   return (
     <div className="instrument-panel panel-fade">
-      <WalletPrerequisite address={wallet.address} />
+      {fade && <WalletPrerequisite address={wallet.address} />}
 
       {!fade && (
         <SellerForm
@@ -249,19 +249,29 @@ function SellerForm({
 
   return (
     <>
-    <div className="instrument-layout">
-      <section className="instrument-main instrument-section">
-        <header><h3>List a Fade</h3></header>
-        <div className="instrument-fields">
-          <Field label={`Pot (${CONFIG.assetCode})`} hint="Locked in the contract">
-            <TextInput value={pot} onChange={(e) => setPot(e.target.value)} inputMode="decimal" />
-          </Field>
+    <section className="fade-listing workbench-surface" aria-label="List a Fade">
+      <div className="fade-price-ticket">
+        <header className="workbench-heading"><h3>Set your price</h3></header>
+        <div className="fade-price-editor">
+          <div className="fade-price-endpoints">
           <Field label="Start price">
             <TextInput value={startPrice} onChange={(e) => setStartPrice(e.target.value)} inputMode="decimal" />
           </Field>
-          <Field label="Floor price" hint="Negative prices pay the claimant from the pot">
+          <span className="fade-price-connector" aria-hidden="true">↓</span>
+          <Field label="Floor price">
             <TextInput value={floorPrice} onChange={(e) => setFloorPrice(e.target.value)} inputMode="decimal" />
           </Field>
+          </div>
+          <div className="fade-price-chart"><DraftPriceCurve startPrice={startPrice} floorPrice={floorPrice} minutes={minutes} /></div>
+        </div>
+      </div>
+      <div className="fade-listing-terms">
+        <div className="fade-funding">
+          <Field label={`Pot (${CONFIG.assetCode})`} hint="Covers rewards below zero">
+            <TextInput value={pot} onChange={(e) => setPot(e.target.value)} inputMode="decimal" />
+          </Field>
+        </div>
+        <div className="fade-time-terms">
           <Field label="Duration (minutes)" hint="Until the claim deadline">
             <TextInput value={minutes} onChange={(e) => setMinutes(e.target.value)} inputMode="numeric" />
           </Field>
@@ -269,8 +279,10 @@ function SellerForm({
             <TextInput value={handoffMinutes} onChange={(e) => setHandoffMinutes(e.target.value)} inputMode="numeric" />
           </Field>
         </div>
+        <p className="fade-handoff-note">A claim fixes the price. Funds move at signed handoff.</p>
         <details className="instrument-technical">
           <summary>Venue signing key</summary>
+          <p>Negative prices pay the claimant from the locked pot. A venue signature proves handoff before funds move.</p>
           <Field label="Venue pubkey (hex)" hint="Raw ed25519 key that proves handoff">
             <TextInput value={venuePub} onChange={(e) => setVenuePub(e.target.value)} className="font-mono text-[12px]" />
           </Field>
@@ -283,24 +295,14 @@ function SellerForm({
         </details>
         {error && <div className="mt-4"><ErrorNote>{error}</ErrorNote></div>}
         {createdId != null && <div className="mt-4"><OkNote>Fade #{createdId.toString()} created. Its ID is ready in the load form.</OkNote></div>}
-        <div className="instrument-actions">
+        <div className="workbench-commit">
+          <WalletPrerequisite address={wallet.address} />
           <FilledButton transaction onClick={() => void create()} disabled={busy || createdId != null || (!IS_MOCK && !wallet.address)}>
             {busy ? "Locking…" : "Lock the pot"}
           </FilledButton>
         </div>
-      </section>
-      <DraftSummary
-        title="Price preview"
-        visual={<DraftPriceCurve startPrice={startPrice} floorPrice={floorPrice} minutes={minutes} />}
-        rows={[
-          { label: "Pot to lock", value: draftAmount(pot) },
-          { label: "Claim window", value: draftDelay(minutes, "Duration", 30, 1_000_000) },
-          { label: "Handoff window", value: draftDelay(handoffMinutes, "Handoff window", 10, 1_000_000) },
-        ]}
-      >
-        <p>The confirmed claim fixes the price. Funds move only at signed handoff.</p>
-      </DraftSummary>
-    </div>
+      </div>
+    </section>
     <section className="instrument-records">
           <header><h3>Load an existing Fade</h3></header>
           <div className="instrument-inline-control">
@@ -342,8 +344,6 @@ function DraftPriceCurve({ startPrice, floorPrice, minutes }: { startPrice: stri
       <path d={curve.path} className="curve-trajectory" />
       <text x="20" y="163" className="curve-value">{formatDraftMinor(curve.start)}</text>
       <text x="300" y="163" textAnchor="end" className="curve-value">{formatDraftMinor(curve.floor)}</text>
-      <text x="20" y="182" className="curve-label">Start · {CONFIG.assetCode}</text>
-      <text x="300" y="182" textAnchor="end" className="curve-label">Claim deadline</text>
     </svg>
   );
 }
@@ -383,7 +383,7 @@ function FadeStage({
     fade.state === FADE_STATE.Open
       ? "locked"
       : fade.state === FADE_STATE.Claimed
-        ? "claimed — awaiting handoff"
+        ? "claimed: awaiting handoff"
         : fade.state === FADE_STATE.Settled
           ? "executed"
           : "returned";
@@ -391,7 +391,7 @@ function FadeStage({
   const secondsLeft = Math.max(0, (fade.deadline_ledger - ledger) * SECONDS_PER_LEDGER);
 
   return (
-    <div className="instrument-records">
+    <div className="instrument-records fade-live-ticket">
       {/* status line */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
@@ -416,7 +416,7 @@ function FadeStage({
         <GhostButton onClick={onReset}>New fade</GhostButton>
       </div>
 
-      <div className="instrument-layout">
+      <div className="instrument-layout fade-live-layout">
         {/* price hero + curve */}
         <div className="instrument-main instrument-section">
           <div className="flex items-end justify-between">
@@ -441,7 +441,7 @@ function FadeStage({
                     className="mt-2 font-mono text-[11px] uppercase tracking-[0.16em]"
                     style={{ color: "var(--ember)" }}
                   >
-                    Below zero — the pot pays at confirmed handoff
+                    Below zero: the pot pays at confirmed handoff
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -477,7 +477,7 @@ function FadeStage({
           <RailRow k="Deadline ledger" v={fade.deadline_ledger.toString()} />
           <RailRow k="Handoff window" v={`${fade.handoff_window} ledgers`} />
           <RailRow k="Seller" v={shortAddress(fade.seller)} />
-          <RailRow k="Claimant" v={fade.claimant ? shortAddress(fade.claimant) : "—"} />
+          <RailRow k="Claimant" v={fade.claimant ? shortAddress(fade.claimant) : "Not claimed"} />
           <RailRow k="Venue key" v={shortHex(fade.venue_pubkey)} />
         </aside>
       </div>
@@ -502,7 +502,7 @@ function FadeStage({
             Returned
           </div>
           <p className="mt-2 text-[14px] leading-relaxed text-muted">
-            No claim before the deadline, or no handoff inside the window — the
+            No claim before the deadline, or no handoff inside the window. The
             pot went back to the seller by rule. No discretion was involved.
           </p>
         </div>
@@ -677,7 +677,7 @@ function DecayCurve({
         style={{ cursor: "grab" }}
       />
       <text x={nowX} y={H - 6} fontSize="10" fill="var(--muted)" fontFamily="var(--font-mono)" textAnchor="middle">
-        {scrub != null ? `ledger ${scrub} — release or press Escape to return` : frozen ? "claim ledger — drag to preview" : "now — drag me"}
+        {scrub != null ? `ledger ${scrub}: release or press Escape to return` : frozen ? "claim ledger: drag to preview" : "now: drag me"}
       </text>
     </svg>
   );
@@ -848,7 +848,7 @@ function FadeActions({
         refId: fade.id.toString(),
         amount: fade.claimed_at != null ? priceAtLedger(fade, fade.claimed_at).toString() : null,
         status: "executed",
-        detail: "venue signature verified — settled at the frozen price",
+        detail: "venue signature verified: settled at the frozen price",
         txHash: null,
       });
     });
@@ -862,7 +862,7 @@ function FadeActions({
         refId: fade.id.toString(),
         amount: fade.pot.toString(),
         status: "returned",
-        detail: "rule-based refund — pot returned to the seller",
+        detail: "refund under the rule: pot returned to the seller",
         txHash: null,
       });
     });
@@ -874,16 +874,16 @@ function FadeActions({
       {fade.state === FADE_STATE.Open && (
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="max-w-[52ch] text-[14px] leading-relaxed text-muted">
-            The first valid on-chain claim wins and fixes the price at its execution
-            ledger. A no-show lets the seller recover the pot after the window;
-            the listing stays closed.
+            The first valid claim on the network wins and fixes the price at its execution
+            ledger. If the claimant does not complete handoff, the seller can
+            recover the pot after the window; the listing stays closed.
           </p>
           {claimable ? (
             <FilledButton transaction onClick={() => void doClaim()} disabled={disabled}>
               {busy === "claim" ? "Claiming…" : `Claim at ${formatMinor(priceAtLedger(fade, ledger))} ${CONFIG.assetCode} (estimate)`}
             </FilledButton>
           ) : (
-            <span className="text-[13px] text-muted">claim closed — deadline passed</span>
+            <span className="text-[13px] text-muted">claim closed: deadline passed</span>
           )}
         </div>
       )}
@@ -895,12 +895,15 @@ function FadeActions({
             <h3 className="display text-[20px] text-ink">Prove the handoff</h3>
             <span className="tnum font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
               window ends at ledger{" "}
-              {fade.claimed_at != null ? fade.claimed_at + fade.handoff_window : "—"}
+              {fade.claimed_at != null ? fade.claimed_at + fade.handoff_window : "Not recorded"}
             </span>
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Field label="Venue secret (demo signer)" hint="S… or 64-hex seed; mock mode signs itself">
               <TextInput
+                type="password"
+                autoComplete="off"
+                spellCheck={false}
                 value={venueSecret}
                 onChange={(e) => setVenueSecret(e.target.value)}
                 className="font-mono text-[12px]"
@@ -929,7 +932,7 @@ function FadeActions({
       {(fade.state === FADE_STATE.Open || fade.state === FADE_STATE.Claimed) && (
         <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-5" style={{ borderColor: "var(--hairline)" }}>
           <p className="max-w-[52ch] text-[13px] leading-relaxed text-muted">
-            Rule-based refund: callable by anyone once the deadline or the
+            Refund under the rule: callable by anyone once the deadline or the
             handoff window lapses. The pot returns to the seller.
           </p>
           {refundable ? (

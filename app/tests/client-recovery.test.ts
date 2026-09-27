@@ -199,7 +199,7 @@ it.each([1n,0xffff_ffff_ffff_ffffn])('accepts the confirmed positive u64 creatio
 });
 it('releases a definitively failed creation and leaves ordinary void successes valid',async()=>{
  const failed=create(async()=>({sendTransactionResponse:{hash},getTransactionResponse:{txHash:hash,envelopeXdr,status:'FAILED',ledger:12},result:{unwrap:()=>{throw new Error('no result')}}}));
- await expect(creations[1][1](failed.client)).rejects.toThrow(/failed on-chain/);
+ await expect(creations[1][1](failed.client)).rejects.toThrow(/failed on the network/);
  expect(unresolvedTransaction({...scope,action:'create_pod',refId:null})).toBeUndefined();
  const retry=create(async()=>{throw new Error('new approval declined')});delete (retry.tx as any).signed;
  await expect(creations[1][1](retry.client)).rejects.toThrow('new approval declined');
