@@ -65,3 +65,32 @@ it('keeps an older confirmed creation awaiting its ID visible with a retry guard
  expect(screen.getByText(/1 unresolved/)).toBeTruthy();
  expect(screen.getByText(/record ID.*recovered.*do not create|do not create.*record ID/i)).toBeTruthy();
 });
+
+it('shows another public contract unresolved hash without querying it or linking to the active record',async()=>{
+ const otherContract='C'+'B'.repeat(55),otherHash='b'.repeat(64);
+ rememberTransactionAttempt({account,network,contractId:otherContract,action:'claim',refId:'9',hash:otherHash});
+ const read=vi.spyOn(rpc.Server.prototype,'getTransaction');
+ render(<TransactionActivity wallet={{address:account}}/>);
+ await waitFor(()=>expect(screen.getByText(otherHash)).toBeTruthy());
+ expect(screen.getByText(otherContract)).toBeTruthy();
+ expect(screen.getByText(/another public deployment/i)).toBeTruthy();
+ expect(screen.queryByRole('link',{name:/Open record/})).toBeNull();
+ expect(screen.getByRole('link',{name:/View transaction/}).getAttribute('href')).toContain(otherHash);
+ expect(read).not.toHaveBeenCalled();
+});
+
+it('checks only the configured contract while retaining other contracts for the same source',async()=>{
+ const otherHash='c'.repeat(64),otherContract='C'+'B'.repeat(55);
+ rememberTransactionAttempt({account,network,contractId,action:'claim',refId:'9',hash});
+ rememberTransactionAttempt({account,network,contractId:otherContract,action:'claim',refId:'9',hash:otherHash});
+ rememberTransactionAttempt({account:'G'+'B'.repeat(55),network,contractId:otherContract,action:'claim',refId:'9',hash:'d'.repeat(64)});
+ rememberTransactionAttempt({account,network:Networks.PUBLIC,contractId:otherContract,action:'claim',refId:'9',hash:'e'.repeat(64)});
+ const read=vi.spyOn(rpc.Server.prototype,'getTransaction').mockResolvedValue({txHash:hash,envelopeXdr,status:'SUCCESS',ledger:23} as any);
+ render(<TransactionActivity wallet={{address:account}}/>);
+ await waitFor(()=>expect(screen.getByText(/Confirmed/)).toBeTruthy());
+ expect(screen.getByText(otherHash)).toBeTruthy();
+ expect(screen.queryByText('d'.repeat(64))).toBeNull();expect(screen.queryByText('e'.repeat(64))).toBeNull();
+ expect(screen.getAllByRole('link',{name:/Open record/})).toHaveLength(1);
+ expect(read).toHaveBeenCalledOnce();expect(read).toHaveBeenCalledWith(hash);
+ expect(screen.getByText(/1 unresolved/)).toBeTruthy();
+});

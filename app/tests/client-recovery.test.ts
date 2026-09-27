@@ -8,13 +8,13 @@ import { WalletSignatureRejectedError } from '../app/lib/wallet-errors';
 import { humanizeError } from '../app/lib/errors';
 import { installRecoveryLocks, recoveryTransactionFixture } from './recovery-fixture';
 afterEach(()=>vi.unstubAllGlobals());
-const account="G"+"A".repeat(55);const contractId='CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5';
+const account='GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF';const contractId='CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5';
 const scope={account,contractId,network:'Test SDF Network ; September 2015'};
-const {hash,envelopeXdr}=recoveryTransactionFixture('client-recovery');
+const {hash,envelopeXdr,signed}=recoveryTransactionFixture('client-recovery');
 function create(send:()=>Promise<any>){
  const signer={address:async()=>account,signTransaction:vi.fn()};
  const client=new SorobanAgyionClient({rpcUrl:'https://example.com',contractId,networkPassphrase:scope.network,signer});
- const tx={signed:{hash:()=>Buffer.from(hash,'hex')},signAndSend:vi.fn(send)};
+ const tx={signed,signAndSend:vi.fn(send)};
  (client as any).bindings=async()=>({protocol_version:async()=>({result:3}),claim:async()=>tx,
    create_fade:async()=>tx,create_pod:async()=>tx,create_trigger:async()=>tx,create_mandate:async()=>tx});return {client,tx};
 }

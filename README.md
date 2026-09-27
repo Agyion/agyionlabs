@@ -94,6 +94,8 @@ A subsequent [real Freighter private lifecycle](deployments/private-pool-freight
 
 The contracts and cryptographic code have automated tests for authorization, arithmetic, replay, conservation, invalid proofs and interrupted transactions. Dependency advisory scans and a source review are part of the development process. These results establish tested behavior. They are not an independent audit or proof that every possible exploit is absent.
 
+The [public transaction guard](docs/PUBLIC_TRANSACTION_SOURCE_GUARD.md) prevents two updated tabs from preparing competing public transactions for the same account and network. Unknown outcomes retain their original hash and stop new preparation across public contracts. A real two-tab browser regression covers coordination and reload with controlled RPC responses, without signing or sending a payment. Existing open tabs must reload to use the correction.
+
 The [recovery compatibility follow-up](docs/RECOVERY_COMPATIBILITY.md) retains the actual included merchant key epoch and corrects an accounting-reader assumption about restored archive metadata. Its local workspace run passed 1,306 tests with six optional skips; the changed real browser journal test passed separately. It does not change deployed contract bytecode or establish live archive restoration.
 
 A separate [isolated ledger test](docs/PRIVATE_ARCHIVE_RESTORE_TEST.md) subsequently

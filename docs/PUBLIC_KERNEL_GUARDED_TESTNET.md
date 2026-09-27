@@ -73,14 +73,21 @@ transaction was already broadcast, its original hash remains available for
 read-only reconciliation. Retirement does not erase journals or cancel a
 transaction already submitted to the network.
 
+The [public source guard](PUBLIC_TRANSACTION_SOURCE_GUARD.md) now reserves the
+account and network before asynchronous preparation, across public actions and
+contracts. Pending or unknown original hashes block a new preparation and remain
+visible in Activity. This client correction has local adversarial and native
+two-tab browser evidence; it does not activate V4 or establish its lifecycles.
+
 ## Remaining activation gates
 
 1. Exercise actual V4 public lifecycles with exact custody and liability
    reconciliation. Synthetic readback and client tests do not prove inclusion.
 2. Integrate a compiled release catalogue and original-contract recovery across
    links, credentials, pending transactions and receipt scopes.
-3. Serialize submissions by source account and network across public releases,
-   including pending results and transaction preparation.
+3. Preserve the tested source-account guard when integrating the public release
+   catalogue and original-record recovery. Existing open tabs must reload; this
+   guard cannot coordinate an older client or an external wallet application.
 4. Publish activation only after the exact source checks and a frozen website
    build pass. Publishing client preparation does not activate the new contract.
 

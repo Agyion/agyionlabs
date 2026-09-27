@@ -41,6 +41,7 @@ jobs:
           npx --no-install playwright install chromium
           MARKET_JOURNAL_BROWSER_TEST=1 node --experimental-strip-types --test market/tests/journal-browser.test.ts
           PRIVATE_JOURNAL_BROWSER_TEST=1 node --import ./contracts/private-pool/client/test-register.mjs --test contracts/private-pool/client/journal.test.ts
+          PUBLIC_SOURCE_BROWSER_TEST=1 node --test scripts/tests/public-source-lock-browser.test.mjs
       - name: Type and style checks
         run: |
           npm --prefix app run typecheck

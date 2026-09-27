@@ -19,19 +19,24 @@ export default function TransactionActivity({ wallet }: { wallet: Pick<WalletSta
   const [checking, setChecking] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [storageUnavailable, setStorageUnavailable] = useState(false);
-  const matching = useCallback(() => listTransactionAttempts().filter(a => a.network === CONFIG.networkPassphrase && a.contractId === CONFIG.contractId && (!wallet.address || a.account === wallet.address)), [wallet.address]);
+  // An unknown result reserves its source even when it belongs to another
+  // public contract. Keep that hash visible without trusting it as RPC config.
+  const matching = useCallback(() => listTransactionAttempts().filter(a => a.network === CONFIG.networkPassphrase && (!wallet.address || a.account === wallet.address)), [wallet.address]);
   const refresh = useCallback(async () => {
     if (IS_MOCK) return;
     const current = generation.current;
     setChecking(true); setNotice(null);
     try {
       const server = new rpc.Server(CONFIG.rpcUrl, { allowHttp: CONFIG.rpcUrl.startsWith("http://") });
-      const scopes = new Map(matching().map(a => [a.account, { account:a.account, network:a.network, contractId:a.contractId }]));
+      const scopes = new Map(matching().filter(a => a.contractId === CONFIG.contractId).map(a =>
+        [JSON.stringify([a.account, a.network, a.contractId]), { account:a.account, network:a.network, contractId:a.contractId }]));
       for (const scope of scopes.values()) { await reconcileTransactionAttempts(server, scope); recoverTransactionEntries(scope); }
       if (current === generation.current) {
         setAttempts(matching());
         setStorageUnavailable(false);
-        setNotice("Status checked. Unknown outcomes and confirmed creations awaiting their record ID remain blocked from resubmission.");
+        setNotice(scopes.size
+          ? "Configured deployment checked. Unknown outcomes and confirmed creations awaiting their record ID remain blocked from resubmission."
+          : "Original transaction hashes retained. Automatic status checks are available only for the configured deployment.");
       }
     } catch { if (current === generation.current) {
       try { matching(); }
@@ -64,12 +69,15 @@ export default function TransactionActivity({ wallet }: { wallet: Pick<WalletSta
       <div className="instrument-actions"><GhostButton onClick={() => void refresh()} disabled={checking}>{checking ? "Checking…" : "Check transaction status"}</GhostButton></div>
       {notice && <p role="status">{notice}</p>}
       {visible.map(attempt => {
-        const href = attempt.refId ? recordHref(transactionTemplate(attempt.action), attempt.refId) : null;
+        const supported = attempt.contractId === CONFIG.contractId;
+        const href = supported && attempt.refId ? recordHref(transactionTemplate(attempt.action), attempt.refId) : null;
         const explorer = transactionExplorer(attempt);
-        return <article key={attempt.hash} className="instrument-section">
+        return <article key={JSON.stringify([attempt.account, attempt.network, attempt.contractId, attempt.hash])} className="instrument-section">
           <h4>{attempt.action.replaceAll("_", " ")} · {attempt.status === "success" ? "Confirmed" : attempt.status === "failed" ? "Failed" : "Outcome unconfirmed"}</h4>
           <p>{attempt.refId ? `Record ${attempt.refId}` : "Record ID not yet recovered"}{attempt.ledger != null ? ` · Ledger ${attempt.ledger}` : ""}</p>
           <p style={{ overflowWrap: "anywhere" }}>{attempt.hash}</p>
+          {!supported && <><p>This transaction belongs to another public deployment. Its hash is preserved; automatic recovery is unavailable here.</p>
+            <p style={{ overflowWrap: "anywhere" }}>{attempt.contractId}</p></>}
           <div className="instrument-actions">{explorer && <a href={explorer} target="_blank" rel="noopener noreferrer">View transaction ↗</a>}{href && <Link href={href}>Open record →</Link>}</div>
           {(attempt.status === "pending" || attempt.status === "unknown") && <p>Check this hash before retrying. A missing RPC result does not prove the transaction failed.</p>}
           {attempt.status === "success" && requiresTransactionRecovery(attempt) && <p>This creation is confirmed. Check transaction status until its record ID is recovered; do not create it again.</p>}

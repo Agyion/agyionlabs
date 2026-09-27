@@ -27,18 +27,20 @@ it('forgets the reviewer handle when an already-ready vault changes identity or 
   const view = render(<PrivateTriggerAttester active />);
   const details = screen.getByText('Review a Trigger condition').closest('details')!; details.open = true;
   fireEvent.click(screen.getByRole('button', { name: 'Create reviewer key' }));
-  await screen.findByLabelText('Reviewer public point');
+  // The first lazy import initializes real cryptography and may exceed the
+  // default 1s DOM query deadline when the full suite runs concurrently.
+  await screen.findByLabelText('Reviewer public point', {}, { timeout: 30000 });
   workspace = { ...workspace, vault: {}, scope: { ...scope, epoch: '2' } }; boundary.workspace = workspace;
   view.rerender(<PrivateTriggerAttester active />);
   await waitFor(() => expect(screen.queryByLabelText('Reviewer public point')).toBeNull());
   expect(screen.getByRole('button', { name: 'Create reviewer key' })).toBeTruthy();
   expect(workspace.protocol.signAttestation).not.toHaveBeenCalled();
-});
+}, 60000);
 it('uses actual encrypted key backup checks before enabling attestation and clears the entered password', async () => {
   const view = render(<PrivateTriggerAttester active />);
   screen.getByText('Review a Trigger condition').closest('details')!.open = true;
   fireEvent.click(screen.getByRole('button', { name: 'Create reviewer key' }));
-  await screen.findByLabelText('Reviewer public point');
+  await screen.findByLabelText('Reviewer public point', {}, { timeout: 30000 });
   const password = screen.getByLabelText('Reviewer key password') as HTMLInputElement;
   fireEvent.change(screen.getByLabelText('Trigger to attest'), { target: { value: '123' } });
   expect((screen.getByRole('button', { name: 'Sign the condition and download receipt' }) as HTMLButtonElement).disabled).toBe(true);

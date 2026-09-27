@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Keypair, Networks, StrKey } from '@stellar/stellar-sdk';
 import { SorobanAgyionClient } from '../app/lib/agyionClient';
 import { getClient, resetClient } from '../app/lib/client';
 import { CONFIG } from '../app/lib/config';
+import { installRecoveryLocks } from './recovery-fixture';
 
 vi.mock('../app/lib/config', () => ({ IS_MOCK: false, CONFIG: {
   mode: 'soroban', assetCode: 'USDC', decimals: 7,
@@ -41,7 +42,14 @@ function fixture(asset = CONFIG.assetContractId, expectedAssetContractId: string
   const submit = vi.spyOn(client as any, 'submit').mockResolvedValue(undefined);
   return { client, bindings, submit, signer: cfg.signer };
 }
-afterEach(() => { vi.restoreAllMocks(); resetClient(); });
+beforeEach(() => {
+  const rows = new Map<string, string>();
+  const localStorage = { get length() { return rows.size; }, key: (i: number) => [...rows.keys()][i] ?? null,
+    getItem: (key: string) => rows.get(key) ?? null, setItem: (key: string, value: string) => { rows.set(key, value); } };
+  vi.stubGlobal('window', { localStorage, dispatchEvent: () => true });
+  installRecoveryLocks();
+});
+afterEach(() => { vi.restoreAllMocks(); resetClient(); vi.unstubAllGlobals(); });
 
 describe('the application token policy', () => {
   it.each(getters)('rejects a foreign asset returned by %s before a panel can label it as USDC', async method => {

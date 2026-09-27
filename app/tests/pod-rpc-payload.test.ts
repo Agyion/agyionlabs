@@ -1,10 +1,18 @@
 import { Account, Keypair, Networks, StrKey, rpc, scValToNative, type Transaction } from '@stellar/stellar-sdk';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { MockAgyionClient, SorobanAgyionClient } from '../app/lib/agyionClient';
 import { podPublicKey, signPodCreation, signPodClaim } from '../app/lib/signers';
+import { installRecoveryLocks } from './recovery-fixture';
 const seed='37'.repeat(32), funder=Keypair.random().publicKey(), recipient=Keypair.random().publicKey();
 const asset=StrKey.encodeContract(Buffer.alloc(32,3)), contractId=StrKey.encodeContract(Buffer.alloc(32,4));
 const domain={contractId,networkPassphrase:Networks.TESTNET};
+beforeEach(() => {
+ const rows = new Map<string, string>();
+ const localStorage = { get length() { return rows.size; }, key: (i: number) => [...rows.keys()][i] ?? null,
+   getItem: (key: string) => rows.get(key) ?? null, setItem: (key: string, value: string) => { rows.set(key, value); } };
+ vi.stubGlobal('window', { localStorage, dispatchEvent: () => true });
+ installRecoveryLocks();
+});
 afterEach(()=>vi.unstubAllGlobals());
 it('actual generated bindings simulate only public key/proofs and recipient-bound signature, never the Pod seed',async()=>{
  const wallet=vi.fn();const send=vi.spyOn(rpc.Server.prototype,'sendTransaction').mockRejectedValue(new Error('No broadcast in fixture'));

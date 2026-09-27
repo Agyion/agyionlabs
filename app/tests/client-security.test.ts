@@ -4,7 +4,13 @@ import { MockAgyionClient, SorobanAgyionClient } from '../app/lib/agyionClient';
 import { podPublicKey, signPodCreation, signPodClaim } from '../app/lib/signers';
 import { formatMinor, parseMinor } from '../app/lib/format';
 import { installRecoveryLocks, recoveryTransactionFixture } from './recovery-fixture';
-beforeEach(()=>installRecoveryLocks());afterEach(()=>vi.unstubAllGlobals());
+beforeEach(() => {
+ const rows = new Map<string, string>();
+ const localStorage = { get length() { return rows.size; }, key: (i: number) => [...rows.keys()][i] ?? null,
+   getItem: (key: string) => rows.get(key) ?? null, setItem: (key: string, value: string) => { rows.set(key, value); } };
+ vi.stubGlobal('window', { localStorage, dispatchEvent: () => true });
+ installRecoveryLocks();
+});afterEach(()=>vi.unstubAllGlobals());
 const who=Keypair.random().publicKey();
 const contract='CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5';
 function chain(bindings:any, signer:any={address:async()=>who,signTransaction:vi.fn()}) {

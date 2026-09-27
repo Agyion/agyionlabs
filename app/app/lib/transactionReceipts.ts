@@ -120,6 +120,12 @@ export function requiresTransactionRecovery(attempt: TransactionAttempt): boolea
 export function unresolvedTransaction(intent: TransactionIntent): TransactionAttempt | undefined {
   return listTransactionAttempts(intent).find(a => a.action === intent.action && a.refId === intent.refId && requiresTransactionRecovery(a));
 }
+/** Source sequence uncertainty crosses actions and contracts on the same network. */
+export function unresolvedPublicSource(scope: Pick<TransactionScope, 'account' | 'network'>, own?: TransactionIntent & { hash: string }): TransactionAttempt | undefined {
+  return listTransactionAttempts().find(a => a.account === scope.account && a.network === scope.network &&
+    (a.status === 'pending' || a.status === 'unknown') &&
+    !(own && sameScope(a, own) && a.hash === own.hash && a.action === own.action && a.refId === own.refId));
+}
 export interface TransactionOutcomeResponse { txHash?: string; status: string; ledger?: number; envelopeXdr?: xdr.TransactionEnvelope; returnValue?: xdr.ScVal }
 export function hasTerminalTransactionEvidence(response: TransactionOutcomeResponse | undefined, hash: string, network: string): response is TransactionOutcomeResponse & { status: 'SUCCESS' | 'FAILED'; ledger: number } {
   if (!response || response.txHash !== hash || (response.status !== 'SUCCESS' && response.status !== 'FAILED') ||
