@@ -6,9 +6,9 @@ This record describes the development review on **27 September 2026**. The curre
 
 | Evidence | Files | Current lines |
 | --- | ---: | ---: |
-| Exact current bytes with complete source-read evidence | 495 | 53,609 |
+| Exact current bytes with complete source-read evidence | 505 | 55,217 |
 | Verified reviewed baseline plus completely reviewed differences | 98 | 23,827 |
-| Total first-party authored scope | 593 | 77,436 |
+| Total first-party authored scope | 603 | 79,044 |
 | Unresolved files or line ranges at this snapshot | 0 | 0 |
 
 The first row uses explicit complete reading ranges matched to each current file hash. It does not mean every file was read again when this manifest was generated. The second row is composed coverage: the previously reviewed baseline was checked against Git bytes, every difference was reviewed, and unchanged, changed and deleted ranges were reconciled. It is not a fresh full-file reread.
@@ -16,6 +16,8 @@ The first row uses explicit complete reading ranges matched to each current file
 The manifest lists each file's relative path, SHA-256, line count and review method. The scope includes first-party implementation, tests, configuration, styles, handwritten API declarations, vector assets and database migrations. Generated bindings, prover constants, cryptographic parameters, proof fixtures, geographic data, lockfiles, copied vendor code and dependency implementations are outside the authored totals. Ignored files, documentation, licenses and binary media are also excluded. The generated manifest excludes itself to avoid recursive hashing.
 
 ## Executed verification and limits
+
+The [V4 bootstrap adapters](PUBLIC_V4_LIFECYCLE_PREPARATION.md), source `8c7d7cfd7dd43528d7385ff1128148229e64ddc3`, add ten authored files and update the two readback files. The local workspace passed 2,134 checks with 13 skips, and [exact-source hosted CI](https://github.com/Agyion/agyionlabs/actions/runs/36348554511) passed both jobs with 2,133 checks and 14 skips. Protected preparation/load, bounded acquisition, one-attempt actor funding, read-only funding recovery and explicit CLI modes are tested with isolated deterministic identities and substituted original authority/CLI/network. The 20 preparation cases include two real child processes competing for the same exclusive fixture directory, with one winner and zero loser key-generation calls. No actual operator identity, RPC, funding request, signature or submission was produced by this phase. The lifecycle signer, full observation/preflight collector and live 39-step executor remain unfinished. Prior synthetic integration and read-only RPC evidence remain historical; published website and earlier chain receipts are unchanged.
 
 The [V4 runner seams](PUBLIC_V4_LIFECYCLE_PREPARATION.md), source `a76cc6b7fec1aa8093351d4967b0912322e18e1b`, add three authored files and update four; one generated positive-simulation fixture is excluded from authored counts. The local workspace passed 1,904 checks with 13 skips, and [exact-source hosted CI](https://github.com/Agyion/agyionlabs/actions/runs/36345249539) passed both jobs with 1,903 checks and 14 skips. Separate synthetic 38/39-step integration rechecks the concrete policies and read-only replay, with exact pinned WASM only in the local opt-in; this is not live contract execution. Three actual unsigned requests validated matching ledger headers at 4,902,649, and three more captured a positive record-mode simulation at 4,902,687 for local assembly testing. These six requests produced zero funding, signatures or submissions. Earlier Contract#3 evidence remains historical. The runnable CLI, protected identity/funding preparation and real 39-step execution remain unfinished; published website and earlier chain receipts are unchanged.
 

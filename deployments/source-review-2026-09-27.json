@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T19:59:04.756553+00:00",
-  "sourceBaselineCommit": "a76cc6b7fec1aa8093351d4967b0912322e18e1b",
+  "reviewedAt": "2026-09-27T20:54:57.213655+00:00",
+  "sourceBaselineCommit": "8c7d7cfd7dd43528d7385ff1128148229e64ddc3",
   "websiteRelease": {
     "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
     "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
@@ -42,12 +42,12 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 593,
-    "lines": 77436,
+    "files": 603,
+    "lines": 79044,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 495,
-        "lines": 53609
+        "files": 505,
+        "lines": 55217
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 98,
@@ -2965,6 +2965,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/lib/public-lifecycle-acquisition.mjs",
+      "sha256": "580bfc70160f19f8553c50d6c2eaf839e381aad612c02e0a87a72e36e233f861",
+      "lines": 140,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/lib/public-lifecycle-assembly.mjs",
       "sha256": "fbfee06bff2780419f3d384af368aeb8a599f1bbf1f56ff21e213c2e8863e3f5",
       "lines": 105,
@@ -2986,6 +2992,18 @@
       "path": "scripts/lib/public-lifecycle-fees.mjs",
       "sha256": "b4c9655f3c8df1581af5b623f57df02f81f681f1647b99b0d63d2882b25737bb",
       "lines": 196,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-lifecycle-friendbot.mjs",
+      "sha256": "393110f626c1933d188b58fa3041912963933809206fa825e85896d2275dc509",
+      "lines": 123,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-lifecycle-funding.mjs",
+      "sha256": "869f5a2ec0e595061b87ddccbe9660fa9f4ef2bc28c6cfdbf03a474dbff903d0",
+      "lines": 125,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3014,14 +3032,20 @@
     },
     {
       "path": "scripts/lib/public-lifecycle-readback.mjs",
-      "sha256": "55c0f15a035b722bed7728b56c06df745e9928edb3d6b5919a7f601e575dafda",
-      "lines": 247,
+      "sha256": "cb569064a648ad672c356a2e6f8938d1d8f42827a0e24c563422b7a6840f07cf",
+      "lines": 274,
       "reviewKind": "complete-source-read"
     },
     {
       "path": "scripts/lib/public-lifecycle-rpc.mjs",
       "sha256": "b5a4ab338962146ffe23287140b4fd2498b02f2e77854fe16bbba2f44755b082",
       "lines": 167,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-lifecycle-run.mjs",
+      "sha256": "27d7d867e6c1dc0940c358132b16756103ff04df0cfa4a6207580ab03fbd5761",
+      "lines": 214,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3100,6 +3124,12 @@
       "path": "scripts/research-crypto-design.mjs",
       "sha256": "3eb934f777849a208adb75d9b85365d30f2fa2d63952b007f013a525a985fd44",
       "lines": 52,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/run-public-testnet-lifecycle.mjs",
+      "sha256": "4aedb412e25b6d4d3bd995b06759855e22dd801f63f927978dfdb1ac9b17963e",
+      "lines": 72,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3229,6 +3259,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/public-lifecycle-acquisition.test.mjs",
+      "sha256": "b174057fb681debdf20623f0b094ae1e88425abdddb7a508def6b74aae20aa77",
+      "lines": 191,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/public-lifecycle-assembly.test.mjs",
       "sha256": "9612700118ad607e690335989d32ca241b9f55eee8ef3b43f077a3201b26aac3",
       "lines": 180,
@@ -3250,6 +3286,18 @@
       "path": "scripts/tests/public-lifecycle-fees.test.mjs",
       "sha256": "a753d510ecbcfb3eb5becc9f6c5db3c4b7d7aa34d47db9537b8d5c3206bfd348",
       "lines": 178,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-friendbot.test.mjs",
+      "sha256": "a8173cdb3121c375732f21ec7ed51f7ac406c43709a6545ac1c079dc5005d18d",
+      "lines": 246,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-funding.test.mjs",
+      "sha256": "21435c344f1aa095ae4df62838b325ab52830c078bb12f709a2dec36d19078e7",
+      "lines": 59,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3284,8 +3332,8 @@
     },
     {
       "path": "scripts/tests/public-lifecycle-readback.test.mjs",
-      "sha256": "109300b96b38babed5c8e710de3728ba4f367175dfa7265296ae1c68fd7d51e2",
-      "lines": 283,
+      "sha256": "34218175bfa9c50c8ef2d1fe96bc1a38ae047d4ffbce203b856854f638fd8e0c",
+      "lines": 342,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3298,6 +3346,12 @@
       "path": "scripts/tests/public-lifecycle-rpc.test.mjs",
       "sha256": "0572d51a2826a096ae9b1121e5d9df7bbbcfac72f2eaa28796e3377029774a85",
       "lines": 248,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-run.test.mjs",
+      "sha256": "1b8ad51c5dddcc38fdfe77b141db7be7dc0484d9b4b3fdb230ec978c04b4c653",
+      "lines": 227,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3334,6 +3388,12 @@
       "path": "scripts/tests/release-kernel-readback.test.mjs",
       "sha256": "a5497e2cddf2c9d8d1443377b32a0e962780005e89b94b0e6269d3263888d375",
       "lines": 36,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/run-public-testnet-lifecycle.test.mjs",
+      "sha256": "d80535dca072edb6a9ea01f4ca0bf40aecf245ceded797f2ac349143bb85c516",
+      "lines": 125,
       "reviewKind": "complete-source-read"
     },
     {
@@ -5398,5 +5458,416 @@
       }
     ],
     "boundary": "Read-only verified journal replay, acquisition-only fixed keys and strict local simulation assembly. Separate synthetic 38/39-step tests are not contract-host or live lifecycle execution; their 400-stroop fee is synthetic. Six actual unsigned read-only requests cover matching ledger headers and one positive record-mode simulation, not enforce/sign/send or inclusion. Historical three-request Contract#3 evidence remains in the prior phase. Runnable CLI, protected identity/funding preparation and real39 remain unfinished. No new deployment, website build/publication, application activation or independent audit claim."
+  },
+  "publicV4Bootstrap": {
+    "status": "source-and-isolated-bootstrap-verified",
+    "sourceCommit": "8c7d7cfd7dd43528d7385ff1128148229e64ddc3",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36348554511",
+    "sourceInventorySha256": "f7d87a6042840c8015cbb7eebf08e060cd94026100b992f5c2925517ada6b41e",
+    "newAuthoredFiles": 10,
+    "modifiedAuthoredFiles": 2,
+    "authoredLineIncrease": 1608,
+    "localWorkspacePassed": 2134,
+    "localDefaultOptionalSkips": 13,
+    "hostedWorkspacePassed": 2133,
+    "hostedDefaultOptionalSkips": 14,
+    "sourceCoverage": {
+      "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-root-source-coverage.json",
+      "sha256": "fa51ac435a172e2a2e197fce017388b39fa2a06574785ec0ffc5479d6b92e430"
+    },
+    "preparationTests": 20,
+    "twoProcessPreparationRace": true,
+    "newRealIdentityPreparations": 0,
+    "newRealRpcRequests": 0,
+    "newFundingRequests": 0,
+    "newSignatures": 0,
+    "newTransactionsSubmitted": 0,
+    "evidence": [
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/capture-increment.py",
+        "sha256": "5dd26c034e9d457ab45c3dbbcb2948950129062f035fc7f2915ab966e9d16675"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/preparation-provenance.json",
+        "sha256": "746a3d0bb29a53f7bbb4c18e0c3d9f5f180fd9e47579df6b62f49bbedff2e5af"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/repository-inventory.json",
+        "sha256": "f7d87a6042840c8015cbb7eebf08e060cd94026100b992f5c2925517ada6b41e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/summary.json",
+        "sha256": "e71e07ea0cb6d8962a376e471dad2da3501bf935a1a65873e686ec75953a34a8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/independent-verification.json",
+        "sha256": "edf7414dea949e57ab3160481dcefb16b70e9ee8caaa563594ef03f53a6d37b8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/frozen-inputs.json",
+        "sha256": "da256618189d5c7d294dab4b0ad9969fab94084c0741b5e302138ba95039e429"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-root-source-coverage.json",
+        "sha256": "fa51ac435a172e2a2e197fce017388b39fa2a06574785ec0ffc5479d6b92e430"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-local-test-summary.source-bound.json",
+        "sha256": "ef49bf233be12374a876c97fc191503b93d33f47a97c70bb3262813645a14938"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-workspace.log",
+        "sha256": "21eaab06817b768471b2d6e73c113abfb5b3460bedcdee2ee6633cb6f5576c96"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-hosted-test-summary.json",
+        "sha256": "e993a0b5d5e6289b5e7a900e87ec9bef2f7dd15401b0549b9a03c1ea3b296a49"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-hosted-ci.json",
+        "sha256": "c558e8d1ff4046f16f76e99e6416f1830f3f78a6f5e5e0ca504c5d5dd6bc033e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-hosted-ci.log",
+        "sha256": "6f62698b145bc19912bf26329e5b227cd09244f5e6c03aee4aac704a16566a06"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-root-review.md",
+        "sha256": "e34b4dbea7e2c563c3ceaf8bd2d7bbfa301fe131d07365196bf180da5329d55f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/implementation-summary-v2.json",
+        "sha256": "3d6652f863b55dd6f3b1eeefd4e77b9255eac8efb5d8135b44afaf838b2acd6e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/peer-gaps-first.log",
+        "sha256": "6f5ba3ae557cf12052cc4b2c7ccd4cf7e79683f604055a951c3e9df5883d99b2"
+      },
+      {
+        "path": "docs/PUBLIC_V4_LIFECYCLE_PREPARATION.md",
+        "sha256": "4e70cfa1b55d620ac993216a7928eae087453e8bbc19566321165a02ccdd86ef"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/REPORT.md",
+        "sha256": "f20ff5232c9727273f756e56ac6b82ab4ebe396fa7712d60302fe246226702b6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/adversarial-red.log",
+        "sha256": "083f2a4ad9490e29acf5b3693695eccc9c75b58d9e30e1f636f92eec4e902331"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/captured-role-red.log",
+        "sha256": "93fbf3aeecf887ed744805d6729161b0bc36f472259f72e01ba5c65de7d3de8e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/final-focused.log",
+        "sha256": "4f2dec88090e27512a7fc20c5b852403e5dbcf96bb01dd784ffc78c121760cd9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/first-green.log",
+        "sha256": "d51746d1ac8dcc7260fe87a777e4143090b91fd9c8cdbaed6ecde7a97e8fbb83"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/funding-green.log",
+        "sha256": "024f121598c221e96231e32866502488f0b3a7cd19baefe83b01380e945a2fba"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/funding-readback-independent-review.json",
+        "sha256": "d34ec6fa736eeb82dcdb21328ef30668f68147b36a99fc68b80c40ba29cf26a8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/funding-red.log",
+        "sha256": "2f55d7bc99fa4eab6a8e32206ad0767052bca36cd434b9553085282f6807e47f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/initial-red.log",
+        "sha256": "8882b280be5f3d20abbbf4d23769bd519877d765fdfe40c28f48ebb52b72a4f8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/null-adapter-red.log",
+        "sha256": "4ddd2ff64d6119ec56fed21bda532954050ab388f29b6bb0e3e64fc8214d187a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/offline-real-metadata-probe.mjs.txt",
+        "sha256": "ebb9a7152b4fa890cd69ffcdfff3f14e35e3af39b6b0772e1fcded6f095822dc"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/offline-real-metadata.json",
+        "sha256": "f1b9c68642b94f00c91c702d1544754a020dd826a742ea0d3a2a49a78475bfa2"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/offline-real-metadata.log",
+        "sha256": "f1b9c68642b94f00c91c702d1544754a020dd826a742ea0d3a2a49a78475bfa2"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-implementation/source-coverage.json",
+        "sha256": "3879d41fc49260f283cd4c0a2b8764adb47f015007f629ae72f1076d91926e3b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-peer-review/REPORT.md",
+        "sha256": "4208a8a06963501528c2914bd6011a35af019daa2dcdebf8f488a32bdea165d8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-peer-review/execution.json",
+        "sha256": "454446474243290f56a0dd907c3dc4a6e7e769fc58fc7908de84e53365fea380"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-peer-review/manifest.json",
+        "sha256": "1bac032422a815a93a584c04fd578d7b1b70510ac902a42dca6b6eb9202ed35f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/acquisition-peer-review/selected-offline-tests.log",
+        "sha256": "6cbc71c4c7dbfc0bce4ad3377848c41fe5166891bab79292e1e7e1371316325b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-local-test-summary.json",
+        "sha256": "3c7f6e0c66257aa2f66c25f6f68d47a1c230c705ba445ed7f6a472a51df486cd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-next-phase-design-review.json",
+        "sha256": "47a950ff85ca47fa8d74cde0ae034b769554ddb8b9c3ae031bd397ec3ed8da5a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-peer-identities-verified.json",
+        "sha256": "c86891566b36eb4d0be8841e6a4d34f3f39244211adeb1a818ff347bcbfffe66"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/bootstrap-root-ci-verification.json",
+        "sha256": "385e8e3448a0ad201380dedfb0990eb34d223cc425e5df9def91a296892a89f5"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/cli-implementation/first-green.log",
+        "sha256": "3ef5231803a54f951dd0ca4313ae82c38c4f3a7afaaaa95222b30ddeded3ba90"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/cli-implementation/funding-routes-green.log",
+        "sha256": "461eb441669e5dc0f7b5e83be4280ccc118921a134361ad1af323a11dc2beb7b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/cli-implementation/funding-routes-red.log",
+        "sha256": "6219a1f391913d75e1bb0e6e18d28f4247f453af93f17cf5e9f6e711bafe8638"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/cli-implementation/loader-corrected-green.log",
+        "sha256": "3b263870956a04ec75faa117053dc0aed4a1ebe1b5d35ef6f8343f2b2d45cc7e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/cli-implementation/loader-probe.mjs",
+        "sha256": "a406cc9131c0d1628c8d6a934a25e034a4db22732e72db58bdef98615c20439b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/cli-implementation/loader-probe.stderr.log",
+        "sha256": "93685cc0e567c5b38bf8897be00618d4cca8d89f715008c7b7d6c30d97377dc3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/cli-implementation/loader-probe.stdout.json",
+        "sha256": "cf044c692606368d856d9ebb8603259973a494204359abe2d7db255508929416"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/cli-implementation/red.log",
+        "sha256": "5b2353e2fb593357725c47d6fcda4b94804e4e9f22bbbea7eedc8c03bf13eb1e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/REPORT.md",
+        "sha256": "02ebbc4e9b7fca8eb824c71690e7ed0d3118edec0f125390c4139abcd124925d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/source-identities.json",
+        "sha256": "2c95ec1efddaa40ab516b9078b99cc46ddff945185fe54b0b967ec390e9578bf"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/FINAL-coverage.log",
+        "sha256": "38d95f1cc015413a6ab530e01cc5d301750bfbe55e7d8e3ba36e115f947a718b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/GREEN-cleanup.log",
+        "sha256": "dc21cf516044d34049d9c2c8fe19aa1489cfb9b3bdeee70d1d47220f242fb20d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/GREEN-first.log",
+        "sha256": "d8c84a86542efe098985b76315ee9851a1c8bae44e569bf5a76d34822563da1e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/RED-cleanup-accessors.log",
+        "sha256": "3a2441a8b2b4feb643877b2005b5efaab5239bb09f048e039c6a23a3b0fce643"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/RED-compact-evidence.log",
+        "sha256": "c3bf44bdf91a8fa6bda67189f34e154bd986db4bedc068b1ae2c98571162685a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/RED.log",
+        "sha256": "0b80811aa9d522888ef28a8ed07e0f8060b38c4274eea4df9911cff7a9a62fb0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/REPORT.md",
+        "sha256": "b87189115cf60f01129e1edc43412f6395b30eb26c007592371128bffb150ec9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/checks.json",
+        "sha256": "97f6e10dfb299356996e56a4228b4e4cc7fb295b304bf8e79680484cfe3e8046"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/manifest.json",
+        "sha256": "301ad1cf01bf7c5447de15fb2dbd20bad1d4b58046a6e5c73df56818656e96ac"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/peer-review/REPORT.md",
+        "sha256": "ded6931c9d337dfd6e44a0e65141c32da8f16e7c383089af6c03b8b8b68e6a95"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/peer-review/review.json",
+        "sha256": "5c96750b82183b7d61ae86770d3e794d23952b8475c4fb9db3943e04193bedb4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/friendbot-implementation/verification.json",
+        "sha256": "a5a0b98827618c6c35784121614f0f16a6ad44a213f407376f68634d0c2d4022"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/funding-implementation/orchestrator-first-green.log",
+        "sha256": "9be29d3cefc07d399a63de5854106c7bf3312389a4301f271f4d0c0d05a05fad"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/funding-implementation/orchestrator-receipt-green.log",
+        "sha256": "219aaa76faa0d10c8eccb51380195ca7e73d841675a8c2fe533835b24f51223d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/funding-implementation/orchestrator-receipt-red.log",
+        "sha256": "7fafab6509bbee79e8f7757e1e8c5606ecb542d20bb50e9c5e59bbe92fbb515f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/funding-implementation/orchestrator-red.log",
+        "sha256": "8f341a5ead568c01ce65a91d66da130aa494df4760067075049305bda101a376"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/funding-implementation/readback-green.log",
+        "sha256": "df211b218c15e9882d9d89afb03ee69cf6e407d97ee42c6f0d7dd13918eaceaa"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/funding-implementation/readback-red.log",
+        "sha256": "3336c093dbad55d1750b6a09aa0851c4ee5a4772e36e7264382dec43b7bac260"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/funding-peer-review/cli-final-review.json",
+        "sha256": "41ffb10fcf3d6d0f45e92781db4aeb98c248335827e9cd26d744ea937c6bce5d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/funding-peer-review/final-review.json",
+        "sha256": "59ead75cbb00e2cc5d5ba38c919ee33f525d2f6457930c4769fdc36b51ddcf54"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/funding-peer-review/initial-review.json",
+        "sha256": "bafa683928be1304511886130a2d02e97a505da2d83cbceb050cfe467f93d0e3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/REPORT-v2.md",
+        "sha256": "aef178f46918f6a822da130e9ed5fa79891139924990ae27eb33336d47966c11"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/REPORT.md",
+        "sha256": "a5b9c8acdd830a3a8ff49e538c1958ae21231f7c71578e192dbd48e2cd440c2b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/coverage-v2.json",
+        "sha256": "d4fcbf5bb37823fc38d1efe88b091f55cb3610c33a42e19c13d942b35523b168"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/coverage.json",
+        "sha256": "e0719416b0d1de95cd3b41efa94f48d8b32d41e50c54937130b339e6a06dcf04"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/first-green-attempt.log",
+        "sha256": "f1020741fc17fd818e0acefe5d97e4d6a50c69e599efb141e5561e441fa58ef3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/green-final.log",
+        "sha256": "b0f2725948dd654ca2a2b5244486afe1c3f642dbab01551eb0c21af0e1ea09b9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/green.log",
+        "sha256": "bdb22c98002b0fb56799ab98e7babd9fd1461f836cafd5c15c5280860c280d39"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/implementation-summary.json",
+        "sha256": "ff805dd664a8e50d90cdf0207d54b9fd4b010335480612e81a9d2815e28ad4c8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/red-expanded.log",
+        "sha256": "e09c454bec7f9641eefed11b9cca168a4cf4f82390adaf9303d18cd82a0332dc"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/preparation-implementation/red.log",
+        "sha256": "22e2d9ec8c5b88c8fd85344ead451ba1304898daa1a4c8cb1c2537f812d7e24d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/run-peer-review/REPORT.md",
+        "sha256": "d3bfe5745d69a090b53115bef423db65f3cab88f5779c87f6351876a3acb143a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/run-peer-review/manifest.json",
+        "sha256": "25dfd582675208cf015228051fa3001013f90f84934f53b388fcdd3a0002aedb"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-next/REPORT.md",
+        "sha256": "77fafeeeab19ed9931fc92fce148c309989dd647fac115b0600a698cf7c36918"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-next/manifest.json",
+        "sha256": "4ce37e2b693e2c35e5769881458d9ddddf146a18e79887c3eee44d1b077df6ab"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/FINALIZER-PREPARATION.md",
+        "sha256": "687dcf632570641263811c3d86aa850d43c41e61d55aba516c062991b586f532"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/capture-execution.log",
+        "sha256": "747ddc9d27f6988a696d30ece6b87b939482f59d09fc466636e763630b066488"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/finalizer-preparation.json",
+        "sha256": "970615ec48c7b5c30172df2542273dbe0cd9aaa01c19c6c5468321b03b2beb1c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/independent-checks/checker-diagnostics.json",
+        "sha256": "3b8b47c5cacc54588099d122bede54b429c77d1a98cf264a334033c5f7279906"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/independent-checks/final-verification.log",
+        "sha256": "0c547c7c529a9593e73e27fa0e04fb19f98a60ac1fb4deffc1011cfafb603cb9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/independent-checks/verify.py",
+        "sha256": "89aef2b47db81efe96ca6c9d110db472137f5a68b1dc0ec07a25002878ed1c51"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/root-finalizer-review.json",
+        "sha256": "afa69789d7c0e37c852241bfe8c6b6833b046eccbc1b0df46537b4427e186148"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/source-bound-summary-amendment/exact.diff",
+        "sha256": "733f82e10ae8ea0dde6568336bb49c9edd752b88308f7d4b8e631008efc24ae4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/source-bound-summary-amendment/finalize-bootstrap-evidence.before.py",
+        "sha256": "a15ea2833b5c78167b463bf98b73769828ec3c9564a49b753a00d67dc64700cd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/source-bound-summary-amendment/finalizer-inputs.before.template.json",
+        "sha256": "40aea4677582bc30b96c2ffbadfd8b145a49ee0a2613b895a90657a2e6f3a7e6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/source-bound-summary-amendment/receipt.json",
+        "sha256": "b52466db5ec380eb49dc2bbda55d11a3db8ee3e9f5875c88866ca81149b90b9b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/finalizer-inputs.json",
+        "sha256": "520a24ed71ea8b94110c6e0cf80ff91490663283a959d48a32463531eb971c89"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/finalize-bootstrap-evidence.py",
+        "sha256": "5ce32d6d362d5734863dfb8988a132a0fc3eb6ccfdb3137a57b466ff4a5673d7"
+      }
+    ],
+    "boundary": "Protected seven-key preparation/load, bounded raw acquisition, one-attempt actor funding with read-only account recovery, and explicit CLI routing are implemented and tested with isolated fixtures. Original authority/CLI and transports are substituted; observed account state is not a verified Friendbot inclusion. The real two-child preparation race is local filesystem evidence, not power-loss or same-UID/root resistance. Lifecycle signing, complete observation/preflight integration and the 39-step live executor remain unfinished. Prior 38/39 synthetic integration and unsigned RPC captures remain historical, not new execution by this phase. No new deployment, website publication, application activation or independent audit claim."
   }
 }
