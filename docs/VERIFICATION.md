@@ -6,9 +6,9 @@ This record describes the development review on **27 September 2026**. The curre
 
 | Evidence | Files | Current lines |
 | --- | ---: | ---: |
-| Exact current bytes with complete source-read evidence | 467 | 48,794 |
+| Exact current bytes with complete source-read evidence | 471 | 49,478 |
 | Verified reviewed baseline plus completely reviewed differences | 99 | 23,951 |
-| Total first-party authored scope | 566 | 72,745 |
+| Total first-party authored scope | 570 | 73,429 |
 | Unresolved files or line ranges at this snapshot | 0 | 0 |
 
 The first row uses explicit complete reading ranges matched to each current file hash. It does not mean every file was read again when this manifest was generated. The second row is composed coverage: the previously reviewed baseline was checked against Git bytes, every difference was reviewed, and unchanged, changed and deleted ranges were reconciled. It is not a fresh full-file reread.
@@ -16,6 +16,8 @@ The first row uses explicit complete reading ranges matched to each current file
 The manifest lists each file's relative path, SHA-256, line count and review method. The scope includes first-party implementation, tests, configuration, styles, handwritten API declarations, vector assets and database migrations. Generated bindings, prover constants, cryptographic parameters, proof fixtures, geographic data, lockfiles, copied vendor code and dependency implementations are outside the authored totals. Ignored files, documentation, licenses and binary media are also excluded. The generated manifest excludes itself to avoid recursive hashing.
 
 ## Executed verification and limits
+
+The separate [offline V4 lifecycle foundation](PUBLIC_V4_LIFECYCLE_PREPARATION.md), source `d94ada7c1ded15b644b2f68c5f78b06306c65598`, adds four reviewed tool/test files. Its local complete workspace passed 1,476 checks with seven default optional skips, including 902 application and 182 tooling tests. Eight plan and thirteen grouped envelope tests are included in those totals. A separate check matched all twelve kernel method argument layouts against the exact compiled V4 WASM. Both jobs in the [exact hosted source run](https://github.com/Agyion/agyionlabs/actions/runs/36334160853) passed. This increment does not include a live executor, new funding, signed chain transaction, contract activation or website publication. The website release and its historical verification below remain unchanged.
 
 The current public source-account guard release passed 34 HTTP and 14 UI checks. All 103 public files, totaling 166,322,489 bytes, matched the frozen build across attempts: 102 from the latest failed full scan and one from a later direct targeted transfer. No complete scan passed. The 104-file local tree has SHA-256 `0647e768ff3097f2be55a97a27e6ce7e84d1ffd78ba8274b83ce620af3f2fcce`, using the exact path/hash/byte-count manifest ordering described below. Direct Playwright-managed Chromium captured no page, console, request or CSP errors. The original public V3 kernel remained ready; public V4 remains deployed-inactive. This read-only live run made no wallet request or transaction and does not renew earlier map-specific, vault or wallet-extension evidence.
 

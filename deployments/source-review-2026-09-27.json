@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T16:22:24.169549+00:00",
-  "sourceBaselineCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
+  "reviewedAt": "2026-09-27T16:51:56.777855+00:00",
+  "sourceBaselineCommit": "d94ada7c1ded15b644b2f68c5f78b06306c65598",
   "websiteRelease": {
     "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
     "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
@@ -42,12 +42,12 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 566,
-    "lines": 72745,
+    "files": 570,
+    "lines": 73429,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 467,
-        "lines": 48794
+        "files": 471,
+        "lines": 49478
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 99,
@@ -2965,6 +2965,18 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/lib/public-lifecycle-envelope.mjs",
+      "sha256": "70fae6615d71fa154986200f87fc799dfcf70a1768b8bfff7b7ff6d9b74c3a25",
+      "lines": 173,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-lifecycle-plan.mjs",
+      "sha256": "02b85dfd1d2c83b9e3ec49fb05b8475daf640cacc635af83e983f2d68f6020a4",
+      "lines": 145,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/lib/typography-audit.mjs",
       "sha256": "7dc99dd2cf022df36efa0d572619bd8c6743f04487020620b7aab5cc08c71f3f",
       "lines": 144,
@@ -3142,6 +3154,18 @@
       "path": "scripts/tests/public-deployment-readback.test.mjs",
       "sha256": "0424dcaa9579aa79f8e8f9b7cc3a29d402171e26a8f6cae174f14159859421b4",
       "lines": 80,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-envelope.test.mjs",
+      "sha256": "f817a0741745bd2d49cb10b7949f60b93ae43f5f8b2d36906721e47db7503e47",
+      "lines": 239,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-plan.test.mjs",
+      "sha256": "d3c844ebdccf2bbe5160aa77f57cc5952fd8fcaf7d6fc94728b7c2d3a8f76342",
+      "lines": 127,
       "reviewKind": "complete-source-read"
     },
     {
@@ -4281,5 +4305,86 @@
       "dependencyAdvisoriesReported": 0,
       "boundary": "Root-decoded exact CI logs; suites may overlap and are not a deduplicated security guarantee."
     }
+  },
+  "publicV4OfflinePreparation": {
+    "status": "offline-tools-verified",
+    "sourceCommit": "d94ada7c1ded15b644b2f68c5f78b06306c65598",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36334160853",
+    "sourceInventorySha256": "feb4614f09787bd6d70fb96380e36a0289ed2099bf85f94d1bf964ce4303388f",
+    "newAuthoredFiles": 4,
+    "newAuthoredLines": 684,
+    "localWorkspacePassed": 1476,
+    "defaultOptionalSkips": 7,
+    "newPlanTests": 8,
+    "newEnvelopeTests": 13,
+    "compiledAbiMethods": 12,
+    "hostedApplicationAndContractJobs": "passed",
+    "evidence": [
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-offline-inventory/repository-inventory.json",
+        "sha256": "feb4614f09787bd6d70fb96380e36a0289ed2099bf85f94d1bf964ce4303388f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-offline-inventory/summary.json",
+        "sha256": "bee4619ff0a81b40821c27e683641e6fdd1289710cca9ca18386d0f673a515fb"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-offline-inventory/independent-verification.json",
+        "sha256": "22b21e68100af17336c44c2d8578e4ba89853132b657fe6fca371830e2d3b2f1"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/root-source-coverage.json",
+        "sha256": "768aa74542aea9a21f6c41fa6cf80d490c17417ea974ed11726682c7f2052ec9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/envelope/source-coverage.json",
+        "sha256": "952d27c885c40db1de4873c61ca4ea2367a3f7bac2e419eed06e2005604bd2cc"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/local-test-summary.json",
+        "sha256": "4102f5ff80028b8bb8ea0d58bc40428a7852331586110a57af9a47c66d7ac57e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/workspace-final.log",
+        "sha256": "6366a330237908bd6d93bc2a35ee95b640b049379b9075474f4cdf73ded4f8ff"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/hosted-ci.json",
+        "sha256": "db0d0a84404ad868f9fe057cfc1b478d67d68e588a3d2f6ff4c26bed7a66eb3c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/hosted-ci.log",
+        "sha256": "7b17efa200e4d7493de7505a2fc386370e4c6b620f97ec63209f2762277a9804"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/envelope/compiled-spec-check.json",
+        "sha256": "2c71a5954401cb090e12ec4102108245dc41261d5a3bb420d91c6c8065737c42"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/envelope/check-compiled-spec.mjs",
+        "sha256": "07839ab3db2c7b559f604deb4e0dfe6d3a408f849a0b94cfffc49474ca1f51fe"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/plan/terminal-gates-red.log",
+        "sha256": "6192b047195568923cd73a4a3becb7d1dfcf34fe03225e93afbdca8f11100409"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/plan/terminal-gates-green.log",
+        "sha256": "53a00c9b60ba2634764dd38d749faa254f0003fe05b0665f8c051abd2d3a669d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/envelope/coercion-red.log",
+        "sha256": "a492c32f805d2ca95c3a10082cc5b4b8ef7f35545043d801e864684222b6d964"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/envelope/final-focused.log",
+        "sha256": "82d320dbe1b0bdc19f7cbe640bb3e95288728d1e6f8ab464350bf73db85679e0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/OFFLINE_PLAN_PRE_FIX_REVIEW_2026-09-27.md",
+        "sha256": "f110beece239c65cf9e140840d7c30a900aff18fadf976828f2899cf7195e414"
+      }
+    ],
+    "boundary": "Offline immutable schedule of 39 calls and strict signing-time envelope validation only. Existing source byte identities preserved. Synthetic offline signatures are test fixtures. No lifecycle executor, new live identities, funding or submissions, application activation or website deployment. Original website/source-guard evidence remains unchanged. No external audit or exploit-absence guarantee."
   }
 }
