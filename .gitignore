@@ -18,3 +18,25 @@ test-results/
 
 app/.wrangler/
 contracts/private-pool/test_snapshots/
+
+# Local working notes and review output
+/BH_wip_v18_1080p_blakhole-450x253.jpg
+/BUILD_STATUS.md
+/Black_hole.webp
+/HANDOFF.md
+/SPEC.md
+/SPEC_V2.md
+/blackhole.png
+/contracts/private-pool/RESOURCE_RESULTS.md
+/contracts/private-pool/SECURITY_REVIEW.md
+/gargantua.jpeg
+/privacy/EXECUTION_V2.md
+/privacy/IMPLEMENTATION_PLAN.md
+/docs/archive/
+/docs/design/
+/docs/research/
+/docs/security/
+/docs/superpowers/
+/docs/verification/
+/docs/ui/
+/docs/media/

@@ -1,0 +1,36 @@
+# Security
+
+Agyion currently targets Stellar testnet. Do not use this release for real funds.
+The project has not received an independent security or cryptographic audit.
+
+## What the application checks
+
+* The configured network, contract instance and actual WASM hash must match the reviewed public release before a transaction is prepared.
+* Wallet approval is bound to the requested account, network and transaction envelope. A changed wallet session invalidates an in progress action.
+* Pending transaction hashes are recorded before submission. An uncertain outcome is reconciled using the original hash, without automatically sending another payment.
+* Contracts enforce authorization, time windows, recipient binding, conservation and replay protection. Atomic failures must preserve recorded liabilities.
+* Private proofs are produced locally. Secret witnesses, vault passwords and trustee shares do not belong in RPC requests, logs or transaction journals.
+
+These are implementation properties backed by specific tests, not a guarantee against every attack.
+
+## Material trust boundaries
+
+The public application relies on its wallet extension, RPC provider, token issuer and browser environment. A code hash returned by a compromised provider is not an independent consensus proof. Token freezing or clawback remains subject to the asset's issuer controls.
+
+Physical handoffs and external events depend on the configured signer. A contract can verify a signature without establishing that the signed statement is true. Transaction inclusion order does not establish equal network access or fair click order.
+
+The private implementation has additional requirements. Its development setup does not establish an independent trusted setup ceremony. Locally operated threshold test keys do not establish independent trustee custody. A cooperating threshold can decrypt outside the application's approval workflow. Deposits, withdrawals, fees, submitting accounts and timing can reveal relationships even when note contents are encrypted.
+
+Browser storage can be deleted or rolled back. Losing private keys and their encrypted recovery backup can make funds unrecoverable. Archived contract state requires network restoration and normal transaction fees. Recovery must reject incomplete history rather than display an invented balance.
+
+## Reporting a vulnerability
+
+Contact the repository maintainer through an established private channel to arrange confidential disclosure. Include the affected commit and component, preconditions, expected impact and a minimal reproduction using local fixtures or valueless testnet assets.
+
+Do not publish wallet secrets, recovery files, personal information or a working attack against another person's funds. Do not test against third party infrastructure without permission.
+
+## Verification
+
+Run the workspace tests with `npm test`. Contract and private client checks have their own commands in the component documentation. Optional real proof suites and browser or live network tests must be explicitly enabled. A skipped suite is not a passing result.
+
+Historical test counts do not certify later code. Any contract or circuit change requires new tests, exact artifact verification and matching deployment configuration. Mainnet activation requires a separate security and operational release decision.
