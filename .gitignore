@@ -40,3 +40,6 @@ contracts/private-pool/test_snapshots/
 /docs/verification/
 /docs/ui/
 /docs/media/
+
+# Retired template media is kept in artifacts/reference-media only
+/landing/public/media/
