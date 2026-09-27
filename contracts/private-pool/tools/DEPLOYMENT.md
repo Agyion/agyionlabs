@@ -45,9 +45,10 @@ deterministic address and verifies every dealer/acceptance signature, aggregate
 point, raw DKG domain, epoch, auditor coordinates and transcript hash. A copied
 transcript from another deployment is rejected. These checks do not establish
 trustee independence, actual share retention, transport security, a sound setup
-ceremony or legal authority. Reviewed SAC addresses are required for this release;
-the pool assumes exact token transfer semantics and cannot make a malicious
-allowlisted token trustworthy.
+ceremony or legal authority. Reviewed SAC addresses are required. The new source
+candidate verifies the host's built-in SAC executable type and tracks aggregate
+liabilities. The active earlier deployment does not acquire those guards through
+a new build. Canonical SAC identity does not remove issuer powers.
 
 Prepare a new plan using the **existing** dedicated owned 0700 identity directory
 from step 1 and a new output path. The tool does not overwrite anything there:
@@ -82,5 +83,9 @@ node contracts/private-pool/tools/prepare-deployment.mjs verify-readback new-pla
 Readback validation checks exact bytecode, immutable config, domain derived from
 the actual deployed address/network, asset IDs and policy root. It compares saved
 evidence with the reviewed plan; it does not authenticate an untrusted RPC or
-claim a deployment happened merely because input files match. Live CLI constructor
-and readback execution remain untested until the operator's explicit release run.
+claim a deployment happened merely because input files match. The earlier
+deployment has separately recorded [testnet evidence](../../../docs/VERIFICATION.md).
+A new accounting candidate still requires its own constructor, exact code and
+configuration readback, initial liability checks, resource measurements and
+transaction tests. Existing private notes and trustee domains remain attached to
+their original deployment; changing application pins is not a migration.

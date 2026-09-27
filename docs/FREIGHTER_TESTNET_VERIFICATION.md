@@ -51,3 +51,16 @@ This was not an error-free browser run. The isolated context recorded four RPC `
 The successful scope is one merchant registration and original-profile reload/reconnect recovery. It does not establish a Freighter-mediated payment, offer funding, pickup settlement, USDC transfer, private proof transaction, hardware wallet or mobile wallet flow. The earlier scripted-wallet marketplace tests retain their own, separate boundaries. This result is not a guarantee that every wallet or network scenario works.
 
 Safe UI screenshots, official distribution metadata, the included public transaction and a structured receipt were retained as local test evidence. Passwords, recovery material and the disposable profile are excluded from the repository. The isolated browser was closed after verification.
+
+## Cancellation follow-up
+
+The real cancellation above sent nothing but originally displayed a generic
+verification error. A later adapter correction recognizes the exact plain data
+decline returned by the official 5.48.0 extension source, only at the signing
+boundary. It displays a specific declined-signature message; unknown or
+post-submission failures still direct the user to transaction recovery. The
+regressions use the actual Wallets Kit adapter with synthetic extension API
+responses. The historical real cancellation payload was not intercepted, and
+this correction is not a second live extension signing test. It was included in
+Cloudflare website version `2ec058c3-bd70-455e-afc2-5acbbd61b5c1` and passed the
+subsequent read-only production checks described in [verification](VERIFICATION.md).

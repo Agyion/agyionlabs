@@ -1,16 +1,22 @@
-# Activation boundary for the experimental private pool
+# Release requirements for the experimental private pool
 
-The source implements and locally verifies a separate private-note system.
-It does not upgrade the existing Agyion deployment, migrate existing balances,
-turn the current public Pod/Trigger/Envoy into private records, or enable
-deposits in the published application. Fade remains public.
+The experimental private pool is deployed on Stellar testnet and integrated into
+the published Pod, Trigger and Envoy application path. Its separate encrypted
+vault, local prover and transaction recovery do not migrate or hide existing
+public Agyion balances. Fade remains public. The [verification record](../../docs/VERIFICATION.md)
+and [application coordinator](../../app/app/lib/private/README.md) describe the
+implemented path and the limits of its executed tests.
 
 The verified development keys are useful for repeatable tests. Their public
 PSE phase1 was fully checked; the circuit-specific phase2 was contributed by
 one local operator. Independent setup security cannot be obtained by running
 that operator's script again or labeling local test processes as trustees.
 
-## Facts that a funding release must bind
+## Requirements for a new release
+
+The development release implements the deployment and application bindings below.
+Its single-operator setup and trustee custody do not satisfy the independent
+production requirements. Each future release must verify its own exact evidence.
 
 1. Freeze the exact circuits, dependency locks, reviewed cryptographic profile
    and externally contributed phase2 transcript. Reverify the resulting keys
@@ -41,9 +47,9 @@ that operator's script again or labeling local test processes as trustees.
    recovery on another browser and realistic target devices before activation.
    Independent cryptographic/security review remains required for real funds.
 
-The contract itself rejects mainnet. Changing that restriction is a new release,
-not a deployment flag. The current approved Cloudflare frontend is not silently
-replaced with an unconfigured private funding path.
+The contract itself rejects mainnet. Changing that restriction requires a new
+contract release, application configuration and review. A development testnet
+deployment does not authorize real-fund activation.
 
 ## Privacy and usability limits
 

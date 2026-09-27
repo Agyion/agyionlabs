@@ -80,13 +80,17 @@ missing read or an RPC failure into an unspent note or an empty pool.
 
 ## Release limits
 
-The current application has no deployed private-pool profile or connected private
-funding UI. The separate reader, wallet lifecycle, journal, worker and key/archive
-recovery modules are implemented; they are not imported into the published Agyion
-panels. Real proofs, actual local SDK signatures, synthetic RPC reconciliation and
-actual browser storage tests do not establish live product integration. Full
-native/WASM execution and rollback/resource checks are in `../RESOURCE_RESULTS.md`.
-Network archival restoration, live signed submission/reconciliation and deployment
-remain untested. A single-operator development phase2 and local
-trustee tests do not establish independent ceremony security, a live committee,
-legal authority, independent audit or mainnet readiness.
+The published application integrates the pinned private testnet deployment,
+reader, wallet lifecycle, journal, prover worker and encrypted vault recovery.
+The separate live private-pool run completed 15 included transactions with local
+SDK signing identities. Browser proving and fee rejection were verified with a
+scripted wallet; the real Freighter registration test covers the public market,
+not a private transaction. See the [verification record](../../../docs/VERIFICATION.md)
+and [resource and fee boundaries](../BUDGET.md).
+
+Network archival restoration, private-pool USDC settlement and real mobile-wallet
+proving remain unverified. Local browser storage tests establish their specific
+persistence and concurrency behavior, not every live product flow. The
+single-operator development phase2 and trustee custody do not establish an
+independent ceremony, independently operated committee, legal authority,
+independent audit or mainnet readiness.

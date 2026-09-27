@@ -5,6 +5,7 @@ import { bindPrivateWallet } from '../../lib/private/wallet-session';
 import { walletSessionVersion, onWalletSessionChange } from '../../lib/wallet';
 import type { MarketCommand, MarketFeeConfirmation, MarketOutcome, MarketProtocol } from '../../../../market/client/protocol-types';
 import { amount, units } from '../../lib/market/forms';
+import { WalletSignatureRejectedError } from '../../lib/wallet-errors';
 
 interface Session {
   protocol: MarketProtocol | null; account: string | null; busy: boolean; error: string | null;
@@ -14,6 +15,7 @@ interface Session {
 const Context = createContext<Session | null>(null);
 export function useMarketSession(): Session { const value = useContext(Context); if (!value) throw new Error('Market session missing.'); return value; }
 export function marketError(error: unknown): string {
+  if (error instanceof WalletSignatureRejectedError) return error.message;
   const diagnostic = error instanceof Error || (typeof DOMException !== 'undefined' && error instanceof DOMException) ? error : null;
   const code = diagnostic?.message ?? '', name = diagnostic?.name ?? '';
   const errorCode: unknown = diagnostic ? (diagnostic as Error & { code?: unknown }).code : undefined;

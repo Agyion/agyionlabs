@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
+import { WalletSignatureRejectedError } from '../app/lib/wallet-errors';
 import { File as NodeFile } from 'node:buffer';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -149,4 +150,15 @@ it('clears a received credential password and file when the active vault is lock
   vaultState.status = 'ready';
   view.rerender(<PrivateInstrumentPanel kind="pod" address="fixture-public-account" legacy={null} />);
   expect((screen.getByRole('button', { name: 'Open credential locally' }) as HTMLButtonElement).disabled).toBe(true);
+});
+
+it('shows typed signature cancellation while still refreshing recovery and never resubmitting', async () => {
+  protocol.submit.mockRejectedValue(new WalletSignatureRejectedError());
+  renderPod(); await prepareDeposit();
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm private operation' }));
+  await screen.findByText(/Signature declined in the wallet/);
+  expect(screen.getByText(/This request was not submitted/)).toBeTruthy();
+  expect(protocol.refreshPending).toHaveBeenCalledTimes(2);
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm private operation' }));
+  expect(protocol.submit).toHaveBeenCalledExactlyOnceWith(prepared);
 });

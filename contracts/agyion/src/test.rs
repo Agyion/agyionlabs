@@ -42,7 +42,7 @@ fn setup() -> Setup {
     let token = token::Client::new(&env, &asset);
     let token_admin = token::StellarAssetClient::new(&env, &asset);
 
-    let contract_id = env.register(Agyion, ());
+    let contract_id = env.register(Agyion, (soroban_sdk::vec![&env, asset.clone()],));
     let client = AgyionClient::new(&env, &contract_id);
 
     Setup {
@@ -456,7 +456,8 @@ fn venue_sig_ts_parity() {
     ));
     let network: [u8; 32] = Sha256::digest(b"Test SDF Network ; September 2015").into();
     env.ledger().with_mut(|ledger| ledger.network_id = network);
-    env.register_at(&contract, Agyion, ());
+    let asset = env.register_stellar_asset_contract_v2(Address::generate(&env)).address();
+    env.register_at(&contract, Agyion, (soroban_sdk::vec![&env, asset],));
     // Use the production domain builder, then the public credential fields.
     let mut payload = env.as_contract(&contract, || {
         crate::credential_payload(&env, b"agyion:handoff:v2\0")
@@ -1464,7 +1465,7 @@ fn security_handoff_signature_cannot_execute_trigger() {
 #[test]
 fn security_trigger_signature_cannot_cross_contracts() {
     let s = setup();
-    let other_id = s.env.register(Agyion, ());
+    let other_id = s.env.register(Agyion, (soroban_sdk::vec![&s.env, s.asset.clone()],));
     let other = AgyionClient::new(&s.env, &other_id);
     let funder = Address::generate(&s.env);
     let recipient = Address::generate(&s.env);
@@ -1497,7 +1498,7 @@ fn security_trigger_signature_cannot_cross_contracts() {
 #[test]
 fn security_handoff_signature_cannot_cross_contracts() {
     let s = setup();
-    let other_id = s.env.register(Agyion, ());
+    let other_id = s.env.register(Agyion, (soroban_sdk::vec![&s.env, s.asset.clone()],));
     let other = AgyionClient::new(&s.env, &other_id);
     let seller = Address::generate(&s.env);
     let recipient = Address::generate(&s.env);
@@ -1539,7 +1540,7 @@ fn security_handoff_signature_cannot_cross_contracts() {
 #[test]
 fn security_envoy_signature_cannot_cross_contracts() {
     let s = setup();
-    let other_id = s.env.register(Agyion, ());
+    let other_id = s.env.register(Agyion, (soroban_sdk::vec![&s.env, s.asset.clone()],));
     let other = AgyionClient::new(&s.env, &other_id);
     let seller = Address::generate(&s.env);
     let owner = Address::generate(&s.env);
@@ -2007,13 +2008,13 @@ fn security_wasm_pod_signature_and_domain_bound_settlement() {
     const WASM: &[u8] = include_bytes!("../target/wasm32v1-none/release/agyion.wasm");
     let env = Env::default();
     env.mock_all_auths_allowing_non_root_auth();
-    let contract_id = env.register(WASM, ());
-    let client = AgyionClient::new(&env, &contract_id);
-    assert_eq!(client.protocol_version(), 3);
     let funder = Address::generate(&env);
     let recipient = Address::generate(&env);
     let sac = env.register_stellar_asset_contract_v2(funder.clone());
     let asset = sac.address();
+    let contract_id = env.register(WASM, (soroban_sdk::vec![&env, asset.clone()],));
+    let client = AgyionClient::new(&env, &contract_id);
+    assert_eq!(client.protocol_version(), 4);
     let token = token::Client::new(&env, &asset);
     token::StellarAssetClient::new(&env, &asset).mint(&funder, &300);
     let proof = pod_create_proof(&env, &contract_id, &funder, &asset, 100, 0);
@@ -2100,7 +2101,7 @@ fn pod_failed_asset_payment_preserves_claim_and_reserve() {
     let admin = token::StellarAssetClient::new(&env, &asset);
     let token = token::Client::new(&env, &asset);
     admin.mint(&funder, &100);
-    let contract = env.register(Agyion, ());
+    let contract = env.register(Agyion, (soroban_sdk::vec![&env, asset.clone()],));
     let client = AgyionClient::new(&env, &contract);
     let proof = pod_create_proof(&env, &contract, &funder, &asset, 100, 0);
     let id = client.create_pod(&funder, &asset, &100, &0, &pod_pubkey(&env), &proof);
@@ -2116,12 +2117,14 @@ fn pod_failed_asset_payment_preserves_claim_and_reserve() {
     assert_eq!(client.get_pod(&id).state, 1);
 }
 
-fn assert_trigger_destination_validation(env: &Env, contract: &Address) {
+fn assert_trigger_destination_validation(env: &Env, wasm: Option<&[u8]>) {
     env.mock_all_auths_allowing_non_root_auth();
-    let client = AgyionClient::new(env, contract);
     let funder = Address::generate(env);
     let beneficiary = Address::generate(env);
     let asset = env.register_stellar_asset_contract_v2(funder.clone()).address();
+    let contract_id = register_kernel(env, &asset, wasm);
+    let contract = &contract_id;
+    let client = AgyionClient::new(env, contract);
     let token = token::Client::new(env, &asset);
     token::StellarAssetClient::new(env, &asset).mint(&funder, &100);
     assert_eq!(
@@ -2162,8 +2165,7 @@ fn assert_trigger_destination_validation(env: &Env, contract: &Address) {
 #[test]
 fn security_trigger_rejects_kernel_as_beneficiary_before_funding() {
     let env = Env::default();
-    let contract = env.register(Agyion, ());
-    assert_trigger_destination_validation(&env, &contract);
+    assert_trigger_destination_validation(&env, None);
 }
 
 #[test]
@@ -2171,14 +2173,13 @@ fn security_trigger_rejects_kernel_as_beneficiary_before_funding() {
 fn security_wasm_trigger_rejects_kernel_as_beneficiary_before_funding() {
     const WASM: &[u8] = include_bytes!("../target/wasm32v1-none/release/agyion.wasm");
     let env = Env::default();
-    let contract = env.register(WASM, ());
-    assert_trigger_destination_validation(&env, &contract);
+    assert_trigger_destination_validation(&env, Some(WASM));
 }
 
 /// A settlement's second transfer can fail after its first transfer succeeds.
 /// Exercise actual SAC authorization freezes so neither partial payment nor a
 /// terminal Fade state can survive; a later retry must settle the frozen price.
-fn assert_fade_second_transfer_rollback(env: &Env, contract: &Address, positive: bool) {
+fn assert_fade_second_transfer_rollback(env: &Env, wasm: Option<&[u8]>, positive: bool) {
     env.mock_all_auths_allowing_non_root_auth();
     let seller = Address::generate(env);
     let claimant = Address::generate(env);
@@ -2187,6 +2188,8 @@ fn assert_fade_second_transfer_rollback(env: &Env, contract: &Address, positive:
     sac.issuer()
         .set_flag(soroban_sdk::testutils::IssuerFlags::RevocableFlag);
     let asset = sac.address();
+    let contract_id = register_kernel(env, &asset, wasm);
+    let contract = &contract_id;
     let token = token::Client::new(env, &asset);
     let admin = token::StellarAssetClient::new(env, &asset);
     let client = AgyionClient::new(env, contract);
@@ -2221,6 +2224,7 @@ fn assert_fade_second_transfer_rollback(env: &Env, contract: &Address, positive:
     assert_eq!(token.balance(&seller), 100);
     assert_eq!(token.balance(&claimant), 50);
     assert_eq!(token.balance(contract), 200);
+    assert_eq!(client.asset_liability(&asset), 200);
     assert_eq!(client.get_pod(&pod).state, 0);
 
     env.mock_all_auths_allowing_non_root_auth();
@@ -2232,6 +2236,7 @@ fn assert_fade_second_transfer_rollback(env: &Env, contract: &Address, positive:
     assert_eq!(client.get_fade(&fade).state, 2);
     assert_eq!(token.balance(&seller), if positive { 215 } else { 185 });
     assert_eq!(token.balance(&claimant), if positive { 35 } else { 65 });
+    assert_eq!(client.asset_liability(&asset), 100);
     assert_eq!(token.balance(contract), 100); // the unrelated Pod is preserved
     assert_eq!(client.get_pod(&pod).state, 0);
     assert_eq!(client.try_confirm_handoff(&fade, &7, &signature), Err(Ok(Error::InvalidState)));
@@ -2243,8 +2248,7 @@ fn assert_fade_second_transfer_rollback(env: &Env, contract: &Address, positive:
 fn fade_second_transfer_failure_preserves_all_reserves_and_frozen_price() {
     for positive in [true, false] {
         let env = Env::default();
-        let contract = env.register(Agyion, ());
-        assert_fade_second_transfer_rollback(&env, &contract, positive);
+        assert_fade_second_transfer_rollback(&env, None, positive);
     }
 }
 
@@ -2254,8 +2258,7 @@ fn wasm_fade_second_transfer_failure_preserves_all_reserves_and_frozen_price() {
     const WASM: &[u8] = include_bytes!("../target/wasm32v1-none/release/agyion.wasm");
     for positive in [true, false] {
         let env = Env::default();
-        let contract = env.register(WASM, ());
-        assert_fade_second_transfer_rollback(&env, &contract, positive);
+        assert_fade_second_transfer_rollback(&env, Some(WASM), positive);
     }
 }
 
@@ -2266,7 +2269,7 @@ fn wasm_fade_second_transfer_failure_preserves_all_reserves_and_frozen_price() {
 /// change the hand-checked record and token balances asserted below.
 fn assert_fade_ten_serialized_claimants(
     env: &Env,
-    contract: &Address,
+    wasm: Option<&[u8]>,
     positive: bool,
     first: usize,
 ) {
@@ -2278,6 +2281,8 @@ fn assert_fade_ten_serialized_claimants(
     env.mock_all_auths_allowing_non_root_auth();
     let seller = Address::generate(env);
     let asset = env.register_stellar_asset_contract_v2(seller.clone()).address();
+    let contract_id = register_kernel(env, &asset, wasm);
+    let contract = &contract_id;
     let token = token::Client::new(env, &asset);
     let admin = token::StellarAssetClient::new(env, &asset);
     let client = AgyionClient::new(env, contract);
@@ -2405,8 +2410,7 @@ fn fade_ten_claimants_same_ledger_only_first_valid_execution_wins() {
     for positive in [true, false] {
         for first in [0, 7] {
             let env = Env::default();
-            let contract = env.register(Agyion, ());
-            assert_fade_ten_serialized_claimants(&env, &contract, positive, first);
+            assert_fade_ten_serialized_claimants(&env, None, positive, first);
         }
     }
 }
@@ -2418,8 +2422,18 @@ fn wasm_fade_ten_claimants_same_ledger_only_first_valid_execution_wins() {
     for positive in [true, false] {
         for first in [0, 7] {
             let env = Env::default();
-            let contract = env.register(WASM, ());
-            assert_fade_ten_serialized_claimants(&env, &contract, positive, first);
+            assert_fade_ten_serialized_claimants(&env, Some(WASM), positive, first);
         }
+    }
+}
+
+#[path = "accounting_test.rs"]
+mod accounting_tests;
+
+fn register_kernel(env: &Env, asset: &Address, wasm: Option<&[u8]>) -> Address {
+    let args = (soroban_sdk::vec![env, asset.clone()],);
+    match wasm {
+        Some(bytes) => env.register(bytes, args),
+        None => env.register(Agyion, args),
     }
 }

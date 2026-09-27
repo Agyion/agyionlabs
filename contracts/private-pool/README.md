@@ -4,6 +4,15 @@ Implements the separate testnet profile in `privacy/PROTOCOL_V2.md`. The publish
 app uses this pool for experimental private instruments. It does not migrate or
 hide existing public Agyion balances.
 
+The source now includes an additional backing guard for a new immutable
+deployment. The currently pinned app deployment remains the earlier release:
+new source does not upgrade its existing notes or custody. The candidate
+initializes per asset liabilities, verifies canonical SAC identity through the
+host, and rejects deficient backing before deposits, withdrawals or public fees.
+Fee-free private transitions conserve hidden value without revealing the asset
+or querying every allowed asset. See [issuer control findings](../../docs/TOKEN_ISSUER_RISKS.md)
+for the active release limitation and the required compatibility checks.
+
 Actual development Groth16 verifying-key hashes are installed in `src/pins.rs`.
 Construction requires those exact 157-input and 4-input keys. Zero pins explicitly
 reject construction; there is
@@ -39,7 +48,7 @@ private circuit preserves Envoy owner recovery after revocation.
 
 The actual 17-step proof chain passes in both native and WASM execution, including
 deposit, Pod claim, Trigger attest/refund, Envoy count exhaustion/revocation/owner
-recovery, and withdrawals. All 27 tests pass, including proof-bound amount/account/
+recovery, and withdrawals. The initial 27-test checkpoint included proof-bound amount/account/
 ciphertext tampering, replay, unauthorized funding and real SAC failure rollback
 (both failed deposit and failed fee after an earlier withdrawal). Durable archive
 enumeration matches all 16 transition records and the revocation; final public

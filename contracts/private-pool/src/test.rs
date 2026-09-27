@@ -1,4 +1,5 @@
 extern crate std;
+mod backing;
 #[cfg(feature = "proof-tests")]
 mod integration;
 use crate::{hash, verifier};
@@ -186,12 +187,18 @@ fn pool_itself_cannot_be_a_bridge_or_fee_destination() {
             if kind == 1 {
                 changed.nullifiers = soroban_sdk::vec![&e, hash::zero(&e), hash::zero(&e)];
             }
-            assert_eq!(crate::state_checks(&e, &s, &changed), Err(Error::InvalidBridge));
+            assert_eq!(
+                crate::state_checks(&e, &s, &changed),
+                Err(Error::InvalidBridge)
+            );
         }
         let mut changed = t;
         changed.fee_amount = 1;
         changed.fee_account = Some(pool.clone());
-        assert_eq!(crate::state_checks(&e, &s, &changed), Err(Error::InvalidFee));
+        assert_eq!(
+            crate::state_checks(&e, &s, &changed),
+            Err(Error::InvalidFee)
+        );
     });
 }
 #[test]
@@ -750,6 +757,9 @@ fn expired_nullifier_is_still_rejected_in_native_storage() {
     assert_eq!(result, Ok(Err(Error::Spent)));
 }
 fn funded_fixture_env() -> (Env, Address) {
+    funded_fixture_env_with_clawback(false)
+}
+fn funded_fixture_env_with_clawback(clawback: bool) -> (Env, Address) {
     use soroban_sdk::xdr;
     use std::boxed::Box;
     let identity: serde_json::Value =
@@ -774,6 +784,9 @@ fn funded_fixture_env() -> (Env, Address) {
     for (_, (entry, _)) in snapshot.ledger.ledger_entries.iter_mut() {
         if let xdr::LedgerEntryData::Account(account) = &mut entry.data {
             account.flags |= 2; // Stellar AUTH_REVOCABLE_FLAG.
+            if clawback {
+                account.flags |= 8; // Synthetic AUTH_CLAWBACK_ENABLED_FLAG, not Circle USDC.
+            }
         }
     }
     // Actual native SAC with funded classic test accounts. These synthetic

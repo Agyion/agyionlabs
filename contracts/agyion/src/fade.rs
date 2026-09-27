@@ -2,9 +2,9 @@
 //! start_price toward the floor; venue-signed handoff confirmation and
 //! rule-based refund.
 
-use soroban_sdk::{token, xdr::ToXdr, Address, Bytes, BytesN, Env, I256};
+use soroban_sdk::{xdr::ToXdr, Address, Bytes, BytesN, Env, I256};
 
-use crate::{DataKey, Error, Fade, TTL_EXTEND, TTL_THRESHOLD};
+use crate::{accounting, DataKey, Error, Fade, TTL_EXTEND, TTL_THRESHOLD};
 
 /// Upper bound for `duration_ledgers` and `handoff_window` (~58 days at
 /// 5s/ledger). Security audit v2 finding 1: without a bound, a pathological
@@ -41,6 +41,7 @@ pub(crate) fn read(env: &Env, fade_id: u64) -> Result<Fade, Error> {
     env.storage()
         .instance()
         .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    accounting::liability(env, &fade.asset)?;
     Ok(fade)
 }
 
@@ -127,7 +128,7 @@ pub fn create_fade(
 
     // Non-custodial: the pot is deposited into the contract; from now on only
     // the rules move it.
-    token::Client::new(env, &asset).transfer(&seller, env.current_contract_address(), &pot);
+    accounting::deposit(env, &asset, &seller, pot)?;
 
     let fade = Fade {
         seller,
@@ -187,6 +188,7 @@ pub(crate) fn claim_internal(env: &Env, fade_id: u64, claimant: Address) -> Resu
         return Err(Error::InvalidState);
     }
 
+    accounting::destination(env, &fade.asset, &claimant)?;
     fade.state = 1;
     fade.claimant = Some(claimant);
     fade.claimed_at = Some(now);
@@ -242,7 +244,7 @@ pub fn confirm_handoff(env: &Env, fade_id: u64, ts: u64, sig: BytesN<64>) -> Res
 
     // Settle: the price is frozen at the ledger of the claim.
     let price = price_at_ledger(env, &fade, claimed_at);
-    let token = token::Client::new(env, &fade.asset);
+    accounting::release(env, &fade.asset, fade.pot)?;
     let contract = env.current_contract_address();
 
     if price > 0 {
@@ -252,8 +254,8 @@ pub fn confirm_handoff(env: &Env, fade_id: u64, ts: u64, sig: BytesN<64>) -> Res
         // recording mode can produce the claimant's full invocation tree.
         // A venue signature alone still cannot authorize claimant spending.
         claimant.require_auth();
-        token.transfer(&claimant, &fade.seller, &price);
-        token.transfer(&contract, &fade.seller, &fade.pot);
+        accounting::transfer(env, &fade.asset, &claimant, &fade.seller, price)?;
+        accounting::transfer(env, &fade.asset, &contract, &fade.seller, fade.pot)?;
     } else {
         // Negative price: the pot compensates the claimant, the remainder
         // goes to the seller. Cap: the negative payout never exceeds the pot.
@@ -265,14 +267,15 @@ pub fn confirm_handoff(env: &Env, fade_id: u64, ts: u64, sig: BytesN<64>) -> Res
             _ => fade.pot,
         };
         if payout > 0 {
-            token.transfer(&contract, &claimant, &payout);
+            accounting::transfer(env, &fade.asset, &contract, &claimant, payout)?;
         }
         let remainder = fade.pot - payout;
         if remainder > 0 {
-            token.transfer(&contract, &fade.seller, &remainder);
+            accounting::transfer(env, &fade.asset, &contract, &fade.seller, remainder)?;
         }
     }
 
+    accounting::solvent(env, &fade.asset)?;
     fade.state = 2;
     write(env, fade_id, &fade);
     Ok(())
@@ -302,11 +305,15 @@ pub fn refund(env: &Env, fade_id: u64) -> Result<(), Error> {
         return Err(Error::DeadlinePassed);
     }
 
-    token::Client::new(env, &fade.asset).transfer(
+    accounting::release(env, &fade.asset, fade.pot)?;
+    accounting::transfer(
+        env,
+        &fade.asset,
         &env.current_contract_address(),
         &fade.seller,
-        &fade.pot,
-    );
+        fade.pot,
+    )?;
+    accounting::solvent(env, &fade.asset)?;
 
     fade.state = 3;
     write(env, fade_id, &fade);

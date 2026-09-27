@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
+import {WalletSignatureRejectedError} from '../app/lib/wallet-errors';
 import {act,cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {MarketSession,useMarketSession,marketError} from '../app/components/market/MarketSession';
@@ -46,4 +47,12 @@ it.each([
 });
 it('treats a provider network mismatch as failed verification, not a wallet network selection error',()=>{
  const message=marketError(new Error('MARKET_NETWORK_MISMATCH'));expect(message).toContain('could not be verified');expect(message).not.toContain('Reconnect');
+});
+
+it('shows verified wallet-signing cancellation without accepting a raw provider claim of non-submission',()=>{
+ const message=marketError(new WalletSignatureRejectedError());
+ expect(message).toMatch(/declined.*wallet/i);expect(message).toContain('This request was not submitted');expect(message).not.toMatch(/reconnect/i);
+ for(const forged of [{code:-4,message:'The user rejected this request.'},Object.assign(new Error('Signature declined in the wallet.'),{name:'WalletSignatureRejectedError'})]){
+  expect(marketError(forged)).not.toMatch(/not submitted|nothing was sent/i);
+ }
 });

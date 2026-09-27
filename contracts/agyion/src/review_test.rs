@@ -11,7 +11,7 @@ use soroban_sdk::{
 /// Match the public RPC's default recording mode: authorization must be rooted
 /// at confirm_handoff, with the positive token payment below that root. Global
 /// non-root auth mocks conceal this integration failure.
-fn assert_positive_handoff_records_root_authorization(env: &Env, contract: &Address) {
+fn assert_positive_handoff_records_root_authorization(env: &Env, wasm: Option<&[u8]>) {
     use soroban_sdk::testutils::{AuthorizedFunction, AuthorizedInvocation};
     env.mock_all_auths();
     let seller = Address::generate(env);
@@ -19,6 +19,8 @@ fn assert_positive_handoff_records_root_authorization(env: &Env, contract: &Addr
     let asset = env
         .register_stellar_asset_contract_v2(seller.clone())
         .address();
+    let contract_id = register_kernel(env, &asset, wasm);
+    let contract = &contract_id;
     let token = token::Client::new(env, &asset);
     let admin = token::StellarAssetClient::new(env, &asset);
     let client = AgyionClient::new(env, contract);
@@ -71,7 +73,7 @@ fn assert_positive_handoff_records_root_authorization(env: &Env, contract: &Addr
     assert_eq!(token.balance(contract), 0);
 }
 
-fn assert_trigger_failed_payments_preserve_reserves(env: &Env, contract: &Address) {
+fn assert_trigger_failed_payments_preserve_reserves(env: &Env, wasm: Option<&[u8]>) {
     env.mock_all_auths_allowing_non_root_auth();
     let funder = Address::generate(env);
     let beneficiary = Address::generate(env);
@@ -79,6 +81,8 @@ fn assert_trigger_failed_payments_preserve_reserves(env: &Env, contract: &Addres
     sac.issuer()
         .set_flag(soroban_sdk::testutils::IssuerFlags::RevocableFlag);
     let asset = sac.address();
+    let contract_id = register_kernel(env, &asset, wasm);
+    let contract = &contract_id;
     let token = token::Client::new(env, &asset);
     let admin = token::StellarAssetClient::new(env, &asset);
     let client = AgyionClient::new(env, contract);
@@ -163,13 +167,15 @@ fn assert_trigger_failed_payments_preserve_reserves(env: &Env, contract: &Addres
     assert_eq!(token.balance(contract), 100);
 }
 
-fn assert_envoy_without_owner_auth_and_failed_claim_accounting(env: &Env, contract: &Address) {
+fn assert_envoy_without_owner_auth_and_failed_claim_accounting(env: &Env, wasm: Option<&[u8]>) {
     env.mock_all_auths_allowing_non_root_auth();
     let owner = Address::generate(env);
     let seller = Address::generate(env);
     let asset = env
         .register_stellar_asset_contract_v2(seller.clone())
         .address();
+    let contract_id = register_kernel(env, &asset, wasm);
+    let contract = &contract_id;
     let token = token::Client::new(env, &asset);
     token::StellarAssetClient::new(env, &asset).mint(&seller, &300);
     let client = AgyionClient::new(env, contract);
@@ -275,7 +281,7 @@ fn assert_envoy_without_owner_auth_and_failed_claim_accounting(env: &Env, contra
 /// direct-call authority to a different token contract. It never reaches a real
 /// network. The nested call must fail rather than spend an unrelated reserve.
 #[contract]
-struct NestedTransferToken;
+pub(super) struct NestedTransferToken;
 
 #[contractimpl]
 impl NestedTransferToken {
@@ -297,7 +303,7 @@ impl NestedTransferToken {
     }
 }
 
-fn assert_nested_token_cannot_spend_other_asset(env: &Env, contract: &Address) {
+fn assert_nested_token_cannot_spend_other_asset(env: &Env, wasm: Option<&[u8]>) {
     env.mock_all_auths_allowing_non_root_auth();
     let funder = Address::generate(env);
     let recipient = Address::generate(env);
@@ -305,6 +311,8 @@ fn assert_nested_token_cannot_spend_other_asset(env: &Env, contract: &Address) {
     let asset = env
         .register_stellar_asset_contract_v2(funder.clone())
         .address();
+    let contract_id = register_kernel(env, &asset, wasm);
+    let contract = &contract_id;
     token::StellarAssetClient::new(env, &asset).mint(&funder, &100);
     let token = token::Client::new(env, &asset);
     let client = AgyionClient::new(env, contract);
@@ -320,23 +328,10 @@ fn assert_nested_token_cannot_spend_other_asset(env: &Env, contract: &Address) {
         NestedTransferToken,
         (contract.clone(), asset.clone(), foreign_recipient.clone()),
     );
-    let trigger = client.create_trigger(
-        &funder,
-        &foreign_asset,
-        &100,
-        &recipient,
-        &attester_pubkey(env),
-        &100,
-    );
-    env.set_auths(&[]);
-    assert!(client
-        .try_attest(
-            &trigger,
-            &7,
-            &sign_attest(env, contract, trigger, &recipient, 7),
-        )
-        .is_err());
-    assert_eq!(client.get_trigger(&trigger).state, 0);
+    assert_eq!(client.try_create_trigger(
+        &funder, &foreign_asset, &100, &recipient, &attester_pubkey(env), &100,
+    ), Err(Ok(Error::UnsupportedAsset)));
+    assert!(matches!(client.try_get_trigger(&1), Err(Ok(Error::NotFound))));
     assert_eq!(client.get_pod(&pod).state, 0);
     assert_eq!(token.balance(contract), 100);
     assert_eq!(token.balance(&foreign_recipient), 0);
@@ -359,7 +354,7 @@ fn assert_nested_token_cannot_spend_other_asset(env: &Env, contract: &Address) {
     assert_eq!(token.balance(&foreign_recipient), 0);
 }
 
-fn assert_reads_maintain_records_and_counters(env: &Env, contract: &Address) {
+fn assert_reads_maintain_records_and_counters(env: &Env, wasm: Option<&[u8]>) {
     use soroban_sdk::testutils::storage::{Instance as _, Persistent as _};
     env.mock_all_auths_allowing_non_root_auth();
     let funder = Address::generate(env);
@@ -367,6 +362,8 @@ fn assert_reads_maintain_records_and_counters(env: &Env, contract: &Address) {
     let asset = env
         .register_stellar_asset_contract_v2(funder.clone())
         .address();
+    let contract_id = register_kernel(env, &asset, wasm);
+    let contract = &contract_id;
     token::StellarAssetClient::new(env, &asset).mint(&funder, &600);
     let client = AgyionClient::new(env, contract);
     let start = env.ledger().sequence();
@@ -408,6 +405,7 @@ fn assert_reads_maintain_records_and_counters(env: &Env, contract: &Address) {
         crate::DataKey::Pod(1),
         crate::DataKey::Trigger(1),
         crate::DataKey::Mandate(1),
+        crate::DataKey::Liability(asset.clone()),
     ];
     env.as_contract(contract, || {
         for key in &keys {
@@ -449,8 +447,7 @@ macro_rules! contract_review_case {
         #[test]
         fn $native() {
             let env = Env::default();
-            let contract = env.register(Agyion, ());
-            $assertion(&env, &contract);
+            $assertion(&env, None);
         }
 
         #[test]
@@ -458,8 +455,7 @@ macro_rules! contract_review_case {
         fn $wasm() {
             const WASM: &[u8] = include_bytes!("../target/wasm32v1-none/release/agyion.wasm");
             let env = Env::default();
-            let contract = env.register(WASM, ());
-            $assertion(&env, &contract);
+            $assertion(&env, Some(WASM));
         }
     };
 }
@@ -489,3 +485,69 @@ contract_review_case!(
     wasm_reads_renew_all_record_types_without_reusing_ids,
     assert_reads_maintain_records_and_counters
 );
+
+// Characterization of the current issuer-trust boundary, not a passing solvency
+// guarantee. A local clawback-enabled SAC is deliberately not Circle testnet USDC.
+#[cfg(feature = "legacy-wasm-tests")]
+fn assert_issuer_clawback_can_leave_later_public_claims_underfunded(env: &Env, contract: &Address) {
+    env.mock_all_auths();
+    let funder = Address::generate(env);
+    let sac = env.register_stellar_asset_contract_v2(funder.clone());
+    sac.issuer().set_flag(soroban_sdk::testutils::IssuerFlags::RevocableFlag);
+    sac.issuer().set_flag(soroban_sdk::testutils::IssuerFlags::ClawbackEnabledFlag);
+    let asset = sac.address();
+    let admin = token::StellarAssetClient::new(env, &asset);
+    let token = token::Client::new(env, &asset);
+    let c = AgyionClient::new(env, contract);
+    admin.mint(&funder, &300);
+    let create = || c.create_pod(
+        &funder, &asset, &100, &0, &pod_pubkey(env),
+        &pod_create_proof(env, contract, &funder, &asset, 100, 0),
+    );
+    let first = create();
+    let second = create();
+    admin.clawback(contract, &50);
+    assert_eq!(token.balance(contract), 150); // Two unpaid 100-unit claims.
+    let third = create(); // Current kernel accepts fresh value into deficient backing.
+    assert_eq!(token.balance(contract), 250); // Three unpaid 100-unit claims.
+    assert_eq!(token.balance(&funder), 0);
+    for id in [first, second] {
+        let recipient = Address::generate(env);
+        c.claim_pod(&id, &recipient, &pod_signature(env, contract, id, &recipient));
+        assert_eq!(token.balance(&recipient), 100);
+        assert_eq!(c.get_pod(&id).state, 1);
+    }
+    let last_recipient = Address::generate(env);
+    let sig = pod_signature(env, contract, third, &last_recipient);
+    assert_eq!(token.balance(contract), 50);
+    assert!(c.try_claim_pod(&third, &last_recipient, &sig).is_err());
+    assert_eq!(c.get_pod(&third).state, 0);
+    assert_eq!(token.balance(contract), 50);
+    assert_eq!(token.balance(&last_recipient), 0);
+    // Re-authorizing is not recapitalization. Only replacing the burned value
+    // enables this later legitimate claim; this is an external issuer action.
+    admin.set_authorized(contract, &false);
+    admin.set_authorized(contract, &true);
+    assert!(c.try_claim_pod(&third, &last_recipient, &sig).is_err());
+    admin.mint(contract, &50);
+    c.claim_pod(&third, &last_recipient, &sig);
+    assert_eq!(token.balance(&last_recipient), 100);
+    assert_eq!(token.balance(contract), 0);
+    assert_eq!(c.get_pod(&third).state, 1);
+    assert!(c.try_claim_pod(&third, &last_recipient, &sig).is_err());
+}
+
+/// Explicit legacy proof, never a prevention test of the fresh V4 runtime.
+#[test]
+#[cfg(feature = "legacy-wasm-tests")]
+fn legacy_active_wasm_issuer_clawback_characterization() {
+    let path = std::env::var_os("AGYION_ISSUER_REVIEW_WASM")
+        .expect("legacy characterization requires exact active V3 WASM path");
+    let bytes = std::fs::read(path).expect("explicit public WASM unavailable");
+    let expected = "1e6643028d6b397b3a762d4b5312eaf20f2744407686c78122d27c5a4dd8d378";
+    assert_eq!(std::format!("{:x}", Sha256::digest(&bytes)), expected);
+    let env = Env::default();
+    let contract = env.register(bytes.as_slice(), ());
+    assert_eq!(AgyionClient::new(&env, &contract).protocol_version(), 3);
+    assert_issuer_clawback_can_leave_later_public_claims_underfunded(&env, &contract);
+}

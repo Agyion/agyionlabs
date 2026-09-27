@@ -20,6 +20,7 @@
 import type { TransactionSigner } from "./agyionClient";
 import { activeSigner, assertSignedTransactionMatches, registerSigner, unregisterSigner, walletSessionVersion } from "./wallet";
 import { CONFIG } from "./config";
+import { walletSigningError } from "./wallet-errors";
 import { Networks, StrKey } from "@stellar/stellar-sdk";
 import type { ModuleInterface } from "@agyion/stellar-wallets-kit/types";
 
@@ -93,10 +94,14 @@ class KitSigner implements TransactionSigner {
   async signTransaction(txXdr: string, networkPassphrase: string): Promise<string> {
     if (networkPassphrase !== CONFIG.networkPassphrase || networkPassphrase !== Networks.TESTNET) throw new Error("Wallet signing is available on Stellar testnet only.");
     await this.assertSession();
-    const { signedTxXdr, signerAddress } = await this.walletModule.signTransaction(txXdr, {
-      networkPassphrase,
-      address: this.connectedAddress,
-    });
+    let response: Awaited<ReturnType<ModuleInterface["signTransaction"]>>;
+    try {
+      response = await this.walletModule.signTransaction(txXdr, {
+        networkPassphrase,
+        address: this.connectedAddress,
+      });
+    } catch (error) { throw walletSigningError(error, this.walletModule.productId); }
+    const { signedTxXdr, signerAddress } = response;
     await this.assertSession();
     if (signerAddress && signerAddress !== this.connectedAddress) throw new Error("Wallet returned a signature for a different account.");
     assertSignedTransactionMatches(txXdr, signedTxXdr, networkPassphrase, this.connectedAddress);

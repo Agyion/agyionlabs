@@ -93,9 +93,18 @@ fn public(e: &Env, k: &SigningKey) -> BytesN<32> {
     BytesN::from_array(e, &k.verifying_key().to_bytes())
 }
 fn setup(wasm: bool) -> Setup {
-    let e = Env::new_with_config(soroban_sdk::testutils::EnvTestConfig {
+    setup_with_issuer(wasm, false)
+}
+fn setup_with_issuer(wasm: bool, clawback: bool) -> Setup {
+    setup_with_issuer_and_account(wasm, clawback, false)
+}
+fn setup_with_issuer_and_account(wasm: bool, clawback: bool, classic_account: bool) -> Setup {
+    let mut e = Env::new_with_config(soroban_sdk::testutils::EnvTestConfig {
         capture_snapshot_at_drop: false,
     });
+    if classic_account {
+        e = issuer_control::with_classic_account(e);
+    }
     e.mock_all_auths();
     let network = e
         .crypto()
@@ -110,6 +119,9 @@ fn setup(wasm: bool) -> Setup {
     let issuer = Address::generate(&e);
     let sac = e.register_stellar_asset_contract_v2(issuer);
     sac.issuer().set_flag(IssuerFlags::RevocableFlag);
+    if clawback {
+        sac.issuer().set_flag(IssuerFlags::ClawbackEnabledFlag);
+    }
     let asset_xdr = Bytes::from_slice(
         &e,
         &sac.asset()
@@ -148,6 +160,8 @@ fn backends(f: impl Fn(Setup)) {
     #[cfg(feature = "wasm-tests")]
     f(setup(true));
 }
+
+mod issuer_control;
 
 #[test]
 fn seller_auth_registration_and_immutable_funding() {

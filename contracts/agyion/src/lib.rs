@@ -1,7 +1,7 @@
 #![no_std]
-// Keep the published contract ABI; Soroban also generates matching client methods.
+// Monetary entrypoint layouts stay stable. V4 adds constructor, views and errors.
 #![allow(clippy::too_many_arguments)]
-//! Agyion kernel contract (v3).
+//! Agyion kernel contract (v4).
 //!
 //! Single contract, four templates:
 //! - **Fade** (was Son Saat): declining price clock + venue-signed handoff.
@@ -9,13 +9,16 @@
 //! - **Trigger**: event escrow executed by an independent attester's ed25519 signature.
 //! - **Envoy**: on-chain limited mandate: an agent key may claim Fade listings for the owner.
 //!
-//! Protocol v3 replaces unsafe Pod plaintext reveals with recipient-bound signatures.
+//! V4 adds canonical SAC allowlisting and aggregate custody accounting.
+//! V3 recipient-bound Pod credential domains remain deployment scoped.
 //! See SECURITY_PROTOCOL.md for the security changes to the historical specification.
 
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, xdr::ToXdr, Address, Bytes, BytesN, Env,
+    Vec,
 };
 
+mod accounting;
 mod envoy;
 mod fade;
 mod pod;
@@ -139,6 +142,10 @@ pub enum Error {
     MandateExpired = 10, // ledger > valid_until
     Unauthorized = 11,   // mandate revoked, or caller is not the mandate owner
     InvalidInput = 12,   // parameter combination rejected (e.g. positive price via envoy)
+    Accounting = 13,
+    UnsupportedAsset = 14,
+    ArchiveUnavailable = 15,
+    InvalidConfig = 16,
 }
 
 #[contracttype]
@@ -152,6 +159,9 @@ pub enum DataKey {
     PodCount,
     TriggerCount,
     MandateCount,
+    AccountingVersion,
+    Assets,
+    Liability(Address),
 }
 
 /// Prefix every off-chain credential with its purpose, network and deployment.
@@ -167,9 +177,22 @@ pub struct Agyion;
 
 #[contractimpl]
 impl Agyion {
+    /// Fresh V4 only. Immutable canonical SAC allowlist; no upgrade or admin.
+    pub fn __constructor(env: Env, assets: Vec<Address>) -> Result<(), Error> {
+        accounting::initialize(&env, assets)
+    }
+
+    pub fn supported_assets(env: Env) -> Result<Vec<Address>, Error> {
+        accounting::assets(&env)
+    }
+
+    pub fn asset_liability(env: Env, asset: Address) -> Result<i128, Error> {
+        accounting::liability(&env, &asset)
+    }
+
     /// Clients must check this before using this ABI. Requires a fresh deployment.
     pub fn protocol_version() -> u32 {
-        3
+        accounting::VERSION
     }
 
     // ---- Fade ----

@@ -33,11 +33,14 @@ jobs:
           npm --prefix contracts/private-pool/client ci
           npm --prefix market ci
       - name: Application, privacy, client and tool tests
-        run: npm test
+        run: |
+          npm test
+          python3 scripts/test_deploy_testnet.py
       - name: Browser persistence and concurrent submission guards
         run: |
           npx --no-install playwright install chromium
           MARKET_JOURNAL_BROWSER_TEST=1 node --experimental-strip-types --test market/tests/journal-browser.test.ts
+          PRIVATE_JOURNAL_BROWSER_TEST=1 node --import ./contracts/private-pool/client/test-register.mjs --test contracts/private-pool/client/journal.test.ts
       - name: Type and style checks
         run: |
           npm --prefix app run typecheck
@@ -46,9 +49,19 @@ jobs:
           npm --prefix landing run check
       - name: Public proof fixture provenance
         run: node contracts/private-pool/tools/verify-fixture-provenance.mjs
-      - name: Verify public proving assets and build the static testnet site
+      - name: Verify public proving assets
         run: |
           node scripts/fetch-private-prover.mjs --development --base https://agyion.jasurbek-rustamov.workers.dev/
+      - name: Reproduce private proofs and adversarial circuit cases
+        run: |
+          node scripts/prepare-private-integration.mjs --development artifacts/privacy-ci
+          PRIVACY_ARTIFACT_DIR="$PWD/artifacts/privacy-ci" \
+          PRIVACY_CIRCUIT_DIR="$PWD/artifacts/privacy-ci/circuit" \
+          PRIVACY_PROVER_MANIFEST="$PWD/artifacts/privacy-ci/prover-cases.json" \
+          PRIVACY_DISCLOSURE_PROOF_TEST=1 PRIVACY_PROVER_TESTS=1 PRIVACY_CIRCUIT_TESTS=1 \
+          node --test --test-concurrency=1 privacy/test/disclosure-proof.test.mjs privacy/test/prover-integration.test.mjs privacy/test/prover-verification.test.mjs privacy/test/transition-circuit.test.mjs
+      - name: Build the static testnet site
+        run: |
           npm --prefix landing run build
           node --input-type=module <<'NODE'
           import { execFileSync } from 'node:child_process';

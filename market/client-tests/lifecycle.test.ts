@@ -1,4 +1,5 @@
 import {afterEach,expect,it,vi} from 'vitest';
+import {WalletSignatureRejectedError} from '../../app/app/lib/wallet-errors.ts';
 import {Account,Networks,SorobanDataBuilder,Transaction,TransactionBuilder,hash,rpc,xdr} from '@stellar/stellar-sdk';
 import {chainFixture} from '../tests/chain-fixture.ts';
 import type {MarketAttempt,MarketJournal,MarketJournalEntry,MarketTerminal} from '../client/journal.ts';
@@ -40,4 +41,14 @@ it('fee budget can change only by a fresh explicit handle before signing; dispos
 it('a second intent cannot sign around an unresolved source attempt, and storage failure prevents broadcasting',async()=>{
  const h=await harness(),a=await h.client.prepare(h.command),b=await h.client.prepare(h.command);await h.client.submit(a);await expect(h.client.submit(b)).rejects.toThrow('UNRESOLVED_MARKET_TRANSACTION');expect(h.signs).toBe(1);expect(h.sends).toBe(1);
  const n=await harness(),d=await n.client.prepare(n.command);n.journal.commit=async()=>{throw Error('synthetic storage failure');};await expect(n.client.submit(d)).rejects.toThrow('synthetic storage failure');expect(n.signs).toBe(1);expect(n.sends).toBe(0);
+});
+
+it('a declined signing request cannot send, while the same error after send remains a pending hash',async()=>{
+ const h=await harness(),draft=await h.client.prepare(h.command);h.hooks.sign=()=>{throw new WalletSignatureRejectedError();};
+ await expect(h.client.submit(draft)).rejects.toBeInstanceOf(WalletSignatureRejectedError);
+ expect(h.signs).toBe(1);expect(h.sends).toBe(0);expect(h.rows.size).toBe(0);
+ const n=await harness(),d=await n.client.prepare(n.command);n.hooks.send=()=>{throw new WalletSignatureRejectedError();};
+ const result=await n.client.submit(d);expect(result.status).toBe('pending');expect(n.rows.get(result.hash)?.terminal).toBeNull();
+ expect((await n.client.submit(d)).hash).toBe(result.hash);expect((await n.client.reconcile(result.hash)).status).toBe('pending');
+ expect(n.signs).toBe(1);expect(n.sends).toBe(1);
 });

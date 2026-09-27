@@ -3,9 +3,9 @@
 //! deadline a rule-based refund returns the funds to the funder. No
 //! discretion on either path.
 
-use soroban_sdk::{token, xdr::ToXdr, Address, Bytes, BytesN, Env};
+use soroban_sdk::{xdr::ToXdr, Address, Bytes, BytesN, Env};
 
-use crate::{DataKey, Error, Trigger, TTL_EXTEND, TTL_THRESHOLD};
+use crate::{accounting, DataKey, Error, Trigger, TTL_EXTEND, TTL_THRESHOLD};
 
 pub(crate) fn next_id(env: &Env) -> u64 {
     let key = DataKey::TriggerCount;
@@ -30,6 +30,7 @@ pub(crate) fn read(env: &Env, trigger_id: u64) -> Result<Trigger, Error> {
     env.storage()
         .instance()
         .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    accounting::liability(env, &trigger.asset)?;
     Ok(trigger)
 }
 
@@ -63,7 +64,7 @@ pub fn create_trigger(
     // A token self-transfer leaves the reserve in this contract while attest
     // marks the escrow executed. There is no beneficiary withdrawal entrypoint,
     // so reject this destination before the funder deposits anything.
-    if beneficiary == env.current_contract_address() {
+    if beneficiary == env.current_contract_address() || beneficiary == asset {
         return Err(Error::InvalidInput);
     }
     // A deadline in the past (or the current ledger) would birth a
@@ -80,7 +81,7 @@ pub fn create_trigger(
 
     // Non-custodial: funds are deposited into the contract; only the
     // attest/refund rules can move them.
-    token::Client::new(env, &asset).transfer(&funder, env.current_contract_address(), &amount);
+    accounting::deposit(env, &asset, &funder, amount)?;
 
     let trigger = Trigger {
         funder,
@@ -132,11 +133,16 @@ pub fn attest(env: &Env, trigger_id: u64, ts: u64, sig: BytesN<64>) -> Result<()
     env.crypto()
         .ed25519_verify(&trigger.attester_pubkey, &payload, &sig);
 
-    token::Client::new(env, &trigger.asset).transfer(
+    accounting::destination(env, &trigger.asset, &trigger.beneficiary)?;
+    accounting::release(env, &trigger.asset, trigger.amount)?;
+    accounting::transfer(
+        env,
+        &trigger.asset,
         &env.current_contract_address(),
         &trigger.beneficiary,
-        &trigger.amount,
-    );
+        trigger.amount,
+    )?;
+    accounting::solvent(env, &trigger.asset)?;
 
     trigger.state = 1;
     write(env, trigger_id, &trigger);
@@ -156,11 +162,16 @@ pub fn refund_trigger(env: &Env, trigger_id: u64) -> Result<(), Error> {
         return Err(Error::DeadlinePassed);
     }
 
-    token::Client::new(env, &trigger.asset).transfer(
+    accounting::destination(env, &trigger.asset, &trigger.funder)?;
+    accounting::release(env, &trigger.asset, trigger.amount)?;
+    accounting::transfer(
+        env,
+        &trigger.asset,
         &env.current_contract_address(),
         &trigger.funder,
-        &trigger.amount,
-    );
+        trigger.amount,
+    )?;
+    accounting::solvent(env, &trigger.asset)?;
 
     trigger.state = 2;
     write(env, trigger_id, &trigger);

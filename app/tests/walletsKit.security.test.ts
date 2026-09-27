@@ -3,14 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const kit = vi.hoisted(() => ({ init: vi.fn(), selectedModule: null as unknown, refreshSupportedWallets: vi.fn(), authModal: vi.fn(), getAddress: vi.fn(), fetchAddress: vi.fn(), getNetwork: vi.fn(), signTransaction: vi.fn(), disconnect: vi.fn(), on: vi.fn(() => () => {}), setWallet: vi.fn() }));
 vi.mock('@agyion/stellar-wallets-kit/sdk', () => ({ StellarWalletsKit: kit }));
-vi.mock('@agyion/stellar-wallets-kit/types', () => ({ Networks: { TESTNET: 'Test SDF Network ; September 2015' }, KitEventType: { STATE_UPDATED: 'STATE_UPDATE', WALLET_SELECTED: 'WALLET_SELECTED', DISCONNECT: 'DISCONNECT' } }));
-vi.mock('@agyion/stellar-wallets-kit/modules/freighter', () => ({ FreighterModule: class {} }));
+const freighter = vi.hoisted(() => ({ isConnected: vi.fn(), getAddress: vi.fn(), getNetwork: vi.fn(), signTransaction: vi.fn() }));
+vi.mock('@stellar/freighter-api', () => freighter);
 vi.mock('@agyion/stellar-wallets-kit/modules/xbull', () => ({ xBullModule: class {} }));
 vi.mock('@agyion/stellar-wallets-kit/modules/lobstr', () => ({ LobstrModule: class {} }));
 vi.mock('@agyion/stellar-wallets-kit/modules/wallet-connect', () => ({ WalletConnectModule: class {}, WalletConnectTargetChain: { TESTNET: 'testnet' } }));
 
 import { connectWithKit, disconnectKit } from '../app/lib/walletsKit';
 import { activeSigner, defaultSigner, unregisterSigner } from '../app/lib/wallet';
+import { bindPrivateWallet } from '../app/lib/private/wallet-session';
 
 const key = Keypair.random();
 const recipient = Keypair.random();
@@ -31,7 +32,7 @@ beforeEach(() => {
   kit.disconnect.mockResolvedValue(undefined);
   kit.signTransaction.mockImplementation(async (xdr: string, opts: { networkPassphrase: string }) => { const tx = new Transaction(xdr, opts.networkPassphrase); tx.sign(key); return { signedTxXdr: tx.toXDR(), signerAddress: key.publicKey() }; });
 });
-afterEach(() => { unregisterSigner(); });
+afterEach(() => { unregisterSigner(); vi.unstubAllGlobals(); });
 
 describe('wallet network and identity', () => {
   it('connects and accepts an unchanged testnet transaction signed by the connected account', async () => {
@@ -85,4 +86,70 @@ describe('wallet network and identity', () => {
     await expect(connecting).rejects.toThrow(/cancel|session|disconnect|changed/i);
     expect(defaultSigner()).toBeNull();
   });
+});
+
+
+describe('Freighter signing rejection boundary', () => {
+  async function vendorSigner() {
+    vi.stubGlobal('window', {});
+    const { FreighterModule } = await import('@agyion/stellar-wallets-kit/modules/freighter');
+    freighter.isConnected.mockResolvedValue({ isConnected: true });
+    freighter.getAddress.mockResolvedValue({ address: key.publicKey() });
+    freighter.getNetwork.mockResolvedValue({ network: 'TESTNET', networkPassphrase: Networks.TESTNET });
+    kit.selectedModule = new FreighterModule();
+    await connectWithKit();
+    return defaultSigner()!;
+  }
+  it('normalizes the official Freighter cancellation object through the real vendor adapter', async () => {
+    const signer = await vendorSigner();
+    // Freighter 5.48.0 FreighterApiDeclinedError via API 6.0.0 signTransaction.
+    freighter.signTransaction.mockResolvedValue({ signedTxXdr: '', signerAddress: '', error: { code: -4, message: 'The user rejected this request.' } });
+    const bound = await bindPrivateWallet(() => {});
+    const error = await bound.wallet.signTransaction(payment(), Networks.TESTNET, key.publicKey()).catch(e => e);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe('WalletSignatureRejectedError');
+    expect(error.message).toMatch(/declined.*wallet/i);
+    expect(freighter.signTransaction).toHaveBeenCalledTimes(1);
+    expect(activeSigner()).toBe(signer);
+    expect(bound.wallet.session().account).toBe(key.publicKey());
+  });
+  it('does not trust unknown, malformed, inherited or hostile rejection data', async () => {
+    const read = vi.fn(() => { throw new Error('private-error-fragment'); });
+    const revoked = Proxy.revocable({}, {}); revoked.revoke();
+    const variants = [
+      null, undefined, 'The user rejected this request.',
+      { code: -1, message: 'The user rejected this request.' },
+      { code: '-4', message: 'The user rejected this request.' },
+      { code: -4 }, { code: -4, message: '<img src=x> private-error-fragment' },
+      Object.assign(new Error('private-error-fragment'), { code: -4 }),
+      Object.create({ code: -4, message: 'The user rejected this request.' }),
+      Object.defineProperty({ message: 'The user rejected this request.' }, 'code', { get: read }),
+      Object.defineProperty({ code: -4 }, 'message', { get: read }),
+      Object.assign([], { code: -4, message: 'The user rejected this request.' }),
+      { toString: read }, revoked.proxy,
+    ];
+    await connectWithKit();
+    for (const value of variants) {
+      kit.signTransaction.mockRejectedValueOnce(value);
+      const error = await defaultSigner()!.signTransaction(payment(), Networks.TESTNET).catch(e => e);
+      expect(error).toBeInstanceOf(Error);
+      expect(error.name).toBe('WalletSigningError');
+      expect(error.message).not.toMatch(/private-error-fragment|img|declined|not submitted/i);
+      expect(Object.hasOwn(error, 'cause')).toBe(false);
+    }
+    expect(read).not.toHaveBeenCalled();
+  });
+});
+
+it('does not normalize a network change discovered after a successful signature as wallet rejection', async () => {
+  await connectWithKit();
+  kit.signTransaction.mockImplementationOnce(async (xdr: string) => {
+    const tx = new Transaction(xdr, Networks.TESTNET); tx.sign(key);
+    kit.getNetwork.mockResolvedValue({ networkPassphrase: Networks.PUBLIC });
+    return { signedTxXdr: tx.toXDR(), signerAddress: key.publicKey() };
+  });
+  const error = await defaultSigner()!.signTransaction(payment(), Networks.TESTNET).catch(e => e);
+  expect(error.message).toMatch(/not on Stellar testnet/i);
+  expect(error.name).not.toMatch(/WalletSignatureRejectedError|WalletSigningError/);
+  expect(activeSigner()).toBeNull();
 });

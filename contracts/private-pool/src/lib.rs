@@ -1,14 +1,15 @@
 #![no_std]
 //! Experimental testnet-only private pool. Real, immutable Groth16 keys are
 //! mandatory; missing artifacts fail closed. No public Agyion funds are migrated.
+mod backing;
 mod hash;
 mod pins;
 mod tree_zeros;
 mod verifier;
 use hash::{canonical, is_zero, u64_field, zero, Poseidon};
 use soroban_sdk::{
-    contract, contracterror, contractevent, contractimpl, contracttype, token, Address, Bytes,
-    BytesN, Env, Vec,
+    contract, contracterror, contractevent, contractimpl, contracttype, Address, Bytes, BytesN,
+    Env, Vec,
 };
 pub use verifier::VerifyingKey;
 const PUBLIC_INPUTS: u32 = 157;
@@ -37,6 +38,10 @@ pub enum Error {
     DuplicateCommitment = 17,
     ArchiveUnavailable = 18,
     ArchiveFull = 19,
+    LiabilityUnavailable = 20,
+    InsufficientBacking = 21,
+    InvalidAccounting = 22,
+    UnexpectedBalance = 23,
 }
 #[contracttype]
 #[derive(Clone, Debug)]
@@ -110,6 +115,7 @@ enum Key {
     Record(BytesN<32>),
     RecordIndex(u64),
     RevocationIndex(u64),
+    Liability(Address),
 }
 #[contractevent]
 #[derive(Clone)]
@@ -220,10 +226,14 @@ fn state_checks(e: &Env, s: &PoolState, t: &Transition) -> Result<u64, Error> {
     // A SAC self-transfer leaves the reserve unchanged. Consuming private
     // notes for such a withdrawal/fee would strand that value in the pool.
     let pool = e.current_contract_address();
-    if t.bridge_account.as_ref() == Some(&pool) {
+    if t.bridge_account.as_ref() == Some(&pool)
+        || (t.bridge_account.is_some() && t.bridge_account == t.asset)
+    {
         return Err(Error::InvalidBridge);
     }
-    if t.fee_account.as_ref() == Some(&pool) {
+    if t.fee_account.as_ref() == Some(&pool)
+        || (t.fee_account.is_some() && t.fee_account == t.asset)
+    {
         return Err(Error::InvalidFee);
     }
     // Nonces are exact unsigned128bit values. Other field checks are delegated
@@ -346,6 +356,7 @@ impl PrivatePool {
             if initial.assets.iter().take(i).any(|b| b == a) {
                 return Err(Error::InvalidConfig);
             }
+            backing::stellar_asset(&a)?;
             ids.push_back(hash.tagged_address(b"AGYION_ASSET_V2\0", &a));
         }
         let root = BytesN::from_array(&e, &tree_zeros::EMPTY_32);
@@ -369,6 +380,9 @@ impl PrivatePool {
         e.storage()
             .instance()
             .set(&Key::RevocationVk, &revocation_vk);
+        for asset in config.config.assets.iter() {
+            persist(&e, &Key::Liability(asset), &0i128);
+        }
         bump(&e);
         Ok(())
     }
@@ -391,8 +405,12 @@ impl PrivatePool {
         if t.bridge_kind == 1 {
             t.bridge_account.as_ref().unwrap().require_auth();
         }
-        // Effects before all token calls; any failure rolls all effects and
+        let mut backing = backing::prepare(&e, t)?;
+        // Effects before token transfers; any failure rolls all effects and
         // earlier transfers back atomically. No admin bypass or upgrade entrypoint.
+        if let Some(value) = &backing {
+            value.persist_liability(&e);
+        }
         for n in t.nullifiers.iter() {
             if !is_zero(&n) {
                 persist(&e, &Key::Nullifier(n), &true);
@@ -424,25 +442,31 @@ impl PrivatePool {
         );
         if t.bridge_kind == 1 {
             let funder = t.bridge_account.as_ref().unwrap();
-            token::Client::new(&e, t.asset.as_ref().unwrap()).transfer(
+            backing.as_mut().unwrap().transfer(
+                &e,
                 funder,
-                e.current_contract_address(),
-                &(t.bridge_amount as i128),
-            );
+                &e.current_contract_address(),
+                t.bridge_amount,
+                true,
+            )?;
         }
         if t.bridge_kind == 2 {
-            token::Client::new(&e, t.asset.as_ref().unwrap()).transfer(
+            backing.as_mut().unwrap().transfer(
+                &e,
                 &e.current_contract_address(),
                 t.bridge_account.as_ref().unwrap(),
-                &(t.bridge_amount as i128),
-            );
+                t.bridge_amount,
+                false,
+            )?;
         }
         if t.fee_amount != 0 {
-            token::Client::new(&e, t.asset.as_ref().unwrap()).transfer(
+            backing.as_mut().unwrap().transfer(
+                &e,
                 &e.current_contract_address(),
                 t.fee_account.as_ref().unwrap(),
-                &(t.fee_amount as i128),
-            );
+                t.fee_amount,
+                false,
+            )?;
         }
         RecordAdded {
             record_id: id.clone(),
@@ -531,6 +555,14 @@ impl PrivatePool {
     }
     pub fn config(e: Env) -> PoolConfig {
         config(&e)
+    }
+    /// Aggregate obligations from already-public bridge and fee amounts.
+    /// Missing/archived accounting must be restored, never inferred as zero.
+    pub fn liability(e: Env, asset: Address) -> Result<i128, Error> {
+        network(&e)?;
+        let amount = backing::liability(&e, &asset)?;
+        bump(&e);
+        Ok(amount)
     }
     pub fn state(e: Env) -> PoolState {
         state(&e)

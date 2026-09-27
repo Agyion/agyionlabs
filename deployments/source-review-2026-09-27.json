@@ -1,23 +1,73 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T06:59:07.561296+00:00",
-  "runtimeReleaseCommit": "a14dc5b628ad72f99c9d92a1abb7135a3965ca47",
+  "reviewedAt": "2026-09-27T07:58:11.619627+00:00",
+  "sourceBaselineCommit": "2952860e62c7ed7e2a8affeaf20bbf13211403a3",
+  "websiteRelease": {
+    "workerVersion": "2ec058c3-bd70-455e-afc2-5acbbd61b5c1",
+    "url": "https://agyionlabs.dev",
+    "verifiedAt": "2026-09-27T07:36:17.487Z",
+    "treeSha256": "3e932f650e09a1c7b446a2a2447ede9252713b0a82713177aa9466acba5d0c97",
+    "files": 99,
+    "bytes": 159496300,
+    "runtimeChangesFromSourceBaseline": [
+      {
+        "path": "app/app/lib/wallet-errors.ts",
+        "sha256": "23be78fe3ef90fe54099cb85cb32f5531e7bfa907b04b4ca9cf7e91ddd4eb876"
+      },
+      {
+        "path": "app/app/lib/walletsKit.ts",
+        "sha256": "ba7a68653872f5f05d7158fe305f8181feceb5c5ac6e76f29ba7586bdf30172a"
+      },
+      {
+        "path": "app/app/components/app/PrivateInstrumentPanel.tsx",
+        "sha256": "8baccc4494ca03035a9637a727f87a3eeb961444546f35758c975a360e37a53b"
+      },
+      {
+        "path": "app/app/components/market/MarketSession.tsx",
+        "sha256": "fd273615ebb72eeea398a8818d4fb5201897280456c934ca4e0af9d53c7d27c2"
+      }
+    ],
+    "contractPinsChanged": false,
+    "readOnlyBrowserChecks": {
+      "http": 34,
+      "ui": 14,
+      "rpcTransport": "direct Chrome networking",
+      "walletRequests": 0,
+      "transactions": 0
+    }
+  },
+  "undeployedContractCandidates": [
+    {
+      "name": "public-kernel-v4",
+      "wasmSha256": "d101e0fea1852cf057049cc08695b9e26a8b3c6a82db58d4c2706db03a22b186",
+      "bytes": 26696,
+      "artifact": "unoptimized Stellar CLI 28.0.0 build",
+      "namedNativeAndWasmTests": 75
+    },
+    {
+      "name": "private-pool-with-backing-accounting",
+      "wasmSha256": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018",
+      "bytes": 34248,
+      "artifact": "unoptimized Stellar CLI 28.0.0 build",
+      "namedNativeAndWasmTests": 44
+    }
+  ],
   "scope": "Tracked and nonignored first-party authored source, tests, configuration, styles, API declarations, vector assets and database migrations. Exact current bytes at this checkpoint.",
   "reviewKinds": {
     "complete-source-read": "The exact current hash has explicit complete source-read ranges from this development review. It does not imply a new reread during manifest generation.",
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 522,
-    "lines": 65534,
+    "files": 530,
+    "lines": 67795,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 427,
-        "lines": 45595
+        "files": 437,
+        "lines": 46190
       },
       "verified-baseline-plus-reviewed-diff": {
-        "files": 95,
-        "lines": 19939
+        "files": 93,
+        "lines": 21605
       }
     },
     "unresolvedFiles": 0,
@@ -32,14 +82,14 @@
   "limitations": [
     "Development source review is not an independent security audit, execution coverage, proof of cryptographic soundness or a guarantee that every exploit is absent.",
     "Passing tests do not establish source-read coverage. Testnet and browser evidence has separate scope and limitations.",
-    "These file hashes are a dated source checkpoint, not a claim that every listed file is part of the deployed website bundle. The listed operator, tooling, metadata and comment changes follow the website runtime release commit.",
+    "These hashes are a dated source checkpoint. The website release is identified by its worker version and verified published bytes. The contract candidates are local artifacts, not replacements at active immutable addresses. No sourceBaselineCommit claim includes the listed subsequent runtime changes.",
     "Any subsequent source change requires renewed review evidence and manifest reconciliation."
   ],
   "files": [
     {
       "path": ".github/workflows/checks.yml",
-      "sha256": "618e7e6759f4f2f879461b0820d2f7afb71e033ce838c9c3903c131043bbb0a7",
-      "lines": 110,
+      "sha256": "20e914c52c4028b7a1448cada796b3f42d648b3a06b152894b104cca79effa7e",
+      "lines": 123,
       "reviewKind": "complete-source-read"
     },
     {
@@ -128,8 +178,8 @@
     },
     {
       "path": "app/app/components/app/PrivateInstrumentPanel.tsx",
-      "sha256": "ef482731b59be8adc9ed24fcf68d7541e45fb3269106acd8d484e3c7f4fb547c",
-      "lines": 288,
+      "sha256": "8baccc4494ca03035a9637a727f87a3eeb961444546f35758c975a360e37a53b",
+      "lines": 289,
       "reviewKind": "complete-source-read"
     },
     {
@@ -296,8 +346,8 @@
     },
     {
       "path": "app/app/components/market/MarketSession.tsx",
-      "sha256": "64fb349ad324fb77e90964113264063db4e7e0ab34eb90ae92eefd8fb0b441b4",
-      "lines": 98,
+      "sha256": "fd273615ebb72eeea398a8818d4fb5201897280456c934ca4e0af9d53c7d27c2",
+      "lines": 100,
       "reviewKind": "complete-source-read"
     },
     {
@@ -499,6 +549,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "app/app/lib/wallet-errors.ts",
+      "sha256": "23be78fe3ef90fe54099cb85cb32f5531e7bfa907b04b4ca9cf7e91ddd4eb876",
+      "lines": 32,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "app/app/lib/wallet.ts",
       "sha256": "f681ca874fb1289c161906028bca763b68f759332f0423c5a648a7f232d46915",
       "lines": 172,
@@ -506,9 +562,9 @@
     },
     {
       "path": "app/app/lib/walletsKit.ts",
-      "sha256": "ea5b5406a271064d61a83b4822939a399eab956f787bb33b9477e623801fd5b4",
-      "lines": 174,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "ba7a68653872f5f05d7158fe305f8181feceb5c5ac6e76f29ba7586bdf30172a",
+      "lines": 179,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/app/market-map.css",
@@ -626,9 +682,9 @@
     },
     {
       "path": "app/tests/client-recovery.test.ts",
-      "sha256": "ac7ce795f4223d74b581ebc644b5a5263c60c67717772dde4304e383595594fa",
-      "lines": 211,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "1e6de182b9d39e38c323c0c36d45cdd35f3c7acb4cc2c5db5945fa5578854918",
+      "lines": 226,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/tests/client-security.test.ts",
@@ -710,8 +766,8 @@
     },
     {
       "path": "app/tests/market-session.test.tsx",
-      "sha256": "ad238380fa4915eaa421d2aae6218e14c865cdae277da19cc8e916e973803ad8",
-      "lines": 49,
+      "sha256": "574af4a8da535053d40edc90e4af4b8d18cfa3ceefce1d4d3f51b9b2214bda4d",
+      "lines": 58,
       "reviewKind": "complete-source-read"
     },
     {
@@ -770,8 +826,8 @@
     },
     {
       "path": "app/tests/private-instruments.test.tsx",
-      "sha256": "7daacafa9c3d00892c74c8f258b993b30b2dcb5c84782b5c339a46e64331363f",
-      "lines": 152,
+      "sha256": "f1ce2daf9adc1de421b114d6eb4974581dac2655b2e39e03d31f1597c9905565",
+      "lines": 164,
       "reviewKind": "complete-source-read"
     },
     {
@@ -908,8 +964,8 @@
     },
     {
       "path": "app/tests/walletsKit.security.test.ts",
-      "sha256": "92bda9ee4d8b0c6d8a0101460a2f59ea2417619ad030371b6c348143250a6fa9",
-      "lines": 88,
+      "sha256": "057ded2f462c327a1f870c4f6d2ddd74c10726bc8cf27f05da6e826ed5a7c681",
+      "lines": 155,
       "reviewKind": "complete-source-read"
     },
     {
@@ -950,8 +1006,20 @@
     },
     {
       "path": "contracts/agyion/Cargo.toml",
-      "sha256": "06221d2a8397b9b8cb50cac1f1d3de5ba187ad1f807597fa9a32afcfc913690e",
-      "lines": 29,
+      "sha256": "e76bc26346c41d3e023a46877d9ee04d1d96ae3057fbca612aab15f1173f68b5",
+      "lines": 30,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/agyion/src/accounting.rs",
+      "sha256": "8db1eafb6390ca7a4256fb8a1e95394b829e833076cfe39aee7ea58826e77e90",
+      "lines": 167,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/agyion/src/accounting_test.rs",
+      "sha256": "865bd8e61abbd7cb519ba844ecbc06bd9e08d23df3b650a9ca07a36f226108df",
+      "lines": 611,
       "reviewKind": "complete-source-read"
     },
     {
@@ -962,38 +1030,38 @@
     },
     {
       "path": "contracts/agyion/src/fade.rs",
-      "sha256": "64ca5c064a182dd2236022d840666f3bcd561311331a30d6d7c9ac6338ad1b53",
-      "lines": 314,
+      "sha256": "c9cbc6754f1696c1c0f4ed841e84a026f40e1a63d94d73289311a558ddfe0940",
+      "lines": 321,
       "reviewKind": "complete-source-read"
     },
     {
       "path": "contracts/agyion/src/lib.rs",
-      "sha256": "f261c11b0b965ebb78a8d14c1b64189f5f19d159731c8bbcb6fa85818208ea29",
-      "lines": 356,
+      "sha256": "554b6f9eb2a522c8fc71699e8ae512f9452975e08a4c533870315af3191782ba",
+      "lines": 379,
       "reviewKind": "complete-source-read"
     },
     {
       "path": "contracts/agyion/src/pod.rs",
-      "sha256": "6cdec41e8643c7bb92011aa655d36355b6373ab0f9d290b050690ae98655c170",
-      "lines": 127,
+      "sha256": "cd61af220223c3ba4bd909f52e8ed9147dbb4dbf240a3e080ef4d94beb43a73c",
+      "lines": 133,
       "reviewKind": "complete-source-read"
     },
     {
       "path": "contracts/agyion/src/review_test.rs",
-      "sha256": "ad351507d70d25feb062cce03c2742215cfd9ea585785bd2874414094d624165",
-      "lines": 491,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "e3a4ac9df1e9b4854f37e933bc96c2b6f2fa1a16ccd0d83f092fea5eb87b9f70",
+      "lines": 553,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "contracts/agyion/src/test.rs",
-      "sha256": "3c94d09211998e4a5aaad1576453bdaaae9cde3bd280a48dfadb722d73a02cce",
-      "lines": 2425,
+      "sha256": "170258a87b14f4d0cd8b3213457de8dc29d8310fb5c92c6c28284e0e50864446",
+      "lines": 2439,
       "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "contracts/agyion/src/trigger.rs",
-      "sha256": "4fc87d77a1eb580eba2f1ec6027b5596c577ba71dcc84e5fc1d0e9c09c080c88",
-      "lines": 168,
+      "sha256": "306c88c22a99ce6b0c44af3df67a729bf10e00befb152e1f90192eaf50e4a9a3",
+      "lines": 179,
       "reviewKind": "complete-source-read"
     },
     {
@@ -1016,8 +1084,14 @@
     },
     {
       "path": "contracts/fade-market/src/test.rs",
-      "sha256": "3ab8b194559c72700cf17cfb8c344816d32aa27ddadb761316d7780572117319",
-      "lines": 1141,
+      "sha256": "d3407c1ba0b6ed142192deab5fef64467fdecb48935216fb04631d7feb045a33",
+      "lines": 1155,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "contracts/fade-market/src/test/issuer_control.rs",
+      "sha256": "4d649e437c135d41a7cd36ccbdd9162f94effc340fa361c8bd6fe0edbdfae14c",
+      "lines": 244,
       "reviewKind": "complete-source-read"
     },
     {
@@ -1034,8 +1108,8 @@
     },
     {
       "path": "contracts/private-pool/Cargo.toml",
-      "sha256": "1968b5912d08c80519bc483c7b7c340e009eb787abd0bf862c9b93b183af74b2",
-      "lines": 24,
+      "sha256": "8155bdfcdfc21cdd9a184d9e67a98b2bf4677fdd222842060c0ebc8bbc907406",
+      "lines": 25,
       "reviewKind": "complete-source-read"
     },
     {
@@ -1141,6 +1215,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "contracts/private-pool/src/backing.rs",
+      "sha256": "9ae370e1f4241cd94c1e29df279874502992f4853c3bc3ecc00bfa7bae20eb27",
+      "lines": 102,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "contracts/private-pool/src/hash.rs",
       "sha256": "a71ca38e9ecbc3ac371e4df2a9e4449982119dd78dd1c2f094bc6604a10510b3",
       "lines": 151,
@@ -1148,8 +1228,8 @@
     },
     {
       "path": "contracts/private-pool/src/lib.rs",
-      "sha256": "b88975ae5ee79767c07321ed5c41d34dc0b0b56243cfb81b3e525bd34389159b",
-      "lines": 571,
+      "sha256": "9e480bf47964eb9ad1611b73af29351bef96e7d2d834cee80723968b332c22d2",
+      "lines": 603,
       "reviewKind": "complete-source-read"
     },
     {
@@ -1160,15 +1240,21 @@
     },
     {
       "path": "contracts/private-pool/src/test.rs",
-      "sha256": "ebf9832102398d6d668353bf54cae0c1057eaa2f7545fd08bb39d7df65fdbbf2",
-      "lines": 888,
+      "sha256": "64ad6d8043e284549887d41844b354b508596ee99a72edd04a11d942e743b841",
+      "lines": 901,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "contracts/private-pool/src/test/backing.rs",
+      "sha256": "55d0e448d02c20155e64b885b39086e5f42af3dd7c1eb5e52a9870e06f34e91a",
+      "lines": 289,
       "reviewKind": "complete-source-read"
     },
     {
       "path": "contracts/private-pool/src/test/integration.rs",
-      "sha256": "f17a65dcf61b873559de2b1ae066dde0e31bbf7accf4b2d31d52cdcaef4e74a7",
-      "lines": 535,
-      "reviewKind": "complete-source-read"
+      "sha256": "022c4f81ebacb93ec492326cec7313748c8a8b7891ac8beeeae385c9a0217a1f",
+      "lines": 795,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "contracts/private-pool/src/tree_zeros.rs",
@@ -1886,8 +1972,8 @@
     },
     {
       "path": "market/client-tests/lifecycle.test.ts",
-      "sha256": "6ed7a264cc6a61f51c6d9113c1a52445fd1e910df2c3329fd1c0f34e0ee99ad5",
-      "lines": 43,
+      "sha256": "1131a2d16e4d8ed05cf0ecd018b08ceb3c925e04da41b2a73608efd6293a69fb",
+      "lines": 54,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2678,9 +2764,9 @@
     },
     {
       "path": "scripts/deploy_testnet.sh",
-      "sha256": "6f42cc233cb645d72daf85a39964ed10ffa97ee01daaff5d6d6edf95ad98fdb5",
-      "lines": 141,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "b79a5ddaf48826f0da8b9755a29db00bef31c46e1eaa437e6e0d5c078dce96a7",
+      "lines": 151,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "scripts/detail-pages-check.mjs",
@@ -2734,6 +2820,12 @@
       "path": "scripts/package-private-prover.mjs",
       "sha256": "6f3e11604fa8605cb48a25423fc46cc378c706be5d5d503f0dc95715d6358cb3",
       "lines": 141,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/prepare-private-integration.mjs",
+      "sha256": "5e83283f9c5bf3e9849892b74830a9b5ef7c12df09f05fedc3c2250f5710dc62",
+      "lines": 108,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2810,9 +2902,9 @@
     },
     {
       "path": "scripts/test_deploy_testnet.py",
-      "sha256": "538af066bbb266a851bc73d2294dc278a1483656fc2159a9016d8f90168c3628",
-      "lines": 182,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "a6e9990ecfdba94f330078665d4a84d8785b859ec422fdfb14ff7c543f2138a1",
+      "lines": 222,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "scripts/tests/app-asset-manifest.test.mjs",
@@ -2836,6 +2928,12 @@
       "path": "scripts/tests/package-private-prover.test.mjs",
       "sha256": "94ab930494f1784561950201cc0470c74067164e9f3d575c62c0f7e5d374c481",
       "lines": 95,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/prepare-private-integration.test.mjs",
+      "sha256": "84cc13256f82a5c0273b18ba79227d68994b9f1e9b992d24255aabd7c8932274",
+      "lines": 79,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3168,22 +3266,5 @@
       "lines": 285,
       "reviewKind": "verified-baseline-plus-reviewed-diff"
     }
-  ],
-  "postRuntimeReleaseChanges": [
-    ".github/workflows/checks.yml",
-    "app/.eslintignore",
-    "app/tailwind.config.ts",
-    "deployments/market-testnet.json",
-    "privacy/src/authorization.mjs",
-    "privacy/test/authorization.test.mjs",
-    "scripts/fetch-private-prover.mjs",
-    "scripts/lib/private-json.mjs",
-    "scripts/tests/fetch-private-prover.test.mjs",
-    "scripts/tests/private-json.test.mjs",
-    "scripts/tests/verify-testnet-market-usdc.test.mjs",
-    "scripts/verify-production-release.mjs",
-    "scripts/verify-testnet-market-catalog.mjs",
-    "scripts/verify-testnet-market-usdc.mjs",
-    "scripts/verify-testnet-market.mjs"
   ]
 }

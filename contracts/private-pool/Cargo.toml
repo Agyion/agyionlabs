@@ -15,6 +15,7 @@ ed25519-dalek = "2"
 [features]
 proof-tests = []
 wasm-tests = ["proof-tests"]
+legacy-characterization = ["wasm-tests"]
 [profile.release]
 opt-level = "z"
 overflow-checks = true

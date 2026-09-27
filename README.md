@@ -90,6 +90,13 @@ The compiled browser application generated and verified a fresh Groth16 proof, s
 
 The contracts and cryptographic code have automated tests for authorization, arithmetic, replay, conservation, invalid proofs and interrupted transactions. Dependency advisory scans and a source review are part of the development process. These results establish tested behavior. They are not an independent audit or proof that every possible exploit is absent.
 
+The latest contract source adds aggregate backing guards for new public and
+private deployments. Those candidates have not replaced the immutable contracts
+used by the application. Existing records and private notes retain their original
+deployment and recovery scope. The [issuer control review](docs/TOKEN_ISSUER_RISKS.md)
+records the reproduced limitation, tested candidate behavior and remaining
+deployment compatibility work.
+
 [Review scope and verification limits](docs/VERIFICATION.md) · [Security boundaries and reporting](SECURITY.md) · [Payment contracts](contracts/) · [Private protocol](privacy/PROTOCOL_V2.md)
 
 ## Build and run

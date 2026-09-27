@@ -4,6 +4,8 @@ import { rpc } from '@stellar/stellar-sdk';
 import { SorobanAgyionClient } from '../app/lib/agyionClient';
 import { listTransactionAttempts, reconcileTransactionAttempts, unresolvedTransaction } from '../app/lib/transactionReceipts';
 import { unregisterSigner } from '../app/lib/wallet';
+import { WalletSignatureRejectedError } from '../app/lib/wallet-errors';
+import { humanizeError } from '../app/lib/errors';
 import { installRecoveryLocks, recoveryTransactionFixture } from './recovery-fixture';
 afterEach(()=>vi.unstubAllGlobals());
 const account="G"+"A".repeat(55);const contractId='CAVVTPBBNOCMDBC26CVOXKSU7B7MDK33TXQXTVUVKSJHSVKGLZTVJ5N5';
@@ -208,4 +210,17 @@ it('releases a definitively failed creation and leaves ordinary void successes v
  const claim=create(async()=>({sendTransactionResponse:{hash},getTransactionResponse:{txHash:hash,envelopeXdr,status:'SUCCESS',ledger:12},result:{unwrap:()=>undefined}}));
  await expect(claim.client.claim(7n,account)).resolves.toBeUndefined();
  expect(listTransactionAttempts(scope)[0]).toMatchObject({action:'claim',status:'success',refId:'7'});
+});
+
+it('keeps a signing decline separate from a cancellation-shaped error after broadcast',async()=>{
+ const declined=new WalletSignatureRejectedError();
+ const before=create(async()=>{throw declined;});delete (before.tx as any).signed;
+ await expect(before.client.claim(7n,account)).rejects.toBe(declined);
+ expect(humanizeError(declined)).toMatch(/declined.*wallet/i);expect(listTransactionAttempts()).toEqual([]);
+ const transport=vi.spyOn(rpc.Server.prototype,'sendTransaction').mockRejectedValue(declined);
+ let after:ReturnType<typeof create>;after=create(async()=>{await (after.client as any).server.sendTransaction(after.tx.signed);});
+ const error=await after.client.claim(7n,account).catch(error=>error);
+ expect(humanizeError(error)).toContain(hash);expect(humanizeError(error)).not.toMatch(/not submitted|nothing was sent|declined.*wallet/i);
+ expect(listTransactionAttempts(scope)).toMatchObject([{hash,status:'unknown'}]);
+ await expect(after.client.claim(7n,account)).rejects.toThrow(/unresolved/);expect(transport).toHaveBeenCalledOnce();
 });

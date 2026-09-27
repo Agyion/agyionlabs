@@ -106,7 +106,17 @@ fn transition(e: &Env, fixture: &Value, asset: &Address) -> Transition {
     }
 }
 fn initialized(wasm: bool) -> (Env, Address, Address, Value) {
-    let (e, asset) = funded_fixture_env();
+    initialized_with_clawback(wasm, false)
+}
+fn initialized_with_clawback(wasm: bool, clawback: bool) -> (Env, Address, Address, Value) {
+    initialized_with_bytecode(wasm, clawback, None)
+}
+fn initialized_with_bytecode(
+    wasm: bool,
+    clawback: bool,
+    legacy: Option<StdVec<u8>>,
+) -> (Env, Address, Address, Value) {
+    let (e, asset) = funded_fixture_env_with_clawback(clawback);
     e.cost_estimate().budget().reset_unlimited();
     let host: Value =
         serde_json::from_str(include_str!("../../fixtures/host-config.json")).unwrap();
@@ -137,10 +147,12 @@ fn initialized(wasm: bool) -> (Env, Address, Address, Value) {
         ),
     };
     if wasm {
-        let path = std::env::var_os("PRIVATE_POOL_WASM")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| results().join("private_pool.wasm"));
-        let bytes = std::fs::read(path).expect("compiled pinned private-pool WASM required");
+        let bytes = legacy.unwrap_or_else(|| {
+            let path = std::env::var_os("PRIVATE_POOL_WASM")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| results().join("private_pool.wasm"));
+            std::fs::read(path).expect("compiled pinned private-pool WASM required")
+        });
         e.register_at(&pool, bytes.as_slice(), (config, vk, revocation_vk));
     } else {
         e.register_at(&pool, PrivatePool, (config, vk, revocation_vk));
@@ -196,6 +208,29 @@ fn measured_cost(e: &Env, step: &Value) -> Value {
         "boundary":"Host invocation estimate; excludes complete transaction envelope and some ledger-apply/XDR overhead."})
 }
 fn run_chain(wasm: bool) {
+    run_chain_with_budget(wasm, false);
+}
+fn reset_chain_call(e: &Env, bounded: bool) {
+    if bounded {
+        e.cost_estimate()
+            .budget()
+            .reset_limits(100_000_000, 40 * 1024 * 1024);
+    } else {
+        reset(e);
+    }
+}
+fn capture_chain_cost(e: &Env, step: &Value, bounded: bool) -> Value {
+    let mut value = measured_cost(e, step);
+    if bounded {
+        value["enforcedHostCpuLimit"] = json!(100_000_000u64);
+        value["enforcedHostMemoryLimit"] = json!(40 * 1024 * 1024u64);
+        // Read-only assertions below are separate invocations, outside the
+        // measured transition budget. The constructor is outside this budget.
+        reset(e);
+    }
+    value
+}
+fn run_chain_with_budget(wasm: bool, bounded: bool) {
     let (e, asset, pool, host) = initialized(wasm);
     let c = PrivatePoolClient::new(&e, &pool);
     let funder = address(&e, &host["funder"]);
@@ -207,6 +242,8 @@ fn run_chain(wasm: bool) {
     let mut costs = StdVec::new();
     let mut record_index = 0;
     let mut revocation_index = 0;
+    let mut liability = 0i128;
+    assert_eq!(c.liability(&asset), 0);
     for step in chain["steps"].as_array().unwrap() {
         let fixture = read(&format!("proofs/{}", step["file"].as_str().unwrap()));
         let f = inputs(&e, &fixture);
@@ -244,7 +281,7 @@ fn run_chain(wasm: bool) {
             );
             reset(&e);
             assert_eq!(state_tuple(c.state()), before);
-            reset(&e);
+            reset_chain_call(&e, bounded);
             c.revoke(
                 &f.get(3).unwrap(),
                 &f.get(1).unwrap(),
@@ -253,7 +290,7 @@ fn run_chain(wasm: bool) {
                 &signature,
                 &p,
             );
-            let cost = measured_cost(&e, step);
+            let cost = capture_chain_cost(&e, step, bounded);
             let saved = c.revocation_at(&revocation_index).unwrap();
             assert_eq!(saved.tag, f.get(3).unwrap());
             assert_eq!(saved.old_root, f.get(1).unwrap());
@@ -265,9 +302,17 @@ fn run_chain(wasm: bool) {
             let t = transition(&e, &fixture, &asset);
             // This is the actual deposit authorization requirement; mock auth
             // provides local test account authority, never a bypassed verifier.
-            reset(&e);
+            reset_chain_call(&e, bounded);
             let id = c.submit(&t, &p);
-            let cost = measured_cost(&e, step);
+            let cost = capture_chain_cost(&e, step, bounded);
+            if t.bridge_kind == 1 {
+                liability += i128::from(t.bridge_amount);
+            }
+            if t.bridge_kind == 2 {
+                liability -= i128::from(t.bridge_amount);
+            }
+            liability -= i128::from(t.fee_amount);
+            assert_eq!(c.liability(&asset), liability);
             assert_eq!(
                 id,
                 BytesN::from_array(&e, &hex32(fixture["ciphertextDigest"].as_str().unwrap()))
@@ -314,7 +359,13 @@ fn run_chain(wasm: bool) {
     assert_eq!(c.state().revocation_count, 1);
     assert_eq!(c.record_id_at(&16), None);
     assert!(c.revocation_at(&1).is_none());
-    let mode = if wasm { "wasm" } else { "native" };
+    let mode = if bounded {
+        "wasm-bounded"
+    } else if wasm {
+        "wasm"
+    } else {
+        "native"
+    };
     std::println!(
         "POOL_CHAIN_{mode} {}",
         serde_json::to_string(&costs).unwrap()
@@ -339,6 +390,11 @@ fn real_native_chain_moves_sac_tokens_and_checks_all_public_records() {
 #[cfg(feature = "wasm-tests")]
 fn real_wasm_chain_moves_sac_tokens_and_measures_full_execution() {
     run_chain(true);
+}
+#[test]
+#[cfg(feature = "wasm-tests")]
+fn real_wasm_chain_enforces_100m_cpu_and_40mib_memory_per_transition() {
+    run_chain_with_budget(true, true);
 }
 
 #[test]
@@ -475,8 +531,14 @@ fn self_destination_rejection(wasm: bool) {
         reset(&e);
         // Empty proof makes the ordering explicit: these destinations reject
         // before the verifier; this is not a forged accepted proof.
-        assert_eq!(c.try_submit(&changed, &Bytes::new(&e)),
-            Err(Ok(if bridge { Error::InvalidBridge } else { Error::InvalidFee })));
+        assert_eq!(
+            c.try_submit(&changed, &Bytes::new(&e)),
+            Err(Ok(if bridge {
+                Error::InvalidBridge
+            } else {
+                Error::InvalidFee
+            }))
+        );
         reset(&e);
         assert_eq!(state_tuple(c.state()), before);
         assert_eq!(balance(&e, &asset, &pool), 1000);
@@ -515,11 +577,13 @@ fn fee_failure_rollback(wasm: bool) {
     let id = hash::ciphertext_digest(&e, &t.ciphertext);
     let before = state_tuple(c.state());
     token.set_authorized(&fee, &false);
+    assert_eq!(c.liability(&asset), 1000);
     reset(&e);
     assert!(c.try_submit(&t, &p).is_err());
     reset(&e);
     assert_eq!(state_tuple(c.state()), before);
     assert_eq!(balance(&e, &asset, &pool), 1000);
+    assert_eq!(c.liability(&asset), 1000);
     assert_eq!(balance(&e, &asset, &recipient), 0);
     assert_eq!(balance(&e, &asset, &fee), 0);
     assert!(c.record(&id).is_none());
@@ -527,9 +591,205 @@ fn fee_failure_rollback(wasm: bool) {
     assert!(!c.spent(&t.nullifiers.get(0).unwrap()));
     token.set_authorized(&fee, &true);
     assert_eq!(submit_fixture(&e, &pool, &asset, &fixture), id);
+    assert_eq!(c.liability(&asset), 600);
     assert_eq!(c.record_id_at(&3), Some(id));
     assert_eq!(c.state().record_count, 4);
     assert_eq!(balance(&e, &asset, &pool), 600);
     assert_eq!(balance(&e, &asset, &recipient), 395);
     assert_eq!(balance(&e, &asset, &fee), 5);
+}
+
+#[test]
+#[cfg(feature = "legacy-characterization")]
+fn exact_legacy_wasm_issuer_clawback_allows_early_but_blocks_later_withdrawal() {
+    let path = std::env::var_os("PRIVATE_POOL_LEGACY_WASM")
+        .expect("Exact active legacy WASM input required");
+    let bytes = std::fs::read(path).expect("Legacy WASM read failed");
+    let e = Env::default();
+    assert_eq!(
+        e.crypto()
+            .sha256(&Bytes::from_slice(&e, &bytes))
+            .to_bytes()
+            .to_array(),
+        hex32("103f46d4eb97b021f2618e307970ce49993417901789e03760a4af512b7fee6e")
+    );
+    issuer_clawback_characterization(bytes);
+}
+// This deliberately records the current shared-backing limitation. No fixture
+// proof is altered, verifier substituted, or real issuer contacted or controlled.
+#[cfg(feature = "legacy-characterization")]
+fn issuer_clawback_characterization(bytes: StdVec<u8>) {
+    let (e, asset, pool, host) = initialized_with_bytecode(true, true, Some(bytes));
+    let c = PrivatePoolClient::new(&e, &pool);
+    let admin = soroban_sdk::token::StellarAssetClient::new(&e, &asset);
+    let funder = address(&e, &host["funder"]);
+    let recipient = address(&e, &host["recipient"]);
+    let fee = address(&e, &host["fee"]);
+    admin.mint(&funder, &1000);
+    submit_fixture(&e, &pool, &asset, &read("proofs/01-deposit.json"));
+    admin.clawback(&pool, &500);
+    assert_eq!(balance(&e, &asset, &pool), 500); // 1000 private units still exist.
+    for name in ["02-create-pod", "03-claim-pod", "04-withdraw-pod"] {
+        submit_fixture(&e, &pool, &asset, &read(&format!("proofs/{name}.json")));
+    }
+    assert_eq!(balance(&e, &asset, &pool), 100); // 600 private units remain.
+    assert_eq!(balance(&e, &asset, &recipient), 395);
+    assert_eq!(balance(&e, &asset, &fee), 5);
+    for name in ["05-create-trigger", "06-attest-trigger"] {
+        submit_fixture(&e, &pool, &asset, &read(&format!("proofs/{name}.json")));
+    }
+    let fixture = read("proofs/07-withdraw-trigger.json");
+    let t = transition(&e, &fixture, &asset);
+    let p = proof(&e, &fixture);
+    let id = hash::ciphertext_digest(&e, &t.ciphertext);
+    let before = state_tuple(c.state());
+    assert_eq!(t.bridge_amount, 200);
+    reset(&e);
+    assert!(c.try_submit(&t, &p).is_err());
+    reset(&e);
+    assert_eq!(state_tuple(c.state()), before);
+    assert_eq!(balance(&e, &asset, &pool), 100);
+    assert_eq!(balance(&e, &asset, &recipient), 395);
+    assert!(!c.spent(&t.nullifiers.get(0).unwrap()));
+    assert!(c.record(&id).is_none());
+    assert_eq!(c.record_id_at(&6), None);
+    // Restoring authorization does not repair the 500-unit deficit.
+    admin.set_authorized(&pool, &false);
+    admin.set_authorized(&pool, &true);
+    reset(&e);
+    assert!(c.try_submit(&t, &p).is_err());
+    reset(&e);
+    assert_eq!(state_tuple(c.state()), before);
+    // Explicit external recapitalization; there is no application admin rescue.
+    admin.mint(&pool, &500);
+    assert_eq!(submit_fixture(&e, &pool, &asset, &fixture), id);
+    assert_eq!(balance(&e, &asset, &pool), 400);
+    assert_eq!(balance(&e, &asset, &recipient), 595);
+    assert_eq!(balance(&e, &asset, &fee), 5);
+    assert!(c.spent(&t.nullifiers.get(0).unwrap()));
+    assert_eq!(c.record_id_at(&6), Some(id));
+    assert_eq!(c.state().record_count, 7);
+}
+
+#[test]
+fn backing_deficit_blocks_first_payout_after_private_only_transitions() {
+    backing_deficit(false);
+}
+#[test]
+#[cfg(feature = "wasm-tests")]
+fn real_wasm_backing_deficit_blocks_first_payout_after_private_only_transitions() {
+    backing_deficit(true);
+}
+fn backing_deficit(wasm: bool) {
+    let (e, asset, pool, host) = initialized_with_clawback(wasm, true);
+    let c = PrivatePoolClient::new(&e, &pool);
+    let issuer = soroban_sdk::token::StellarAssetClient::new(&e, &asset);
+    issuer.mint(&address(&e, &host["funder"]), &1000);
+    submit_fixture(&e, &pool, &asset, &read("proofs/01-deposit.json"));
+    assert_eq!(c.liability(&asset), 1000);
+    issuer.clawback(&pool, &500);
+    // Hidden-asset, fee-free conservation remains usable without an asset scan.
+    for name in ["02-create-pod", "03-claim-pod"] {
+        submit_fixture(&e, &pool, &asset, &read(&format!("proofs/{name}.json")));
+    }
+    let fixture = read("proofs/04-withdraw-pod.json");
+    let t = transition(&e, &fixture, &asset);
+    let before = state_tuple(c.state());
+    reset(&e);
+    assert_eq!(
+        c.try_submit(&t, &proof(&e, &fixture)),
+        Err(Ok(Error::InsufficientBacking))
+    );
+    reset(&e);
+    assert_eq!(state_tuple(c.state()), before);
+    assert_eq!(balance(&e, &asset, &pool), 500);
+    assert_eq!(c.liability(&asset), 1000);
+    assert!(!c.spent(&t.nullifiers.get(0).unwrap()));
+    assert!(c
+        .record(&hash::ciphertext_digest(&e, &t.ciphertext))
+        .is_none());
+    assert!(c.record_id_at(&3).is_none());
+    assert_eq!(balance(&e, &asset, &address(&e, &host["recipient"])), 0);
+    assert_eq!(balance(&e, &asset, &address(&e, &host["fee"])), 0);
+    issuer.mint(&pool, &500);
+    submit_fixture(&e, &pool, &asset, &fixture);
+    assert_eq!(c.liability(&asset), 600);
+    assert_eq!(balance(&e, &asset, &pool), 600);
+    assert_eq!(balance(&e, &asset, &address(&e, &host["recipient"])), 395);
+    assert_eq!(balance(&e, &asset, &address(&e, &host["fee"])), 5);
+}
+
+#[test]
+fn constructor_rejects_custom_wasm_missing_and_account_asset_addresses() {
+    let (e, asset) = funded_fixture_env();
+    reset(&e);
+    let frame = e.register(StorageFrame, ());
+    let host = read("proofs/chain.json")["host"].clone();
+    let vk = key(&e, "keys/transition-vk.json", 157);
+    let revocation = key(&e, "keys/revocation-vk.json", 4);
+    for candidate in [
+        frame.clone(),
+        Address::generate(&e),
+        address(&e, &host["funder"]),
+    ] {
+        reset(&e);
+        let config = Config {
+            assets: soroban_sdk::vec![&e, asset.clone(), candidate],
+            disclosure_epoch: 1,
+            auditor_x: field(&e, &host["auditorX"]),
+            auditor_y: field(&e, &host["auditorY"]),
+            dkg_transcript_hash: BytesN::from_array(
+                &e,
+                &hex32(host["dkgTranscriptHash"].as_str().unwrap()),
+            ),
+        };
+        e.as_contract(&frame, || {
+            assert_eq!(
+                PrivatePool::__constructor(e.clone(), config, vk.clone(), revocation.clone()),
+                Err(Error::UnknownAsset)
+            );
+            assert!(!e.storage().instance().has(&Key::Config));
+            assert!(!e.storage().persistent().has(&Key::Liability(asset.clone())));
+        });
+    }
+}
+
+#[test]
+fn missing_liability_blocks_real_deposit_without_consuming_funds_or_archive() {
+    let (e, asset, pool, host) = initialized(false);
+    let c = PrivatePoolClient::new(&e, &pool);
+    let funder = address(&e, &host["funder"]);
+    soroban_sdk::token::StellarAssetClient::new(&e, &asset).mint(&funder, &1000);
+    e.as_contract(&pool, || {
+        e.storage()
+            .persistent()
+            .remove(&Key::Liability(asset.clone()))
+    });
+    assert_eq!(
+        c.try_liability(&asset),
+        Err(Ok(Error::LiabilityUnavailable))
+    );
+    let fixture = read("proofs/01-deposit.json");
+    let t = transition(&e, &fixture, &asset);
+    let before = state_tuple(c.state());
+    reset(&e);
+    assert_eq!(
+        c.try_submit(&t, &proof(&e, &fixture)),
+        Err(Ok(Error::LiabilityUnavailable))
+    );
+    reset(&e);
+    assert_eq!(state_tuple(c.state()), before);
+    assert_eq!(balance(&e, &asset, &funder), 1000);
+    assert_eq!(balance(&e, &asset, &pool), 0);
+    assert!(c.record_id_at(&0).is_none());
+    assert!(c
+        .record(&hash::ciphertext_digest(&e, &t.ciphertext))
+        .is_none());
+    // Test-only restoration of the known original ledger value; there is no
+    // production initialize/reset path for a missing accounting counter.
+    e.as_contract(&pool, || {
+        crate::persist(&e, &Key::Liability(asset.clone()), &0i128)
+    });
+    submit_fixture(&e, &pool, &asset, &fixture);
+    assert_eq!(c.liability(&asset), 1000);
 }

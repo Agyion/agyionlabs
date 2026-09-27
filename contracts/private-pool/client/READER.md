@@ -1,6 +1,8 @@
 # Pinned testnet archive reader
 
-This source is not an activated release or evidence of a deployed pool. It makes
+The private application uses this reader with its pinned testnet release.
+Deployment and integration evidence is recorded separately in the
+[verification record](../../../docs/VERIFICATION.md). The reader itself makes
 only `getNetwork` and `getLedgerEntries` RPC calls. It never simulates, signs,
 submits, connects a wallet, or restores archived storage.
 

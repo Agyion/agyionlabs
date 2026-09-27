@@ -41,6 +41,29 @@ explicitly skips it. Full Groth16/contract checks are separate from witness
 assertions. See the development scripts and artifact manifests for provenance.
 Never send a private witness to RPC, a hosted prover, logs or analytics.
 
+To reproduce all four optional cryptographic suites from a clean checkout,
+install the locked dependencies, acquire the reviewed public proving files and
+prepare a new output directory:
+
+```sh
+node scripts/fetch-private-prover.mjs --development
+node scripts/prepare-private-integration.mjs --development artifacts/privacy-ci
+PRIVACY_ARTIFACT_DIR="$PWD/artifacts/privacy-ci" \
+PRIVACY_CIRCUIT_DIR="$PWD/artifacts/privacy-ci/circuit" \
+PRIVACY_PROVER_MANIFEST="$PWD/artifacts/privacy-ci/prover-cases.json" \
+PRIVACY_DISCLOSURE_PROOF_TEST=1 PRIVACY_PROVER_TESTS=1 PRIVACY_CIRCUIT_TESTS=1 \
+node --test --test-concurrency=1 privacy/test/disclosure-proof.test.mjs privacy/test/prover-integration.test.mjs privacy/test/prover-verification.test.mjs privacy/test/transition-circuit.test.mjs
+```
+
+Preparation uses the locked local compiler, verifies the exact compiled output
+hashes, and combines the downloaded public keys with committed test proofs. It
+does not generate a setup, read trustee shares or accept an existing output
+directory. A failed preparation leaves its output for diagnosis; use a different
+fresh directory after fixing the cause. The workflow runs these suites separately
+from ordinary unit tests, together with the private browser journal checks.
+Fresh local preparation and all 47 checks passed on 27 September 2026. This
+reproduces development artifacts and proofs, not an independent setup ceremony.
+
 The v2 JS modules use the root MIT license except where their dependency or
 composition requires otherwise. Circuit composition is GPL-3.0-or-later; see
 [LICENSE-CIRCUITS](LICENSE-CIRCUITS) and [DEPENDENCIES.md](DEPENDENCIES.md).

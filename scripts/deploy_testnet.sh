@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Agyion kernel v3 deployment helper. Default: local, read-only checks and plan.
+# Reviewed legacy Agyion kernel v3 deployment helper. Default: read-only plan.
 # ./scripts/deploy_testnet.sh              # no build, key creation, funding or RPC
 # DRY_RUN=0 ./scripts/deploy_testnet.sh    # explicit operator-run testnet deployment
 # DEPLOYER_ALIAS may name an existing CLI identity. Only the dedicated default
@@ -80,7 +80,7 @@ print_config() {
 if [[ "$DRY_RUN" == '1' ]]; then
   say 'Plan only. No tests/build, key changes, funding, signing or network calls will run.'
   say '1. Run the locked kernel test suite.'
-  say "2. Build with stellar contract build; use exactly $WASM_FILE."
+  say "2. Build with stellar contract build; require an exact reviewed legacy v3 hash for $WASM_FILE before any key creation, funding or deployment."
   if [[ -z "$DEPLOYER_ADDRESS" ]]; then
     say "3. Create $DEDICATED_ALIAS without overwrite and fund it with testnet Friendbot."
   else
@@ -89,6 +89,7 @@ if [[ "$DRY_RUN" == '1' ]]; then
   say '4. Deploy the new kernel on the pinned testnet network; preserve existing contract aliases.'
   say '5. Fetch deployed bytes and require an exact SHA-256 match; read protocol_version with --send no and require 3 before printing app configuration.'
   say 'No issuer, trustline or asset-transfer steps are needed; the app uses Circle testnet USDC.'
+  say 'New constructor or accounting candidates require a separate reviewed release workflow; this legacy helper will refuse their bytes.'
   say 'Configuration template (replace the placeholder only after successful deployment):'
   print_config '<new-v3-testnet-contract-id>' '<verified-wasm-sha256>'
   say 'To execute this plan explicitly: DRY_RUN=0 ./scripts/deploy_testnet.sh'
@@ -103,6 +104,15 @@ CARGO_TARGET_DIR="$CONTRACT_DIR/target" stellar_cmd contract build --manifest-pa
 [[ -s "$WASM_FILE" ]] || die "Build did not produce the expected kernel: $WASM_FILE"
 WASM_HASH="$(sha256sum "$WASM_FILE" | cut -d ' ' -f1)"
 say "WASM SHA-256: $WASM_HASH"
+
+# These exact protocol-3 artifacts are reviewed development releases.
+# A local test/build passing cannot authorize a new constructor or accounting
+# release. Reject unknown bytes BEFORE creating/funding an identity or signing.
+# No environment override may widen this legacy allowlist.
+case "$WASM_HASH" in
+  1e6643028d6b397b3a762d4b5312eaf20f2744407686c78122d27c5a4dd8d378|bce9e56ef654d4fb694d7b813337f90024fc8361982dce490024032c65499fc8) ;;
+  *) die 'Compiled WASM is not a reviewed legacy protocol-3 artifact. Use a separate reviewed release workflow for new constructor/accounting candidates. No identity was created or funded and no deployment was submitted.' ;;
+esac
 
 if [[ -z "$DEPLOYER_ADDRESS" ]]; then
   say "Creating dedicated testnet identity: $DEDICATED_ALIAS"

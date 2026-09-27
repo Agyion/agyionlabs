@@ -1,9 +1,9 @@
 //! Pod template: the funder buries funds in the contract; after unlock_ledger
 //! has passed, the bearer signing key authorizes a specific recipient.
 
-use soroban_sdk::{token, xdr::ToXdr, Address, Bytes, BytesN, Env};
+use soroban_sdk::{xdr::ToXdr, Address, Bytes, BytesN, Env};
 
-use crate::{DataKey, Error, Pod, TTL_EXTEND, TTL_THRESHOLD};
+use crate::{accounting, DataKey, Error, Pod, TTL_EXTEND, TTL_THRESHOLD};
 
 pub(crate) fn next_id(env: &Env) -> u64 {
     let key = DataKey::PodCount;
@@ -30,6 +30,7 @@ pub(crate) fn read(env: &Env, pod_id: u64) -> Result<Pod, Error> {
     env.storage()
         .instance()
         .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    accounting::liability(env, &pod.asset)?;
     Ok(pod)
 }
 
@@ -76,7 +77,7 @@ pub fn create_pod(
 
     // Non-custodial: funds are deposited into the contract; outside the rules
     // nobody can withdraw them.
-    token::Client::new(env, &asset).transfer(&funder, env.current_contract_address(), &amount);
+    accounting::deposit(env, &asset, &funder, amount)?;
 
     let pod = Pod {
         funder,
@@ -115,11 +116,16 @@ pub fn claim_pod(
     env.crypto()
         .ed25519_verify(&pod.claim_pubkey, &payload, &signature);
 
-    token::Client::new(env, &pod.asset).transfer(
+    accounting::destination(env, &pod.asset, &recipient)?;
+    accounting::release(env, &pod.asset, pod.amount)?;
+    accounting::transfer(
+        env,
+        &pod.asset,
         &env.current_contract_address(),
         &recipient,
-        &pod.amount,
-    );
+        pod.amount,
+    )?;
+    accounting::solvent(env, &pod.asset)?;
 
     pod.state = 1;
     write(env, pod_id, &pod);

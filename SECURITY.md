@@ -17,6 +17,15 @@ These are implementation properties backed by specific tests, not a guarantee ag
 
 The public application relies on its wallet extension, RPC provider, token issuer and browser environment. A code hash returned by a compromised provider is not an independent consensus proof. Token freezing or clawback remains subject to the asset's issuer controls.
 
+The active legacy public kernel and private pool do not enforce an aggregate
+backing check after issuer clawback. Local tests using their exact deployed code
+showed that an early claim can consume backing needed by later claims. The
+separate marketplace already rejects that deficit. The observed Circle testnet
+policy had clawback disabled; this is a conditional asset control risk, not an
+observed Circle exploit. See the dated [issuer control findings](docs/TOKEN_ISSUER_RISKS.md)
+and their release boundary before adding assets or treating a new source build
+as a fix to an immutable deployed contract.
+
 Physical handoffs and external events depend on the configured signer. A contract can verify a signature without establishing that the signed statement is true. Transaction inclusion order does not establish equal network access or fair click order.
 
 The public marketplace catalog is a discovery snapshot. It cannot settle a

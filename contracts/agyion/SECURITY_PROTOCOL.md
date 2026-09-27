@@ -1,11 +1,20 @@
-# Kernel security protocol v3
+# Public kernel security protocol
 
-This local revision reports `protocol_version() == 3`. It requires a **new
-contract deployment** and regenerated bindings. V1/V2 contracts and funded
-records do not acquire these properties through a frontend update. There is no
-automatic migration or upgrade entry point. The frontend rejects writes when
-the deployed version differs. The production domain still uses the older
-configured testnet kernel until a separately verified deployment is selected.
+The active application uses the pinned V3 deployment listed in
+[public releases](../../deployments/public-testnet.json). The current source
+contains a V4 accounting candidate that requires a fresh deployment with an
+immutable allowlist of one to eight existing Stellar Asset Contracts. It has not
+replaced the active V3 deployment. The active bindings, record IDs and recovery
+remain tied to V3; the current client rejects another version or code hash.
+There is no automatic migration or upgrade entry point.
+
+V4 retains the credential layouts below and their network and contract binding.
+Its fresh contract address prevents an old authorization from being reused there.
+It adds per asset liabilities, backing checks before deposits and payouts,
+exact custody balance checks, and rejection of destinations that would strand
+funds in the kernel or its asset contract. Missing accounting state is an error,
+never a zero balance. See [issuer control findings](../../docs/TOKEN_ISSUER_RISKS.md)
+for the active release limitation and the new release requirements.
 
 ## Why Pod changed
 
@@ -103,10 +112,12 @@ state extend TTL on executed reads/writes; simulations do not persist TTL.
 Long locks require submitted maintenance or Soroban restoration. Archived
 state is not permission to reset counters or forget obligations.
 
-The contract accepts token addresses implementing the expected interface.
-This does not certify arbitrary tokens' backing, transfer semantics, freeze or
-clawback policies. Tests use the Stellar Asset Contract. The standalone ZK
-preimage verifier is not used to authorize any kernel payment.
+The active V3 contract accepts token addresses implementing the expected
+interface. The V4 constructor instead checks the host's built-in Stellar Asset
+executable type and fixes a bounded allowlist. Metadata returned by a custom
+token cannot satisfy that host check. Authentic SAC identity does not remove an
+issuer's freeze or clawback powers. The standalone ZK preimage verifier is not
+used to authorize any kernel payment.
 
 ## Local verification
 
