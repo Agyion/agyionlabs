@@ -186,6 +186,8 @@ export type ProtocolReadiness = "ready" | "incompatible" | "unavailable";
 
 export interface AgyionClient {
   protocolReadiness?(): Promise<ProtocolReadiness>;
+  /** End this selection's signing lifetime without discarding durable outcomes. */
+  retire?(): void;
   // Fade
   create_fade(
     seller: string,
@@ -766,6 +768,12 @@ export interface SorobanConfig {
   expectedAssetContractId?: string;
   /** Public app requires a reviewed WASM pin; reusable SDK callers may omit it. */
   expectedContractWasmHash?: string;
+  /** Existing SDK callers retain V3 unless a reviewed V4 release is explicit. */
+  expectedProtocolVersion?: 3 | 4;
+  /** Exact ordered constructor allowlist, required together with a WASM pin for V4. */
+  expectedSupportedAssets?: readonly string[];
+  /** Recovery services existing obligations; it cannot create or claim new ones. */
+  writePolicy?: "funding" | "recovery";
 }
 
 function hexToBuffer(hex: string, expected?: number): Buffer {
@@ -850,6 +858,7 @@ export class SorobanAgyionClient implements AgyionClient {
   private bindingsP: Promise<BindingsClient> | null = null;
   private readonly session = walletSessionVersion();
   private intent: TransactionIntent | null = null;
+  private retired = false;
 
   constructor(private cfg: SorobanConfig) {
     if (cfg.expectedContractWasmHash !== undefined && !/^[a-f0-9]{64}$/.test(cfg.expectedContractWasmHash)) {
@@ -858,6 +867,20 @@ export class SorobanAgyionClient implements AgyionClient {
     if (cfg.expectedAssetContractId !== undefined && !StrKey.isValidContract(cfg.expectedAssetContractId)) {
       throw new AgyionError(AgyionErrorCode.InvalidInput, "The supported asset must be a valid token contract address.");
     }
+    if ((cfg.expectedProtocolVersion !== undefined && cfg.expectedProtocolVersion !== 3 && cfg.expectedProtocolVersion !== 4) ||
+        (cfg.writePolicy !== undefined && cfg.writePolicy !== "funding" && cfg.writePolicy !== "recovery")) {
+      throw new AgyionError(AgyionErrorCode.InvalidInput, "Unsupported public release version or write policy.");
+    }
+    const assets = cfg.expectedSupportedAssets;
+    if ((assets !== undefined && (!Array.isArray(assets) || assets.length < 1 || assets.length > 8 ||
+        Array.from(assets).some(asset => typeof asset !== "string" || !StrKey.isValidContract(asset)) || new Set(assets).size !== assets.length)) ||
+        (cfg.expectedProtocolVersion === 4 && (!assets || cfg.expectedContractWasmHash === undefined)) ||
+        (assets && cfg.expectedAssetContractId !== undefined && !assets.includes(cfg.expectedAssetContractId))) {
+      throw new AgyionError(AgyionErrorCode.InvalidInput, "V4 requires a reviewed WASM pin and an exact bounded supported asset list.");
+    }
+    // Callers cannot change a selected release or relax its policy during awaits.
+    this.cfg = Object.freeze({ ...cfg, expectedProtocolVersion: cfg.expectedProtocolVersion ?? 3,
+      writePolicy: cfg.writePolicy ?? "funding", expectedSupportedAssets: assets ? Object.freeze([...assets]) : undefined });
     this.server = new rpc.Server(cfg.rpcUrl, {
       allowHttp: cfg.rpcUrl.startsWith("http://"),
     });
@@ -867,6 +890,8 @@ export class SorobanAgyionClient implements AgyionClient {
       catch (error) { throw new NotBroadcastError(error instanceof Error ? error.message : "Wallet session changed. Nothing was sent."); }
       const intent = this.intent;
       if (!intent) throw new NotBroadcastError("Missing transaction intent; nothing was sent.");
+      try { this.assertWritePolicy(intent.action); }
+      catch (error) { throw new NotBroadcastError(error instanceof Error ? error.message : "Recovery policy blocked this transaction. Nothing was sent."); }
       const hash = transaction.hash().toString("hex");
       const competing = unresolvedTransaction(intent);
       if (competing && competing.hash !== hash) throw new NotBroadcastError(
@@ -926,8 +951,20 @@ export class SorobanAgyionClient implements AgyionClient {
   }
 
   private assertSession(): void {
+    if (this.retired) throw new Error("This public release selection was retired. Reopen its record before continuing.");
     if (!this.cfg.signer) throw new Error("Connect a wallet to approve this transaction");
     if (walletSessionVersion() !== this.session) throw new Error("Wallet session changed; reconnect before continuing");
+  }
+
+  retire(): void { this.retired = true; }
+
+  private assertWritePolicy(action: string): void {
+    // A preexisting positive-price handoff still pays claimant -> seller. This
+    // is recovery of that claim, not a promise that all legacy transfers stop.
+    const recovery = ["confirm_handoff", "refund", "claim_pod", "attest", "refund_trigger", "revoke_mandate"];
+    if (this.cfg.writePolicy === "recovery" && !recovery.includes(action)) {
+      throw new AgyionError(AgyionErrorCode.InvalidInput, "This deployment is available for existing position recovery only. New funding, mandates and claims are disabled.");
+    }
   }
 
   private assertSupportedAsset(asset: string): void {
@@ -942,6 +979,25 @@ export class SorobanAgyionClient implements AgyionClient {
     if (this.cfg.expectedAssetContractId === undefined) return;
     const record = kind === "fade" ? await this.get_fade(id) : kind === "pod" ? await this.get_pod(id) : await this.get_trigger(id);
     if (!record) throw new AgyionError(AgyionErrorCode.NotFound, `${kind} not found: #${id}`);
+  }
+
+  private accountingReadiness(storage: xdr.ScMapEntry[] | null): ProtocolReadiness {
+    if (!storage) return "unavailable";
+    const entries = new Map<string, xdr.ScVal>();
+    for (const entry of storage) {
+      const key = entry.key().toXDR("base64");
+      if (entries.has(key)) return "unavailable";
+      entries.set(key, entry.val());
+    }
+    const value = (name: string) => entries.get(xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(name)]).toXDR("base64"));
+    const version = value("AccountingVersion"), assets = value("Assets");
+    if (version?.switch().name !== "scvU32" || assets?.switch().name !== "scvVec") return "unavailable";
+    const list = assets.vec();
+    if (!list || list.length < 1 || list.length > 8 || list.some(asset => asset.switch().name !== "scvAddress" || asset.address().switch().name !== "scAddressTypeContract")) return "unavailable";
+    const addresses = list.map(asset => Address.fromScAddress(asset.address()).toString());
+    if (new Set(addresses).size !== addresses.length) return "unavailable";
+    const expected = this.cfg.expectedSupportedAssets!;
+    return version.u32() === 4 && addresses.length === expected.length && addresses.every((asset, index) => asset === expected[index]) ? "ready" : "incompatible";
   }
 
   async protocolReadiness(): Promise<ProtocolReadiness> {
@@ -965,10 +1021,15 @@ export class SorobanAgyionClient implements AgyionClient {
           data.durability().name !== "persistent" || data.val().switch().name !== "scvContractInstance") return "unavailable";
         const executable = data.val().instance().executable();
         if (executable.switch().name !== "contractExecutableWasm" || executable.wasmHash().toString("hex") !== this.cfg.expectedContractWasmHash) return "incompatible";
+        if (this.cfg.expectedProtocolVersion === 4) {
+          if (!Number.isSafeInteger(entry.liveUntilLedgerSeq) || entry.liveUntilLedgerSeq! < response.latestLedger || entry.liveUntilLedgerSeq! > 0xffff_ffff) return "unavailable";
+          const accounting = this.accountingReadiness(data.val().instance().storage());
+          if (accounting !== "ready") return accounting;
+        }
       }
       const c = await this.bindings();
       const version = await c.protocol_version();
-      return version.result === 3 ? "ready" : Number.isSafeInteger(version.result) ? "incompatible" : "unavailable";
+      return version.result === this.cfg.expectedProtocolVersion ? "ready" : Number.isSafeInteger(version.result) ? "incompatible" : "unavailable";
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       // The deployed pre-v2 kernel has no version entry point. Only its explicit
@@ -980,21 +1041,27 @@ export class SorobanAgyionClient implements AgyionClient {
     }
   }
 
-  private async writable(): Promise<BindingsClient> {
+  private async writable(action: string): Promise<BindingsClient> {
     this.assertSession();
+    this.assertWritePolicy(action);
     const readiness = await this.protocolReadiness();
-    if (readiness === "incompatible") throw new Error("This kernel is incompatible with the reviewed V3 deployment configuration. Transactions are disabled.");
+    if (readiness === "incompatible") throw new Error(`This kernel is incompatible with the reviewed V${this.cfg.expectedProtocolVersion} deployment configuration. Transactions are disabled.`);
     if (readiness !== "ready") throw new AgyionError(AgyionErrorCode.RpcError, "Cannot check kernel readiness. Transactions are disabled until the RPC is available; retry the readiness check.");
     this.assertSession();
-    return this.bindings();
+    const bindings = await this.bindings();
+    this.assertSession();
+    return bindings;
   }
 
   private async submit<T>(tx: { signed?: { hash(): Buffer }; signAndSend(): Promise<{ result: { unwrap(): T }; getTransactionResponse?: TransactionOutcomeResponse; sendTransactionResponse?: { hash: string } }> }, action: string, refId?: string): Promise<T> {
     this.assertSession();
+    this.assertWritePolicy(action);
     const account = await this.cfg.signer!.address();
     this.assertSession();
     const intent: TransactionIntent = { account, network: this.cfg.networkPassphrase, contractId: this.cfg.contractId, action, refId: refId ?? null };
     return withRecoveryLock(JSON.stringify(["soroban",account,intent.network,intent.contractId,action,intent.refId]), async () => {
+    this.assertSession();
+    this.assertWritePolicy(action);
     if (this.intent) throw new Error("Another transaction is awaiting a result. Check its status before continuing.");
     const unresolved = unresolvedTransaction(intent);
     if (unresolved?.status === "success") throw confirmedCreationRecoveryError(unresolved.hash);
@@ -1069,7 +1136,7 @@ export class SorobanAgyionClient implements AgyionClient {
     venue_pubkey: string,
   ): Promise<bigint> {
     this.assertSupportedAsset(asset);
-    const c = await this.writable();
+    const c = await this.writable("create_fade");
     const tx = await c.create_fade({
       seller,
       asset,
@@ -1093,21 +1160,21 @@ export class SorobanAgyionClient implements AgyionClient {
   }
 
   async claim(fade_id: bigint, claimant: string): Promise<void> {
-    const c = await this.writable();
+    const c = await this.writable("claim");
     await this.assertSupportedRecord("fade", fade_id);
     const tx = await c.claim({ fade_id, claimant });
     await this.submit(tx, "claim", String(fade_id));
   }
 
   async confirm_handoff(fade_id: bigint, ts: bigint, sig: string): Promise<void> {
-    const c = await this.writable();
+    const c = await this.writable("confirm_handoff");
     await this.assertSupportedRecord("fade", fade_id);
     const tx = await c.confirm_handoff({ fade_id, ts, sig: hexToBuffer(sig, 64) });
     await this.submit(tx, "confirm_handoff", String(fade_id));
   }
 
   async refund(fade_id: bigint): Promise<void> {
-    const c = await this.writable();
+    const c = await this.writable("refund");
     await this.assertSupportedRecord("fade", fade_id);
     const tx = await c.refund({ fade_id });
     await this.submit(tx, "refund", String(fade_id));
@@ -1142,7 +1209,7 @@ export class SorobanAgyionClient implements AgyionClient {
     key_proof: string,
   ): Promise<bigint> {
     this.assertSupportedAsset(asset);
-    const c = await this.writable();
+    const c = await this.writable("create_pod");
     const tx = await c.create_pod({
       funder,
       asset,
@@ -1155,7 +1222,7 @@ export class SorobanAgyionClient implements AgyionClient {
   }
 
   async claim_pod(pod_id: bigint, recipient: string, signature: string): Promise<void> {
-    const c = await this.writable();
+    const c = await this.writable("claim_pod");
     await this.assertSupportedRecord("pod", pod_id);
     const tx = await c.claim_pod({
       pod_id,
@@ -1194,7 +1261,7 @@ export class SorobanAgyionClient implements AgyionClient {
     deadline_ledger: number,
   ): Promise<bigint> {
     this.assertSupportedAsset(asset);
-    const c = await this.writable();
+    const c = await this.writable("create_trigger");
     const tx = await c.create_trigger({
       funder,
       asset,
@@ -1207,14 +1274,14 @@ export class SorobanAgyionClient implements AgyionClient {
   }
 
   async attest(trigger_id: bigint, ts: bigint, sig: string): Promise<void> {
-    const c = await this.writable();
+    const c = await this.writable("attest");
     await this.assertSupportedRecord("trigger", trigger_id);
     const tx = await c.attest({ trigger_id, ts, sig: hexToBuffer(sig, 64) });
     await this.submit(tx, "attest", String(trigger_id));
   }
 
   async refund_trigger(trigger_id: bigint): Promise<void> {
-    const c = await this.writable();
+    const c = await this.writable("refund_trigger");
     await this.assertSupportedRecord("trigger", trigger_id);
     const tx = await c.refund_trigger({ trigger_id });
     await this.submit(tx, "refund_trigger", String(trigger_id));
@@ -1247,7 +1314,7 @@ export class SorobanAgyionClient implements AgyionClient {
     daily_cap: bigint,
     valid_until: number,
   ): Promise<bigint> {
-    const c = await this.writable();
+    const c = await this.writable("create_mandate");
     const tx = await c.create_mandate({
       owner,
       agent_pubkey: hexToBuffer(agent_pubkey, 32),
@@ -1259,7 +1326,7 @@ export class SorobanAgyionClient implements AgyionClient {
   }
 
   async envoy_claim(mandate_id: bigint, fade_id: bigint, ts: bigint, agent_sig: string): Promise<void> {
-    const c = await this.writable();
+    const c = await this.writable("envoy_claim");
     await this.assertSupportedRecord("fade", fade_id);
     const tx = await c.envoy_claim({
       mandate_id,
@@ -1271,7 +1338,7 @@ export class SorobanAgyionClient implements AgyionClient {
   }
 
   async revoke_mandate(owner: string, mandate_id: bigint): Promise<void> {
-    const c = await this.writable();
+    const c = await this.writable("revoke_mandate");
     const tx = await c.revoke_mandate({ owner, mandate_id });
     await this.submit(tx, "revoke_mandate", String(mandate_id));
   }
