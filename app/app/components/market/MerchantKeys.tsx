@@ -81,7 +81,13 @@ export default function MerchantKeys({ merchant, merchantKnown = true, active = 
       assertCurrent();
       const result = await execute({ action: 'register_merchant', publicKey: handle.publicKey, expectedEpoch: (merchant?.epoch ?? 0) + 1 });
       assertCurrent();
-      if (result?.status === 'confirmed') { await onRegistered(); assertCurrent(); setNotice('Merchant key registered on testnet.'); }
+      if (result?.status === 'confirmed') {
+        await onRegistered(); assertCurrent();
+        const registration = result.registration;
+        if (registration && registration.epoch !== handle.scope.keyEpoch) {
+          setError(`Registration confirmed at epoch ${registration.epoch}. This backup is for epoch ${handle.scope.keyEpoch}. Keep it for earlier pickups. Lock the key and prepare a new rotation for new listings.`);
+        } else setNotice(registration ? `Merchant key registered on testnet at epoch ${registration.epoch}.` : 'Registration confirmed. Check the current key before creating listings.');
+      }
       else if (result) setNotice('Registration is not confirmed. Check Recovery.');
     })}>{merchant ? 'Confirm key rotation' : 'Register merchant key'}</button></>}
     {notice && <p role="status" className="market-notice">{notice}</p>}{error && <p role="alert" className="market-error">{error}</p>}

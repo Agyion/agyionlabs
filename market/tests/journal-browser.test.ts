@@ -44,5 +44,43 @@ test('real browser IndexedDB preserves atomic source reservations, reload and te
   const corrupt=await factory({name});let guarded=false;try{await corrupt.pending();}catch{guarded=true;}corrupt.close();
   return {fulfilled:outcomes.filter(v=>v.status==='fulfilled').length,rollback,invalid,pending:pending.length,preserved,conflict,secondPending:secondPending.length===1&&secondPending[0]===loser.hash,cancelledPublication,guarded};
  },{name:'agyion.market.test.'+Date.now(),a,pub});
- assert.deepEqual(result,{fulfilled:1,rollback:true,invalid:true,pending:1,preserved:true,conflict:true,secondPending:true,cancelledPublication:true,guarded:true});assert.equal(external,0);
+ assert.deepEqual(result,{fulfilled:1,rollback:true,invalid:true,pending:1,preserved:true,conflict:true,secondPending:true,cancelledPublication:true,guarded:true});
+ const registrationResult=await page.evaluate(async({name,a,pub})=>{
+  const factory=window.marketJournalFactory,journal=await factory({name});
+  const attempt={...a,action:'register_merchant' as const,hash:'81'.repeat(32),intentId:'82'.repeat(32)};
+  const registration={seller:a.source,publicKey:'83'.repeat(32),epoch:3};
+  const good={hash:attempt.hash,status:'confirmed' as const,ledger:105,offerId:null,registration};
+  await journal.commit(attempt);
+  let getterCalled=false,rejected=0;
+  const accessor={...registration};Object.defineProperty(accessor,'epoch',{enumerable:true,get(){getterCalled=true;return 3;}});
+  const badRegistrations=[undefined,null,{}, {...registration,unknown:1},{...registration,[Symbol('unknown')]:1},{...registration,publicKey:'00'.repeat(32)},{...registration,publicKey:'AB'.repeat(32)},{...registration,publicKey:'1'},{...registration,epoch:0},{...registration,epoch:4294967296},{...registration,epoch:1.5},{...registration,seller:a.contract},accessor];
+  const optionalAccessor={...good};Object.defineProperty(optionalAccessor,'registration',{enumerable:true,get(){getterCalled=true;return registration;}});
+  const invalidTerminals=[...badRegistrations.map(registration=>({...good,registration})),optionalAccessor,{...good,unknown:1},{...good,offerId:'1'},{...good,status:'failed'},{hash:attempt.hash,status:'known_not_sent',reason:'cancelled',registration}];
+  for(const invalid of invalidTerminals){try{await journal.finish(invalid as Parameters<MarketJournal['finish']>[0]);}catch{rejected++;}}
+  const allInvalidPreserved=(await journal.pending()).length===1&&(await journal.get(attempt.hash))?.terminal===null;
+  await journal.finish(good);journal.close();
+  const reopened=await factory({name}),preserved=(await reopened.get(attempt.hash))?.terminal;
+  const lockReleased=(await reopened.pending()).length===0;
+  const legacy={...attempt,hash:'84'.repeat(32),intentId:'85'.repeat(32),sequence:'102'};
+  await reopened.commit(legacy);await reopened.finish({hash:legacy.hash,status:'confirmed',ledger:106,offerId:null});reopened.close();
+  const reload=await factory({name}),legacyTerminal=(await reload.get(legacy.hash))?.terminal;
+  const other={...a,hash:'86'.repeat(32),intentId:'87'.repeat(32),sequence:'103'};
+  await reload.commit(other);let wrongAction=false;try{await reload.finish({...good,hash:other.hash,offerId:'1'});}catch{wrongAction=true;}
+  const wrongActionPreserved=(await reload.get(other.hash))?.terminal===null;await reload.finish({hash:other.hash,status:'known_not_sent',reason:'cancelled'});
+  await reload.commit(pub);let wrongKind=false;try{await reload.finish({...good,hash:pub.hash});}catch{wrongKind=true;}
+  const wrongKindPreserved=(await reload.get(pub.hash))?.terminal===null;reload.close();
+  const open=indexedDB.open(name,1),db=await new Promise<IDBDatabase>((resolve,reject)=>{open.onsuccess=()=>resolve(open.result);open.onerror=()=>reject(open.error);});
+  const tx=db.transaction('terminals','readwrite'),read=tx.objectStore('terminals').get(attempt.hash);
+  read.onsuccess=()=>{const row=read.result;row.registration.epoch=0;tx.objectStore('terminals').put(row);};
+  await new Promise<void>((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onabort=()=>reject(tx.error);});db.close();
+  const corrupt=await factory({name});let corruptRegistrationBlocked=false;try{await corrupt.history();}catch{corruptRegistrationBlocked=true;}corrupt.close();
+  return {invalidCount:invalidTerminals.length,rejected,getterCalled,allInvalidPreserved,preserved,lockReleased,legacyTerminal,wrongAction,wrongActionPreserved,wrongKind,wrongKindPreserved,corruptRegistrationBlocked};
+ },{name:'agyion.market.registration.'+Date.now(),a,pub});
+ assert.equal(registrationResult.rejected,registrationResult.invalidCount);
+ assert.equal(registrationResult.getterCalled,false);assert.equal(registrationResult.allInvalidPreserved,true);
+ assert.deepEqual(registrationResult.preserved,{hash:'81'.repeat(32),status:'confirmed',ledger:105,offerId:null,registration:{seller:source,publicKey:'83'.repeat(32),epoch:3}});
+ assert.equal(registrationResult.lockReleased,true);
+ assert.deepEqual(registrationResult.legacyTerminal,{hash:'84'.repeat(32),status:'confirmed',ledger:106,offerId:null});
+ assert.equal(registrationResult.wrongAction,true);assert.equal(registrationResult.wrongActionPreserved,true);assert.equal(registrationResult.wrongKind,true);assert.equal(registrationResult.wrongKindPreserved,true);
+ assert.equal(registrationResult.corruptRegistrationBlocked,true);assert.equal(external,0);
 });

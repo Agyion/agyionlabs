@@ -3,7 +3,7 @@ import {Address,FeeBumpTransaction,Keypair,Networks,Transaction,TransactionBuild
 import {Buffer} from 'buffer';
 import {requireValue} from '../shared/codec.ts';
 import type {MarketPlan} from './commands.ts';
-import type {MarketTransactionAttempt} from './journal.ts';
+import type {MarketTransactionAttempt,MarketRegistration} from './journal.ts';
 import {marketSpec} from './spec.ts';
 import type {Merchant} from './spec.ts';
 export function invocation(tx:Transaction){requireValue(tx.operations.length===1&&tx.operations[0].type==='invokeHostFunction','EXACT_MARKET_CALL_REQUIRED');return tx.operations[0];}
@@ -26,15 +26,17 @@ export function validateSignedTransaction(requested:Transaction,returned:string,
  const key=Keypair.fromPublicKey(source);requireValue(signed.signatures.some(s=>key.verify(signed.hash(),s.signature())),'EXPECTED_WALLET_SIGNATURE_REQUIRED');return signed;
 }
 function wire(value:{toXDR(format:'base64'):string}){const encoded=value.toXDR('base64');requireValue(typeof encoded==='string'&&encoded.length>0&&encoded.length<=16*1024*1024);return encoded;}
+function merchantIdentity(value:xdr.ScVal,fn:xdr.InvokeContractArgs):MarketRegistration {
+ const type=xdr.ScSpecTypeDef.scSpecTypeUdt(new xdr.ScSpecTypeUdt({name:'Merchant'})),m=marketSpec.scValToNative<Merchant>(value,type);
+ requireValue(marketSpec.nativeToScVal(m,type).toXDR().equals(value.toXDR())&&Number.isInteger(m.epoch)&&m.epoch>0&&m.epoch<=0xffffffff&&m.public_key.length===32&&!m.public_key.equals(Buffer.alloc(32))&&new Address(m.seller).toScVal().toXDR().equals(fn.args()[0].toXDR())&&xdr.ScVal.scvBytes(m.public_key).toXDR().equals(fn.args()[1].toXDR()),'MERCHANT_RETURN_MISMATCH');
+ return Object.freeze({seller:m.seller,publicKey:m.public_key.toString('hex'),epoch:m.epoch});
+}
 export function returnIdentity(action:string,value:xdr.ScVal,fn:xdr.InvokeContractArgs):string|null{
  if(action==='create_offer'){requireValue(value.switch().name==='scvU64'&&BigInt(value.u64().toString())>0n,'INVALID_CREATED_OFFER_ID');return value.u64().toString();}
- if(action==='register_merchant'){
-  const type=xdr.ScSpecTypeDef.scSpecTypeUdt(new xdr.ScSpecTypeUdt({name:'Merchant'})),m=marketSpec.scValToNative<Merchant>(value,type);
-  requireValue(marketSpec.nativeToScVal(m,type).toXDR().equals(value.toXDR())&&m.epoch>0&&new Address(m.seller).toScVal().toXDR().equals(fn.args()[0].toXDR())&&xdr.ScVal.scvBytes(m.public_key).toXDR().equals(fn.args()[1].toXDR()),'MERCHANT_RETURN_MISMATCH');return null;
- }
+ if(action==='register_merchant'){merchantIdentity(value,fn);return null;}
  requireValue(value.switch().name==='scvVoid','UNEXPECTED_MARKET_RETURN');return null;
 }
-export function transactionEvidence(response:rpc.Api.GetTransactionResponse,a:MarketTransactionAttempt):{status:'confirmed'|'failed';ledger:number;offerId:string|null}|null{
+export function transactionEvidence(response:rpc.Api.GetTransactionResponse,a:MarketTransactionAttempt):{status:'confirmed';ledger:number;offerId:string|null;registration?:MarketRegistration}|{status:'failed';ledger:number;offerId:null}|null{
  try{
   if((response.status!=='SUCCESS'&&response.status!=='FAILED')||response.txHash!==a.hash||!Number.isInteger(response.ledger)||response.ledger<=0||response.ledger>0xffffffff)return null;
   const envelope=TransactionBuilder.fromXDR(wire(response.envelopeXdr),Networks.TESTNET),wrapped=envelope instanceof FeeBumpTransaction;
@@ -53,6 +55,6 @@ export function transactionEvidence(response:rpc.Api.GetTransactionResponse,a:Ma
   const version=meta.switch(),rv=version===3?meta.v3().sorobanMeta()?.returnValue():version===4?meta.v4().sorobanMeta()?.returnValue():null;
   const events=version===3?meta.v3().sorobanMeta()?.events():version===4?meta.v4().operations()[0]?.events():null;if(!rv||!events)return null;
   const preimage=new xdr.InvokeHostFunctionSuccessPreImage({returnValue:rv,events});if(!hash(preimage.toXDR()).equals(host.success()))return null;
-  return {status:'confirmed',ledger:response.ledger,offerId:returnIdentity(a.action,rv,fn)};
+  return {status:'confirmed',ledger:response.ledger,offerId:returnIdentity(a.action,rv,fn),...(a.action==='register_merchant'?{registration:merchantIdentity(rv,fn)}:{})};
  }catch{return null;}
 }

@@ -4,19 +4,28 @@
 [`app/app/lib/private/protocol.ts`](../../../app/app/lib/private/protocol.ts).
 The path includes a public-call encoder, verified release/archive reader,
 submission and revocation lifecycles, and a durable public transaction journal.
-The selected development pool is deployed on testnet; application publication
-and browser-wallet settlement require their own release verification. Existing
-public Agyion balances are not migrated. Witnesses and keys never belong in the
-transaction journal or RPC arguments. The
+The published application selects the guarded CAI6 private pool for new funding
+and retains the original CDSK profile for recovery. The
+[compiled catalogue](../../../app/app/lib/private/release.ts) binds each policy
+to its own exact manifest, committee, assets and backup scope. Its recovery-only
+restriction is application policy, not a change to the original immutable
+contract. Existing private notes and public Agyion balances are not migrated.
+Witnesses and keys never belong in the transaction journal or RPC arguments. The
 [coordinator guide](../../../app/app/lib/private/README.md) describes current
 backup, credential, fee, cancellation and pending-recovery behavior.
 
 ## Included and checked
 
-`bindings.ts` is the Stellar CLI TypeScript output from the actual private-pool
+`bindings.ts` is the Stellar CLI TypeScript output from the original private-pool
 WASM contract spec. Its low-level methods describe `submit`, `revoke`, `state`,
 `config`, `record`, `record_id_at`, `revocation_at`, `spent` and deployment.
-Regeneration from the final pinned WASM was byte-identical to these bindings.
+The guarded release preserves those existing interfaces and proof layouts;
+these bindings do not claim to include its added `liability` getter or accounting
+errors. The additive `liability.ts` reader checks the configured asset's persistent
+counter, storage identity, lifetime and matching before/after checkpoint, and
+names errors 20 through 23. A missing counter fails closed. This read alone does
+not establish token custody or solvency, and the original pool has no such
+counter.
 
 `prepareSubmit(publicInputs, proofHex, addresses)` converts exactly 157 canonical
 bigint fields, a canonical 256-byte proof hex string, and the three public
@@ -50,23 +59,22 @@ IndexedDB atomic writes and Web Locks, with immutable public attempts and audite
 reservations across tabs and reload. Storage deletion/rollback or hostile code on
 the same origin remain outside this local guarantee.
 
-## Application boundaries required for each enabled release
+## Implemented application boundaries
 
-| Existing source | Required separate private path |
+| Source | Current private path |
 | --- | --- |
-| `app/app/lib/config.ts`, `client.ts` | Supply a reviewed private-pool release profile to the implemented release verifier/reader, separate from Agyion. Independently pin both VKs and local prover artifacts as well as deployed code, assets and DKG. No active profile is fabricated from test fixtures. |
-| `privacy/src/verifier.mjs` | Keep its historical research suite registry closed. The real pinned v2 Groth16 adapter in `prover.mjs` is separate; returning true from an injected test callback must never activate the app. |
-| `privacy/src/client.mjs`, `witness.mjs` | Run the actual prover in a local worker with pinned artifacts. Only public signals/proof cross into this contract adapter. Handle progress, cancellation, proving failures and stale append roots without auto-signing or auto-resubmission. |
-| `privacy/src/vault.mjs`, `recovery.mjs` | Wire the implemented complete key vault and verified archive reconstruction into the app. Before deposit or a new grant, require saving the encrypted key file, reselecting that file and checking its full material. Note/draft backups alone do not replace the complete vault. Recovery must use a pinned trusted chain reader and its full snapshot/count checks. |
-| `app/app/lib/wallet.ts`, `agyionClient.ts` | Adapt the existing wallet/session to the implemented testnet submission lifecycle and same pinned RPC. Present the transaction facts and explicit fee cap before signing. Do not call generated `signAndSend()` directly from a panel. |
-| `app/app/lib/transactionReceipts.ts`, `recoveryStorage.ts` | Render and reconcile the separate IndexedDB private journal, including pending entries recovered after reload. Unknown inclusion blocks duplicates; a known pre-broadcast refusal needs an explicit retry. Balance still comes from verified archive reconstruction, never a local success label. |
-| `app/app/components/app/AppShell.tsx`, `PodPanel.tsx`, `TriggerPanel.tsx`, `EnvoyPanel.tsx` | Keep public Agyion controls and public-data disclosures intact. Private notes have a separate balance, eligibility and recovery model. A private deposit must show its public token/amount/funder, public fee/destination if present, exact testnet pool and mandatory backup acknowledgement. Fade remains public. |
+| `app/app/lib/private/release.ts` | Only compiled reviewed profiles can supply code, immutable configuration and DKG pins. Backup metadata can suggest an existing profile but cannot add or authenticate one. New funding uses guarded CAI6; original CDSK permits only existing-position recovery actions in the current coordinator. |
+| `privacy/src/verifier.mjs`, `prover.mjs` | The historical research suite registry remains closed. The separate v2 adapter and browser worker load pinned real Groth16 artifacts. Trusted test hooks are not product inputs. |
+| `app/app/lib/private/protocol.ts` | The coordinator recovers the full archive, prepares local witnesses and proofs, checks exact public signals and handles cancellation. Only public signals, proof and public addresses enter this contract adapter. A stale root requires explicit preparation again. |
+| `app/app/lib/privateVault.ts`, `privacy/src/recovery.mjs` | Actual selected encrypted files are decrypted and compared before key access. Adding a grant invalidates the previous check. Recovery uses the pinned reader's complete counts and checkpoint. Scoped recipient credentials are separate saved files, not implicit contents of the complete vault backup. |
+| `app/app/lib/private/wallet-session.ts` | The existing wallet is bound to its account, session and testnet network before and after signing. Explicit fee review precedes the wallet. Panels do not call generated `signAndSend()` directly. |
+| `app/app/lib/private/pending-recovery.ts` | Account-wide pending records remain available while the vault is locked. Reconciliation uses the original profile and signed hash with no signing or sending capability. Unknown inclusion preserves the reservation; balances come from archive reconstruction. |
+| `app/app/components/app/PrivateWorkspaceProvider.tsx`, `PrivateInstrumentPanel.tsx` | Pod, Trigger and Envoy share a scoped workspace and policy-specific controls. Profile or wallet changes retire old keys, credentials, proof work and fee approval. Public entry/exit and fee metadata remain visible. Fade remains public. |
 
-The application vertical slice is one asset: wallet deposit into a private
-cash note, local encrypted backup, event/record scan, private transfer, reload
-recovery, then withdrawal to a displayed public address. These proof/contract
-branches now pass locally, including conditional instruments. Authorization/disclosure remains
-an explicit trustee workflow, not a wallet transaction or an automatic UI claim.
+Both compiled private profiles allow canonical native XLM and Circle testnet
+USDC. The guarded profile's actual chain lifecycles and the narrower real wallet
+test are recorded below. Authorization/disclosure remains an explicit trustee
+workflow, not a wallet transaction or an automatic UI claim.
 
 The client can backfill without an indexer using `state.record_count`,
 `record_id_at(index)` and `record(id)`; revocation history has its own count and
@@ -75,22 +83,35 @@ validate the resulting roots against a fresh state from the selected pool. A
 page of events without a completeness/root check is insufficient. In-range
 missing entries are `ArchiveUnavailable`, not the end of history. Input roots may be historical; append and revocation roots must be
 fresh. Tree races invalidate a proof and require explicit preparation again.
-Archived persistent entries require restoration; the client must not turn a
-missing read or an RPC failure into an unspent note or an empty pool.
+Archived persistent entries require restoration. No live archival restoration
+workflow is implemented in this client or application. A missing read or an RPC
+failure cannot become an unspent note or an empty pool.
 
 ## Release limits
 
-The published application integrates the pinned private testnet deployment,
-reader, wallet lifecycle, journal, prover worker and encrypted vault recovery.
-The separate live private-pool run completed 15 included transactions with local
-SDK signing identities. Browser proving and fee rejection were verified with a
-scripted wallet; the real Freighter registration test covers the public market,
-not a private transaction. See the [verification record](../../../docs/VERIFICATION.md)
-and [resource and fee boundaries](../BUDGET.md).
+The published application integrates the pinned releases, reader, wallet
+lifecycle, journal, prover worker and encrypted vault recovery. On 27 September
+2026, the [guarded-pool receipt](../../../deployments/private-pool-guarded-testnet.json)
+recorded 15 included XLM transactions with 122 checks and 15 included Circle
+testnet USDC transactions with 124 checks. Both runs covered Pod, Trigger and
+Envoy roles, encrypted saved-file recovery, revocation and final withdrawals.
+They used local CLI signing identities, not browser-wallet approvals.
 
-Network archival restoration, private-pool USDC settlement and real mobile-wallet
-proving remain unverified. Local browser storage tests establish their specific
-persistence and concurrency behavior, not every live product flow. The
-single-operator development phase2 and trustee custody do not establish an
-independent ceremony, independently operated committee, legal authority,
-independent audit or mainnet readiness.
+The later [real Freighter receipt](../../../deployments/private-pool-freighter-testnet.json)
+records eight checks and two included private transactions on the published
+guarded-pool website: a 0.01 test XLM deposit and withdrawal. It verified actual
+encrypted backup recovery, page reload, reconnect and reconciliation of the
+original pending hash without resubmission. The direct browser run used an
+outgoing transaction guard and retained network failures. It does not establish
+extension-approved execution of every private instrument role. A subsequent
+six-check cancellation-only run used the real extension against the corrected
+local build and produced no signatures or broadcasts. Its publication was
+verified separately in the [verification record](../../../docs/VERIFICATION.md).
+
+Local synthetic tests, genuine browser storage/proof tests, scripted-wallet
+checks, CLI chain lifecycles and actual extension approvals are separate evidence.
+Live network archival restoration, hardware and real mobile-wallet proving remain
+unverified. The single-operator development phase2 and custody of all five
+trustee shares do not establish an independent production ceremony, independently
+operated committee, legal identity/disclosure service, independent audit or
+mainnet readiness. See the [resource and fee boundaries](../BUDGET.md).

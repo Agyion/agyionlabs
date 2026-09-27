@@ -21,11 +21,29 @@ test('additive reader returns exact nonnegative i128 under the pinned checkpoint
  f.persistent(f.counter,nativeToScVal(0n,{type:'i128'}));assert.equal((await reader.readLiability(host.asset)).amount,0n);
  assert.deepEqual(AccountingErrors,{20:'LiabilityUnavailable',21:'InsufficientBacking',22:'InvalidAccounting',23:'UnexpectedBalance'});
 });
+for(const {label,amount} of [{label:'positive',amount:12345678901234567890123456789n},{label:'zero',amount:0n}]){
+ test(`a restored ${label} counter remains readable when its modification ledger is newer than the unchanged instance`,async()=>{
+  const f=await fixture(amount),reader=createPoolLiabilityReader(f.release,{fetch:f.fetcher});
+  const before=await reader.readLiability(host.asset),counter=f.entries.get(f.counterKey);
+  // Model hot-archive restoration metadata, not a ledger-apply restoration test.
+  // The instance/state and counter value stay unchanged; only the counter's
+  // last-modified ledger advances from 1000 while the RPC head remains 1010.
+  for(const modified of [1005,1001]){
+   f.entries.set(f.counterKey,{...counter,lastModifiedLedgerSeq:modified});
+   const restored=await reader.readLiability(host.asset);
+   assert.equal(restored.amount,amount);assert.equal(restored.ledger,1010);
+   assert.equal(restored.snapshotId,before.snapshotId);
+   assert.ok(!f.calls.some(name=>/send|simulate|restore/i.test(name)));
+  }
+ });
+}
 test('missing or expired counters never become zero and invalid numeric representations reject',async()=>{
  const f=await fixture(),reader=createPoolLiabilityReader(f.release,{fetch:f.fetcher});
  const original=f.entries.get(f.counterKey);f.entries.delete(f.counterKey);
  await assert.rejects(reader.readLiability(host.asset),/unavailable|restoration/i);
- f.entries.set(f.counterKey,{...original,liveUntilLedgerSeq:1009});await assert.rejects(reader.readLiability(host.asset),/expired|restoration/i);
+ for(const liveUntilLedgerSeq of [0,1009]){
+  f.entries.set(f.counterKey,{...original,liveUntilLedgerSeq});await assert.rejects(reader.readLiability(host.asset),/expired|restoration/i);
+ }
  f.entries.set(f.counterKey,{...original,liveUntilLedgerSeq:undefined});await assert.rejects(reader.readLiability(host.asset),/TTL|restoration/i);
  for(const value of [nativeToScVal(-1n,{type:'i128'}),nativeToScVal(1n,{type:'u64'}),xdr.ScVal.scvVoid()]){
   f.persistent(f.counter,value);await assert.rejects(reader.readLiability(host.asset),/nonnegative|i128/i);
@@ -42,7 +60,6 @@ test('counter reply key, returned storage identity, durability, ledger and frami
  for(const mutate of [
   (v:any)=>{v.id++;},(v:any)=>{v.error={code:-1};},(v:any)=>{v.result.entries.push(v.result.entries[1]);},
   (v:any)=>{v.result.latestLedger=0;},(v:any)=>{v.result.entries[1].lastModifiedLedgerSeq=1011;},
-  (v:any)=>{v.result.entries[1].lastModifiedLedgerSeq=1001;},
   (v:any)=>{v.result.entries[1].key=v.result.entries[0].key;},
   (v:any)=>{const d=xdr.LedgerEntryData.fromXDR(v.result.entries[1].xdr,'base64');d.contractData().durability(xdr.ContractDataDurability.temporary());v.result.entries[1].xdr=d.toXDR('base64');},
   (v:any)=>{const d=xdr.LedgerEntryData.fromXDR(v.result.entries[1].xdr,'base64');d.contractData().contract(new Address(host.asset).toScAddress());v.result.entries[1].xdr=d.toXDR('base64');},

@@ -100,7 +100,9 @@ function MarketRecovery({ active, onOpen, onMerchantRegistered }: { active: bool
           await onMerchantRegistered();
           if (!current()) return;
         }
-        setNotice(`Transaction result: ${result.status.replaceAll('_', ' ')}.`);
+        setNotice(result.status === 'confirmed' && result.registration
+          ? `Registration confirmed at key epoch ${result.registration.epoch}. Check the current key in Sell.`
+          : `Transaction result: ${result.status.replaceAll('_', ' ')}.`);
         if (result.status === 'confirmed' && result.offerId) onOpen(result.offerId);
       }
       await refresh();
@@ -109,7 +111,7 @@ function MarketRecovery({ active, onOpen, onMerchantRegistered }: { active: bool
   return <section aria-label="Market recovery"><div className="market-section-heading"><div><h3>Check an earlier action</h3><p>Checks do not resubmit transactions.</p></div><button type="button" className="btn btn-secondary" disabled={!active || !protocol || loading} onClick={() => void refresh()}>Refresh</button></div>
     {!account && <p className="market-empty">Connect the account that submitted the action.</p>}
     {account && !loading && entries.length === 0 && <p className="market-empty">No saved market actions for this account in this browser.</p>}
-    {entries.map(entry => <article className="market-recovery-row" key={entry.attempt.hash}><div><strong>{entry.attempt.kind === 'publication' ? `Publish offer ${entry.attempt.publication.offerId}` : entry.attempt.action.replaceAll('_', ' ')}</strong><p>{entry.terminal?.status.replaceAll('_', ' ') ?? 'Awaiting confirmation'}</p><code>{entry.attempt.hash}</code></div><div className="market-actions"><button type="button" className="btn btn-secondary" disabled={!active || !protocol || loading || busy} onClick={() => void check(entry)}>Check result</button>{entry.attempt.kind === 'publication' && !entry.terminal && <button type="button" className="btn btn-secondary" disabled={!active || !protocol || loading || busy} onClick={() => void check(entry, true)}>Retry saved publication</button>}</div></article>)}
+    {entries.map(entry => <article className="market-recovery-row" key={entry.attempt.hash}><div><strong>{entry.attempt.kind === 'publication' ? `Publish offer ${entry.attempt.publication.offerId}` : entry.attempt.action.replaceAll('_', ' ')}</strong><p>{entry.terminal?.status === 'confirmed' && entry.terminal.registration ? `Confirmed at key epoch ${entry.terminal.registration.epoch}` : entry.terminal?.status.replaceAll('_', ' ') ?? 'Awaiting confirmation'}</p><code>{entry.attempt.hash}</code></div><div className="market-actions"><button type="button" className="btn btn-secondary" disabled={!active || !protocol || loading || busy} onClick={() => void check(entry)}>Check result</button>{entry.attempt.kind === 'publication' && !entry.terminal && <button type="button" className="btn btn-secondary" disabled={!active || !protocol || loading || busy} onClick={() => void check(entry, true)}>Retry saved publication</button>}</div></article>)}
     {notice && <p role="status" className="market-notice">{notice}</p>}{error && <p role="alert" className="market-error">{error}</p>}
   </section>;
 }

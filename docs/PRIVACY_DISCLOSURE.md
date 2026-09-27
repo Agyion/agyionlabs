@@ -71,13 +71,19 @@ real-user deployment.
 
 ## Verified testnet behavior
 
-The deployed development pool is
-`CDSK32ISKXRW6PX3ZMCHLUP4URNQSYNNH2GZU7ZSZJFL4FSEFQM25YHT`.
-Its committee uses three of five shares, all presently controlled by one local
-development operator. The circuit-specific setup is also a development setup.
-These facts do not establish institutional independence.
+The current application default is the guarded development pool
+`CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB`.
+The original `CDSK32ISKXRW6PX3ZMCHLUP4URNQSYNNH2GZU7ZSZJFL4FSEFQM25YHT` pool
+remains in the compiled catalogue for recovery with its original scope and
+committee. The application's recovery-only policy does not change the original
+contract or transfer its notes. Each pool has its own domain-bound development
+committee with a three-of-five threshold; one local operator controls all five
+shares. The circuit-specific setup remains a development setup. These facts do
+not establish institutional independence.
 
-A real accepted Pod creation was used for a live disclosure test:
+### Historical original-pool disclosure, 27 September 2026
+
+A real accepted Pod creation in the original CDSK pool was used for this test:
 `a6110ce6da8c4520db2ac7051083bb23a54fa629f6d4ca9e876bb0198fb87e81`.
 The record is
 `3f1518c454482521450f6961463a445688b7f61793f5914610ecb9e23bd1fd3b`.
@@ -88,10 +94,26 @@ not open the parties or terms envelopes. Expanded scope, insufficient decision
 signatures, expired approval and replay, including replay after an operator
 restart, were rejected. Thirteen checks passed.
 
-This verifies a technical path against an accepted ledger record. The decision
-signers represented a test policy, not a prosecutor, court or legal custodian.
-It does not establish a production disclosure service or a complete evidence
-handling process.
+### Guarded-pool disclosure, 27 September 2026
+
+The [guarded-pool receipt](../deployments/private-pool-guarded-testnet.json)
+records a separate 13-check disclosure run against Pod creation
+`8908463378e10ef10274cccbe02ad7c91b341a6e45434315f7351b22fcb80e39`, record
+`37344ccd018599ae31a1954b8b2828e5a2c16a696dc6f8c7b64796fa1c1b282b`.
+Three of five development shares opened only `audit-assets`. Insufficient or
+duplicate shares, expanded scope, insufficient decision signatures, expired
+approval and replay after an operator restart were rejected. The first storage
+attempt correctly rejected a writable ancestor; the successful separate run
+used a protected directory. Neither attempt weakened the storage policy.
+
+These runs verify technical paths against accepted ledger records. The decision
+signers represented test policies, not a prosecutor, court or legal custodian.
+They do not establish a production disclosure service or a complete evidence
+handling process. Local synthetic authorization and storage tests are separate
+evidence. The [real Freighter private deposit and withdrawal](../deployments/private-pool-freighter-testnet.json)
+verify a wallet and recovery path, not legal authorization or trustee custody.
+No live network-archival restoration workflow is implemented or verified; a
+missing accepted record remains an error rather than permission to disclose.
 
 ## Operational process required before a real-user release
 

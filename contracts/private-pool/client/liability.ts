@@ -77,8 +77,10 @@ export function createPoolLiabilityReader(release:PoolRelease,options:{fetch?:ty
    ensure(instance.value.switch().name==='scvContractInstance','Pool instance unavailable');
    const snapshotId=digest(Buffer.from(JSON.stringify([release.scope.profileId,instance.value.toXDR('base64')])));
    ensure(snapshotId===before.snapshotId,'Pool snapshot changed during liability read','SNAPSHOT_CHANGED');
-   // Every accounting write accompanies an instance state write in this runtime.
-   ensure(counter.modified<=instance.modified,'Liability counter is newer than its pool state');
+   // Hot-archive restoration rewrites the counter's last-modified ledger without
+   // changing its value or a still-live instance (Stellar Core RestoreFootprintOp).
+   // entry() bounds metadata by this shared RPC ledger; identical pinned instance
+   // content before/with/after the counter read binds the accounting snapshot.
    ensure(counter.value.switch().name==='scvI128','Expected nonnegative i128 liability');
    const amount:unknown=scValToNative(counter.value);
    ensure(typeof amount==='bigint'&&amount>=0n&&amount<(1n<<127n),'Expected nonnegative i128 liability');

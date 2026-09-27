@@ -1,8 +1,10 @@
 # Experimental disclosure operator and encrypted backup
 
-These portable modules implement cryptographic checks and encrypted bytes. They
-are not a legal decision system, a hosted committee, production key custody or
-an independent security audit. They do not change the legacy parser or the
+Status checked 27 September 2026. The portable authorization and backup modules
+implement cryptographic checks and encrypted bytes. The separate Node-only
+`operator-store.mjs` supplies durable first-use storage on a protected local
+POSIX filesystem. These modules are not a legal decision system, a hosted
+committee, production key custody or an independent security audit. They do not change the legacy parser or the
 installed proof-suite registry. No function logs or persists plaintext.
 
 ## Independent decision authorization
@@ -87,8 +89,12 @@ auditor. Missing records, read failures or mismatches produce no share or claim.
 The trusted adapter must authenticate accepted records from the pinned pool;
 it must not delegate to the remote requester's archive source. A matching hash
 alone is not ledger inclusion. Historical transaction validity windows need
-not be current, but disclosure expiry is rechecked after the read and again
-after the durable replay claim. Local fixture readers are not live inclusion.
+not be current, but disclosure expiry is rechecked after the read, after the
+durable replay claim and after response encryption, immediately before return.
+Local fixture readers are not live inclusion. The real
+[`readAcceptedPoolRecord`](../contracts/private-pool/client/reader.ts) adapter
+brackets the accepted record with the pinned reader's matching checkpoints;
+the RPC provider remains a trust boundary, not a consensus-proof verifier.
 
 Before producing any partial decryption, the operator awaits
 `claimRequest(replayKey, authorizationDigest)`. This trusted callback **must
@@ -101,9 +107,27 @@ After claiming, the operator calls the trusted `readCurrentLedger()` again and
 rechecks expiry before applying its secret share. Missing/noncanonical ledger
 values fail closed. A failure after a successful claim consumes the request;
 the caller must obtain a new signed request rather than automatically releasing
-the claim. This module does not implement a storage backend or an idempotent
-response journal. Its tests use an explicit in-memory atomic fixture, not a
-claim of durable deployment.
+the claim. A final trusted ledger failure or expiry after asynchronous response
+encryption also returns no delivery and leaves the claim consumed.
+
+[`createFileReplayStore({directory})`](src/operator-store.mjs) implements the
+durable callback separately. It requires an absolute canonical private directory,
+checks ownership and protected ancestors, uses exclusive file creation across
+processes, and acknowledges only after file and directory synchronization.
+Existing markers, including incomplete or corrupt files, remain consumed after
+restart. An I/O failure faults the instance; there is no reset or claim-removal
+API. Stored rows contain public replay and authorization digests, not shares,
+requests, plaintext or delivered ciphertext. This is not an idempotent response
+journal: losing a response requires a new signed request, not reopening the old
+claim.
+
+The store assumes a trusted OS account and a local filesystem with working
+exclusive-create and synchronization semantics. It cannot prevent that account
+or root from deleting or rolling back the directory. Network shares, independent
+custody, protected backups and operational audit retention are not supplied by
+this adapter. Authorization unit tests use an in-memory claim fixture; separate
+store tests exercise actual files, restart, independent processes and injected
+storage failures.
 
 Only requested fields receive partial decryption proofs. The full authorization
 digest plugs into the DLEQ request context. `disclosurePartialContext(authorized,
@@ -173,7 +197,7 @@ collection do not provide a secure-erasure guarantee. The modules do not log,
 persist or transmit plaintext themselves. Backup strength still depends on the
 password, endpoint integrity and the caller's custody and recovery practices.
 
-## Local checks
+## Local checks and testnet evidence
 
 Tests use real Argon2id/AES-GCM and actual Ed25519/X25519, BabyJub DLEQ and HKDF
 operations. They exercise wrong passwords, modified backup context/tag, malicious
@@ -183,3 +207,17 @@ missing/stale ledger reads, requester/context/tag changes, and delivery plus
 threshold combination. All keys, requests, archives and replay stores are local
 synthetic fixtures. No real committee, legal authorization, hosted service or
 external disclosure is demonstrated by these tests.
+
+Separate dated disclosure runs used accepted records from the original
+`CDSK32ISKXRW6PX3ZMCHLUP4URNQSYNNH2GZU7ZSZJFL4FSEFQM25YHT` pool and the current
+guarded `CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB` pool.
+The [guarded-pool receipt](../deployments/private-pool-guarded-testnet.json)
+records 13 checks, including assets-only three-of-five disclosure, refusal of
+scope expansion and replay refusal after operator restart. Decision authorities
+were simulated, and one development operator held all five trustee shares.
+Neither that run nor the separate [real Freighter private lifecycle](../deployments/private-pool-freighter-testnet.json)
+establishes independent trustee custody, a production ceremony, an independent
+audit or a legal identity/disclosure service. Browser vault recovery and trustee
+disclosure are separate workflows. Live network archival restoration remains
+unimplemented and unverified. See [disclosure boundaries](../docs/PRIVACY_DISCLOSURE.md)
+for the exact historical records and limits.

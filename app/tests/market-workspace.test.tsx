@@ -50,3 +50,19 @@ it.each(['confirmed','pending'])('refreshes merchant registration only after an 
  expect(screen.getByLabelText('Merchant epoch').textContent).toBe(status==='confirmed'?'1':'unregistered');
  expect(mocks.session.protocol.reconcile).toHaveBeenCalledTimes(1);expect(mocks.session.protocol.prepare).not.toHaveBeenCalled();expect(mocks.session.protocol.submit).not.toHaveBeenCalled();
 });
+
+it('keeps the included registration epoch visible after journal reload without treating it as the current key',async()=>{
+ const registration={seller:'seller',publicKey:'ab'.repeat(32),epoch:3};
+ const entry={attempt:{kind:'transaction',source:'seller',action:'register_merchant',hash:'cd'.repeat(32)},terminal:{hash:'cd'.repeat(32),status:'confirmed',ledger:100,offerId:null,registration}};
+ mocks.session.protocol.history.mockResolvedValue([entry]);
+ mocks.session.protocol.reconcile=vi.fn(async()=>entry.terminal);
+ mocks.session.protocol.merchant.mockResolvedValue({value:{epoch:4}});
+ mocks.session.protocol.prepare=vi.fn();mocks.session.protocol.submit=vi.fn();
+ render(panel());fireEvent.click(screen.getByRole('button',{name:'Recovery'}));
+ await screen.findByText(/confirmed.*key epoch 3/i);
+ expect(screen.getByLabelText('Merchant epoch').textContent).toBe('4');
+ fireEvent.click(screen.getByRole('button',{name:'Check result'}));
+ expect((await screen.findByRole('status')).textContent).toMatch(/confirmed.*key epoch 3/i);
+ expect(screen.getByLabelText('Merchant epoch').textContent).toBe('4');
+ expect(mocks.session.protocol.prepare).not.toHaveBeenCalled();expect(mocks.session.protocol.submit).not.toHaveBeenCalled();
+});

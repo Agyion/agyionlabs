@@ -94,6 +94,8 @@ A subsequent [real Freighter private lifecycle](deployments/private-pool-freight
 
 The contracts and cryptographic code have automated tests for authorization, arithmetic, replay, conservation, invalid proofs and interrupted transactions. Dependency advisory scans and a source review are part of the development process. These results establish tested behavior. They are not an independent audit or proof that every possible exploit is absent.
 
+The [recovery compatibility follow-up](docs/RECOVERY_COMPATIBILITY.md) retains the actual included merchant key epoch and corrects an accounting-reader assumption about restored archive metadata. Its local workspace run passed 1,306 tests with six optional skips; the changed real browser journal test passed separately. It does not change deployed contract bytecode or establish live archive restoration.
+
 The current private testnet default and separate marketplace enforce aggregate
 backing guards. The original public kernel and original private pool retain their
 [documented issuer control limitation](docs/TOKEN_ISSUER_RISKS.md); immutable

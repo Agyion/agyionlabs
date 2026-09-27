@@ -11,7 +11,8 @@ export type MarketAction=typeof MARKET_ACTIONS[number];
 export interface MarketTransactionAttempt {version:1;kind:'transaction';intentId:string;releaseId:string;contract:string;source:string;action:MarketAction;hash:string;sequence:string;callHash:string}
 export interface MarketPublicationAttempt {version:1;kind:'publication';releaseId:string;contract:string;source:string;hash:string;publication:Publication;signature:string}
 export type MarketAttempt=MarketTransactionAttempt|MarketPublicationAttempt;
-export type MarketTerminal={hash:string;status:'confirmed'|'failed';ledger:number;offerId:string|null}|{hash:string;status:'known_not_sent';reason:'session_changed'|'state_changed'|'cancelled'|'read_failed'}|{hash:string;status:'accepted';receipt:PublicationReceipt};
+export type MarketRegistration=Readonly<{seller:string;publicKey:string;epoch:number}>;
+export type MarketTerminal={hash:string;status:'confirmed';ledger:number;offerId:string|null;registration?:MarketRegistration}|{hash:string;status:'failed';ledger:number;offerId:null}|{hash:string;status:'known_not_sent';reason:'session_changed'|'state_changed'|'cancelled'|'read_failed'}|{hash:string;status:'accepted';receipt:PublicationReceipt};
 export interface MarketJournalEntry {attempt:MarketAttempt;terminal:MarketTerminal|null}
 export interface MarketJournal {
  exclusive<T>(run:()=>Promise<T>):Promise<T>;pending():Promise<readonly MarketAttempt[]>;
@@ -35,8 +36,13 @@ export function snapshotMarketAttempt(value:unknown):MarketAttempt {
 export function marketReservationKeys(value:MarketAttempt):readonly string[]{
  const a=snapshotMarketAttempt(value);return Object.freeze(a.kind==='transaction'?[`testnet:source:${a.source}`,`testnet:${a.contract}:intent:${a.intentId}`]:[`testnet:${a.contract}:publication:${a.publication.offerId}`]);
 }
+function registration(value:unknown):MarketRegistration {
+ requireValue(value&&typeof value==='object'&&Object.getPrototypeOf(value)===Object.prototype&&Reflect.ownKeys(value).length===3,'INVALID_JOURNAL_REGISTRATION');
+ const v=exact(value,['seller','publicKey','epoch']);
+ return Object.freeze({seller:address(v.seller),publicKey:nonzero(v.publicKey),epoch:uint32(v.epoch,1)});
+}
 function terminal(value:unknown):MarketTerminal {
- requireValue(value&&typeof value==='object');const status=Object.getOwnPropertyDescriptor(value,'status')?.value;
+ requireValue(value&&typeof value==='object'&&Reflect.ownKeys(value).length===Object.keys(value).length);const status=Object.getOwnPropertyDescriptor(value,'status')?.value;
  if(status==='accepted'){
   const v=exact(value,['hash','status','receipt']),r=exact(v.receipt,['authority','networkId','contract','offerId','seller','keyEpoch','revision','digest','signatureHash','expiresAt','acceptedAt']),h=nonzero(v.hash);
   requireValue(r.authority==='accepted-publication'&&r.networkId===TESTNET_NETWORK_ID&&r.digest===h);
@@ -44,11 +50,17 @@ function terminal(value:unknown):MarketTerminal {
   return Object.freeze({hash:h,status:'accepted',receipt});
  }
  if(status==='known_not_sent'){const v=exact(value,['hash','status','reason']);requireValue(['session_changed','state_changed','cancelled','read_failed'].includes(String(v.reason)));return Object.freeze({hash:nonzero(v.hash),status,reason:v.reason as Extract<MarketTerminal,{status:'known_not_sent'}>['reason']});}
- const v=exact(value,['hash','status','ledger','offerId']);requireValue(status==='confirmed'||status==='failed');const offerId=v.offerId===null?null:decimal(v.offerId);requireValue(offerId===null||BigInt(offerId)>0n);requireValue(status!=='failed'||offerId===null);return Object.freeze({hash:nonzero(v.hash),status,ledger:uint32(v.ledger,1),offerId});
+ const hasRegistration=Object.hasOwn(value,'registration'),v=exact(value,['hash','status','ledger','offerId',...(hasRegistration?['registration']:[])]);requireValue(status==='confirmed'||status==='failed');const offerId=v.offerId===null?null:decimal(v.offerId);requireValue(offerId===null||BigInt(offerId)>0n);
+ const common={hash:nonzero(v.hash),ledger:uint32(v.ledger,1)};
+ if(status==='failed'){requireValue(offerId===null&&!hasRegistration,'JOURNAL_TERMINAL_REGISTRATION');return Object.freeze({...common,status,offerId:null});}
+ return Object.freeze({...common,status,offerId,...(hasRegistration?{registration:registration(v.registration)}:{})});
 }
 function bindTerminal(a:MarketAttempt,t:MarketTerminal):void {
  requireValue(a.hash===t.hash,'JOURNAL_TERMINAL_HASH');
- if(a.kind==='transaction'){requireValue(t.status!=='accepted','JOURNAL_TERMINAL_KIND');if(t.status==='confirmed'&&a.action==='create_offer')requireValue(t.offerId!==null,'JOURNAL_CREATED_OFFER_REQUIRED');return;}
+ if(a.kind==='transaction'){requireValue(t.status!=='accepted','JOURNAL_TERMINAL_KIND');if(t.status==='confirmed'){
+  if(a.action==='create_offer')requireValue(t.offerId!==null,'JOURNAL_CREATED_OFFER_REQUIRED');
+  if(t.registration)requireValue(a.action==='register_merchant'&&t.offerId===null&&t.registration.seller===a.source,'JOURNAL_TERMINAL_REGISTRATION');
+ }return;}
  if(t.status==='known_not_sent'){requireValue(t.reason==='cancelled','JOURNAL_TERMINAL_KIND');return;}
  requireValue(t.status==='accepted','JOURNAL_TERMINAL_KIND');const p=a.publication,r=t.receipt;
  requireValue(r.contract===p.contract&&r.seller===p.seller&&r.offerId===p.offerId&&r.keyEpoch===p.keyEpoch&&r.revision===p.revision&&r.expiresAt===p.expiresAt&&r.signatureHash===hash(Buffer.from(a.signature,'hex')).toString('hex'),'JOURNAL_PUBLICATION_RECEIPT');

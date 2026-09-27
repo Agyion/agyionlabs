@@ -53,6 +53,39 @@ it('requires real encrypted backup reselection and sends the next key epoch for 
  await waitFor(()=>expect(mocks.session.execute).toHaveBeenCalledWith(expect.objectContaining({action:'register_merchant',expectedEpoch:1})));
 },60000);
 
+it.each([1,2,undefined])('keeps the checked backup scope and reports the actual included registration epoch: %s',async includedEpoch=>{
+ const onKey=vi.fn(),onRegistered=vi.fn(async()=>{});
+ const view=render(<MerchantKeys merchant={null} onKey={onKey} onRegistered={onRegistered}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Create merchant key'}));
+ const key=onKey.mock.calls.find(call=>call[0])![0] as vault.MerchantKeyHandle;
+ fireEvent.change(screen.getByLabelText('Backup password'),{target:{value:password}});
+ fireEvent.click(screen.getByRole('button',{name:'Save encrypted backup'}));
+ await waitFor(()=>expect(downloaded).toBeDefined(),{timeout:30000});
+ const saved=new File([await downloaded!.text()],'saved.json');
+ fireEvent.change(screen.getByLabelText('Saved encrypted backup'),{target:{files:[saved]}});
+ fireEvent.click(screen.getByRole('button',{name:'Check saved file'}));
+ await screen.findByRole('button',{name:'Register merchant key'},{timeout:30000});
+ mocks.session.execute.mockResolvedValueOnce({hash:'ab'.repeat(32),status:'confirmed',ledger:100,offerId:null,...(includedEpoch===undefined?{}:{registration:{seller:account,publicKey:key.publicKey,epoch:includedEpoch}})});
+ fireEvent.click(screen.getByRole('button',{name:'Register merchant key'}));
+ await waitFor(()=>expect(onRegistered).toHaveBeenCalledTimes(1));
+ expect(key.scope.keyEpoch).toBe(1);expect(vault.merchantKeyBackupChecked(key)).toBe(true);
+ expect(mocks.session.execute).toHaveBeenCalledTimes(1);
+ if(includedEpoch===2){
+  expect((await screen.findByRole('alert')).textContent).toMatch(/confirmed.*epoch 2/i);
+  expect(screen.getByRole('alert').textContent).toMatch(/backup.*epoch 1/i);
+  expect(screen.getByRole('alert').textContent).toMatch(/lock.*rotation/i);
+  view.rerender(<MerchantKeys merchant={{seller:account,public_key:Buffer.from(key.publicKey,'hex'),epoch:2}} onKey={onKey} onRegistered={onRegistered}/>);
+  expect(screen.queryByText('Registered key is ready')).toBeNull();
+  expect(screen.queryByRole('button',{name:'Confirm key rotation'})).toBeNull();
+ }else if(includedEpoch===1){
+  expect((await screen.findByRole('status')).textContent).toMatch(/registered.*epoch 1/i);
+  expect(screen.queryByRole('alert')).toBeNull();
+ }else{
+  expect((await screen.findByRole('status')).textContent).toMatch(/confirmed.*current key/i);
+ }
+ expect(mocks.session.execute).toHaveBeenCalledTimes(1);
+},60000);
+
 it('clears a revoked key and password when account changes without relying on parent remount',async()=>{
  const onKey=vi.fn(),view=render(<MerchantKeys merchant={null} onKey={onKey} onRegistered={async()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'Create merchant key'}));fireEvent.change(screen.getByLabelText('Backup password'),{target:{value:password}});
  mocks.session.account=other;view.rerender(<MerchantKeys merchant={null} onKey={onKey} onRegistered={async()=>{}}/>);

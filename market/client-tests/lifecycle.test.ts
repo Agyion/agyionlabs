@@ -52,3 +52,27 @@ it('a declined signing request cannot send, while the same error after send rema
  expect((await n.client.submit(d)).hash).toBe(result.hash);expect((await n.client.reconcile(result.hash)).status).toBe('pending');
  expect(n.signs).toBe(1);expect(n.sends).toBe(1);
 });
+
+it('persists confirmed actual registration identity and never signs again to repair an epoch mismatch',async()=>{
+ const h=await harness(),draft=await h.client.prepare(h.command),registration={seller:h.seller.publicKey(),publicKey:'ab'.repeat(32),epoch:3};
+ h.hooks.get=missing=>{
+  const merchant=xdr.ScVal.scvMap([new xdr.ScMapEntry({key:xdr.ScVal.scvSymbol('epoch'),val:xdr.ScVal.scvU32(registration.epoch)}),new xdr.ScMapEntry({key:xdr.ScVal.scvSymbol('public_key'),val:xdr.ScVal.scvBytes(Buffer.from(registration.publicKey,'hex'))}),new xdr.ScMapEntry({key:xdr.ScVal.scvSymbol('seller'),val:h.last!.operations[0].type==='invokeHostFunction'?h.last!.operations[0].func.invokeContract().args()[0]:xdr.ScVal.scvVoid()})]);
+  const preimage=new xdr.InvokeHostFunctionSuccessPreImage({returnValue:merchant,events:[]});
+  const result=new xdr.TransactionResult({feeCharged:xdr.Int64.fromString('100'),ext:new xdr.TransactionResultExt(0),result:xdr.TransactionResultResult.txSuccess([xdr.OperationResult.opInner(xdr.OperationResultTr.invokeHostFunction(xdr.InvokeHostFunctionResult.invokeHostFunctionSuccess(hash(preimage.toXDR()))))])});
+  const meta=new xdr.TransactionMeta(3,new xdr.TransactionMetaV3({ext:new xdr.ExtensionPoint(0),txChangesBefore:[],txChangesAfter:[],operations:[new xdr.OperationMeta({changes:[]})],sorobanMeta:new xdr.SorobanTransactionMeta({ext:new xdr.SorobanTransactionMetaExt(0),events:[],returnValue:merchant,diagnosticEvents:[]})}));
+  return {...missing,status:rpc.Api.GetTransactionStatus.SUCCESS,ledger:101,createdAt:1,applicationOrder:0,feeBump:false,envelopeXdr:h.last!.toXDR(),resultXdr:result.toXDR('base64'),resultMetaXdr:meta.toXDR('base64')};
+ };
+ const confirmed=await h.client.submit(draft);expect(confirmed).toMatchObject({status:'confirmed',registration});
+ expect(h.rows.get(confirmed.hash)?.terminal).toMatchObject({status:'confirmed',registration});
+ expect(await h.client.submit(draft)).toEqual(confirmed);expect(await h.client.reconcile(confirmed.hash)).toEqual(confirmed);
+ expect(h.signs).toBe(1);expect(h.sends).toBe(1);expect(await h.journal.pending()).toEqual([]);
+});
+
+it('keeps old confirmed v1 registration entries readable without fabricating identity or refetching',async()=>{
+ const h=await harness(),draft=await h.client.prepare(h.command),pending=await h.client.submit(draft);
+ await h.journal.finish({hash:pending.hash,status:'confirmed',ledger:101,offerId:null});
+ h.hooks.get=()=>{throw Error('OLD_TERMINAL_MUST_NOT_REFETCH')};
+ expect(await h.client.reconcile(pending.hash)).toEqual({hash:pending.hash,status:'confirmed',ledger:101,offerId:null});
+ expect(await h.client.submit(draft)).toEqual({hash:pending.hash,status:'confirmed',ledger:101,offerId:null});
+ expect(h.signs).toBe(1);expect(h.sends).toBe(1);
+});

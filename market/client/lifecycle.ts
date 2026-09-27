@@ -27,7 +27,7 @@ export function createMarketLifecycle(options:MarketProtocolOptions&{release:Mar
  function handle(d:Draft){const h=Object.freeze({id:d.id,action:d.command.action,summary:d.plan.summary,maxFeeStroops:d.cap});drafts.set(h,d);return h;}
  function unwrap(h:PreparedMarketOperation){alive();const d=drafts.get(h);requireValue(d?.active,'PREPARED_MARKET_OPERATION_REQUIRED');return d;}
  function scoped(entry:MarketJournalEntry):MarketTransactionAttempt{requireValue(entry.attempt.kind==='transaction'&&entry.attempt.releaseId===release.releaseId&&entry.attempt.contract===release.contract,'MARKET_ATTEMPT_RELEASE_MISMATCH');return entry.attempt;}
- function outcome(entry:MarketJournalEntry):MarketOutcome{const a=scoped(entry),t=entry.terminal;requireValue(t?.status!=='accepted');return Object.freeze({hash:a.hash,status:t?.status??'pending',ledger:t&&'ledger'in t?t.ledger:null,offerId:t&&'offerId'in t?t.offerId:null});}
+ function outcome(entry:MarketJournalEntry):MarketOutcome{const a=scoped(entry),t=entry.terminal;requireValue(t?.status!=='accepted');return Object.freeze({hash:a.hash,status:t?.status??'pending',ledger:t&&'ledger'in t?t.ledger:null,offerId:t&&'offerId'in t?t.offerId:null,...(t?.status==='confirmed'&&t.registration?{registration:t.registration}:{})});}
  async function reconcileEntry(entry:MarketJournalEntry):Promise<MarketOutcome>{
   const a=scoped(entry);if(entry.terminal)return outcome(entry);
   try{await reader.state();const response=await transport.getTransaction(a.hash),evidence=transactionEvidence(response,a);if(!evidence)return outcome(entry);await journal.finish({hash:a.hash,...evidence});return outcome({attempt:a,terminal:{hash:a.hash,...evidence}});}catch{return outcome(entry);}

@@ -60,3 +60,14 @@ it('accepts only bound failed operation evidence, and validates third-party fee-
  const pair=new xdr.InnerTransactionResultPair({transactionHash:h.tx.hash(),result:new xdr.InnerTransactionResult({feeCharged:xdr.Int64.fromString('100'),ext:new xdr.InnerTransactionResultExt(0),result:xdr.InnerTransactionResultResult.txSuccess(good.result.result().results())})});
  good.result.result(xdr.TransactionResultResult.txFeeBumpInnerSuccess(pair));const raw={...good.raw,feeBump:true,envelopeXdr:outer.toXDR(),resultXdr:good.result.toXDR('base64')};expect(transactionEvidence(await good.parse(raw),h.attempt)?.status).toBe('confirmed');pair.transactionHash(Buffer.alloc(32,9));raw.resultXdr=good.result.toXDR('base64');expect(transactionEvidence(await good.parse(raw),h.attempt)).toBeNull();
 });
+
+it('preserves the authenticated registration epoch even when it differs from the earlier expected epoch',async()=>{
+ const h=await operation('register_merchant'),type=xdr.ScSpecTypeDef.scSpecTypeUdt(new xdr.ScSpecTypeUdt({name:'Merchant'}));
+ const registration={seller:h.attempt.source,public_key:Buffer.alloc(32,4),epoch:3};
+ const r=await response(h,marketSpec.nativeToScVal(registration,type));
+ expect(transactionEvidence(await r.parse(r.raw),h.attempt)).toEqual({status:'confirmed',ledger:100,offerId:null,registration:{seller:registration.seller,publicKey:registration.public_key.toString('hex'),epoch:3}});
+ for(const patch of [{epoch:0},{public_key:Buffer.alloc(32)},{public_key:Buffer.alloc(32,5)},{seller:Keypair.fromRawEd25519Seed(Buffer.alloc(32,99)).publicKey()}]){
+  const invalid=await response(h,marketSpec.nativeToScVal({...registration,...patch},type));
+  expect(transactionEvidence(await invalid.parse(invalid.raw),h.attempt)).toBeNull();
+ }
+});
