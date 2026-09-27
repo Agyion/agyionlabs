@@ -7,7 +7,7 @@
 .market-map__notice { margin:0; max-width:58ch; color:#c4bbb0; font-size:.875rem; line-height:1.5; }
 .market-map__body { position:relative; isolation:isolate; border-top:1px solid var(--map-line); }
 .market-map__canvas { width:100%; height:clamp(280px,45vh,440px); background:#e6e4df; color:#171715; }
-.market-map__canvas .leaflet-control-zoom a { color:#171715; }
+.market-map__canvas .leaflet-control-zoom a { display:flex; align-items:center; justify-content:center; width:44px; height:44px; line-height:44px; color:#171715; }
 .market-map__attribution { padding:5px 12px; background:#ede9e2; color:#302e29; font-size:.75rem; line-height:1.5; text-align:right; }
 .market-map__attribution a { color:#214f68; text-decoration:underline; }
 .market-map__search { display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:14px 16px; }
@@ -18,5 +18,25 @@
 .market-map-pin { box-sizing:border-box; display:flex; align-items:center; justify-content:center; width:36px; height:36px; border:2px solid #fff8ec; border-radius:50%; background:#25221e; color:#fff8ec; font:700 14px/1 sans-serif; box-shadow:0 2px 5px #0005; }
 .market-map-pin--selected { background:#f2b571; color:#21170b; border-color:#21170b; }
 .market-map-marker:focus-visible .market-map-pin { outline:3px solid #b75108; outline-offset:3px; }
+.pickup-location { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:end; gap:16px; padding:24px; }
+.market-map .pickup-location__nearby { gap:10px; min-height:48px; background:var(--map-accent); border-color:var(--map-accent); color:#21170b; font-weight:600; }
+.pickup-location__form { min-width:0; }
+.pickup-location__form label { display:block; margin-bottom:8px; font-size:.9rem; }
+.pickup-location__input { display:flex; gap:8px; }
+.pickup-location__input input { box-sizing:border-box; width:100%; min-width:0; min-height:48px; padding:10px 14px; border:1px solid var(--map-line); border-radius:8px; background:#121311; color:var(--map-ink); font:inherit; }
+.pickup-location__input input:focus-visible { outline:2px solid var(--map-accent); outline-offset:3px; }
+.pickup-location__input button { flex-shrink:0; }
+.pickup-location__privacy,.pickup-location__message { grid-column:1/-1; margin:0; font-size:.875rem; color:#c4bbb0; line-height:1.5; }
+.pickup-location__privacy a { text-decoration:underline; text-underline-offset:3px; }
+.pickup-location__results { grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; list-style:none; padding:0; margin:0; }
+.market-map .pickup-location__results button { width:100%; min-height:64px; flex-direction:column; align-items:flex-start; gap:5px; text-align:left; }
+.pickup-location__results strong { font-size:1rem; font-weight:500; }
+.pickup-location__results span { color:#c4bbb0; font-size:.875rem; }
+.market-map__empty { padding:24px; border-top:1px solid var(--map-line); }
+.market-map__empty h4 { margin:0 0 8px; font-size:1.125rem; font-weight:500; }
+.market-map__empty p { margin:0; color:#c4bbb0; }
+.market-map__place { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px 0; }
+.market-map__place strong { font-size:1.125rem; font-weight:500; }
+@media(max-width:640px) { .pickup-location { grid-template-columns:1fr; padding:18px; } .pickup-location__results { grid-template-columns:1fr; } .pickup-location__input { flex-wrap:wrap; } .pickup-location__input input { flex-basis:100%; } .pickup-location__input button { width:100%; } }
 .market-map-pin__label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 @media(max-width:540px) { .market-map__toolbar { align-items:flex-start; flex-direction:column; gap:10px; } .market-map__search { align-items:flex-start; flex-direction:column; } }

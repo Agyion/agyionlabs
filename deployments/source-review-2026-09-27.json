@@ -1,40 +1,80 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T07:58:11.619627+00:00",
-  "sourceBaselineCommit": "2952860e62c7ed7e2a8affeaf20bbf13211403a3",
+  "reviewedAt": "2026-09-27T10:20:41.919525+00:00",
+  "sourceBaselineCommit": "11cf1214c73486d9752f6c13443eed0b1d7dbc05",
   "websiteRelease": {
-    "workerVersion": "2ec058c3-bd70-455e-afc2-5acbbd61b5c1",
+    "workerVersion": "12049d67-b5bb-49dd-8bfe-e978f252bcc7",
     "url": "https://agyionlabs.dev",
-    "verifiedAt": "2026-09-27T07:36:17.487Z",
-    "treeSha256": "3e932f650e09a1c7b446a2a2447ede9252713b0a82713177aa9466acba5d0c97",
-    "files": 99,
-    "bytes": 159496300,
+    "verifiedAt": "2026-09-27T10:17:39.875Z",
+    "treeSha256": "bc7a46b8393e51e75c994ac185814a3e711286dc9e39549262d142e9d1110c32",
+    "treeHashScope": "All 104 local build files, including the local _headers configuration; all 103 public files separately matched.",
+    "files": 103,
+    "bytes": 166304582,
     "runtimeChangesFromSourceBaseline": [
       {
-        "path": "app/app/lib/wallet-errors.ts",
-        "sha256": "23be78fe3ef90fe54099cb85cb32f5531e7bfa907b04b4ca9cf7e91ddd4eb876"
+        "path": "app/app/components/app/PrivateWorkspaceProvider.tsx",
+        "sha256": "a439779d1a3f2d1fce96013e073b9aea9f3b341fb1a12921febb5482de9e0484"
       },
       {
-        "path": "app/app/lib/walletsKit.ts",
-        "sha256": "ba7a68653872f5f05d7158fe305f8181feceb5c5ac6e76f29ba7586bdf30172a"
+        "path": "app/app/components/market/MarketMap.tsx",
+        "sha256": "ae2d8e73a746a9410a717d330d81f98b9ea1e86709b26a55d3a1c1e5e051ef7d"
       },
       {
-        "path": "app/app/components/app/PrivateInstrumentPanel.tsx",
-        "sha256": "8baccc4494ca03035a9637a727f87a3eeb961444546f35758c975a360e37a53b"
+        "path": "app/app/components/market/PickupLocation.tsx",
+        "sha256": "86b0e4a781d0414beb2d7a5382c0cfdd8c6c6d91fb8d8a92046db22b15247ae0"
       },
       {
-        "path": "app/app/components/market/MarketSession.tsx",
-        "sha256": "fd273615ebb72eeea398a8818d4fb5201897280456c934ca4e0af9d53c7d27c2"
+        "path": "app/app/lib/market/places.ts",
+        "sha256": "44066f766b7a60272649e015b3459c0abc5e9b5a539d3cc906255b563ea16aab"
+      },
+      {
+        "path": "app/app/lib/private/pending-recovery.ts",
+        "sha256": "8cb62fc8c427056403c32cf4767cedc12abe42e321d5eaaab86fc54853aef17a"
+      },
+      {
+        "path": "app/app/lib/private/protocol-types.ts",
+        "sha256": "e0cb01e3550ad6a6c21d65c97a1636e7078a459dc9cc986db7137451109e320e"
+      },
+      {
+        "path": "app/app/lib/private/protocol.ts",
+        "sha256": "8e46959a4bcc0bd86ac9144b74025ff7dfeb7edd9867042b1b924c52216928f3"
+      },
+      {
+        "path": "app/app/lib/private/release.ts",
+        "sha256": "d031ebaccfffcb174e447f55fd226f994030fc1217029a6cf4ae705797f636c0"
+      },
+      {
+        "path": "app/app/market-map.css",
+        "sha256": "f3b80e28baea2ce47277b5aaeb82537bc4a6b1831620ec05a4def9bf5cc5eaa1"
+      },
+      {
+        "path": "app/public/places/cities-20260927.json",
+        "sha256": "682697605c69c5f560cc394fe0faecd9423643d02307dbb15b9013ba90f951b6"
+      },
+      {
+        "path": "contracts/private-pool/client/liability.ts",
+        "sha256": "ab3a13e0887b6b88f44dc3f0f03a4789f3e2d042a303a392ae2bb3eff24423e2"
+      },
+      {
+        "path": "scripts/assemble-site.mjs",
+        "sha256": "1f78406799f08bbfa82ab7d4a6fbf4fcb3eeb0f0eb3d4acc693c23d8400f71d6"
+      },
+      {
+        "path": "scripts/site-headers.mjs",
+        "sha256": "7d7684a87aa3794f069340e97bdfee8e1a8d93b45a0ba90b308e4f356fc147f9"
       }
     ],
     "contractPinsChanged": false,
     "readOnlyBrowserChecks": {
       "http": 34,
       "ui": 14,
+      "map": 8,
       "rpcTransport": "direct Chrome networking",
       "walletRequests": 0,
-      "transactions": 0
-    }
+      "transactions": 0,
+      "locationTest": "Emulated test coordinates after an explicit browser permission grant, not an operator location measurement."
+    },
+    "earlierFailedAttempt": "Initial live browser checks failed on ERR_NETWORK_CHANGED while fetching scripts. Retained separately; the subsequent direct-network runs passed."
   },
   "undeployedContractCandidates": [
     {
@@ -58,16 +98,16 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 530,
-    "lines": 67795,
+    "files": 541,
+    "lines": 68902,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 437,
-        "lines": 46190
+        "files": 443,
+        "lines": 46633
       },
       "verified-baseline-plus-reviewed-diff": {
-        "files": 93,
-        "lines": 21605
+        "files": 98,
+        "lines": 22269
       }
     },
     "unresolvedFiles": 0,
@@ -77,13 +117,15 @@
     "Generated contract bindings and specification, generated prover constants, proof fixtures, cryptographic parameter data and dependency lockfiles are outside authored source totals.",
     "Copied vendor code and transitive dependency implementations are outside the first-party review claim.",
     "Ignored files, private material, build output, Markdown documentation, licenses and binary media are outside the source-line denominator.",
-    "This generated review manifest is excluded from source totals to avoid recursive self-hashing."
+    "This generated review manifest is excluded from source totals to avoid recursive self-hashing.",
+    "The generated GeoNames city index is attributed geographic data, not manually authored or line-audited implementation."
   ],
   "limitations": [
     "Development source review is not an independent security audit, execution coverage, proof of cryptographic soundness or a guarantee that every exploit is absent.",
     "Passing tests do not establish source-read coverage. Testnet and browser evidence has separate scope and limitations.",
     "These hashes are a dated source checkpoint. The website release is identified by its worker version and verified published bytes. The contract candidates are local artifacts, not replacements at active immutable addresses. No sourceBaselineCommit claim includes the listed subsequent runtime changes.",
-    "Any subsequent source change requires renewed review evidence and manifest reconciliation."
+    "Any subsequent source change requires renewed review evidence and manifest reconciliation.",
+    "The compiled private release catalogue currently contains only the unchanged original pool. New accounting contracts, dual-profile UI and production custody are not activated by this website release."
   ],
   "files": [
     {
@@ -196,9 +238,9 @@
     },
     {
       "path": "app/app/components/app/PrivateWorkspaceProvider.tsx",
-      "sha256": "e8a017cce399a3b92fd5baad355b9611cdd25f2a88873cdb0e434de60afbc2ab",
-      "lines": 111,
-      "reviewKind": "complete-source-read"
+      "sha256": "a439779d1a3f2d1fce96013e073b9aea9f3b341fb1a12921febb5482de9e0484",
+      "lines": 210,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "app/app/components/app/ProtocolStatus.tsx",
@@ -328,9 +370,9 @@
     },
     {
       "path": "app/app/components/market/MarketMap.tsx",
-      "sha256": "fee7de2efafd595dfc8ca8f8d15b2c93cf79ab0de75c3d928196a2faf1850709",
-      "lines": 129,
-      "reviewKind": "complete-source-read"
+      "sha256": "ae2d8e73a746a9410a717d330d81f98b9ea1e86709b26a55d3a1c1e5e051ef7d",
+      "lines": 143,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "app/app/components/market/MarketOffer.tsx",
@@ -354,6 +396,12 @@
       "path": "app/app/components/market/MerchantKeys.tsx",
       "sha256": "e83dc670de2c2462c4289b8326b7e5a6c3e4491ea9627a0f3876df5709e47ea3",
       "lines": 89,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/market/PickupLocation.tsx",
+      "sha256": "86b0e4a781d0414beb2d7a5382c0cfdd8c6c6d91fb8d8a92046db22b15247ae0",
+      "lines": 50,
       "reviewKind": "complete-source-read"
     },
     {
@@ -453,6 +501,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "app/app/lib/market/places.ts",
+      "sha256": "44066f766b7a60272649e015b3459c0abc5e9b5a539d3cc906255b563ea16aab",
+      "lines": 54,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "app/app/lib/private/committee.json",
       "sha256": "b3cf846a83e9d1c1d7757f6e35e6a9af45d65b3784176e36bfa516b7648d0c85",
       "lines": 124,
@@ -465,16 +519,22 @@
       "reviewKind": "complete-source-read"
     },
     {
-      "path": "app/app/lib/private/protocol-types.ts",
-      "sha256": "f1eae9ef299359fc3fbbf1281fc98ed90ffdc151b5d8daa90a18f49ff1667dbf",
-      "lines": 47,
+      "path": "app/app/lib/private/pending-recovery.ts",
+      "sha256": "8cb62fc8c427056403c32cf4767cedc12abe42e321d5eaaab86fc54853aef17a",
+      "lines": 77,
       "reviewKind": "complete-source-read"
     },
     {
-      "path": "app/app/lib/private/protocol.ts",
-      "sha256": "c3e06f53584137355f00b91f05746c3ddb2819ec775517543b0cfc01f107418d",
-      "lines": 232,
+      "path": "app/app/lib/private/protocol-types.ts",
+      "sha256": "e0cb01e3550ad6a6c21d65c97a1636e7078a459dc9cc986db7137451109e320e",
+      "lines": 47,
       "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/lib/private/protocol.ts",
+      "sha256": "8e46959a4bcc0bd86ac9144b74025ff7dfeb7edd9867042b1b924c52216928f3",
+      "lines": 243,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/app/lib/private/release.json",
@@ -484,9 +544,9 @@
     },
     {
       "path": "app/app/lib/private/release.ts",
-      "sha256": "410bce8dc2f6be4bbbe902e8413a7960f23e46179770d7e444acee88a9550867",
-      "lines": 26,
-      "reviewKind": "complete-source-read"
+      "sha256": "d031ebaccfffcb174e447f55fd226f994030fc1217029a6cf4ae705797f636c0",
+      "lines": 90,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "app/app/lib/private/wallet-session.ts",
@@ -568,9 +628,9 @@
     },
     {
       "path": "app/app/market-map.css",
-      "sha256": "bfbd9f585db6373dbec1e0d4556cb36bf60b91ab1f5b958fe9db85e4019fa6c8",
-      "lines": 22,
-      "reviewKind": "complete-source-read"
+      "sha256": "f3b80e28baea2ce47277b5aaeb82537bc4a6b1831620ec05a4def9bf5cc5eaa1",
+      "lines": 42,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "app/app/market.css",
@@ -807,6 +867,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "app/tests/pickup-places.test.ts",
+      "sha256": "1c8ef180455f91642c6c5e221db39e7be81bb485c7d3975e04d4733ac0e26c4d",
+      "lines": 28,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "app/tests/pod-credentials.test.ts",
       "sha256": "305d81f1c5c3ba2ced726879f31fb84916c6362a387995228b87ae9b474e05b5",
       "lines": 46,
@@ -837,15 +903,33 @@
       "reviewKind": "complete-source-read"
     },
     {
-      "path": "app/tests/private-protocol.fixture.ts",
-      "sha256": "f2c7897ef7a318cb028c568653bbb54b23cb2e901303a0ae86dd1543ea7be09f",
-      "lines": 81,
+      "path": "app/tests/private-pending-recovery.test.ts",
+      "sha256": "55a827ababd0c1b6ffd68db1fbaf9219b8d52edb751438ee373b152b8472525f",
+      "lines": 132,
       "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-protocol-policy.test.ts",
+      "sha256": "01c06e35d5d3e51459c98e85513bf16185ac3b1d3d0bf81ef47bcf3465a8c0a3",
+      "lines": 75,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-protocol.fixture.ts",
+      "sha256": "d08e6bc7dab474a8c489100785102ed5580924634faf1b00ea35ae2ef9bc92e5",
+      "lines": 82,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "app/tests/private-protocol.test.ts",
       "sha256": "993ea29378a42a0cc3fd54bdc7f643bc4142ef3a8683e510aa27158ba4544da6",
       "lines": 91,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-release.test.ts",
+      "sha256": "6c3c605140b6b1eda049fca14e5e8282519fb6e5b54842a3a43ef4bfa9185ff5",
+      "lines": 51,
       "reviewKind": "complete-source-read"
     },
     {
@@ -880,9 +964,9 @@
     },
     {
       "path": "app/tests/private-workspace-provider.test.tsx",
-      "sha256": "863814aabf5ddf8e51fefbbfdc7fede20ab4f7d6621ead46dfb5dee2951f5766",
-      "lines": 72,
-      "reviewKind": "complete-source-read"
+      "sha256": "0a904586a0f99cec0e9cba7e179526874e987d6a0f41d804d8592124035d5671",
+      "lines": 185,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "app/tests/protocol-readiness.test.tsx",
@@ -1126,14 +1210,26 @@
     },
     {
       "path": "contracts/private-pool/client/journal.test.ts",
-      "sha256": "458913494fb54c657a7ada41b0a96b314723c35c49fe4c426f5a98dc47046515",
-      "lines": 107,
-      "reviewKind": "complete-source-read"
+      "sha256": "3d94458e2dfcd6423be725df126eb25e711a6448f0642944bb1c47b804b06494",
+      "lines": 126,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "contracts/private-pool/client/journal.ts",
       "sha256": "b0535667e4d0d0bb2a1863d29cc2df39e3e44cab6f1330c3407aa15a80beae9c",
       "lines": 203,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/liability.test.ts",
+      "sha256": "b72188558a56240c9650e34c71f10f929b1d0ccfe426eb138ae6efb7ebe46f37",
+      "lines": 76,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/liability.ts",
+      "sha256": "ab3a13e0887b6b88f44dc3f0f03a4789f3e2d042a303a392ae2bb3eff24423e2",
+      "lines": 91,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2194,8 +2290,14 @@
     },
     {
       "path": "market/ui-tests/MarketMap.test.tsx",
-      "sha256": "3d226652da312a9da28599e494f6cdf7384ab16f349483fdaf8341fc0ec03e23",
-      "lines": 91,
+      "sha256": "83fc61b6fe31002ba1cb16c67f8a14cd3cc879866683e930437417a574998c9a",
+      "lines": 117,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "market/ui-tests/PickupLocation.test.tsx",
+      "sha256": "c2d386a5443aa8407e06bfb210069dfa63ae5c3bc02dd83d080181574f6263fa",
+      "lines": 40,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2746,9 +2848,15 @@
     },
     {
       "path": "scripts/assemble-site.mjs",
-      "sha256": "97495d240b4858ffce90f199a3e2617450933a40ed2a593b0de6161de3abcceb",
+      "sha256": "1f78406799f08bbfa82ab7d4a6fbf4fcb3eeb0f0eb3d4acc693c23d8400f71d6",
       "lines": 32,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/build-place-index.py",
+      "sha256": "2066c060834529520a02af7e89bb44ccd3f1918706456a2c1ca9727ced5ea273",
+      "lines": 66,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "scripts/build_site.sh",
@@ -2890,9 +2998,9 @@
     },
     {
       "path": "scripts/site-headers.mjs",
-      "sha256": "9c473bab56e0e0cb637fbde745a70e2dadeacbfb75d4caedcb31465fb1afe8c1",
+      "sha256": "7d7684a87aa3794f069340e97bdfee8e1a8d93b45a0ba90b308e4f356fc147f9",
       "lines": 41,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "scripts/static-preview-headers.mjs",
@@ -2974,9 +3082,9 @@
     },
     {
       "path": "scripts/tests/site-headers.test.mjs",
-      "sha256": "a5670cb449f6184813cce8f76c63d7b12838e193d715ebb844f1c121ea95421d",
+      "sha256": "9c045d762e4c31d6fab245d9e67d813550fcaf6bc51ef1e31ac9aff737066f7a",
       "lines": 73,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "scripts/tests/static-preview-headers.test.mjs",

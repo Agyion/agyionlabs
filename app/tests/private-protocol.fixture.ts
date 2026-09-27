@@ -7,6 +7,7 @@ import {File as NodeFile} from 'node:buffer';
 import {createHash} from 'node:crypto';
 import {Account,Address,Keypair,Networks,SorobanDataBuilder,StrKey,Transaction,TransactionBuilder,nativeToScVal,rpc,xdr} from '@stellar/stellar-sdk';
 import {setup,b,sc,dataKey} from '../../contracts/private-pool/client/reader-fixture';
+import type {PrivateReleasePolicy} from '../app/lib/private/release';
 import {verifyPoolRelease} from '../../contracts/private-pool/client/release';
 import {createPoolReader} from '../../contracts/private-pool/client/reader';
 import {snapshotAttempt,intentOf,reservationKeys,type JournalIntent,type JournalAttempt,type SubmissionJournal,type TerminalEvidence,type JournalEntry} from '../../contracts/private-pool/client/journal';
@@ -35,16 +36,16 @@ class MemoryJournal implements SubmissionJournal {
 }
 let backup:CompletePrivacyKeyBackup;
 export async function initializeProtocolFixture(){const f=setup(),release=await verifyPoolRelease(f.manifest,f.dkg),vault=createPrivacyVault(release.scope,grants);try{backup=await backupPrivacyVault(vault,password)}finally{forgetPrivacyVault(vault)}}
-export async function protocolFixture(overrideBackup?:CompletePrivacyKeyBackup){
+export async function protocolFixture(overrideBackup?:CompletePrivacyKeyBackup,policy:PrivateReleasePolicy='funding'){
  const f=setup(),release=await verifyPoolRelease(f.manifest,f.dkg),tree=new SparseMerkleTree(32);
  f.state.root=b(tree.root);f.state.next_index=0n;f.state.record_count=0n;f.state.roots=[b(tree.root)];f.instance();
  const vault=createPrivateVaultController(release.scope);await vault.restore(selected(overrideBackup??backup),password);
  const journal=new MemoryJournal(),key=Keypair.fromRawEd25519Seed(Buffer.alloc(32,71)),asset=StrKey.decodeContract(f.manifest.config.assets[0]).toString('hex');
  const reader=createPoolReader(release,{fetch:async(...args)=>{if(hooks.readFailure)throw Error('TEST_READER_UNAVAILABLE');return f.fetcher(...args)}});
  const calls={proves:0,verifies:0,signs:0,sends:0,disposed:0,fees:[] as FeeConfirmation[]};
- const hooks={readFailure:false,resourceFee:'300',acceptFee:true,session:'fixture-session',onFee:async()=>{},onSign:async()=>{},onProve:async()=>{},onGet:async()=>{},walletListener:(()=>{}) as ()=>void};
+ const hooks={policy,readFailure:false,resourceFee:'300',acceptFee:true,session:'fixture-session',onFee:async()=>{},onSign:async()=>{},onProve:async()=>{},onGet:async()=>{},walletListener:(()=>{}) as ()=>void};
  let recordId='00'.repeat(32),lastFields:readonly string[]=[];
- const adapters:PrivateProtocolAdapters={release:async()=>release,assets:f.manifest.config.assets,reader:()=>reader,journal:async()=>journal,
+ const adapters:PrivateProtocolAdapters={get policy(){return hooks.policy},release:async()=>release,assets:f.manifest.config.assets,reader:()=>reader,journal:async()=>journal,
   transport:()=>({getAccount:async a=>new Account(a,'100'),getLatestLedger:async()=>({sequence:1005}),
    simulateTransaction:async tx=>{
     const auth:xdr.SorobanAuthorizationEntry[]=[];

@@ -28,7 +28,7 @@ export type PreparedPrivateOperation=Readonly<{
 }>;
 export type PrivateOperationOutcome=SubmissionOutcome|RevocationOutcome;
 export type FeeConfirmation=Readonly<{feeStroops:string;maxFeeStroops:string;source:string;action:string;signal:AbortSignal}>;
-export type PrivateProtocolOptions=Readonly<{vault:VaultAccess;maxFeeStroops:string;confirmFee(value:FeeConfirmation):Promise<boolean>}>;
+export type PrivateProtocolOptions=Readonly<{releaseKey?:string;vault:VaultAccess;maxFeeStroops:string;confirmFee(value:FeeConfirmation):Promise<boolean>}>;
 export interface PrivateProtocol {
  subscribe(listener:()=>void):()=>void;
  getSnapshot():PrivateProtocolSnapshot;

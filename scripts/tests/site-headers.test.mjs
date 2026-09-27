@@ -57,7 +57,7 @@ test('security headers stay unchanged and Cloudflare header limits are respected
     'x-content-type-options': 'nosniff',
     'x-frame-options': 'DENY',
     'referrer-policy': 'no-referrer',
-    'permissions-policy': 'camera=(), microphone=(), geolocation=()',
+    'permissions-policy': 'camera=(), microphone=(), geolocation=(self)',
     'strict-transport-security': 'max-age=31536000',
   });
   assert.ok(document.split('\n').filter(line => line.startsWith('/')).length <= 100);

@@ -34,9 +34,9 @@ describe('explicit public market map',()=>{
     fireEvent.click(screen.getByRole('button',{name:'Search this area'}));expect(onArea).toHaveBeenCalledExactlyOnceWith([28000000,40000000,29000000,41000000]);
   });
   it('rejects oversized, invalid and wrapped bounds without changing the query behind the user',async()=>{
-    const d=leafletDouble();vi.doMock('leaflet',()=>d.api);const onArea=vi.fn();render(<MarketMap listings={[]} onSelect={()=>{}} onArea={onArea}/>);
+    const d=leafletDouble();vi.doMock('leaflet',()=>d.api);const onArea=vi.fn();render(<MarketMap listings={[listing]} onSelect={()=>{}} onArea={onArea}/>);
     fireEvent.click(screen.getByRole('button',{name:'Show map'}));await waitFor(()=>expect(d.api.map).toHaveBeenCalled());
-    expect(d.map.setView).toHaveBeenCalledWith([0,0],2);expect(d.api.marker).not.toHaveBeenCalled();
+    expect(d.map.setView).not.toHaveBeenCalledWith([0,0],2);expect(d.api.marker).toHaveBeenCalled();
     for(const bounds of [[0,0,5.000001,1],[0,0,1,5.000001],[179,0,181,1],[0,0,NaN,1],[1,0,0,1]]){
       act(()=>d.setArea(bounds));expect(screen.getByRole('button',{name:'Search this area'}).hasAttribute('disabled')).toBe(true);
       fireEvent.click(screen.getByRole('button',{name:'Search this area'}));
@@ -65,7 +65,7 @@ describe('explicit public market map',()=>{
   });
   it('does not publish initialization errors or fetch tiles after an inactive delayed import',async()=>{
     const d=leafletDouble(),gate=deferred<typeof d.api>();vi.doMock('leaflet',()=>gate.promise);
-    const view=render(<MarketMap listings={[]} onSelect={()=>{}} onArea={()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'Show map'}));
+    const view=render(<MarketMap listings={[listing]} onSelect={()=>{}} onArea={()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'Show map'}));
     view.rerender(<MarketMap active={false} listings={[]} onSelect={()=>{}} onArea={()=>{}}/>);
     await act(async()=>{gate.reject(new Error('internal detail'));try{await gate.promise;}catch{}});expect(d.api.map).not.toHaveBeenCalled();expect(screen.queryByText(/internal detail/)).toBeNull();
   });
@@ -77,7 +77,7 @@ describe('explicit public market map',()=>{
   });
   it('discards a pending import after unmount and does not initialize a tile layer',async()=>{
     const d=leafletDouble(),gate=deferred<typeof d.api>(),load=vi.fn(()=>gate.promise);vi.doMock('leaflet',load);
-    const view=render(<MarketMap listings={[]} onSelect={()=>{}} onArea={()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'Show map'}));
+    const view=render(<MarketMap listings={[listing]} onSelect={()=>{}} onArea={()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'Show map'}));
     await waitFor(()=>expect(load).toHaveBeenCalled());view.unmount();await act(async()=>{gate.resolve(d.api);await vi.dynamicImportSettled();});
     expect(d.api.map).not.toHaveBeenCalled();expect(d.api.tileLayer).not.toHaveBeenCalled();
   });
@@ -88,4 +88,30 @@ describe('explicit public market map',()=>{
     view.rerender(<MarketMap listings={listings} selectedId={listing.id} onSelect={()=>{}} onArea={()=>{}}/>);
     expect(d.map.fitBounds).toHaveBeenCalledTimes(1);expect(d.markers.at(-1)!.element.getAttribute('aria-pressed')).toBe('true');
   });
+});
+
+it('offers a local starting point without loading a world map when there are no listings',async()=>{
+ const d=leafletDouble(),load=vi.fn(()=>d.api);vi.doMock('leaflet',load);
+ render(<MarketMap listings={[]} onSelect={()=>{}} onArea={()=>{}}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Show map'}));await vi.dynamicImportSettled();
+ expect(load).not.toHaveBeenCalled();expect(screen.getByRole('button',{name:'Search near me'})).toBeTruthy();
+ expect(screen.getByLabelText('City or town')).toBeTruthy();expect(d.map.setView).not.toHaveBeenCalled();
+});
+it('keeps the chosen neighborhood while a catalog refresh has no listings',async()=>{
+ const d=leafletDouble();vi.doMock('leaflet',()=>d.api);
+ const view=render(<MarketMap listings={[listing]} onSelect={()=>{}} onArea={()=>{}}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Show map'}));await waitFor(()=>expect(d.api.map).toHaveBeenCalledTimes(1));
+ const fits=d.map.fitBounds.mock.calls.length;act(()=>d.setArea([28.9,40.9,29.1,41.1]));
+ view.rerender(<MarketMap listings={[]} onSelect={()=>{}} onArea={()=>{}}/>);
+ expect(d.map.setView).not.toHaveBeenCalledWith([0,0],2);expect(d.map.fitBounds).toHaveBeenCalledTimes(fits);
+ expect(d.map.remove).not.toHaveBeenCalled();
+});
+it('gives the map room after choosing a location and exposes one explicit area-change action',async()=>{
+ const d=leafletDouble();vi.doMock('leaflet',()=>d.api);const onArea=vi.fn();
+ Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition:(yes:PositionCallback)=>yes({coords:{latitude:41,longitude:29,accuracy:50}} as GeolocationPosition)}});
+ try{
+  render(<MarketMap listings={[]} onSelect={()=>{}} onArea={onArea}/>);fireEvent.click(screen.getByRole('button',{name:'Search near me'}));
+  await waitFor(()=>expect(d.api.map).toHaveBeenCalled());expect(onArea).toHaveBeenCalledOnce();expect(screen.queryByLabelText('City or town')).toBeNull();
+  fireEvent.click(screen.getByRole('button',{name:'Change area'}));expect(screen.getByLabelText('City or town')).toBeTruthy();expect(onArea).toHaveBeenCalledOnce();
+ }finally{Reflect.deleteProperty(navigator,'geolocation');}
 });

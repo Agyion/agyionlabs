@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 import http from 'node:http';
-import {Keypair,hash} from '@stellar/stellar-sdk';
+import {Keypair,StrKey,hash} from '@stellar/stellar-sdk';
 import {snapshotAttempt,reservationKeys,type PublicAttempt} from './journal.ts';
 import {fieldBytes} from './adapter.ts';
 
@@ -103,5 +103,24 @@ test('real browser IndexedDB keeps atomic reservations across connections/reload
   let active=0,maximum=0;await Promise.all(Array.from({length:8},()=>j.exclusive(async()=>{active++;maximum=Math.max(maximum,active);await new Promise(r=>setTimeout(r,5));active--;})));
   j.close();return {restored:saved.attempt.hash===a.hash&&saved.terminal===null,duplicateRejected,rolledBack,conflictRejected,freed,immutable:JSON.stringify(saved.attempt)===JSON.stringify(closed.attempt),maximum};
  },{name,a,changed});assert.deepEqual(result,{restored:true,duplicateRejected:true,rolledBack:true,conflictRejected:true,freed:true,immutable:true,maximum:1});
+ // Use the actual DEFAULT database, not a per-profile database. A new pool and
+ // profile must still contend for the original account's shared reservation.
+ const nextProfile={...revokeAttempt(),pool:StrKey.encodeContract(Buffer.alloc(32,97)),releaseId:'98'.repeat(32)};
+ const crossProfile=await next.evaluate(async({old,nextProfile}:any)=>{
+  const f=(globalThis as any).journalFactory,j1=await f(),j2=await f();await j1.commit(old);
+  const {version,hash,sequence,callHash,retryOf,revocationIndex,...intent}=nextProfile;
+  const conflict=await j2.conflicts(intent);let active=0,maximum=0,rejected=false;
+  await Promise.all([j1.exclusive(async()=>{active++;maximum=Math.max(maximum,active);await new Promise(r=>setTimeout(r,25));active--;}),
+   j2.exclusive(async()=>{active++;maximum=Math.max(maximum,active);try{await j2.commit(nextProfile)}catch{rejected=true}finally{active--;}})]);
+  const retained=(await j2.pending()).map((a:any)=>a.hash);const absent=await j2.get(nextProfile.hash)===null;j1.close();j2.close();
+  const reload=await f(),pending=await reload.pending();
+  // Synthetic terminal evidence exercises journal mechanics only. The app
+  // recovery tests separately require the actual signed envelope/archive gates.
+  await reload.terminal({hash:old.hash,status:'failed',ledger:1011});await reload.commit(nextProfile);
+  const remaining=await reload.pending();reload.close();
+  return {oldVisible:pending.length===1&&pending[0].hash===old.hash,conflicts:conflict.map((a:any)=>a.hash),rejected,absent,maximum,retained,
+   nextOnly:remaining.length===1&&remaining[0].hash===nextProfile.hash};
+ },{old:a,nextProfile});
+ assert.deepEqual(crossProfile,{oldVisible:true,conflicts:[a.hash],rejected:true,absent:true,maximum:1,retained:[a.hash],nextOnly:true});
  assert.equal(external,0);t.diagnostic('Actual browser IndexedDB/Web Locks; public test metadata only; no external request or transaction submission.');
  });

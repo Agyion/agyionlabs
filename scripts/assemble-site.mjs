@@ -8,7 +8,7 @@ const root=fileURLToPath(new URL('..',import.meta.url));
 const site=path.join(root,process.argv.includes('--demo') ? 'artifacts/mock-site' : 'app/site');
 await rm(site,{recursive:true,force:true});await mkdir(site,{recursive:true});
 await cp(path.join(root,'landing/dist'),site,{recursive:true});
-for(const item of ['_next','app','404.html','favicon.svg','zk']) await cp(path.join(root,'app/out',item),path.join(site,item),{recursive:true});
+for(const item of ['_next','app','404.html','favicon.svg','zk','places']) await cp(path.join(root,'app/out',item),path.join(site,item),{recursive:true});
 const [appBuild, loadable] = await Promise.all(['app-build-manifest.json', 'react-loadable-manifest.json'].map(async file => JSON.parse(await readFile(path.join(root, 'app/.next', file), 'utf8'))));
 const appAssets = buildAppAssetManifest(appBuild, loadable);
 for (const { href } of appAssets.assets) {

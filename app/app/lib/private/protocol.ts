@@ -18,8 +18,7 @@ import {receiveDescriptor as describeVault,exportPrivateCredential,checkExported
 import type {PrivacyVaultHandle} from '../privateVault';
 import {PRIVATE_PROVER_ASSETS} from '../privateProverAssets';
 import {onWalletSessionChange} from '../wallet';
-import {getPrivatePoolRelease} from './release';
-import manifest from './release.json';
+import {DEFAULT_PRIVATE_RELEASE_KEY,resolvePrivateRelease,type PrivateReleasePolicy} from './release';
 import {bindPrivateWallet,type BoundPrivateWallet} from './wallet-session';
 import {summarizePrivateNote} from './note-summary';
 import type {PrivateProtocol,PrivateProtocolOptions,PrivateProtocolSnapshot,PrivateCommand,PreparedPrivateOperation,PrivatePendingAttempt,PrivateOperationOutcome,PrivateNoteSummary,PrivateReceiveDescriptor} from './protocol-types';
@@ -28,6 +27,8 @@ import type {PrivateProtocol,PrivateProtocolOptions,PrivateProtocolSnapshot,Priv
  * Product UI passes only options. No verifier, witness, server prover or release
  * selected by a form/URL is accepted by the browser defaults. */
 export interface PrivateProtocolAdapters {
+ /** Test/integration authority only. Product policy comes from the catalogue. */
+ readonly policy?:PrivateReleasePolicy;
  release():Promise<PoolRelease>;
  assets:readonly string[];
  reader(release:PoolRelease):PoolReader;
@@ -52,8 +53,8 @@ function rpcTransport(release:PoolRelease):SubmissionTransport{
  return {getAccount:address=>bounded(server.getAccount(address),undefined),getLatestLedger:()=>bounded(server.getLatestLedger(),undefined),
   simulateTransaction:tx=>bounded(server.simulateTransaction(tx),undefined),sendTransaction:tx=>bounded(server.sendTransaction(tx),undefined),getTransaction:hash=>bounded(server.getTransaction(hash),undefined)};
 }
-const browserAdapters:PrivateProtocolAdapters={
- release:getPrivatePoolRelease,assets:manifest.config.assets,reader:createPoolReader,transport:rpcTransport,journal:createIndexedDbSubmissionJournal,wallet:bindPrivateWallet,onWalletChange:onWalletSessionChange,
+const browserAdapters:Omit<PrivateProtocolAdapters,'release'|'assets'|'policy'>={
+ reader:createPoolReader,transport:rpcTransport,journal:createIndexedDbSubmissionJournal,wallet:bindPrivateWallet,onWalletChange:onWalletSessionChange,
  async prover(count,signal){const config=await loadPinnedProverArtifacts(count===157?PRIVATE_PROVER_ASSETS.transition:PRIVATE_PROVER_ASSETS.revocation,{signal});return createLocalGroth16WorkerProver(config,{signal});},
 };
 const empty=Object.freeze([]);
@@ -69,9 +70,18 @@ function address(value:{kind:'account'|'contract';id:string}|null):string|null{
 }
 function sameSession(actual:WalletSession,expected:WalletSession){ensure(actual.id===expected.id&&actual.account===expected.account&&actual.networkPassphrase===expected.networkPassphrase,'WALLET_SESSION_CHANGED');}
 
-export async function createPrivateProtocol(options:PrivateProtocolOptions,adapters:PrivateProtocolAdapters=browserAdapters):Promise<PrivateProtocol>{
+export async function createPrivateProtocol(options:PrivateProtocolOptions,integration?:PrivateProtocolAdapters):Promise<PrivateProtocol>{
  ensure(typeof options.confirmFee==='function','PRIVATE_FEE_CONFIRMATION_REQUIRED');
  ensure(/^[1-9][0-9]{0,9}$/.test(options.maxFeeStroops)&&BigInt(options.maxFeeStroops)<=0xffffffffn,'EXPLICIT_FEE_BUDGET_REQUIRED');
+ // Resolve compiled policy, assets and scope as one authority before opening any
+ // wallet, storage or network resource. Untrusted selectors cannot supply pins.
+ const selected=integration?null:await resolvePrivateRelease(options.releaseKey??DEFAULT_PRIVATE_RELEASE_KEY);
+ const adapters:PrivateProtocolAdapters=integration??{...browserAdapters,release:async()=>selected!.release,assets:selected!.assets,policy:selected!.policy};
+ const recoveryActions=new Set(['consolidate','withdraw','pod-claim','trigger-claim','trigger-refund','envoy-claim','envoy-reclaim','envoy-revoke']);
+ function assertAction(action:string){
+  const policy=adapters.policy??'funding';ensure(policy==='funding'||policy==='recovery','PRIVATE_RELEASE_POLICY_REQUIRED');
+  ensure(policy==='funding'||recoveryActions.has(action),'PRIVATE_RELEASE_RECOVERY_ONLY');
+ }
  const release=await adapters.release();assertPoolRelease(release);ensure(release.networkPassphrase===Networks.TESTNET,'PRIVATE_TESTNET_REQUIRED');
  const reader=adapters.reader(release);assertPoolReader(reader,release);const transport=adapters.transport(release);
  ensure(Array.isArray(adapters.assets)&&adapters.assets.length>0&&adapters.assets.length<=8&&new Set(adapters.assets).size===adapters.assets.length,'PRIVATE_ASSET_POLICY_REQUIRED');
@@ -135,9 +145,9 @@ export async function createPrivateProtocol(options:PrivateProtocolOptions,adapt
   return {submit:createTestnetSubmissionLifecycle({...common,verifyLocal:async(p,s)=>(await localProver(157,signal)).verify(p,s)}),
    revoke:createTestnetRevocationLifecycle({...common,verifyLocal:async(p,s)=>(await localProver(4,signal)).verify(p,s)})};
  }
- async function prepare(value:PrivateCommand):Promise<PreparedPrivateOperation>{const command=parsePrivateCommand(value,release.scope);return run('recovering',async(vault,assertCurrent,signal)=>{
+ async function prepare(value:PrivateCommand):Promise<PreparedPrivateOperation>{current();const command=parsePrivateCommand(value,release.scope);assertAction(command.action);return run('recovering',async(vault,assertCurrent,signal)=>{
   clearPrepared();const bound=await adapters.wallet(assertCurrent);assertCurrent();const walletSession=bound.wallet.session();
-  const {result,ledger}=await recover(vault,assertCurrent,signal);assertCurrent();
+  const {result,ledger}=await recover(vault,assertCurrent,signal);assertCurrent();assertAction(command.action);
   const plan=planPrivateCommand({command,profile:release.profile,scope:release.scope,assets,ledger:BigInt(ledger),source:{kind:'account',id:StrKey.decodeEd25519PublicKey(bound.account).toString('hex')},archive:result.archive,notes:result.notes.map(item=>({id:item.note.commitment,index:item.index,note:client.readNote(item.note)})),usedGrantIds:result.usedGrantIds,vault,credentials});
   publish({phase:'proving'});let draft:LocalPrivateDraft|null=null,candidate:PublicSubmission|PublicRevocation,addresses:PublicAddresses|null=null;
   if(plan.kind==='transition'){
@@ -148,7 +158,7 @@ export async function createPrivateProtocol(options:PrivateProtocolOptions,adapt
    ensure(proof.publicSignals.length===4&&proof.publicSignals.every((n,i)=>n===plan.publicSignals[i]),'PRIVATE_REVOCATION_SIGNAL_MISMATCH');
    candidate={kind:'UnsubmittedPrivateRevocation',...proof,ownerKey:plan.ownerKey,signature:plan.signature};
   }
-  assertCurrent();sameSession(bound.wallet.session(),walletSession);
+  assertCurrent();assertAction(command.action);sameSession(bound.wallet.session(),walletSession);
   const handle=Object.freeze({id:globalThis.crypto.randomUUID(),summary:Object.freeze({...plan.summary}),publicFeePayer:bound.account,maxFeeStroops:options.maxFeeStroops,
    credentials:Object.freeze(plan.requiredCredentialExports.map(item=>Object.freeze({id:item.id,role:item.role,recipient:item.recipient.spendingAuthHash})))});
   prepared.set(handle,{vault,session:walletSession,generation,plan,candidate,addresses,draft,checked:new Set(),result:null,signingStarted:false});publish({status:'ready',feeQuote:null});return handle;
@@ -156,15 +166,16 @@ export async function createPrivateProtocol(options:PrivateProtocolOptions,adapt
  async function submit(handle:PreparedPrivateOperation):Promise<PrivateOperationOutcome>{
   current();const known=completed.get(handle);if(known)return reconciled.get(known.hash)??known;
   const entry=prepared.get(handle);ensure(entry,'PRIVATE_PREPARATION_REQUIRED');if(entry.result)return entry.result;
+  assertAction(entry.plan.summary.action);
   try{return await run('signing',async(vault,assertCurrent,signal)=>{
    ensure(entry.vault===vault&&entry.generation===generation,'PRIVATE_PREPARATION_CHANGED');
    ensure(entry.plan.requiredCredentialExports.every(item=>entry.checked.has(item.id)),'PRIVATE_CREDENTIAL_BACKUP_REQUIRED');
-   const bound=await adapters.wallet(assertCurrent);assertCurrent();sameSession(bound.wallet.session(),entry.session);
+   const bound=await adapters.wallet(assertCurrent);assertCurrent();assertAction(entry.plan.summary.action);sameSession(bound.wallet.session(),entry.session);
    const wallet:PrivateWallet={session:()=>{assertCurrent();return bound.wallet.session()},async signTransaction(value,network,account){
-    assertCurrent();const tx=TransactionBuilder.fromXDR(value,Networks.TESTNET);ensure(tx instanceof Transaction,'PRIVATE_SIGNING_PAYLOAD_INVALID');
+    assertCurrent();assertAction(entry.plan.summary.action);const tx=TransactionBuilder.fromXDR(value,Networks.TESTNET);ensure(tx instanceof Transaction,'PRIVATE_SIGNING_PAYLOAD_INVALID');
     ensure(BigInt(tx.fee)<=BigInt(handle.maxFeeStroops),'FEE_BUDGET_EXCEEDED');publish({phase:'confirming-fee',feeQuote:{feeStroops:tx.fee,maxFeeStroops:handle.maxFeeStroops}});
     const accepted=await bounded(Promise.resolve().then(()=>options.confirmFee(Object.freeze({feeStroops:tx.fee,maxFeeStroops:handle.maxFeeStroops,source:account,action:handle.summary.action,signal}))),signal,120_000);
-    assertCurrent();sameSession(bound.wallet.session(),entry.session);ensure(accepted===true,'PRIVATE_FEE_CONFIRMATION_CANCELLED');publish({phase:'signing'});
+    assertCurrent();assertAction(entry.plan.summary.action);sameSession(bound.wallet.session(),entry.session);ensure(accepted===true,'PRIVATE_FEE_CONFIRMATION_CANCELLED');publish({phase:'signing'});
     entry.signingStarted=true;const signed=await bound.wallet.signTransaction(value,network,account);assertCurrent();return signed;
    }};
    const lifecycles=await makeLifecycles(wallet,signal,handle.maxFeeStroops),outcome=entry.candidate.kind==='UnsubmittedPrivateTransition'
