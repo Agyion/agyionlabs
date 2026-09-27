@@ -1,9 +1,12 @@
 # Experimental BabyJub threshold protocol
 
-This is implemented local cryptographic research, separate from the installed
-proof-suite registry and the public application. It is not a deployed committee,
-an audited threshold-encryption composition, a disclosure authorization service,
-or a guarantee of constant-time JavaScript execution.
+This threshold library is used by the current experimental v2 private testnet
+pool and its integrated application. The deployed development profile uses
+three of five shares held by one local development operator. It is not an
+independently operated production committee, an audited threshold-encryption
+composition, a public disclosure authorization service, or a guarantee of
+constant-time JavaScript execution. The separate legacy v1 `installedSuites()`
+registry remains intentionally empty; it does not describe v2 deployment status.
 
 `src/threshold.mjs` uses pinned MIT-licensed `@noble/curves` 2.4.0 and
 `@noble/hashes` 2.4.0. Curve operations come from `babyjubjub.Point`; this module
@@ -127,8 +130,15 @@ mixed epochs/requests, forged proofs, invalid scalars, identity/small-order and
 mixed-torsion points, and revalidation after public serialization. All trustee
 keys and secrets in the tests are synthetic local fixtures.
 
-JavaScript bigint timing, memory lifetime/zeroization, endpoint authorization,
-private transport, durable key custody/backup, operator independence, rotation,
-deployment and full circuit/contract composition remain separate review and
-operational work. The module does not change `installedSuites()` or activate
-private transfers.
+JavaScript bigint timing, memory lifetime/zeroization, service endpoint
+authorization, private transport, durable key custody/backup, operator
+independence and rotation remain separate review and operational work. The v2
+circuit, contract and app integration have their own development verification
+evidence; these library tests do not substitute for it or establish a production
+release. This module does not change the legacy `installedSuites()` registry.
+
+The disclosure operator in `authorization.mjs` checks its trusted ledger after
+the encrypted response is complete and before returning it. Expiry or a failed
+ledger read at that boundary returns no response while preserving the durable
+first-use claim. A later network delay or reuse of already disclosed information
+cannot be revoked by that application check. See the [disclosure boundaries](../docs/PRIVACY_DISCLOSURE.md).

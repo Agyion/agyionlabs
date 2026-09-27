@@ -1,29 +1,23 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T06:13:48.071691+00:00",
+  "reviewedAt": "2026-09-27T06:59:07.561296+00:00",
   "runtimeReleaseCommit": "a14dc5b628ad72f99c9d92a1abb7135a3965ca47",
   "scope": "Tracked and nonignored first-party authored source, tests, configuration, styles, API declarations, vector assets and database migrations. Exact current bytes at this checkpoint.",
-  "postReleaseToolingChanges": [
-    ".github/workflows/checks.yml",
-    "scripts/fetch-private-prover.mjs",
-    "scripts/tests/fetch-private-prover.test.mjs",
-    "scripts/verify-production-release.mjs"
-  ],
   "reviewKinds": {
     "complete-source-read": "The exact current hash has explicit complete source-read ranges from this development review. It does not imply a new reread during manifest generation.",
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 518,
-    "lines": 65156,
+    "files": 522,
+    "lines": 65534,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 422,
-        "lines": 45215
+        "files": 427,
+        "lines": 45595
       },
       "verified-baseline-plus-reviewed-diff": {
-        "files": 96,
-        "lines": 19941
+        "files": 95,
+        "lines": 19939
       }
     },
     "unresolvedFiles": 0,
@@ -38,7 +32,7 @@
   "limitations": [
     "Development source review is not an independent security audit, execution coverage, proof of cryptographic soundness or a guarantee that every exploit is absent.",
     "Passing tests do not establish source-read coverage. Testnet and browser evidence has separate scope and limitations.",
-    "These file hashes are a dated source checkpoint, not a claim that every listed file is part of the deployed runtime bundle. The listed tooling changes follow the runtime release commit.",
+    "These file hashes are a dated source checkpoint, not a claim that every listed file is part of the deployed website bundle. The listed operator, tooling, metadata and comment changes follow the website runtime release commit.",
     "Any subsequent source change requires renewed review evidence and manifest reconciliation."
   ],
   "files": [
@@ -68,9 +62,9 @@
     },
     {
       "path": "app/.eslintignore",
-      "sha256": "9196511531991543ab15b8efc04a071d99bbbd89279bc1e44aac140caee04b32",
+      "sha256": "f6a0ecc4aeb2dbdeef368e12819e2cd30e36bacf2b28a1b48ff9fcd74012664b",
       "lines": 2,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/.eslintrc.json",
@@ -596,7 +590,7 @@
     },
     {
       "path": "app/tailwind.config.ts",
-      "sha256": "f7f190b3a198eb40a347469ebe9c7c1efc281cea4d8c923f28cfafc9d541e644",
+      "sha256": "0efbb9d356a2fb6c557247568ce5a2bd04637ad52e32734f40e3bbd2984f5b77",
       "lines": 55,
       "reviewKind": "complete-source-read"
     },
@@ -1250,8 +1244,8 @@
     },
     {
       "path": "deployments/market-testnet.json",
-      "sha256": "f5df40c005d23a15dfd7de1e0379ec0043c2941973c52c1dc654481a79794e12",
-      "lines": 51,
+      "sha256": "02c1f19579d6cafafe3ed657ffb748c88726b0ea03a8a18d9502483fd6aa64aa",
+      "lines": 108,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2288,8 +2282,8 @@
     },
     {
       "path": "privacy/src/authorization.mjs",
-      "sha256": "7e7bc6b0ef63675bd926c0cd075ec56dc9f858bd5a157fbe1685e59f0b7efc36",
-      "lines": 224,
+      "sha256": "c8775a754bf90bb9cad7e5b2d97630fead39bba706824c11351ea5a0a2790924",
+      "lines": 228,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2486,8 +2480,8 @@
     },
     {
       "path": "privacy/test/authorization.test.mjs",
-      "sha256": "1218101d72b5aa1c88bb0dd8e9b691b80667581ac2ad8582563d04a4cf8e8175",
-      "lines": 139,
+      "sha256": "a170233e42234654514606f4da7460ecff38a7fef4aa3375aefa57a32cefd313",
+      "lines": 173,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2719,6 +2713,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/lib/private-json.mjs",
+      "sha256": "4504d8f6ac1be67cf58e76423d66268158c605611bdd312cce3c2d6169b8230a",
+      "lines": 5,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/lib/typography-audit.mjs",
       "sha256": "7dc99dd2cf022df36efa0d572619bd8c6743f04487020620b7aab5cc08c71f3f",
       "lines": 144,
@@ -2839,6 +2839,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/private-json.test.mjs",
+      "sha256": "a659f9069a662180e23405ca1ec66e96a1f3188208023a2fba55d9a52aac9efe",
+      "lines": 54,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/private-prover-fixture.mjs",
       "sha256": "0353d80d21048caa9b6e951122d051fb1be731082ad04aeb206511cda443f96d",
       "lines": 42,
@@ -2884,6 +2890,12 @@
       "path": "scripts/tests/verify-testnet-market-catalog.test.mjs",
       "sha256": "a5f58ebf56d7ccd2553fef46f277ba225ff0788afa86b9757996a693a4fcd7ad",
       "lines": 10,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/verify-testnet-market-usdc.test.mjs",
+      "sha256": "d56f68299b42c5f2db2a4e9bd621d72c98fba29c613c63ac06e5e521837211ac",
+      "lines": 95,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3038,14 +3050,20 @@
     },
     {
       "path": "scripts/verify-testnet-market-catalog.mjs",
-      "sha256": "997015c390b1c979d891bbeb7718107f9744f38471606afa6671dec1805006f4",
-      "lines": 115,
+      "sha256": "c06dd03e4d99f5ddca036e3814b4ad75fb9727f77f46d2abd4e64f72b7fbec2c",
+      "lines": 116,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-testnet-market-usdc.mjs",
+      "sha256": "e0b45118710836284f4f74e74c2fa2c772b42060221f7bebf151fe6a1e699900",
+      "lines": 127,
       "reviewKind": "complete-source-read"
     },
     {
       "path": "scripts/verify-testnet-market.mjs",
-      "sha256": "df582e003fe7046bb6e2d1b0ea31dd0d981331917c99751327b4734e3edd8566",
-      "lines": 255,
+      "sha256": "f90c2fb8d8f9204c9a1bb76d3403087822ce3bf80642e508df3fdf2685ac17a7",
+      "lines": 256,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3150,5 +3168,22 @@
       "lines": 285,
       "reviewKind": "verified-baseline-plus-reviewed-diff"
     }
+  ],
+  "postRuntimeReleaseChanges": [
+    ".github/workflows/checks.yml",
+    "app/.eslintignore",
+    "app/tailwind.config.ts",
+    "deployments/market-testnet.json",
+    "privacy/src/authorization.mjs",
+    "privacy/test/authorization.test.mjs",
+    "scripts/fetch-private-prover.mjs",
+    "scripts/lib/private-json.mjs",
+    "scripts/tests/fetch-private-prover.test.mjs",
+    "scripts/tests/private-json.test.mjs",
+    "scripts/tests/verify-testnet-market-usdc.test.mjs",
+    "scripts/verify-production-release.mjs",
+    "scripts/verify-testnet-market-catalog.mjs",
+    "scripts/verify-testnet-market-usdc.mjs",
+    "scripts/verify-testnet-market.mjs"
   ]
 }

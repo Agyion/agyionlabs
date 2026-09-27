@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { createHash, randomBytes } from 'node:crypto';
+import { parsePrivateJson } from './lib/private-json.mjs';
 const require = createRequire(new URL('../app/package.json', import.meta.url));
 const { Keypair, Address, Asset, Contract, Operation, TransactionBuilder, nativeToScVal, scValToNative, xdr, rpc, contract } = require('@stellar/stellar-sdk');
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -62,7 +63,7 @@ function runDirectory(value, create=false) {
 }
 function secureRead(file) {
   const info=fs.lstatSync(file); assert.ok(info.isFile()&&!info.isSymbolicLink()); assert.equal(info.mode&0o777,0o600); assert.equal(info.uid,process.getuid());
-  return JSON.parse(fs.readFileSync(file,'utf8'));
+  return parsePrivateJson(fs.readFileSync(file,'utf8'));
 }
 function prepare(value) {
   const wasm=fs.readFileSync(WASM); assert.equal(sha(wasm),EXPECTED_HASH);

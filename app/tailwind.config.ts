@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Agyion design tokens — mirror the landing (Fluid Studio) palette exactly:
+ * Agyion design tokens. Legacy palette retained for existing utility classes:
  * canvas #000, surface #121512, ink #fff, accent/glow #1fd48c,
  * muted #8a8a8a, faint #666, depth zones abyss #04100b / deep #0e2c22.
  */
@@ -10,13 +10,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Landing depth tokens (landing/src/config.ts theme)
-        paper: "#000000", // canvas — pure black base
-        cream: "#121512", // surface — lifted dark panel
+        // Shared utility depth tokens
+        paper: "#000000", // canvas, pure black base
+        cream: "#121512", // surface, lifted dark panel
         ink: "#FFFFFF", // primary text
         muted: "#8A8A8A", // secondary text
         faint: "#666666", // tertiary text / disabled
-        accent: "#1FD48C", // signal green — CTAs, live price, locked state
+        accent: "#1FD48C", // signal green for existing semantic utility classes
         sand: "#26302A", // decorative lifelines inside visualizations
         hairline: "rgba(255,255,255,0.14)", // table rows, card borders (1px)
         // Depth zones ("scroll = descent")
@@ -26,7 +26,7 @@ const config: Config = {
         drift: "#BDD2C4",
         // Semantic lifecycle colors
         ember: "#F2A65A", // below zero / expired / rejected / mock (warm alarm)
-        olive: "#35C77F", // executed / claimed — success
+        olive: "#35C77F", // executed / claimed, success
         returned: "#8A8A8A", // returned / expired
         // Deeper zone (abyss surfaces)
         night: {

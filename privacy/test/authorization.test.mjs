@@ -137,3 +137,37 @@ test('expiry after a delayed durable claim consumes the request without producin
  assert.equal(calls,2);
  await assert.rejects(operator(0,async()=>true,async()=>undefined).disclose(authorized(),archivedRecord,'105'));
 });
+
+test('expiry during encrypted delivery is rechecked before return and the consumed claim stays closed',{concurrency:false},async()=>{
+ let ledger='105',claims=0,ledgerReads=0,encryptions=0;const used=new Set();
+ const claim=async key=>{claims++;if(used.has(key))return false;used.add(key);return true};
+ const op=operator(0,claim,async()=>{ledgerReads++;return ledger});
+ const original=globalThis.crypto.subtle.encrypt;
+ globalThis.crypto.subtle.encrypt=async function(...args){
+  encryptions++;const ciphertext=await Reflect.apply(original,this,args);ledger='111';return ciphertext;
+ };
+ try {
+  await assert.rejects(op.disclose(authorized(),archivedRecord,'105'),/NOT_CURRENT/);
+  assert.equal(ledgerReads,3);assert.equal(claims,1);assert.equal(encryptions,1);assert.equal(used.size,1);
+  const renewed=authorized({...request,ledger:{from:'100',until:'120'}});
+  await assert.rejects(op.disclose(renewed,archivedRecord,'111'),/REPLAY/);
+  assert.equal(claims,2);assert.equal(encryptions,1);
+ } finally {globalThis.crypto.subtle.encrypt=original;}
+});
+
+test('trusted ledger failure after encryption returns no delivery and cannot reopen its replay claim',{concurrency:false},async()=>{
+ for(const failure of ['throw','invalid']){
+  let encrypted=false,unavailable=true,claims=0;const used=new Set();
+  const op=operator(0,async key=>{claims++;if(used.has(key))return false;used.add(key);return true},async()=>{
+   if(encrypted&&unavailable){if(failure==='throw')throw Error('Trusted ledger unavailable');return undefined;}return '105';
+  });
+  const original=globalThis.crypto.subtle.encrypt;
+  globalThis.crypto.subtle.encrypt=async function(...args){const ciphertext=await Reflect.apply(original,this,args);encrypted=true;return ciphertext;};
+  try {
+   await assert.rejects(op.disclose(authorized(),archivedRecord,'105'),failure==='throw'?/Trusted ledger unavailable/:/CANONICAL_UINT_REQUIRED/);
+   assert.equal(encrypted,true);assert.equal(claims,1);assert.equal(used.size,1);
+   unavailable=false;
+   await assert.rejects(op.disclose(authorized(),archivedRecord,'105'),/REPLAY/);assert.equal(claims,2);
+  } finally {globalThis.crypto.subtle.encrypt=original;}
+ }
+});

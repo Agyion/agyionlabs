@@ -10,6 +10,7 @@ import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomBytes} from 'node:crypto';
 import {checkConfirmed,checkFailed,checkFee,pickupPayload,safeError} from './verify-testnet-market.mjs';
+import {parsePrivateJson} from './lib/private-json.mjs';
 import {getMarketRelease} from '../market/client/release.ts';
 import {createMarketReader} from '../market/client/reader.ts';
 import {createMarketCatalog} from '../market/client/catalog.ts';
@@ -22,7 +23,7 @@ const CONTRACT='CCS7FTPT5XGKN7Q6Y3W3EIRPNF5LE7AV2FAVZ4YYERNGUBU24AAMCSPJ';
 const HASH='b1947f2ac6bfa3f42535ed571b956c9fd1ab425b1441adca99d2c8c919ed1c6c';
 const json=v=>JSON.stringify(v,(_k,x)=>typeof x==='bigint'?x.toString():x,2)+'\n';
 const hash=v=>createHash('sha256').update(v).digest('hex'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function secureRead(file){const s=fs.lstatSync(file);assert.ok(s.isFile()&&!s.isSymbolicLink()&&s.uid===process.getuid()&&(s.mode&0o777)===0o600);return JSON.parse(fs.readFileSync(file,'utf8'));}
+function secureRead(file){const s=fs.lstatSync(file);assert.ok(s.isFile()&&!s.isSymbolicLink()&&s.uid===process.getuid()&&(s.mode&0o777)===0o600);return parsePrivateJson(fs.readFileSync(file,'utf8'));}
 function writeNew(file,value){fs.writeFileSync(file,json(value),{flag:'wx',mode:0o600});}
 export function assertKnownRejectedProbe(previous){
  assert.equal(previous.status,'failed');assert.equal(previous.contract,CONTRACT);assert.equal(previous.wasmHash,HASH);

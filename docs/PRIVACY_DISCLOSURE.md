@@ -55,6 +55,12 @@ same OS owner deliberately deleting or rolling back the journal. Secure backup,
 separate custody, operational access controls and immutable audit retention are
 additional responsibilities.
 
+The operator checks the trusted current ledger again after encrypting its
+response, immediately before returning it. Expiry or an unavailable ledger read
+at that boundary prevents release and leaves the request consumed. This does
+not retract a response already released, impose a deadline on its later network
+delivery, or erase shares or plaintext the requester already obtained.
+
 **A colluding decryption quorum can bypass the application approval workflow.**
 The epoch decryption shares are mathematically capable of opening other records
 under that epoch. They do not know whether an authorization is lawful. Calling

@@ -198,7 +198,11 @@ export function createDisclosureOperator(value) {
     // A failure from here consumes the claim. A new signed request is required.
     authorized(value,await readCurrentLedger());
     const partials=a.request.fields.map(field=>({field,partial:createPartialDecryption(epoch,share,partialContext(a,points,field))}));
-    return sealDelivery(a,share.trusteeId,partials);
+    const delivery=await sealDelivery(a,share.trusteeId,partials);
+    // Encryption is asynchronous. Check the trusted ledger again immediately
+    // before releasing a response; failure still leaves the claim consumed.
+    authorized(value,await readCurrentLedger());
+    return delivery;
   }});
 }
 export async function openDisclosureDelivery(value,requestValue,requesterSecret,epochValue,archive,currentLedger) {

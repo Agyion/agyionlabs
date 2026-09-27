@@ -1,9 +1,10 @@
 # Private instruments v2 implementation profile
 
-This is the executable testnet development profile being implemented after the
-user requested completion. It is not an audited production protocol or an
-independently contributed ceremony. Existing public HAK funds are not migrated.
-The older `IMPLEMENTATION_PLAN.md` describes the completed parser-only package.
+This document specifies the experimental Stellar testnet profile used by the
+private pool and its application integration. It is not an audited production
+protocol or an independently contributed ceremony. Existing public Agyion funds
+are not migrated. The legacy v1 parser and its closed verifier registry remain
+separate from this v2 profile.
 
 ## Fixed interfaces
 

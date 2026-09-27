@@ -31,7 +31,7 @@
     "finalUsdcReserve": "0"
   },
   "deploymentTransaction": "b981aed039ab35f9fc5662b4b25ea3b1f4e1c30e28044f1d2caaa39df91d74e1",
-  "boundary": "Separate public marketplace. No migration of original public positions or private notes. Testnet XLM flows were exercised; no independent audit, physical fulfillment proof or actual USDC settlement is claimed.",
+  "boundary": "Separate public marketplace. No migration of original public positions or private notes. Testnet XLM and canonical Circle testnet USDC flows were exercised in separate runs. No independent audit, physical fulfillment proof, issuer freeze/clawback test or bank payout is claimed.",
   "browserVerification": {
     "verifiedAt": "2026-09-27T05:59:20.502Z",
     "offerId": "8",
@@ -47,5 +47,62 @@
     "finalXlmReserve": "0",
     "finalUsdcReserve": "0",
     "boundary": "Mounted compiled UI with scripted test wallet. Original registration, offer funding and publication used direct browser networking; settlement used a test-only Node HTTP forwarding adapter with real live responses after independently reproduced host virtual-interface changes interrupted Chrome. One settlement broadcast, confirmed Recovery before reload. The final harness assertion assumed wallet connection survived reload and failed; not a passing reconnect or real extension test."
+  },
+  "usdcVerification": {
+    "verifiedAt": "2026-09-27T06:38:36.046Z",
+    "documentation": "docs/USDC_TESTNET_VERIFICATION.md",
+    "includedTransactions": 13,
+    "setupTransactions": 4,
+    "marketplaceTransactions": 9,
+    "recordedCheckGroups": 8,
+    "includedLedgerRange": [
+      4893475,
+      4893505
+    ],
+    "offerIds": [
+      "9",
+      "10",
+      "11",
+      "12"
+    ],
+    "pricesInBaseUnits": [
+      "1000000",
+      "0",
+      "-1000000"
+    ],
+    "decimals": 7,
+    "acquisitionTransaction": "26bf38cda0d1ab52c4983c9b5b35debda4894dc661da1df861cf295305424995",
+    "settlementTransactions": [
+      "dddac6550eb575db4dfcebc52701348518af1e5013aed374486ef981a17f2dcb",
+      "29530c232fbd38834eaf381391e6afbd778a1ae5066036c2e60f16f5bec72095",
+      "4e01d307abcf58932d878961a54aaae76696ffd75ea3f4e686ca0ded025886a6"
+    ],
+    "refundTransaction": "59c148b0bde282b2ab5539aaee038ac60d0550068cd3a54eed797fd54531c096",
+    "finalSellerUsdcBaseUnits": "40000000",
+    "finalBuyerUsdcBaseUnits": "10000000",
+    "finalUsdcBalance": "0",
+    "finalUsdcReserve": "0",
+    "boundary": "Dedicated valueless test identities with local SDK signing. Three fixed-price settlements, expiry refund, duplicate rejection and exact asset conservation. Separate from the original XLM and scripted-browser runs. Not a USDC wallet-extension, private-pool, issuer freeze/clawback or bank-settlement test."
+  },
+  "freighterVerification": {
+    "verifiedAt": "2026-09-27T06:47:21.968Z",
+    "documentation": "docs/FREIGHTER_TESTNET_VERIFICATION.md",
+    "extensionVersion": "5.48.0",
+    "officialReleaseZipSha256": "01ce3164fe74acbdbd56a2c4fa0c0e7a1b3a87a63fdd2482d0b3aacd54b6bd78",
+    "appHtmlSha256": "da25605385a5206c12d6a6344cb5769a3fbf82cdb36df7de828b11c21122c98f",
+    "sourceAccount": "GCMDV4NGAKUKEEFB5CSGQIUKN4PROP2LUSPYFTVH75JH4DBYQC6EROU5",
+    "method": "register_merchant",
+    "transactionHash": "3a4ca8744e6f10af461963f85914944ca3e4e38b3969f5bf89cd6e303ca07f2c",
+    "ledger": 4893567,
+    "feeLimitStroops": "2000000",
+    "reviewedFeeStroops": "183670",
+    "feeChargedStroops": "152527",
+    "includedSignatureVerified": true,
+    "wrongNetworkRefused": true,
+    "walletCancellationSendCount": 0,
+    "totalSendTransactionRequests": 1,
+    "sameOriginalProfileRecoveryConfirmed": true,
+    "seededJournal": false,
+    "boundary": "Official Freighter 5.48.0 release loaded unpacked in an isolated Chromium profile. Direct browser networking, one merchant registration, actual downloaded backup restore and original-profile reload/reconnect recovery. Four RPC network-change failures retained. No payment, USDC, private proof, hardware or mobile wallet transaction claim."
   }
 }
