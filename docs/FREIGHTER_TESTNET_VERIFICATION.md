@@ -119,3 +119,19 @@ This establishes the bounded private deposit, withdrawal and original journal
 recovery flow. Every private instrument role, hardware and mobile wallets,
 live archival restoration, independent security review, production setup and
 independent trustee custody remain outside this extension test.
+
+The corrected source `1ffcbb3` subsequently passed six local checks with the
+actual extension and retained dedicated profile. Cancelling the application fee
+dialog made no wallet request. Two later genuine wallet cancellations retained
+the checked vault and verified balances. Changing the fee cap from ten to nine
+test XLM reused the prepared proof but required a fresh fee dialog and explicit
+wallet request. Nothing was signed or broadcast. Discarding the review retired
+it, and the vault was locked before closing the browser. All broadcasts were
+blocked by this cancellation-only harness; its local result does not claim an
+additional on-chain payment or a live-site wallet run.
+
+That follow-up retained test-selector mistakes, extension telemetry failures and
+two preliminary attempts that selected USDC. The second simulation explicitly
+reported a missing trustline; the first detailed cause was not captured.
+The harness had omitted explicit XLM selection; selecting XLM fixed the test
+setup. None reached wallet signing. The successful XLM preparation took 84,026 ms.

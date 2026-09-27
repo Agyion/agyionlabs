@@ -1,28 +1,64 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T13:18:56.132056+00:00",
-  "sourceBaselineCommit": "351d6f1c5ccc5e2b0873d9c0e69abe67a4b18fa3",
+  "reviewedAt": "2026-09-27T13:36:20.305281+00:00",
+  "sourceBaselineCommit": "1ffcbb3be814bf718dbd420e9ad5349d03d3f2d2",
   "websiteRelease": {
-    "workerVersion": "bcfa6538-0fac-449b-a0da-46c74c342770",
-    "sourceCommit": "598ab2f93134af88501967b7379b79434fef0315",
+    "workerVersion": "bb24b068-0095-43e4-89d5-cc207717d950",
+    "sourceCommit": "1ffcbb3be814bf718dbd420e9ad5349d03d3f2d2",
     "url": "https://agyionlabs.dev",
-    "verifiedAt": "2026-09-27T12:14:58.210Z",
-    "treeSha256": "c3f189e85ac579536d805101a97914cb54f43903f1e71485fb2f02671426c6ea",
+    "verifiedAt": "2026-09-27T13:31:01.301Z",
+    "treeSha256": "ef9305f0c45857b89184f2d882650099816ca9356def20d90af7ab13a261e64e",
     "treeHashScope": "All 104 local files including _headers; all 103 public files separately matched",
     "files": 103,
-    "bytes": 166315936,
+    "bytes": 166316881,
     "runtimeChangesFromSourceBaseline": [],
-    "contractPinsChanged": true,
-    "pinChangeScope": "Guarded private default with original recovery profile retained. Public kernel and marketplace unchanged.",
+    "contractPinsChanged": false,
     "browserChecks": {
       "http": 34,
       "ui": 14,
-      "localVaultLifecycle": 9,
       "liveVaultLifecycle": 9,
+      "map": 8,
       "rpcTransport": "direct Chrome networking",
       "walletRequests": 0,
       "transactions": 0
-    }
+    },
+    "vaultBrowserBoundary": "Playwright-managed Chromium with unchanged verification assertions, direct network, real local crypto and two unfunded fixture vaults. Only executable selection differs. No wallet, operator keys or chain transaction.",
+    "mapDiagnostics": {
+      "pageErrors": [],
+      "requestFailures": [],
+      "location": "Chrome emulated test coordinate, not operator location"
+    },
+    "earlierVaultCheck": {
+      "status": "failed",
+      "completedChecks": 9,
+      "requestFailures": [
+        {
+          "url": "https://soroban-testnet.stellar.org/",
+          "error": "net::ERR_NETWORK_CHANGED"
+        },
+        {
+          "url": "https://soroban-testnet.stellar.org/",
+          "error": "net::ERR_NETWORK_CHANGED"
+        }
+      ],
+      "consoleErrors": [
+        "Failed to load resource: net::ERR_NETWORK_CHANGED",
+        "Failed to load resource: net::ERR_NETWORK_CHANGED"
+      ],
+      "transactions": 0
+    },
+    "earlierVaultRetry": {
+      "status": "failed",
+      "completedChecks": 0,
+      "requestFailures": [
+        {
+          "url": "https://agyionlabs.dev/app/?tab=pod",
+          "error": "net::ERR_NETWORK_CHANGED"
+        }
+      ],
+      "transactions": 0
+    },
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36321991863"
   },
   "undeployedContractCandidates": [
     {
@@ -40,15 +76,15 @@
   },
   "counts": {
     "files": 556,
-    "lines": 71073,
+    "lines": 71104,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 456,
-        "lines": 48462
+        "files": 455,
+        "lines": 48315
       },
       "verified-baseline-plus-reviewed-diff": {
-        "files": 100,
-        "lines": 22611
+        "files": 101,
+        "lines": 22789
       }
     },
     "unresolvedFiles": 0,
@@ -1415,9 +1451,9 @@
     },
     {
       "path": "deployments/private-pool-freighter-testnet.json",
-      "sha256": "b5564abee4c3f6ea5ea237e70aead87cc7e1de0a24fa2eba7407bcf96fededbb",
-      "lines": 147,
-      "reviewKind": "complete-source-read"
+      "sha256": "bb50c29d03e885fd9d57150c29942f7215c52656a4bb1d87b687c28ab80cfa41",
+      "lines": 178,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "deployments/private-pool-guarded-testnet.json",
@@ -3457,57 +3493,26 @@
     "sourceBaselineCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe"
   },
   "previousWebsiteRelease": {
-    "workerVersion": "b689440d-c297-4503-bf91-7bfb3970a509",
+    "workerVersion": "bcfa6538-0fac-449b-a0da-46c74c342770",
+    "sourceCommit": "598ab2f93134af88501967b7379b79434fef0315",
     "url": "https://agyionlabs.dev",
-    "verifiedAt": "2026-09-27T10:38:27.279Z",
-    "treeSha256": "e6a0a39594ddaf0dee4743c00ba69cc132a554b8835d10b6dab84de06c46e7dc",
-    "treeHashScope": "All 104 local build files including local _headers configuration; all 103 public files separately matched.",
+    "verifiedAt": "2026-09-27T12:14:58.210Z",
+    "treeSha256": "c3f189e85ac579536d805101a97914cb54f43903f1e71485fb2f02671426c6ea",
+    "treeHashScope": "All 104 local files including _headers; all 103 public files separately matched",
     "files": 103,
-    "bytes": 166309505,
+    "bytes": 166315936,
     "runtimeChangesFromSourceBaseline": [],
-    "contractPinsChanged": false,
+    "contractPinsChanged": true,
+    "pinChangeScope": "Guarded private default with original recovery profile retained. Public kernel and marketplace unchanged.",
     "browserChecks": {
       "http": 34,
       "ui": 14,
-      "map": 8,
-      "localVaultLifecycle": 6,
+      "localVaultLifecycle": 9,
+      "liveVaultLifecycle": 9,
       "rpcTransport": "direct Chrome networking",
       "walletRequests": 0,
-      "transactions": 0,
-      "locationTest": "Emulated coordinates after explicit browser permission, not operator location.",
-      "vaultTest": "Fresh unfunded local keys, scoped encrypted download/check, wrong-password rejection, restore and locked reload."
-    },
-    "earlierMapTransportFailures": [
-      {
-        "url": "https://soroban-testnet.stellar.org/",
-        "error": "net::ERR_NETWORK_CHANGED"
-      },
-      {
-        "url": "https://market-testnet.agyionlabs.dev/v1/offers",
-        "error": "net::ERR_NETWORK_CHANGED"
-      }
-    ],
-    "latestMapCheck": {
-      "status": "passed",
-      "at": "2026-09-27T10:40:36.388Z",
-      "assertions": 8,
-      "pageErrors": [],
-      "transportFailures": [
-        {
-          "url": "https://tile.openstreetmap.org/11/1189/768.png",
-          "error": "net::ERR_NETWORK_CHANGED"
-        },
-        {
-          "url": "https://tile.openstreetmap.org/11/1188/767.png",
-          "error": "net::ERR_NETWORK_CHANGED"
-        },
-        {
-          "url": "https://tile.openstreetmap.org/11/1189/767.png",
-          "error": "net::ERR_NETWORK_CHANGED"
-        }
-      ]
-    },
-    "sourceCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe"
+      "transactions": 0
+    }
   },
   "activeGuardedPrivateRelease": {
     "name": "private-pool-with-backing-accounting",
@@ -3587,7 +3592,7 @@
   },
   "realPrivateFreighter": {
     "receipt": "deployments/private-pool-freighter-testnet.json",
-    "receiptSha256": "b5564abee4c3f6ea5ea237e70aead87cc7e1de0a24fa2eba7407bcf96fededbb",
+    "receiptSha256": "bb50c29d03e885fd9d57150c29942f7215c52656a4bb1d87b687c28ab80cfa41",
     "checks": 8,
     "genuineWalletRequests": 3,
     "actualSignatures": 2,
@@ -3599,7 +3604,7 @@
     "boundary": "Actual extension on published 598ab2f website; direct RPC with a bounded outgoing transaction guard. Host network and harness failures retained separately."
   },
   "privateCancellationCorrection": {
-    "status": "built and tested locally; not published",
+    "status": "published and verified",
     "sourceChangesAfterBaseline": [
       {
         "path": "app/app/components/app/PrivateInstrumentPanel.tsx",
@@ -3638,8 +3643,109 @@
     "finalUiTestsPassed": 21,
     "build": "landing, application type checking, style checks, application static build and assembled site passed after final runtime changes",
     "lintWarnings": 3,
-    "realExtensionCancellationFollowup": "in progress, no completed claim",
+    "realExtensionCancellationFollowup": {
+      "sourceCommit": "1ffcbb3be814bf718dbd420e9ad5349d03d3f2d2",
+      "testedAt": "2026-09-27T13:24:00.404Z",
+      "status": "passed locally with real extension; publication recorded separately",
+      "treeSha256": "ef9305f0c45857b89184f2d882650099816ca9356def20d90af7ab13a261e64e",
+      "checks": [
+        "Prior real encrypted vault restored and guarded zero balance read directly",
+        "Fresh browser proof prepared with explicit ten XLM fee cap",
+        "Actual fee-dialog cancellation restores explicit confirm, preserves checked vault and opens no wallet",
+        "Genuine Freighter decline preserves checked vault and verified balance and re-enables explicit confirmation with no broadcast",
+        "Explicit fee adjustment reuses the prepared proof and requires a new fee dialog before a second genuine wallet cancellation",
+        "Discard retires the prepared review; no pending journal or automatic wallet request; keys explicitly locked"
+      ],
+      "walletRequests": 2,
+      "explicitWalletCancellations": 2,
+      "signatures": 0,
+      "broadcastAttempts": 0,
+      "feeDialogCancellations": 1,
+      "initialExplicitFeeCapXlm": "10",
+      "revisedExplicitFeeCapXlm": "9",
+      "observedXlmPreparationMs": 84026,
+      "localVaultLockedBeforeClosing": true,
+      "boundary": "Actual official Freighter and retained isolated dedicated testnet profile against the locally built corrected application at 127.0.0.1:4301. Actual browser proof and direct RPC. Only fee and wallet cancellations are permitted; every broadcast is blocked. No scripted signer, RPC forwarding, signature or live-site claim.",
+      "diagnostics": [
+        "Two initial harness selectors did not match the actual accessible labels and were corrected.",
+        "The first two proof attempts retained USDC because the harness omitted explicit XLM selection. The second simulation diagnostic explicitly identified a missing trustline; the first detailed cause was not captured. Both stopped before wallet signing. No asset, balance or trustline was fabricated; XLM was then explicitly selected.",
+        "Direct RPC network-change and extension telemetry TLS failures were retained. No broadcast attempt, signing-intent mismatch or application page error was captured.",
+        "The generic browser-close listener ran during deliberate teardown after success."
+      ],
+      "reportSha256": "2d1d55b07ca09255c2afccee64bf29608900feed003ed0a5de53f5b834f79371"
+    },
     "contractsChanged": false,
-    "limitations": "The full app run preceded the final pending-notice wording change, whose 21 UI checks subsequently passed. Initial concurrent root build reinstalled dependencies during tests; those failed logs are retained. The clean full rerun passed."
-  }
+    "limitations": "The full app run preceded the final pending-notice wording change, whose 21 UI checks subsequently passed. Initial concurrent root build reinstalled dependencies during tests; those failed logs are retained. The clean full rerun passed. Exact final source subsequently passed both hosted jobs. The real-extension cancellation follow-up was local; live read-only checks and exact published byte equality are separate evidence.",
+    "sourceBaselineCommit": "351d6f1c5ccc5e2b0873d9c0e69abe67a4b18fa3",
+    "sourceCommit": "1ffcbb3be814bf718dbd420e9ad5349d03d3f2d2",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36321991863",
+    "workerVersion": "bb24b068-0095-43e4-89d5-cc207717d950",
+    "hostedChecks": {
+      "sourceCommit": "1ffcbb3be814bf718dbd420e9ad5349d03d3f2d2",
+      "workspacePassed": 1297,
+      "defaultOptionalSkips": 6,
+      "separateDeploymentHelperTests": 14,
+      "separatelyEnabledBrowserJournalChecks": 4,
+      "separatelyEnabledCryptographicChecks": 47,
+      "contractNativeAndWasmNamedChecks": 150,
+      "dependencyAuditWorkspaces": 6,
+      "dependencyAdvisoriesReported": 0,
+      "boundary": "Counts from exact passing hosted run36321991863. Suites may overlap; this is not a deduplicated count or exploit absence claim."
+    }
+  },
+  "websiteReleaseHistory": [
+    {
+      "workerVersion": "b689440d-c297-4503-bf91-7bfb3970a509",
+      "url": "https://agyionlabs.dev",
+      "verifiedAt": "2026-09-27T10:38:27.279Z",
+      "treeSha256": "e6a0a39594ddaf0dee4743c00ba69cc132a554b8835d10b6dab84de06c46e7dc",
+      "treeHashScope": "All 104 local build files including local _headers configuration; all 103 public files separately matched.",
+      "files": 103,
+      "bytes": 166309505,
+      "runtimeChangesFromSourceBaseline": [],
+      "contractPinsChanged": false,
+      "browserChecks": {
+        "http": 34,
+        "ui": 14,
+        "map": 8,
+        "localVaultLifecycle": 6,
+        "rpcTransport": "direct Chrome networking",
+        "walletRequests": 0,
+        "transactions": 0,
+        "locationTest": "Emulated coordinates after explicit browser permission, not operator location.",
+        "vaultTest": "Fresh unfunded local keys, scoped encrypted download/check, wrong-password rejection, restore and locked reload."
+      },
+      "earlierMapTransportFailures": [
+        {
+          "url": "https://soroban-testnet.stellar.org/",
+          "error": "net::ERR_NETWORK_CHANGED"
+        },
+        {
+          "url": "https://market-testnet.agyionlabs.dev/v1/offers",
+          "error": "net::ERR_NETWORK_CHANGED"
+        }
+      ],
+      "latestMapCheck": {
+        "status": "passed",
+        "at": "2026-09-27T10:40:36.388Z",
+        "assertions": 8,
+        "pageErrors": [],
+        "transportFailures": [
+          {
+            "url": "https://tile.openstreetmap.org/11/1189/768.png",
+            "error": "net::ERR_NETWORK_CHANGED"
+          },
+          {
+            "url": "https://tile.openstreetmap.org/11/1188/767.png",
+            "error": "net::ERR_NETWORK_CHANGED"
+          },
+          {
+            "url": "https://tile.openstreetmap.org/11/1189/767.png",
+            "error": "net::ERR_NETWORK_CHANGED"
+          }
+        ]
+      },
+      "sourceCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe"
+    }
+  ]
 }

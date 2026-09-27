@@ -143,5 +143,36 @@
     "readback-before.json": "618d059ec9676a3aafe5ab1c632f6b33f7caca6d1e93760e77def58eb8a68dcc",
     "readback-deposit.json": "5be31eb805114e3addefde90c5f259613c923000771d9a8692398d0e5b620c87",
     "readback-withdraw.json": "8c8113e5855f2d2c2c73b2afe0b8157cbc568b7be294e71a9422f686667ea18a"
+  },
+  "cancellationCorrection": {
+    "sourceCommit": "1ffcbb3be814bf718dbd420e9ad5349d03d3f2d2",
+    "testedAt": "2026-09-27T13:24:00.404Z",
+    "status": "passed locally with real extension; publication recorded separately",
+    "treeSha256": "ef9305f0c45857b89184f2d882650099816ca9356def20d90af7ab13a261e64e",
+    "checks": [
+      "Prior real encrypted vault restored and guarded zero balance read directly",
+      "Fresh browser proof prepared with explicit ten XLM fee cap",
+      "Actual fee-dialog cancellation restores explicit confirm, preserves checked vault and opens no wallet",
+      "Genuine Freighter decline preserves checked vault and verified balance and re-enables explicit confirmation with no broadcast",
+      "Explicit fee adjustment reuses the prepared proof and requires a new fee dialog before a second genuine wallet cancellation",
+      "Discard retires the prepared review; no pending journal or automatic wallet request; keys explicitly locked"
+    ],
+    "walletRequests": 2,
+    "explicitWalletCancellations": 2,
+    "signatures": 0,
+    "broadcastAttempts": 0,
+    "feeDialogCancellations": 1,
+    "initialExplicitFeeCapXlm": "10",
+    "revisedExplicitFeeCapXlm": "9",
+    "observedXlmPreparationMs": 84026,
+    "localVaultLockedBeforeClosing": true,
+    "boundary": "Actual official Freighter and retained isolated dedicated testnet profile against the locally built corrected application at 127.0.0.1:4301. Actual browser proof and direct RPC. Only fee and wallet cancellations are permitted; every broadcast is blocked. No scripted signer, RPC forwarding, signature or live-site claim.",
+    "diagnostics": [
+      "Two initial harness selectors did not match the actual accessible labels and were corrected.",
+      "The first two proof attempts retained USDC because the harness omitted explicit XLM selection. The second simulation diagnostic explicitly identified a missing trustline; the first detailed cause was not captured. Both stopped before wallet signing. No asset, balance or trustline was fabricated; XLM was then explicitly selected.",
+      "Direct RPC network-change and extension telemetry TLS failures were retained. No broadcast attempt, signing-intent mismatch or application page error was captured.",
+      "The generic browser-close listener ran during deliberate teardown after success."
+    ],
+    "reportSha256": "2d1d55b07ca09255c2afccee64bf29608900feed003ed0a5de53f5b834f79371"
   }
 }

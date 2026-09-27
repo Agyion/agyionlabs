@@ -124,7 +124,7 @@ one operator controls all five trustee shares. Independent security and
 cryptographic review, production setup and independent trustee custody remain
 outstanding. These results cannot establish the absence of every possible exploit.
 
-The published app is Cloudflare version `bcfa6538-0fac-449b-a0da-46c74c342770`, built from
+The initial guarded-pool website was Cloudflare version `bcfa6538-0fac-449b-a0da-46c74c342770`, built from
 `598ab2f93134af88501967b7379b79434fef0315`. All 103 public files matched the reviewed build.
 Direct live checks passed 34 HTTP and 14 UI assertions with no captured page,
 console, request or CSP errors. The same source commit passed both hosted jobs.
@@ -152,3 +152,5 @@ pool was unchanged. Aggregate signed fee maxima including these two operations
 were 4376725720 stroops, below the same 500 test XLM cap. The
 [separate receipt](../deployments/private-pool-freighter-testnet.json) preserves
 this later checkpoint without rewriting the earlier CLI lifecycle results.
+
+The later cancellation correction is published with the same contract profiles. Its source, Worker version, exact byte comparison and fresh browser checks are recorded in [verification](VERIFICATION.md).
