@@ -200,26 +200,28 @@ function guard(c, claim, reservation) {
   same(read(reservation.directory, reservation.name), reservation.value, 'SOURCE_CHANGED');
   ensure(!read(reservation.directory, reservation.name.replace('.claim.', '.release.')), 'SOURCE_RELEASED');
 }
-const receiptSummaries = rows => frozen(rows.map(r => ({ claim: r.claim, inclusion: r.included })));
-function verifyEvidence(c, claim, rows, phase, value, policy) {
-  const evidence = copy(value); exact(evidence, ['snapshot', 'observations']); exact(evidence.snapshot, ['expected', 'response']);
+// Callback context is rebuilt only from raw evidence decoded in this replay.
+// Full claim/receipt blobs stay in their original records, never copied39times
+// into aggregate observation evidence or trusted via serialized verified flags.
+function compactClaim(claim) {
+  const { evidence: _evidence, predecessors: _predecessors, ...summary } = claim;
+  return frozen(summary);
+}
+function compactInclusion(row) {
+  return row ? frozen({ status: row.included.status, ledger: row.included.ledger,
+    createdId: row.included.createdId, hash: row.attempt.hash }) : null;
+}
+function initialEvidenceFor(rows, claim) { return (rows[0]?.claim ?? claim).evidence.snapshot; }
+function evidenceSnapshot(c, claim, prefix, initialEvidence, phase, value, policy, current = null, beforeSnapshot = null) {
+  const evidence = copy(value); exact(evidence, ['snapshot', 'observations']);
+  exact(evidence.snapshot, ['expected', 'response'], ['headerEvidence']);
   const step = c.plan.steps.find(s => s.id === claim.stepId), index = c.plan.steps.indexOf(step);
   const names = phase === 'before' ? [...(index === 0 ? c.plan.preflightObservations : []), ...step.requiredObservations]
     : [...step.postObservations, ...(index === c.plan.steps.length - 1 ? c.plan.finalObservations : [])];
   exact(evidence.observations, names);
-  const scope = frozen({ plan: c.plan, planSha256: c.planSha256, stepId: step.id, phase, claim, receipts: receiptSummaries(rows) });
-  const checked = copy(policy.verifyObservations({ ...scope, rawEvidence: evidence.observations }));
-  exact(checked, ['planSha256', 'stepId', 'phase', 'evidence']); ensure(checked.planSha256 === c.planSha256 && checked.stepId === step.id && checked.phase === phase, 'OBSERVATION_SCOPE');
-  ensure(Array.isArray(checked.evidence) && checked.evidence.length === names.length, 'OBSERVATION_NAMES');
-  for (let i = 0; i < names.length; i++) {
-    const row = checked.evidence[i]; exact(row, ['observationKind', 'ledger', 'recordRef', 'expectedOutcome', 'evidenceSha256']);
-    ensure(row.observationKind === names[i] && row.evidenceSha256 === digest(evidence.observations[names[i]]) && Number.isSafeInteger(row.ledger) && row.ledger > 0 && row.ledger <= (phase === 'before' ? claim.binding.headLedger : evidence.snapshot.response.latestLedger) && row.recordRef === step.record && typeof row.expectedOutcome === 'string' && row.expectedOutcome.length > 0 && row.expectedOutcome.length <= 200, 'OBSERVATION_BINDING');
-  }
-  if (phase === 'after') {
-    const current = rows.find(r => r.claim.stepId === claim.stepId);
-    ensure(current?.included, 'OBSERVATION_INCLUSION');
-    for (const row of checked.evidence) if (step.postObservations.includes(row.observationKind)) ensure(row.ledger >= current.included.ledger, 'OBSERVATION_INCLUSION');
-  }
+  const scope = frozen({ plan: c.plan, planSha256: c.planSha256, stepId: step.id, phase,
+    claim: compactClaim(claim), prefix, initialEvidence, currentInclusion: compactInclusion(current),
+    snapshotResponse: evidence.snapshot.response, headerEvidence: evidence.snapshot.headerEvidence ?? null, beforeSnapshot });
   const statePolicy = copy(policy.verifyStateExpectations({ ...scope, expected: evidence.snapshot.expected }));
   same(statePolicy, { planSha256: c.planSha256, stepId: step.id, phase, expectedSha256: digest(evidence.snapshot.expected) }, 'STATE_POLICY');
   const snapshot = verifyPublicLifecycleSnapshot({ plan: c.plan, expected: evidence.snapshot.expected }, evidence.snapshot.response);
@@ -228,18 +230,51 @@ function verifyEvidence(c, claim, rows, phase, value, policy) {
     ensure(snapshot.ledger === claim.binding.headLedger, 'SNAPSHOT_HEAD');
     const sequence = snapshot.accounts[step.sourceRole].sequence;
     ensure(typeof sequence === 'string' && /^(0|[1-9][0-9]*)$/.test(sequence) && BigInt(claim.binding.sequence) === BigInt(sequence) + 1n, 'SNAPSHOT_SEQUENCE');
+  } else ensure(current?.included && snapshot.ledger >= current.included.ledger, 'SNAPSHOT_INCLUSION');
+  return { evidence, scope, step, names, snapshot: copy(snapshot) };
+}
+function observationsAfterSnapshot(c, part, policy, currentFee = null) {
+  const { evidence, scope, step, names, snapshot } = part;
+  ensure(scope.phase === 'before' ? currentFee === null : currentFee !== null, 'OBSERVATION_FEE');
+  const checked = copy(policy.verifyObservations({ ...scope, snapshot, currentFee, rawEvidence: evidence.observations }));
+  exact(checked, ['planSha256', 'stepId', 'phase', 'evidence']);
+  ensure(checked.planSha256 === c.planSha256 && checked.stepId === step.id && checked.phase === scope.phase, 'OBSERVATION_SCOPE');
+  ensure(Array.isArray(checked.evidence) && checked.evidence.length === names.length, 'OBSERVATION_NAMES');
+  for (let i = 0; i < names.length; i++) {
+    const row = checked.evidence[i]; exact(row, ['observationKind', 'ledger', 'recordRef', 'expectedOutcome', 'evidenceSha256']);
+    ensure(row.observationKind === names[i] && row.evidenceSha256 === digest(evidence.observations[names[i]]) && Number.isSafeInteger(row.ledger) && row.ledger > 0 && row.ledger <= snapshot.ledger && row.recordRef === step.record && typeof row.expectedOutcome === 'string' && row.expectedOutcome.length > 0 && row.expectedOutcome.length <= 200, 'OBSERVATION_BINDING');
+    if (scope.phase === 'after' && step.postObservations.includes(row.observationKind)) ensure(row.ledger >= scope.currentInclusion.ledger, 'OBSERVATION_INCLUSION');
   }
   return { snapshot, observations: checked };
 }
-function verifiedCompletion(c, row, previous, policy) {
-  const before = verifyEvidence(c, row.claim, previous, 'before', row.claim.evidence, policy);
-  const after = verifyEvidence(c, row.claim, [...previous, row], 'after', row.completion.evidence, policy);
-  const fee = reconcilePublicLifecycleFees({ networkPassphrase: c.plan.networkPassphrase, sourceAccount: row.claim.derived.call.sourceAccount,
-    signedEnvelopeXdr: row.attempt.signedXdr, transactionHash: row.attempt.hash, inclusionLedger: row.included.ledger, response: row.included.response,
-    before: before.snapshot, after: after.snapshot, expectedBusinessDeltas: row.claim.derived.businessDeltas });
-  const result = copy({ before, after, fee }); same(row.completion.verified, result, 'COMPLETION_EVIDENCE'); return result;
+function verifyBefore(c, claim, prefix, initialEvidence, policy) {
+  return observationsAfterSnapshot(c, evidenceSnapshot(c, claim, prefix, initialEvidence, 'before', claim.evidence, policy), policy);
 }
-function replayCompleted(c, rows, policy) { const previous = []; for (const row of rows) { if (row.completion) verifiedCompletion(c, row, previous, policy); previous.push(row); } }
+function verifyTransition(c, row, prefix, initialEvidence, evidence, policy) {
+  const before = verifyBefore(c, row.claim, prefix, initialEvidence, policy);
+  const afterPart = evidenceSnapshot(c, row.claim, prefix, initialEvidence, 'after', evidence, policy, row, before.snapshot);
+  const fee = copy(reconcilePublicLifecycleFees({ networkPassphrase: c.plan.networkPassphrase, sourceAccount: row.claim.derived.call.sourceAccount,
+    signedEnvelopeXdr: row.attempt.signedXdr, transactionHash: row.attempt.hash, inclusionLedger: row.included.ledger, response: row.included.response,
+    before: before.snapshot, after: afterPart.snapshot, expectedBusinessDeltas: row.claim.derived.businessDeltas }));
+  const after = observationsAfterSnapshot(c, afterPart, policy, fee);
+  return copy({ before, after, fee });
+}
+function verifiedCompletion(c, row, prefix, initialEvidence, policy) {
+  const result = verifyTransition(c, row, prefix, initialEvidence, row.completion.evidence, policy);
+  same(row.completion.verified, result, 'COMPLETION_EVIDENCE'); return result;
+}
+function replayCompleted(c, rows, policy) {
+  const prefix = [];
+  for (const row of rows) {
+    if (!row.completion) break;
+    const verified = verifiedCompletion(c, row, frozen([...prefix]), initialEvidenceFor(rows, row.claim), policy);
+    prefix.push(frozen({ stepId: row.claim.stepId, binding: row.claim.binding, inclusion: compactInclusion(row),
+      fee: verified.fee, before: verified.before.snapshot, after: verified.after.snapshot,
+      observations: { before: verified.before.observations, after: verified.after.observations },
+      completionSha256: digest(row.completion), evidenceSha256: { before: digest(row.claim.evidence), after: digest(row.completion.evidence) } }));
+  }
+  return frozen(prefix);
+}
 function release(c, claim, reservation, completion) {
   const name = reservation.name.replace('.claim.', '.release.'), value = { schema: VERSION, reservationSha256: digest(reservation.value), terminalFile: claim.stepId + '.completion.json', terminalSha256: digest(completion) };
   const prior = read(reservation.directory, name); if (prior) same(prior, value, 'SOURCE_RELEASE'); else write(reservation.directory, name, value);
@@ -248,7 +283,7 @@ function adapters(options, execution) {
   for (const name of ['getTransaction', 'collectEvidence', 'verifyObservations', 'verifyStateExpectations', ...(execution ? ['prepare', 'sign', 'sendTransaction'] : [])]) ensure(typeof options[name] === 'function', 'ADAPTER');
 }
 const commonKeys = ['run', 'lockRoot', 'plan', 'planSha256', 'stepId', 'getTransaction', 'collectEvidence', 'verifyObservations', 'verifyStateExpectations'];
-async function settle(c, claim, attempt, reservation, rows, options) {
+async function settle(c, claim, attempt, reservation, rows, prefix, options) {
   let included = read(c.run, claim.stepId + '.inclusion.json');
   if (!included) {
     let raw;
@@ -261,18 +296,15 @@ async function settle(c, claim, attempt, reservation, rows, options) {
   // schedule or release the source. Operator policy for abandoning is absent.
   if (included.status === 'FAILED') return frozen({ status: 'failed', hash: attempt.hash, ledger: included.ledger });
   let completion = read(c.run, claim.stepId + '.completion.json');
-  const previous = rows.filter(r => r.claim.stepId !== claim.stepId);
+  const initialEvidence = initialEvidenceFor(rows, claim), row = { claim, attempt, included, completion };
   if (!completion) {
-    const evidence = copy(await options.collectEvidence(frozen({ plan: c.plan, planSha256: c.planSha256, stepId: claim.stepId, claim, inclusion: included, receipts: receiptSummaries(previous) })));
+    const evidence = copy(await options.collectEvidence(frozen({ plan: c.plan, planSha256: c.planSha256,
+      stepId: claim.stepId, claim: compactClaim(claim), inclusion: included, prefix, initialEvidence })));
     guard(c, claim, reservation);
-    const before = verifyEvidence(c, claim, previous, 'before', claim.evidence, options);
-    const row = { claim, attempt, included, completion: null };
-    const after = verifyEvidence(c, claim, [...previous, row], 'after', evidence, options);
-    const fee = reconcilePublicLifecycleFees({ networkPassphrase: c.plan.networkPassphrase, sourceAccount: claim.derived.call.sourceAccount, signedEnvelopeXdr: attempt.signedXdr,
-      transactionHash: attempt.hash, inclusionLedger: included.ledger, response: included.response, before: before.snapshot, after: after.snapshot, expectedBusinessDeltas: claim.derived.businessDeltas });
-    completion = { schema: VERSION, planSha256: c.planSha256, stepId: claim.stepId, inclusionSha256: digest(included), evidence, verified: copy({ before, after, fee }) };
+    const verified = verifyTransition(c, row, prefix, initialEvidence, evidence, options);
+    completion = { schema: VERSION, planSha256: c.planSha256, stepId: claim.stepId, inclusionSha256: digest(included), evidence, verified };
     write(c.run, claim.stepId + '.completion.json', completion);
-  } else verifiedCompletion(c, { claim, attempt, included, completion }, previous, options);
+  } else verifiedCompletion(c, row, prefix, initialEvidence, options);
   release(c, claim, reservation, completion);
   return frozen({ status: 'complete', hash: attempt.hash, ledger: included.ledger, createdId: included.createdId });
 }
@@ -290,7 +322,8 @@ export async function executePublicLifecycleStep(options) {
   if (!read(c.run, 'plan.json')) write(c.run, 'plan.json', c.manifest);
   write(c.run, step.id + '.claim.json', claim);
   const reservation = sourceReservation(c, claim);
-  replayCompleted(c, rows, options); verifyEvidence(c, claim, rows, 'before', evidence, options);
+  const prefix = replayCompleted(c, rows, options);
+  verifyBefore(c, claim, prefix, initialEvidenceFor(rows, claim), options);
   const prepared = copy(await options.prepare(frozen({ plan: c.plan, planSha256: c.planSha256, stepId: step.id, claim })));
   guard(c, claim, reservation); exact(prepared, ['envelopeXdr'], ['restorePreamble']);
   const common = { step: derived.call, sequence: binding.sequence };
@@ -307,7 +340,7 @@ export async function executePublicLifecycleStep(options) {
   validateSignedPublicLifecycleEnvelope({ ...common, unsignedXdr: attempt.unsignedXdr, signedXdr: attempt.signedXdr, nowSeconds: now() });
   try { await options.sendTransaction(attempt.signedXdr); } catch { /* Unknown transport outcome: query only its persisted hash. */ }
   guard(c, claim, reservation);
-  return settle(c, claim, attempt, reservation, rows, options);
+  return settle(c, claim, attempt, reservation, rows, prefix, options);
 }
 /** Recovery has no signing/submission adapters, and never resends stored XDR.
  * Expired attempts may be verified at their immutable original validation time
@@ -315,9 +348,9 @@ export async function executePublicLifecycleStep(options) {
 export async function recoverPublicLifecycleStep(options) {
   exact(options, commonKeys); adapters(options, false);
   const c = context(options), { rows } = entries(c), row = rows.find(r => r.claim.stepId === options.stepId); ensure(row, 'NO_CLAIM');
-  replayCompleted(c, rows, options);
+  const prefix = replayCompleted(c, rows, options);
   if (!row.attempt) return frozen({ status: 'claimed', hash: null });
   const reservation = findReservation(c, row.claim);
   if (row.completion) { release(c, row.claim, reservation, row.completion); return frozen({ status: 'complete', hash: row.attempt.hash, ledger: row.included.ledger, createdId: row.included.createdId }); }
-  guard(c, row.claim, reservation); return settle(c, row.claim, row.attempt, reservation, rows, options);
+  guard(c, row.claim, reservation); return settle(c, row.claim, row.attempt, reservation, rows, prefix, options);
 }

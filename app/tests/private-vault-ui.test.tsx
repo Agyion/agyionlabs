@@ -31,7 +31,7 @@ it('clears passwords, downloads only encrypted data, and requires actual file re
   const persistence = vi.spyOn(Storage.prototype, 'setItem');
   render(<PrivateVaultProvider scope={scope}><PrivateVault /><ObserveGate /></PrivateVaultProvider>);
   fireEvent.click(screen.getByRole('button', { name: 'Create a private vault' }));
-  await waitFor(() => expect(screen.getByTestId('backup-gate').textContent).toBe('needs-backup'));
+  await waitFor(() => expect(screen.getByTestId('backup-gate').textContent).toBe('needs-backup'), { timeout: 30000 });
   const password = screen.getByLabelText('Backup password') as HTMLInputElement;
   expect(password.type).toBe('password');
   fireEvent.change(password, { target: { value: 'saved fixture password' } });

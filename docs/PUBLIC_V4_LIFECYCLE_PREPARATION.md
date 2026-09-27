@@ -3,8 +3,9 @@
 The public V4 kernel is deployed but remains inactive in the application.
 Offline components prepare its next testnet verification phase: the immutable
 scenario plan, exact call binding, signing-time envelope validation, coherent
-accounting snapshots, fee reconciliation and a durable orchestration library.
-There is no runnable lifecycle CLI or production observation/state policy yet.
+accounting snapshots, fee reconciliation, concrete state and observation policies,
+a bounded raw RPC transport and a durable orchestration library.
+There is no runnable lifecycle CLI, identity preparation or funding adapter yet.
 The pure validators do no I/O. The journal writes protected local records and
 can invoke explicitly supplied preparation, signing and transport adapters;
 it supplies no live adapter, private key or funding implementation itself.
@@ -135,14 +136,80 @@ library stores that directory in its immutable run manifest; it cannot coordinat
 callers deliberately selecting different directories. The future CLI must fix
 one canonical namespace and bind it to the original deployment context.
 
-Two trusted code policies remain required: one must decode the precise negative
-observation and its reachable prerequisites, and one must derive expected state
-from original claims and receipts, including remaining funds and minimum reserve.
-They are not supplied by this phase and are not replaceable with an RPC boolean
-or a user-supplied JSON success flag. Their raw evidence is retained and checked
-again during recovery. Historical early-rejection observations must remain
-bound to their original records and deadlines, rather than being discarded
-because a later successful transaction has a newer preparation ledger.
+The [concrete policy adapter](../scripts/lib/public-lifecycle-policies.mjs) now
+supplies both required policies. It has no validator override or serialized
+success-flag input. It reconstructs the initial state from raw evidence and
+derives the current state from the journal's freshly verified prefix. The prefix
+contains decoded accounts, records, fees and observation identities, without
+copying every prior raw receipt into subsequent observations.
+
+One matching state/observation callback pair may reuse its freshly derived,
+immutable state. The complete raw context must match and the value is consumed
+once. A changed context or later replay derives again; no persisted success
+flag or cross-replay cache bypasses raw verification.
+
+State derivation and exact snapshot checks run first. After inclusion, full fee
+reconciliation also runs before the observation policy. A failed state or fee
+check cannot produce completion or release the source reservation. Recovery
+repeats these checks against raw evidence and compares the result to stored
+acknowledgments; those acknowledgments alone confer no authority.
+
+## State, observations and transport
+
+The [state reducer](../scripts/lib/public-lifecycle-state.mjs) derives all 39
+scheduled transitions, original IDs, record terms, source sequences and actor
+balances. It requires an initially empty kernel and continuity with the previous
+decoded account bytes. Current source fees are established by the following
+metadata decoder. An in-process provenance check prevents deserialized state
+objects from being used as verified reducer outputs.
+
+Minimum reserve comes from the actual same-ledger header. Latest-ledger headers
+and historical header wrappers are decoded separately and checked against their
+ledger number and header hash. For the three pristine dedicated accounts, the
+required minimum is twice that header's base reserve. Remaining authorized fee
+ceilings and gross business outflows must be funded without assuming future
+payouts or treating refunds as new fee authorization.
+
+The [observation gate](../scripts/lib/public-lifecycle-observations.mjs) has a
+finite registry of prerequisite, authorization, credential-domain, timing and
+terminal replay cases. It verifies exact calls and explicit record/enforce modes;
+wrong-source cases also need a valid-source control. Crypto cases check both the
+intended signature preimage and its deliberate mismatch. A transport failure,
+restoration request or unrelated guard error cannot count as the expected result.
+
+Each simulation needs coherent unchanged snapshots surrounding its ledger, with
+at most two ledgers of drift. Historical early-window cases remain tied to their
+original record state and deadline after the execution ledger advances. Shared
+snapshot references are local content hashes; unresolved or unused references
+fail. The final gate also requires the freshly replayed observation history,
+39 original fee/inclusion summaries, all terminal records, zero debts, the single
+donation and unchanged original public/private/market code and release bytes.
+
+The error parser deliberately accepts a narrow terminal host-error grammar and
+consistent decoded diagnostic errors. One retained actual protocol-28 Testnet
+reply from an unsigned zero-amount Fade simulation at ledger 4,901,961 parses
+as `Contract#3`, including its two diagnostic XDR events. The exact case verifier
+also accepts that original response. The bounded acquisition made three read or
+simulation requests and no signature, submission or funding call. Other error
+families still need live acquisition when their scheduled prerequisites become
+reachable, before the corresponding step can pass its observation gate.
+Synthetic coverage does not establish their remote wire behavior. A matching
+substring in a diagnostic trace is not sufficient.
+
+The [RPC transport](../scripts/lib/public-lifecycle-rpc.mjs) fixes the Testnet
+origin and seven allowed methods, rejects unknown parameters, never follows a
+redirect and makes no implicit retry. Its 15-second deadline covers headers and
+body; the two-MiB cap applies to decoded response bytes. Caller cancellation is
+composed with that deadline, and rejected or late responses are cancelled.
+Duplicate JSON keys, malformed UTF-8 and ambiguous result/error envelopes fail.
+Returned data stays raw: a contract simulation error inside `result` is distinct
+from a JSON-RPC or transport error. A failed send request still has an unknown
+inclusion outcome and must use the journal's original-hash recovery.
+
+The transport validates envelope shape, not signing authority or chain consensus.
+The immutable call/envelope checks and journal provide the former. The evidence
+remains dependent on the selected RPC source; a header hash is not an independently
+verified consensus proof.
 
 ## Offline verification
 
@@ -172,10 +239,10 @@ the third argument transmitted explicit `enforce` or `record`, while the default
 omitted `authMode`. This establishes serialization behavior only, not a live
 contract rejection or correct future runner integration.
 
-The additional snapshot suite passes 88 checks locally, including the exact
+At the preceding journal foundation checkpoint, the snapshot suite passed 88 checks locally, including the exact
 compiled WASM and all sixteen record layouts. Its compiled-artifact case is
 explicitly skipped when that artifact is absent. The fee suite passes 63 checks.
-The journal suite passes nineteen default checks plus one separately enabled
+The journal suite then passed nineteen default checks plus one separately enabled
 local checkpoint. Filesystem/race units substitute synthetic plan authority and
 snapshot/fee doubles while retaining real call, envelope, signature and inclusion
 decoders. Their 39-step order case proves orchestration within that unit boundary.
@@ -191,7 +258,8 @@ two live processes also demonstrate source contention before preparation.
 A canonical included `txFailed` result also preserves the failed state and fee
 ceiling, blocks successors and cannot trigger another send during recovery.
 
-The complete local workspace passes 1,654 checks with eight explicit default
+At the preceding journal foundation checkpoint, the complete local workspace
+passed 1,654 checks with eight explicit default
 skips, including 902 application and 360 tooling checks. This run includes the
 failed-inclusion regression. The final journal file was separately rerun with
 nineteen default passes and one skip, then twenty passes with the real-decoder
@@ -203,12 +271,43 @@ confinement. Both the failing cases and final passing cases are retained in the
 development evidence. Directory synchronization does not prove every possible
 power-loss behavior of every filesystem or hardware platform.
 
+The current policy integration passed 41 default state tests, 65 observation
+tests, 56 transport tests and nine adapter tests. Three state/observation checks
+requiring local artifacts are explicitly skipped by default; the separately
+enabled exact-WASM suites passed 42 and 67 respectively. The final journal suite
+passed all 23 checks with its real-decoder checkpoint enabled. These scopes
+overlap; they are not additive unique test counts.
+
+The full synthetic journal integration passed both modes: 38 prefinal steps
+with only executable-byte authentication doubled, and all 39 steps using the
+actual pinned local WASM bytes and four preserved deployment pins. Both modes
+use real state, observation, signature, fee and journal gates with deterministic
+unfunded identities and constructed ledger responses. The fixed seller is
+substituted only in the isolated test process. No WASM contract behavior or
+public-network acceptance is inferred from these synthetic responses.
+
+Each synthetic send loses its acknowledgment; recovery uses the original hash
+without another signature or send. Completed replay needs no network call.
+Changing retained raw XDR while leaving serialized success fields untouched
+is rejected by the raw state decoder. All 39 synthetic fee receipts reconcile
+to 15,600 stroops total, which is test data rather than a live fee estimate.
+The largest policy input was 1,241,524 bytes, below its fixed two-MiB limit.
+
+The complete final local workspace passed 1,829 checks with twelve explicit
+default skips, including 902 application and 535 tooling checks. Its earlier
+run failed at the vault UI test's one-second initial creation wait while real
+key generation was still pending. The unchanged focused case passed; the test
+now uses the same bounded thirty-second wait as its encryption checks. All
+seven vault UI tests and the final full workspace passed with real cryptography
+and every original assertion retained. The failed run remains preserved.
+
 ## Remaining work
 
 The dedicated executor, protected identity preparation and one-time funding,
-production observation/state policies, bounded RPC adapters and end-to-end
-integration of the new libraries remain unfinished. Only after those gates and
-their adversarial tests pass can the bounded live scenarios run. The initial
+raw evidence acquisition and live integration remain unfinished. The policy
+modules, bounded transport and their full synthetic journal integration are
+verified within the scopes above. The remaining live adapters still require
+their own adversarial tests before the bounded live scenarios run. The initial
 deployment receipt remains historical and must not be rewritten as lifecycle
 evidence. No new public V4 lifecycle transaction has been sent by this phase.
 

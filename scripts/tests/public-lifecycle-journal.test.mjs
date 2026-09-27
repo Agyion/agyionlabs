@@ -103,9 +103,9 @@ const canonical=v=>v&&typeof v==='object'?Array.isArray(v)?'['+v.map(canonical).
 const sha=v=>createHash('sha256').update(v).digest('hex'),digest=v=>sha(canonical(v));
 const validate=p=>{assert.deepEqual(p,plan);return true;};
 mock.module(url('public-lifecycle-plan.mjs'),{namedExports:{validatePublicLifecyclePlan:validate,hashPublicLifecyclePlan:p=>{validate(p);return digest(p);}}});
-let snapshots=0,fees=0;
-if(mode!=='real-decoders')mock.module(url('public-lifecycle-readback.mjs'),{namedExports:{verifyPublicLifecycleSnapshot:({plan:p,expected},response)=>{validate(p);assert.equal(expected.unitScope,'snapshot-unit-boundary');assert.equal(response.snapshot.ledger,response.latestLedger);snapshots++;return response.snapshot;}}});
-if(mode!=='real-decoders')mock.module(url('public-lifecycle-fees.mjs'),{namedExports:{reconcilePublicLifecycleFees:o=>{assert.equal(o.response.status,'SUCCESS');assert.equal(o.transactionHash,o.response.txHash);assert.equal(o.before.ledger<o.inclusionLedger,true);assert.equal(o.after.ledger>=o.inclusionLedger,true);fees++;return {netFee:'100',authorizedFee:'1000'};}}});
+let snapshots=0,fees=0;const verificationOrder=[];
+if(mode!=='real-decoders')mock.module(url('public-lifecycle-readback.mjs'),{namedExports:{verifyPublicLifecycleSnapshot:({plan:p,expected},response)=>{validate(p);assert.equal(expected.unitScope,'snapshot-unit-boundary');assert.equal(response.snapshot.ledger,response.latestLedger);snapshots++;verificationOrder.push('snapshot');return response.snapshot;}}});
+if(mode!=='real-decoders')mock.module(url('public-lifecycle-fees.mjs'),{namedExports:{reconcilePublicLifecycleFees:o=>{assert.equal(o.response.status,'SUCCESS');assert.equal(o.transactionHash,o.response.txHash);assert.equal(o.before.ledger<o.inclusionLedger,true);assert.equal(o.after.ledger>=o.inclusionLedger,true);fees++;verificationOrder.push('fee');if(mode==='fee-before-observations')throw Error('SYNTHETIC_FEE_REJECT');return {netFee:'100',authorizedFee:'1000'};}}});
 const J=await import(url('public-lifecycle-journal.mjs')),C=await import(url('public-lifecycle-call.mjs'));
 const planSha256=digest(plan),run=path.join(home,'run'),lockRoot=path.join(home,'locks');for(const dir of [run,lockRoot])if(!fs.existsSync(dir))fs.mkdirSync(dir,{mode:0o700});
 const base={run,lockRoot,plan,planSha256};
@@ -122,7 +122,43 @@ function unsigned(claim){const call=claim.derived.call,args=call.argsXdr.map(v=>
 function receipt(claim,signedXdr){const tx=TransactionBuilder.fromXDR(signedXdr,Networks.TESTNET),rv=claim.derived.expectedCreatedId===null?xdr.ScVal.scvVoid():nativeToScVal(BigInt(claim.derived.expectedCreatedId),{type:'u64'});const preimage=new xdr.InvokeHostFunctionSuccessPreImage({returnValue:rv,events:[]});const meta=new xdr.TransactionMeta(4,new xdr.TransactionMetaV4({ext:new xdr.ExtensionPoint(0),txChangesBefore:[],operations:[new xdr.OperationMetaV2({ext:new xdr.ExtensionPoint(0),changes:[],events:[]})],txChangesAfter:[],sorobanMeta:new xdr.SorobanTransactionMetaV2({ext:new xdr.SorobanTransactionMetaExt(0),returnValue:rv}),events:[],diagnosticEvents:[]}));const tr=new xdr.TransactionResult({feeCharged:xdr.Int64.fromString('100'),result:xdr.TransactionResultResult.txSuccess([xdr.OperationResult.opInner(xdr.OperationResultTr.invokeHostFunction(xdr.InvokeHostFunctionResult.invokeHostFunctionSuccess(Buffer.from(sha(preimage.toXDR()),'hex'))))]),ext:new xdr.TransactionResultExt(0)});return {status:'SUCCESS',txHash:tx.hash().toString('hex'),ledger:claim.binding.headLedger+1,latestLedger:claim.binding.headLedger+2,createdAt:String(Math.floor(Date.now()/1000)),feeBump:false,envelopeXdr:signedXdr,resultXdr:tr.toXDR('base64'),resultMetaXdr:meta.toXDR('base64')};}
 function opts(s=step,index=0,overrides={}){const b=bind(s,index);let claim;return {...base,stepId:s.id,binding:b,evidence:evidence(s,'before',b),...policy,prepare:async input=>{prepares++;claim=input.claim;assert.ok(fs.existsSync(path.join(run,s.id+'.claim.json')));return {envelopeXdr:unsigned(claim)};},sign:async ({unsignedXdr})=>{signs++;const tx=TransactionBuilder.fromXDR(unsignedXdr,Networks.TESTNET);tx.sign(keys[s.sourceRole]);return tx.toXDR();},sendTransaction:async signed=>{sends++;latestSigned=signed;const attempt=JSON.parse(fs.readFileSync(path.join(run,s.id+'.attempt.json'),'utf8'));assert.equal(attempt.signedXdr,signed);assert.equal(fs.statSync(path.join(run,s.id+'.attempt.json')).mode&0o777,0o600);result=receipt(claim,signed);throw Error('synthetic uncertain send');},getTransaction:async hash=>{queries++;assert.equal(hash,result.txHash);return result;},collectEvidence:async()=>evidence(s,'after',b),...overrides};}
 const recovery=(o,override={})=>{const {binding,evidence,prepare,sign,sendTransaction,...r}=o;return {...r,...override};};
-if(mode==='parent-fsync'){
+// REAL_DECODER_CHECKPOINT
+if(mode==='policy-context'){
+ let finalSeen=false;
+ const observed=scope=>{
+  assert.equal(verificationOrder.at(-1),scope.phase==='before'?'snapshot':'fee','observation must run only after the current snapshot and current fee');
+  assert.equal(scope.snapshot.ledger,scope.snapshotResponse.latestLedger);
+  assert.equal(Object.hasOwn(scope.claim,'evidence'),false);assert.equal(Object.hasOwn(scope.claim,'predecessors'),false);
+  const index=plan.steps.findIndex(s=>s.id===scope.stepId);assert.equal(scope.prefix.length,index);assert.deepEqual(scope.initialEvidence,JSON.parse(fs.readFileSync(path.join(run,step.id+'.claim.json'),'utf8')).evidence.snapshot);
+  for(let i=0;i<scope.prefix.length;i++){const r=scope.prefix[i];assert.equal(r.stepId,plan.steps[i].id);assert.equal(r.fee.netFee,'100');assert.equal(r.after.ledger,head+i*3+2);assert.match(r.completionSha256,/^[a-f0-9]{64}$/);assert.match(r.evidenceSha256.before,/^[a-f0-9]{64}$/);assert.equal(r.claim,undefined);assert.equal(r.inclusion.response,undefined);assert.equal(Object.isFrozen(r),true);}
+  if(scope.phase==='before'){assert.equal(scope.currentFee,null);assert.equal(scope.currentInclusion,null);}
+  else{assert.equal(scope.currentFee.netFee,'100');assert.equal(scope.currentInclusion.hash,JSON.parse(fs.readFileSync(path.join(run,scope.stepId+'.attempt.json'),'utf8')).hash);assert.equal(scope.currentInclusion.ledger,scope.claim.binding.headLedger+1);assert.equal(scope.beforeSnapshot.ledger,scope.claim.binding.headLedger);if(index===38){assert.equal(scope.prefix.length,38);finalSeen=true;}}
+  verificationOrder.push('observation');return policy.verifyObservations(scope);
+ };
+ const state=scope=>{assert.equal(scope.snapshotResponse.latestLedger,scope.phase==='before'?scope.claim.binding.headLedger:scope.claim.binding.headLedger+2);assert.equal(Array.isArray(scope.prefix),true);verificationOrder.push('state');return policy.verifyStateExpectations(scope);};
+ for(let i=0;i<39;i++){const s=plan.steps[i],o=opts(s,i,{verifyObservations:observed,verifyStateExpectations:state});assert.equal((await J.executePublicLifecycleStep(o)).status,'complete');sequences[s.sourceRole]++;}
+ assert.equal(finalSeen,true);assert.equal(sends,39);assert.equal(signs,39);
+ await J.recoverPublicLifecycleStep(recovery(opts(plan.steps[38],38,{verifyObservations:observed,verifyStateExpectations:state}),{getTransaction:async()=>{throw Error('completed replay must not query');}}));
+ const file=path.join(run,step.id+'.completion.json'),tampered=JSON.parse(fs.readFileSync(file,'utf8'));tampered.verified.fee.netFee='999';fs.writeFileSync(file,JSON.stringify(tampered));await assert.rejects(J.recoverPublicLifecycleStep(recovery(opts(),{verifyObservations:observed,verifyStateExpectations:state})),/COMPLETION_EVIDENCE|PREDECESSORS/);
+}else if(mode==='after-state-refusal'){
+ // Unit orchestration only: a trusted state callback refuses the included
+ // after-state before either the doubled snapshot/fee or observations can pass.
+ let afterObservations=0;
+ const o=opts(step,0,{verifyStateExpectations:scope=>{if(scope.phase==='after')throw Error('SYNTHETIC_AFTER_STATE_REJECT');return policy.verifyStateExpectations(scope);},verifyObservations:scope=>{if(scope.phase==='after')afterObservations++;return policy.verifyObservations(scope);}});
+ await assert.rejects(J.executePublicLifecycleStep(o),/SYNTHETIC_AFTER_STATE_REJECT/);
+ const attemptFile=path.join(run,step.id+'.attempt.json'),includedFile=path.join(run,step.id+'.inclusion.json');
+ const originalAttempt=fs.readFileSync(attemptFile),originalIncluded=fs.readFileSync(includedFile);
+ assert.equal(JSON.parse(originalAttempt).signedXdr,latestSigned);assert.equal(JSON.parse(originalIncluded).response.envelopeXdr,latestSigned);assert.equal(JSON.parse(originalIncluded).response.txHash,JSON.parse(originalAttempt).hash);
+ assert.equal(fees,0);assert.equal(afterObservations,0);assert.equal(fs.existsSync(path.join(run,step.id+'.completion.json')),false);
+ const sourceDir=path.join(lockRoot,fs.readdirSync(lockRoot)[0]);assert.equal(fs.readdirSync(sourceDir).some(n=>n.includes('.release.')),false);
+ await assert.rejects(J.recoverPublicLifecycleStep(recovery(o,{getTransaction:async()=>{throw Error('persisted inclusion must not query');}})),/SYNTHETIC_AFTER_STATE_REJECT/);
+ assert.deepEqual(fs.readFileSync(attemptFile),originalAttempt);assert.deepEqual(fs.readFileSync(includedFile),originalIncluded);
+ assert.equal(fees,0);assert.equal(afterObservations,0);assert.equal(fs.existsSync(path.join(run,step.id+'.completion.json')),false);assert.equal(fs.readdirSync(sourceDir).some(n=>n.includes('.release.')),false);
+ assert.equal(prepares,1);assert.equal(signs,1);assert.equal(sends,1);assert.equal(queries,1);
+}else if(mode==='fee-before-observations'){
+ let afterObservations=0;const o=opts(step,0,{verifyObservations:scope=>{if(scope.phase==='after')afterObservations++;return policy.verifyObservations(scope);}});
+ await assert.rejects(J.executePublicLifecycleStep(o),/SYNTHETIC_FEE_REJECT/);assert.equal(afterObservations,0);assert.equal(fs.existsSync(path.join(run,step.id+'.completion.json')),false);assert.equal(sends,1);assert.equal(signs,1);
+}else if(mode==='parent-fsync'){
  const seen=new Set(),old=fs.fsyncSync;fs.fsyncSync=function(fd){if(fs.fstatSync(fd).isDirectory())seen.add(fs.readlinkSync('/proc/self/fd/'+fd));return old(fd);};const o=opts();o.prepare=async()=>{assert.ok(seen.has(lockRoot),'lockRoot directory must be fsynced before preparation');assert.ok(seen.has(path.dirname(run)),'run and lockRoot parent must be fsynced');throw Error('ORDER_PROVEN');};await assert.rejects(J.executePublicLifecycleStep(o),/ORDER_PROVEN/);assert.equal(signs,0);assert.equal(sends,0);
 }else if(mode==='signed-crash'){
  const old=fs.fsyncSync;fs.fsyncSync=function(fd){old(fd);if(fs.existsSync(path.join(run,step.id+'.attempt.json'))&&fs.fstatSync(fd).isDirectory())process.exit(72);};await J.executePublicLifecycleStep(opts());throw Error('crash did not occur');
@@ -164,7 +200,7 @@ if(mode==='parent-fsync'){
 console.log('journal unit boundary passed '+mode);
 `;
 
-for (const mode of ['recovery', 'full-order', 'malformed-inclusion', 'wrong-sequence', 'bad-policy', 'source-contention', 'claim-only', 'fee-cap', 'parent-fsync', 'included-failure']) {
+for (const mode of ['recovery', 'full-order', 'malformed-inclusion', 'wrong-sequence', 'bad-policy', 'source-contention', 'claim-only', 'fee-cap', 'parent-fsync', 'included-failure', 'policy-context', 'fee-before-observations', 'after-state-refusal']) {
   test(`unit-only synthetic authority and decoder boundary: ${mode}`, async t => {
     const f = fixture(t), home = path.dirname(f.run), file = path.join(home, 'unit.mjs'); fs.writeFileSync(file, unitChild, { mode: 0o600 });
     const { execFile } = await import('node:child_process'), { promisify } = await import('node:util');
@@ -247,7 +283,8 @@ if(mode==='real-decoders'){
 
 test('local opt-in: genuine pinned WASM snapshot and fee decoder first create plus expired recovery', { skip: process.env.AGYION_LIFECYCLE_REAL_DECODERS !== '1' }, async t => {
   const f = fixture(t), home = path.dirname(f.run), file = path.join(home, 'real.mjs');
-  fs.writeFileSync(file, unitChild.replace("if(mode==='parent-fsync'){", realDecoderChild + "\nif(mode==='parent-fsync'){"), { mode: 0o600 });
+  assert.equal(unitChild.split('// REAL_DECODER_CHECKPOINT').length, 2);
+  fs.writeFileSync(file, unitChild.replace('// REAL_DECODER_CHECKPOINT', realDecoderChild), { mode: 0o600 });
   const { execFile } = await import('node:child_process'), { promisify } = await import('node:util');
   const result = await promisify(execFile)(process.execPath, ['--experimental-test-module-mocks', file, path.dirname(root), home, 'real-decoders'], { timeout: 30000, maxBuffer: 1024 * 1024 });
   assert.match(result.stdout, /journal actual decoder checkpoint passed/);
