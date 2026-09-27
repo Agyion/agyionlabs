@@ -48,7 +48,7 @@ jobs:
         run: node contracts/private-pool/tools/verify-fixture-provenance.mjs
       - name: Verify public proving assets and build the static testnet site
         run: |
-          node scripts/fetch-private-prover.mjs --development
+          node scripts/fetch-private-prover.mjs --development --base https://agyion.jasurbek-rustamov.workers.dev/
           npm --prefix landing run build
           node --input-type=module <<'NODE'
           import { execFileSync } from 'node:child_process';

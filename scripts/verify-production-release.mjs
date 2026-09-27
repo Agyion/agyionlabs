@@ -86,11 +86,22 @@ try{
  await expect(page.locator('.station-dock [role="tab"]')).toHaveCount(6);
  await expect(page.locator('.station-open-instrument')).toHaveCount(0);
  await waitForFonts(page);
+ const fade=page.locator('#panel-fade');
+ // Finish the read before navigating away; the component correctly aborts
+ // outstanding catalog requests when its workspace unmounts. Keep every
+ // unexpected request failure in the strict release result.
+ const settleCatalog = async () => {
+  const listings=fade.getByRole('region',{name:'Fade listings',exact:true});
+  await expect(listings).toBeVisible();
+  await expect(listings.getByRole('button',{name:'Refresh',exact:true})).toBeEnabled({timeout:30000});
+  await expect(listings.getByRole('alert')).toHaveCount(0);
+ };
  for(const width of [1440,390]){
   await page.setViewportSize({width,height:width===1440?1000:844});
   for(const id of ['fade','pod','trigger','envoy','ramp','ledger']){
    await page.locator(`#tab-${id}`).click();await expect(page.locator(`#panel-${id}`)).toBeVisible();
    await expect(page.locator(`#panel-${id}`).getByRole('heading',{name:panelHeadings[id],exact:true}),`${id}: actual task interface`).toBeVisible();
+   if(id==='fade')await settleCatalog();
    if(['pod','trigger','envoy'].includes(id)){
     await expect(page.locator(`#panel-${id} [data-private-instrument="${id}"]`)).toBeVisible();
     await expect(page.locator(`#panel-${id}`).getByText('Experimental testnet. One operator holds the development trustee keys. Deposits, withdrawals and fee payers remain public.',{exact:true})).toBeVisible();
@@ -114,12 +125,13 @@ try{
   expect(report.kernelReadRequests.some(request=>request.keys.includes(expectedFootprint)),'Browser reads the exact expected testnet kernel instance').toBe(true);
   report.protocolStatus.observedContractInstance=expected.contractId;
  }
- const fade=page.locator('#panel-fade');
+ await settleCatalog();
  await fade.getByRole('button',{name:'Sell',exact:true}).click();
  await expect(fade.getByRole('button',{name:'Save listing and fund offer',exact:true})).toHaveCount(0);
  await expect(fade.getByRole('button',{name:'Register merchant key',exact:true})).toHaveCount(0);
  await expect(fade.getByRole('button',{name:'Connect wallet',exact:true})).toBeVisible();
  await fade.getByRole('button',{name:'Find a pickup',exact:true}).click();
+ await settleCatalog();
  await fade.locator('summary').filter({hasText:'Existing public positions'}).click();
  await expect(fade.getByRole('heading',{name:'Load an existing Fade',exact:true})).toBeVisible();
  await expect(fade.getByRole('button',{name:'Lock the pot',exact:true})).toHaveCount(0);

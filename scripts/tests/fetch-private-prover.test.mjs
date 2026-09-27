@@ -64,3 +64,26 @@ test('missing cached files, changed VK pin and escaped symlinks fail without rep
  await assert.rejects(acquirePrivateProver({root:f.root,developmentOnly:true,fetchImpl:f.fetchImpl}),/ordinary directory/);
  assert.ok(await stat(join(f.root,'privacy/package-lock.json')));
 });
+test('an explicitly selected HTTPS publication origin still acquires only exact reviewed bytes',async t=>{
+ const f=await fixture(t),baseUrl='https://agyion.jasurbek-rustamov.workers.dev/';
+ const result=await acquirePrivateProver({root:f.root,developmentOnly:true,baseUrl,fetchImpl:f.fetchImpl});
+ assert.equal(result.artifactCount,6);assert.equal(f.requests.length,6);
+ for(const {url,options}of f.requests){assert.equal(new URL(url).origin,new URL(baseUrl).origin);assert.equal(options.redirect,'error');assert.equal(options.credentials,'omit');assert.equal(options.headers,undefined)}
+ assert.deepEqual((await inspectAcquiredProver({root:f.root,artifactRoot:f.target})).releases,result.releases);
+});
+test('HTTP and redirect diagnostics are precise without logging response bodies, headers or redirect destinations',async t=>{
+ const f=await fixture(t),baseUrl='https://agyion.jasurbek-rustamov.workers.dev/';
+ for(const [mode,status,urlMatches,redirected]of [['http',403,true,false],['url',200,false,false],['redirect',200,true,true]]){
+  let calls=0;const fetchImpl=async url=>{
+   calls++;const response=new Response('private-diagnostic-body',{status,headers:{'set-cookie':'private-diagnostic-cookie'}});
+   Object.defineProperty(response,'url',{value:urlMatches?String(url):'https://untrusted.invalid/secret-redirect-destination'});
+   Object.defineProperty(response,'redirected',{value:redirected});return response;
+  };
+  await assert.rejects(acquirePrivateProver({root:f.root,developmentOnly:true,baseUrl,fetchImpl}),error=>{
+   assert.equal(error.message,`Artifact fetch or redirect refused (HTTP ${status}; origin https://agyion.jasurbek-rustamov.workers.dev; URL matches ${urlMatches}; redirected ${redirected})`);
+   assert.doesNotMatch(error.message,/private-diagnostic|untrusted|secret-redirect/);return true;
+  },mode);
+  assert.equal(calls,1);await assert.rejects(stat(f.target),{code:'ENOENT'});
+  assert.deepEqual((await readdir(join(f.root,'artifacts'))).filter(name=>name.includes('acquire')),[]);
+ }
+});

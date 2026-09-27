@@ -1,0 +1,3154 @@
+{
+  "schema": "agyion-source-review-checkpoint-v1",
+  "reviewedAt": "2026-09-27T06:13:48.071691+00:00",
+  "runtimeReleaseCommit": "a14dc5b628ad72f99c9d92a1abb7135a3965ca47",
+  "scope": "Tracked and nonignored first-party authored source, tests, configuration, styles, API declarations, vector assets and database migrations. Exact current bytes at this checkpoint.",
+  "postReleaseToolingChanges": [
+    ".github/workflows/checks.yml",
+    "scripts/fetch-private-prover.mjs",
+    "scripts/tests/fetch-private-prover.test.mjs",
+    "scripts/verify-production-release.mjs"
+  ],
+  "reviewKinds": {
+    "complete-source-read": "The exact current hash has explicit complete source-read ranges from this development review. It does not imply a new reread during manifest generation.",
+    "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
+  },
+  "counts": {
+    "files": 518,
+    "lines": 65156,
+    "byReviewKind": {
+      "complete-source-read": {
+        "files": 422,
+        "lines": 45215
+      },
+      "verified-baseline-plus-reviewed-diff": {
+        "files": 96,
+        "lines": 19941
+      }
+    },
+    "unresolvedFiles": 0,
+    "unresolvedLines": 0
+  },
+  "exclusions": [
+    "Generated contract bindings and specification, generated prover constants, proof fixtures, cryptographic parameter data and dependency lockfiles are outside authored source totals.",
+    "Copied vendor code and transitive dependency implementations are outside the first-party review claim.",
+    "Ignored files, private material, build output, Markdown documentation, licenses and binary media are outside the source-line denominator.",
+    "This generated review manifest is excluded from source totals to avoid recursive self-hashing."
+  ],
+  "limitations": [
+    "Development source review is not an independent security audit, execution coverage, proof of cryptographic soundness or a guarantee that every exploit is absent.",
+    "Passing tests do not establish source-read coverage. Testnet and browser evidence has separate scope and limitations.",
+    "These file hashes are a dated source checkpoint, not a claim that every listed file is part of the deployed runtime bundle. The listed tooling changes follow the runtime release commit.",
+    "Any subsequent source change requires renewed review evidence and manifest reconciliation."
+  ],
+  "files": [
+    {
+      "path": ".github/workflows/checks.yml",
+      "sha256": "618e7e6759f4f2f879461b0820d2f7afb71e033ce838c9c3903c131043bbb0a7",
+      "lines": 110,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "71663df351df73022bd9142d436072da7fa7c4374b1e64550b7878b04fc42462",
+      "lines": 51,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "anchor/assets.yaml",
+      "sha256": "3e853c2c2c6fa16cb5596c2e5a6e0fc4b3e41de25974384aceb3c9b0abffa676",
+      "lines": 103,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/.env.example",
+      "sha256": "94a3ff56b8fc6d3b9717856e4294bcc4d2e769baf0dfc58b04b1ebd3aae01d91",
+      "lines": 17,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/.eslintignore",
+      "sha256": "9196511531991543ab15b8efc04a071d99bbbd89279bc1e44aac140caee04b32",
+      "lines": 2,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/.eslintrc.json",
+      "sha256": "8d4a8d81dab1c22bcb28635249606f2e59fa816e8e58c56eecf6d2430949847a",
+      "lines": 3,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/.gitignore",
+      "sha256": "f37e7e1b90353a16ba7bec8979585311ee6d00311209391e5ab47162df4ca922",
+      "lines": 36,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/.npmrc",
+      "sha256": "a093bb2fed59d699b7f9a62a5203cc196054c624e9c39c6d908c9e7db5dd2464",
+      "lines": 1,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/app/page.tsx",
+      "sha256": "b75806d52c1862742fec935a8b468dc023777ece75cbdbe16896ae031b44be6a",
+      "lines": 10,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/AppShell.tsx",
+      "sha256": "8b075c74b197a51b44f393cedef65fdb1fc403a52b8b9b4248d99f8e0074a47c",
+      "lines": 227,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/EnvoyPanel.tsx",
+      "sha256": "f157312199697bac5d95754c017803b04cdd76f7bdb58cfdf746d0ec7f9f7acd",
+      "lines": 732,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/FadePanel.tsx",
+      "sha256": "96c5e24a835870faf05d72b676d9a9f85b21513a847dbd6f4ce309413d8d0800",
+      "lines": 954,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/LedgerPanel.tsx",
+      "sha256": "d291447ed64997aa833113eab8e82c571c0e469b4be4451cd03a4957c355c3e7",
+      "lines": 138,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/app/OrbitalBackdrop.tsx",
+      "sha256": "3b7d4481d783b27e691f9db4696cd2a1480bd8214c56b16d924285ae3cc4fe3c",
+      "lines": 213,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/PodPanel.tsx",
+      "sha256": "5491352f662edcd8cbe1238553331d6f933a906673e39a4fd80ac6e9ad70c935",
+      "lines": 376,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/PrivateInstrumentPanel.tsx",
+      "sha256": "ef482731b59be8adc9ed24fcf68d7541e45fb3269106acd8d484e3c7f4fb547c",
+      "lines": 288,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/PrivateTriggerAttester.tsx",
+      "sha256": "334a4f4c8c9ff9f89bbd975bd98fc6bb141920521b9599ffc865eeb7aa3554e2",
+      "lines": 92,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/PrivateVault.tsx",
+      "sha256": "992ac81cbcd5fefbdec8e9990034f57e33844709dbbe3eedcd99a701eb3bc4a9",
+      "lines": 90,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/PrivateWorkspaceProvider.tsx",
+      "sha256": "e8a017cce399a3b92fd5baad355b9611cdd25f2a88873cdb0e434de60afbc2ab",
+      "lines": 111,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/ProtocolStatus.tsx",
+      "sha256": "902787e99a15da04e97a7aa7c526cd567cc2c769454ae5da020d67b50c4ab93d",
+      "lines": 14,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/RampPanel.tsx",
+      "sha256": "00f1efa1d8cab208b618c7238fa640e00d337b49fecf3b994ab997b26d6833c7",
+      "lines": 396,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/app/TransactionActivity.tsx",
+      "sha256": "0ec73ebdddd0244e52fed78d3d39737c2bf1cb1eb6c3869177a71293bea91395",
+      "lines": 80,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/TriggerPanel.tsx",
+      "sha256": "6da439a075fb81505dce3938edadd54a796aaaf93b3cb094b6234b1e0d4cb80f",
+      "lines": 472,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/WalletBar.tsx",
+      "sha256": "754e426198166e79130237c648006c33c0feab8a6fe0ffa3f768411e499c16ff",
+      "lines": 101,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/app/instrumentPresentation.tsx",
+      "sha256": "ff8641d4e1efd9c0bbac1a8a61da802a03136d0c3ace65a6307e75b960cc4341",
+      "lines": 80,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/panelControls.tsx",
+      "sha256": "00742dc3a7fa1a168db937883ebe18680439d468fed37b10ade81d2f92cc7ccf",
+      "lines": 76,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/app/panelValidation.ts",
+      "sha256": "d5a291543aa8744b1959c9564919daf2f46b980283fb7a07f13aad423100f094",
+      "lines": 22,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/landing/Compliance.tsx",
+      "sha256": "bf256f54595d82187e4309bef8469ec416415ce3fcecb7d84afd22e0c3684b87",
+      "lines": 90,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/landing/CtaFooter.tsx",
+      "sha256": "c53aeeaa240e653460b0b0a608be36213cbc1c66967dff6f7a37d0d0ed95e7ea",
+      "lines": 68,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/landing/Cursor.tsx",
+      "sha256": "4f445e63018e5206221ab93ef8f708dd06544ecc3f3fb6ba86a3cd74763725ae",
+      "lines": 68,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/landing/Hero.tsx",
+      "sha256": "a00eec3eefc20c94d98d5885ddfeed4e7e8bdf0f02deb60eb9c7bfdcbcdd05db",
+      "lines": 455,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/landing/HowItWorks.tsx",
+      "sha256": "9d2d33c8e06b355e3b34cac79d4c107dd261a7d2b564af982f05737cab83ec05",
+      "lines": 330,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/landing/Lifeline.tsx",
+      "sha256": "ccf7c1cbfd9e96b3b0d3be3996a0e7713dc6db45d79909cb35a78e65794477d8",
+      "lines": 76,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/landing/Nav.tsx",
+      "sha256": "8279fa09e25d780fb95ebf23473b1312d6343437ce898257abb50898f844ec72",
+      "lines": 70,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/landing/PageWipe.tsx",
+      "sha256": "66e367756e1c3f861c6c8e022c9a043b3858ffdc31b12bf1b5072dfd210e3cdb",
+      "lines": 39,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/landing/TemplateCards.tsx",
+      "sha256": "0e79c4a2ca7c04c1757d2f195c56a5ddd4a720bb6f9499b3cb54b4e6d873230c",
+      "lines": 338,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/landing/WhyStellar.tsx",
+      "sha256": "abbf84b21866609f11212af3340973aa63cd3501c8a5b14ecb40e6909589606b",
+      "lines": 149,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/components/market/EnvoyDiscovery.tsx",
+      "sha256": "365b07bbd4b534ff86dae158eba17ec9d42e768d0b55682321437b009fa8ea96",
+      "lines": 21,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/market/FadeMarketPanel.tsx",
+      "sha256": "d13ded7f358b2943ac5cbe274f761faed32cb1bfcc01751d24ea1ed8fda7e941",
+      "lines": 115,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/market/MarketBrowse.tsx",
+      "sha256": "bd00f79855d70a6a3293e396217a71ed8371a53f5c58f39a8b314a179bdbcaa8",
+      "lines": 57,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/market/MarketMap.tsx",
+      "sha256": "fee7de2efafd595dfc8ca8f8d15b2c93cf79ab0de75c3d928196a2faf1850709",
+      "lines": 129,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/market/MarketOffer.tsx",
+      "sha256": "2a99eebfc57efcd3c265f412828224e5fca40455e23676e9ae100d7eae3ac50e",
+      "lines": 164,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/market/MarketSell.tsx",
+      "sha256": "26d74a9b32d27169d567fe573802ec0c8b6089030da3451f176a217943639206",
+      "lines": 73,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/market/MarketSession.tsx",
+      "sha256": "64fb349ad324fb77e90964113264063db4e7e0ab34eb90ae92eefd8fb0b441b4",
+      "lines": 98,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/market/MerchantKeys.tsx",
+      "sha256": "e83dc670de2c2462c4289b8326b7e5a6c3e4491ea9627a0f3876df5709e47ea3",
+      "lines": 89,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/components/ui.tsx",
+      "sha256": "7fdcd786ef1dbbf7077470382fed01c44373efbd755f8f81b12c457fdc8d46b2",
+      "lines": 338,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/console-surface.css",
+      "sha256": "3ad861a58c76cebe017b5e2d7eb31a06b1050f95e96fef68dd296fdb2924f438",
+      "lines": 103,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/globals.css",
+      "sha256": "12da5e8c88691cf759dcfe05fa4cb17bfcf03c100edddf7bad8728c1d14d871e",
+      "lines": 547,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/instrument-workspaces.css",
+      "sha256": "64c9cb65517c56ee4daa316e956260fa4aa3ce0b45e3e876f33c768d79ccafec",
+      "lines": 274,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/layout.tsx",
+      "sha256": "e828640298131a8469f1d4524dc58e00ad582a18700f64a0428bf73efdbd26eb",
+      "lines": 51,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/accountOps.ts",
+      "sha256": "78f3ecd82e728cd8d523a81f4082368fa99403b4aeb54aeedd06075154d7da65",
+      "lines": 172,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/lib/agyionClient.ts",
+      "sha256": "087eeecb101e7b47f66b723900d5d50c04bcedaa80f3d9df86617eff7b98df6a",
+      "lines": 1304,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/anchor.ts",
+      "sha256": "a9410e859412c61c217dec330c5d929762d4776598c74618e14298ed884ef043",
+      "lines": 440,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/lib/anchorPayments.ts",
+      "sha256": "d326509b31eb4a7b74d74ebaf94c8bd87f4eea610f7af08b292c94785dc59a8f",
+      "lines": 88,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/client.ts",
+      "sha256": "153daf5075221511e7298f7652a721465e6a7943e3dd13c1b555379ed4c2ce58",
+      "lines": 57,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/config.ts",
+      "sha256": "221659c9438d5f30492b776b2c568f3ddabbcbe0df3caa3da7eb9d5a621edb8f",
+      "lines": 49,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/errors.ts",
+      "sha256": "f69fd14b9be22021bd3f819c0228bf4beaeb7b84ae85f2baeef931f3a36c56b1",
+      "lines": 75,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/lib/format.ts",
+      "sha256": "857a3d054f95cf4e0dafc1e5f5f36108d61b69ae33b90b9c173f05ff6c7fc848",
+      "lines": 58,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/lib/instrumentActivity.ts",
+      "sha256": "9934d8f6284e600c10f747968a8c47dc23fb11945e8d2ac68f19dcf5fcecff52",
+      "lines": 5,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/ledgerLog.ts",
+      "sha256": "4518e5bf923698d8338902886b7172ba15b68df31d43ce0ad12548305bc49d28",
+      "lines": 271,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/lib/market/forms.ts",
+      "sha256": "e908174afcdd67118d074c1bc7a0d9945449fa837a465a70ecdb839e260a4744",
+      "lines": 83,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/private/committee.json",
+      "sha256": "b3cf846a83e9d1c1d7757f6e35e6a9af45d65b3784176e36bfa516b7648d0c85",
+      "lines": 124,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/private/note-summary.ts",
+      "sha256": "609135ba81289f96521f4da9071e07b4d087c20cbb1bb562c5d7359d95a030b2",
+      "lines": 26,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/private/protocol-types.ts",
+      "sha256": "f1eae9ef299359fc3fbbf1281fc98ed90ffdc151b5d8daa90a18f49ff1667dbf",
+      "lines": 47,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/private/protocol.ts",
+      "sha256": "c3e06f53584137355f00b91f05746c3ddb2819ec775517543b0cfc01f107418d",
+      "lines": 232,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/lib/private/release.json",
+      "sha256": "4944e60b435b6f0f943b90690d53ff0ca4492b678b296c9a3c12ac3bcbcf5b1e",
+      "lines": 54,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/private/release.ts",
+      "sha256": "410bce8dc2f6be4bbbe902e8413a7960f23e46179770d7e444acee88a9550867",
+      "lines": 26,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/private/wallet-session.ts",
+      "sha256": "d2ed40cb8130fbee68d7eb74e8afdcadb5897aa52222372cba9165120dbb4629",
+      "lines": 31,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/privateVault.ts",
+      "sha256": "8578c7ca4c0957f910c188ef167890583e8993f41efeb07b6a33c3b9b37686bb",
+      "lines": 203,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/privateWorkspaceInputs.ts",
+      "sha256": "426db1703b6b5a97753709177129ffc4b7044d8fec12722705fcfa622fb17e00",
+      "lines": 52,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/recoveryStorage.ts",
+      "sha256": "817e9983f004e0c12c0dd8b80c65a1d41f31640537e6558dd14bfc4d10a98c7a",
+      "lines": 48,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/signers.ts",
+      "sha256": "2f38ad39a3c9fc62215808392f801837d4d9e383ff506353283e61cf9c8a0004",
+      "lines": 121,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/transactionReceipts.ts",
+      "sha256": "87fdb76808c4f7a86cdbf8a1190ee65e8af242f7837771a5ec09cd4773b78b87",
+      "lines": 152,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/useLedger.ts",
+      "sha256": "85d7f447adbfe1331d9c07a786a6f1ad06f4761da45526b59c39f5787f348fd8",
+      "lines": 46,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/lib/useProtocolReadiness.ts",
+      "sha256": "501874d983eb906594d14c32b66c7d85e6d3c88a14140c27f750a4a54d75c862",
+      "lines": 17,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/useWallet.ts",
+      "sha256": "d94786391b36a3d486581bacf8806da04b41ce50880c74307df3eedb7c3b2c15",
+      "lines": 121,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/lib/venueIdentity.ts",
+      "sha256": "d5e4f640089f2a4e2b7c5847563b568def10e6bd9425afb0456a3cb45c2ee1f7",
+      "lines": 44,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/lib/wallet.ts",
+      "sha256": "f681ca874fb1289c161906028bca763b68f759332f0423c5a648a7f232d46915",
+      "lines": 172,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/lib/walletsKit.ts",
+      "sha256": "ea5b5406a271064d61a83b4822939a399eab956f787bb33b9477e623801fd5b4",
+      "lines": 174,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/market-map.css",
+      "sha256": "bfbd9f585db6373dbec1e0d4556cb36bf60b91ab1f5b958fe9db85e4019fa6c8",
+      "lines": 22,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/market.css",
+      "sha256": "2011bc604166ff7b3b09984d26ace9cb75fa2697870274d91c3b1bd3e7af0683",
+      "lines": 78,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/app/orbital.css",
+      "sha256": "be0a960542e10410b649126eb0d6d320d731fc868f1cee50cb68f22ced569568",
+      "lines": 406,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/app/page.tsx",
+      "sha256": "3befc150d7e7da6f43899973f2f3b34ccd56b1b7dc638eb36a325653cda43c54",
+      "lines": 35,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/lib/agyion-bindings/.gitignore",
+      "sha256": "9ae8e02462ff393bb40e787f0a65e79d241ed4f74b32cc57c64acb4ac18fa3fc",
+      "lines": 2,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/lib/agyion-bindings/package.json",
+      "sha256": "023b619ba1561786388110a630650ca3cae9319fa7542ebbed017276ad436a48",
+      "lines": 17,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/lib/agyion-bindings/tsconfig.json",
+      "sha256": "4e9d6c387e88404912c07eb6ce617701563c322751e84a9f4e61e3c47ef6fdb5",
+      "lines": 98,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/lib/zk.ts",
+      "sha256": "0ef3175250e205276a6304362b0f560566b0f45a33cd997ddb0f9155d162d9de",
+      "lines": 235,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/next.config.mjs",
+      "sha256": "bed956265316a769ff1d8fda744a05a56ab1a26e3cb6b9e1500ee5f9ed4c0c2d",
+      "lines": 10,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/package.json",
+      "sha256": "908960f02251114a356669e3c8e5615391971b2f77541cca959146c2b1daa878",
+      "lines": 44,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/postcss.config.mjs",
+      "sha256": "ac31e2a95ef64fe27ceb4124e101675273107aae2e33bc490b01d919e7f03646",
+      "lines": 8,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/public/favicon.svg",
+      "sha256": "39f05901124d7cd5bb80ea7c82f658aff6ddd56022c0890fa298aeebc8546e35",
+      "lines": 1,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/scripts/anchor-smoke.mjs",
+      "sha256": "ccda18f0b070b80b419f0a1de44feb2a08b5b52d40301d74cfb29c125d845af7",
+      "lines": 7,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tailwind.config.ts",
+      "sha256": "f7f190b3a198eb40a347469ebe9c7c1efc281cea4d8c923f28cfafc9d541e644",
+      "lines": 55,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/anchor-payment-recovery.test.ts",
+      "sha256": "9f40e1c64bf88dba9c404d7eb4ae95bb63c160ed89b3c23910e1fbcf5c9d99da",
+      "lines": 108,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/anchor.security.test.ts",
+      "sha256": "c527ab40dadb59e544db1b06ffca23d2bf402588014662283f1171e81714b2fc",
+      "lines": 140,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/tests/app-shell-motion.test.tsx",
+      "sha256": "27f5e3d6ecf079e2ad8bbd67c2e38dbc882eac62497c35308e82f04c8f06fa80",
+      "lines": 210,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/client-asset-policy.test.ts",
+      "sha256": "ba7a8791c017ca093897b15ca8cea465879d2de6e914acde7649562e4942c969",
+      "lines": 105,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/tests/client-deployment-config.test.ts",
+      "sha256": "d9842fc119462aee7b62d7fcfa9a51ee07cc9fa1f9d43c398f0162794d55c550",
+      "lines": 38,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/client-recovery.test.ts",
+      "sha256": "ac7ce795f4223d74b581ebc644b5a5263c60c67717772dde4304e383595594fa",
+      "lines": 211,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/tests/client-security.test.ts",
+      "sha256": "ee4c2a052b08fc011101754f93c1342768dec74051015a282f7961bd6eba95db",
+      "lines": 78,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/tests/config.test.ts",
+      "sha256": "69884a0c36b393ade6d94088d8385f9886cbf766414734f0003a5ff5fe65b863",
+      "lines": 33,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/tests/deployment-identity.test.ts",
+      "sha256": "560c902c7ae9a6511fe4ee03312ade2ed2462678c57e96b804d9724b8f44f17b",
+      "lines": 63,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/tests/fade-recovery.test.tsx",
+      "sha256": "9b5c742bf87707945ce390a8d49fd6b83d535ddf3ee11928e68c9795a11d3210",
+      "lines": 318,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/tests/flight-document.test.tsx",
+      "sha256": "cf3f7c571e71040c65310b38c281489b07181e42b6b751cdfa7ab1d1e55d9c29",
+      "lines": 30,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/flight-handoff.test.ts",
+      "sha256": "062b85c3d39080b4479b0cde988f6ea15727ac4992c9208986dbee1e2dc4a2f5",
+      "lines": 180,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/flight-path.test.ts",
+      "sha256": "3f4808223c0c2cc9e7c408ac4b6139f87211630db1e0ba634386af7a69cf8bc0",
+      "lines": 31,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/flight-preference.test.ts",
+      "sha256": "a3cc6128cc95543fceb8476efbd7999a13f0fd6b185fa3de4397c25fbbe66978",
+      "lines": 49,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/flight-scene.test.ts",
+      "sha256": "2cfd94b3910763c4526744829785a45dc129d4883e3e0ac7fdbe482138b76f28",
+      "lines": 478,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/instrument-orbit.test.ts",
+      "sha256": "deb787d786d5f495566e0eff9b43234cdca15700d8e0058a2bad835fcdd53f86",
+      "lines": 265,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/ledger-clock.test.tsx",
+      "sha256": "90f320528665eb33e0b41ce0a9d99fdabdda8541267d45ea7846f7521e0f7743",
+      "lines": 52,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/tests/ledger-storage.test.ts",
+      "sha256": "db195d1fef777cd08930243c626c5b7dd49de2a31ccefd62b81f0ad94b010a27",
+      "lines": 107,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/market-forms.test.ts",
+      "sha256": "743ee9ea2dca1a85a163abb4f07e4c3abe3fc56ef0aceed114cb1d75647d138b",
+      "lines": 35,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/market-session.test.tsx",
+      "sha256": "ad238380fa4915eaa421d2aae6218e14c865cdae277da19cc8e916e973803ad8",
+      "lines": 49,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/market-ui-safety.test.tsx",
+      "sha256": "0504b054211e9e2a6999aca898a08559a53303f8f4d41a8a403f837bacd1b7d3",
+      "lines": 115,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/market-workspace.test.tsx",
+      "sha256": "f17d98d72b3ea9d5280e5ed8c2b260a5ec6acfaccb086960fb86117b7d82b0c1",
+      "lines": 52,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/module-camera.test.ts",
+      "sha256": "5ae2716c2abac1020dc82b169e8defd3ffe07111d7bf1443ac48479921b63348",
+      "lines": 200,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/orbit-input.test.ts",
+      "sha256": "7ff90b2f85c6f5c019324dfd8ee9ae9ad8f3d72e3e8660ba893b519a74071518",
+      "lines": 253,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/orbital-backdrop.test.tsx",
+      "sha256": "8ca586bb7c70ce0c91e0112caf987b83af79f767ef626fe245d38aaa03afc1ec",
+      "lines": 312,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/panels.test.tsx",
+      "sha256": "02f839f80971482d7d2612e4ffe12a78361c33026d7147769c91f351c1bc0058",
+      "lines": 817,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/pod-credentials.test.ts",
+      "sha256": "305d81f1c5c3ba2ced726879f31fb84916c6362a387995228b87ae9b474e05b5",
+      "lines": 46,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/pod-rpc-payload.test.ts",
+      "sha256": "1fb287f41b1f86bb57c42de5bb6a3bbeb9fd16e68ef6e28950a6f030bf14b58f",
+      "lines": 42,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/tests/pointer-aim.test.ts",
+      "sha256": "ddab1a6c3cfd2b5d919986df526d3c8d7914b49cd768be0bf10abf659b6b6973",
+      "lines": 69,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-instruments.test.tsx",
+      "sha256": "7daacafa9c3d00892c74c8f258b993b30b2dcb5c84782b5c339a46e64331363f",
+      "lines": 152,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-note-summary.test.ts",
+      "sha256": "fde6bcd8380dd97f04f62426c8882266ca4242a38f4930552144433987afb20d",
+      "lines": 23,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-protocol.fixture.ts",
+      "sha256": "f2c7897ef7a318cb028c568653bbb54b23cb2e901303a0ae86dd1543ea7be09f",
+      "lines": 81,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-protocol.test.ts",
+      "sha256": "993ea29378a42a0cc3fd54bdc7f643bc4142ef3a8683e510aa27158ba4544da6",
+      "lines": 91,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-trigger-attester.test.tsx",
+      "sha256": "9137f6593312e461355d0778d2ecf254193ded548eae8a1f7e79c6ecdf63631c",
+      "lines": 72,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-vault-ui.test.tsx",
+      "sha256": "1ddc8aa56c4a981c8e1963bb716b31efbd39d61b5b22c106f203c26037d7e3c9",
+      "lines": 71,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-vault.test.ts",
+      "sha256": "224db42c2a4f689a96f73c3b256bf504e207c0a28d7bb4672da9f099ece23a3b",
+      "lines": 125,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-wallet-session.test.ts",
+      "sha256": "9c5e733bd5ca5111ae91ee77c36816d2c18278b3494fd5106102d81873b9181a",
+      "lines": 39,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-workspace-inputs.test.ts",
+      "sha256": "38930aced29811d645fa444d82e1fd043ac1c9c292eff4642870bf7ca1ac30a5",
+      "lines": 43,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/private-workspace-provider.test.tsx",
+      "sha256": "863814aabf5ddf8e51fefbbfdc7fede20ab4f7d6621ead46dfb5dee2951f5766",
+      "lines": 72,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/protocol-readiness.test.tsx",
+      "sha256": "98f59cbb91eceaed5a8e75679b34890e14262c7b7f2e488dcdf34f3574c4f961",
+      "lines": 38,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "app/tests/record-recovery-ui.test.tsx",
+      "sha256": "2216032629cb5026a14cc967be2a871382de034e5c9c4739209c343f4728c28f",
+      "lines": 45,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/recovery-fixture.ts",
+      "sha256": "ad0450ea9796e26d23c0f74fa3b0b009303b4920158bbe65c37ced763c757a41",
+      "lines": 23,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/recovery-ui.test.tsx",
+      "sha256": "939a3699a378cbcb9586c8e7a7113b3cc8716f041b0caeede6ecc9487fd0cb37",
+      "lines": 67,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/selected-wallets.test.ts",
+      "sha256": "5019cce6295860b7c8658b303cc3f61cbc71a8148e0bb427f5fafe9b7f06fb1a",
+      "lines": 161,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/signing-security.test.ts",
+      "sha256": "5468d3bdccf7a7da9781c7bc130273c33367f28c9ef447dff7f2f1e30a606d4e",
+      "lines": 23,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/transaction-recovery.test.ts",
+      "sha256": "de9629b8d01ba0fd45760f6a8db58f02d688357eb6d07653e50c5bcf1c67da91",
+      "lines": 173,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/venue-identity.test.ts",
+      "sha256": "29d2f017c0d5c85a618c46a03f2caadff01208d65795c683efe314c95731f5c3",
+      "lines": 39,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/wallet-cache.test.ts",
+      "sha256": "b7d2b9326215e3db949a8b5a647711ab353cd3314dbffd303d23110621e582ab",
+      "lines": 67,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/wallet-dependencies.test.ts",
+      "sha256": "23c35c2a757dda2d2f0966a0442cfb004bc81200f1604f072a27768a10e0e40b",
+      "lines": 65,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/wallet.accountOps.test.ts",
+      "sha256": "57c3ee2b95bbf50e58ee79b5638633024e9c25acb23777b5155d41f6427b00e7",
+      "lines": 76,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/wallet.security.test.ts",
+      "sha256": "95a971104d795d2f77d1bbb55e5339eec3fdd62d08446deeeef2c6887e067fcc",
+      "lines": 50,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/wallet.useWallet.test.tsx",
+      "sha256": "bb6dcd2fb2ff0f36090f8aca81b011b6c1888cc8cfd96a3cd4f3c4ee92a2f5c2",
+      "lines": 67,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/walletsKit.security.test.ts",
+      "sha256": "92bda9ee4d8b0c6d8a0101460a2f59ea2417619ad030371b6c348143250a6fa9",
+      "lines": 88,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/zk-artifacts.test.ts",
+      "sha256": "2ebc57667a5177b8476a7a6822efb5a727573331a9ffbf32e1de09f76e515aff",
+      "lines": 89,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tsconfig.json",
+      "sha256": "4faa2db18ff4ee53e201ab2de51ff4c23c5c5e39947876647654859b619823dd",
+      "lines": 28,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/vitest.config.mts",
+      "sha256": "5a50d0db0636d3a6fdb2502dffc5dee194f87f0a9a988ffebe5fa1eb8158bf1c",
+      "lines": 7,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/wrangler.toml",
+      "sha256": "0376b600940c6a28632ac10d59ac1f2ea3d40c49a30e91ed4aaf3ddbe26e48c8",
+      "lines": 16,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "circuits/preimage.circom",
+      "sha256": "2aef6a4be07e8d80cbced888c931660233d9d1f7e25a858e058be883dc94b059",
+      "lines": 19,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/agyion/.gitignore",
+      "sha256": "7d8db252773a802ca99b229b422662d016c094e3d9bcc18110b94bca4bad53b2",
+      "lines": 2,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/agyion/Cargo.toml",
+      "sha256": "06221d2a8397b9b8cb50cac1f1d3de5ba187ad1f807597fa9a32afcfc913690e",
+      "lines": 29,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/agyion/src/envoy.rs",
+      "sha256": "28947fb5af111c1ca29e76d318bec63a1cab7d72169187242d04f3d4eff6ee07",
+      "lines": 225,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/agyion/src/fade.rs",
+      "sha256": "64ca5c064a182dd2236022d840666f3bcd561311331a30d6d7c9ac6338ad1b53",
+      "lines": 314,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/agyion/src/lib.rs",
+      "sha256": "f261c11b0b965ebb78a8d14c1b64189f5f19d159731c8bbcb6fa85818208ea29",
+      "lines": 356,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/agyion/src/pod.rs",
+      "sha256": "6cdec41e8643c7bb92011aa655d36355b6373ab0f9d290b050690ae98655c170",
+      "lines": 127,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/agyion/src/review_test.rs",
+      "sha256": "ad351507d70d25feb062cce03c2742215cfd9ea585785bd2874414094d624165",
+      "lines": 491,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "contracts/agyion/src/test.rs",
+      "sha256": "3c94d09211998e4a5aaad1576453bdaaae9cde3bd280a48dfadb722d73a02cce",
+      "lines": 2425,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "contracts/agyion/src/trigger.rs",
+      "sha256": "4fc87d77a1eb580eba2f1ec6027b5596c577ba71dcc84e5fc1d0e9c09c080c88",
+      "lines": 168,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/fade-market/.gitignore",
+      "sha256": "2bc618e32b96c72b197cfde282d6fdfc171d99061a6c99fa2b086100c956c8ff",
+      "lines": 2,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/fade-market/Cargo.toml",
+      "sha256": "53aeea283637d1ca99a5d8019d6374402a07769be37d9d5f2d4532eeacd0d532",
+      "lines": 29,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/fade-market/src/lib.rs",
+      "sha256": "068d11272bd9297c53f1f3120dacd427cddcd6690999bfd40c75c0e5c8e99c2c",
+      "lines": 656,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/fade-market/src/test.rs",
+      "sha256": "3ab8b194559c72700cf17cfb8c344816d32aa27ddadb761316d7780572117319",
+      "lines": 1141,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/fade-market/src/types.rs",
+      "sha256": "9cb58894e47128af8a1736e7a62a8b06312081c410d95fe0619baf94e75fba7e",
+      "lines": 145,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/.gitignore",
+      "sha256": "2bc618e32b96c72b197cfde282d6fdfc171d99061a6c99fa2b086100c956c8ff",
+      "lines": 2,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/Cargo.toml",
+      "sha256": "1968b5912d08c80519bc483c7b7c340e009eb787abd0bf862c9b93b183af74b2",
+      "lines": 24,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/adapter.test.ts",
+      "sha256": "d7c93027731e2aa3eafd38674659a55b6c0c194a7fbd811908b705a086843c5a",
+      "lines": 70,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/adapter.ts",
+      "sha256": "bd59110adcac6483ac397b88b0c244775d8f09315fd23fed185d7114e69beae4",
+      "lines": 74,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/journal.test.ts",
+      "sha256": "458913494fb54c657a7ada41b0a96b314723c35c49fe4c426f5a98dc47046515",
+      "lines": 107,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/journal.ts",
+      "sha256": "b0535667e4d0d0bb2a1863d29cc2df39e3e44cab6f1330c3407aa15a80beae9c",
+      "lines": 203,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/package.json",
+      "sha256": "b95cc5ac4a4b3874da41d8eb2a1de5c23707a231e864fd0dcc217fe03b910ed7",
+      "lines": 15,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/privacy.d.ts",
+      "sha256": "f4b3c06a74a96bce8a94e783b8b7cb03ce8a954325951d9a292461f10401b2dd",
+      "lines": 23,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/reader-fixture.ts",
+      "sha256": "fecb7a89cca303cc7ecc5e1048881639b58709102ff8d71b3a1a3f4bf54c1e6c",
+      "lines": 50,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/reader.test.ts",
+      "sha256": "4b8f76e90a0f3a46272179c8e4ba8d4bd5ff56228e6da82274585969f821a6ed",
+      "lines": 130,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/reader.ts",
+      "sha256": "0b6b9ba39cc54d4f37e90129379c60f2b1dde6c77b16d61407398cf842e576ef",
+      "lines": 197,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/release.ts",
+      "sha256": "d7ac7af221798c5727e2cb0347af3b28dda5ee797b65d989a3d8be6c0a399146",
+      "lines": 88,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/revocation.test.ts",
+      "sha256": "8e6ff322e4ce51a4bbe36edab23d2ada3ec5d6d8cd4002ce2b7df20bf954205f",
+      "lines": 180,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/revocation.ts",
+      "sha256": "93a6a394ca0b32cc8fea665654a923d252946c33a08ad78ff464ef761ec68533",
+      "lines": 109,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/submission.test.ts",
+      "sha256": "1a47cefa52f4fa9b63b294cac7a811aa20106b2baefbde6b3e026cf4d5bd50c9",
+      "lines": 213,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/submission.ts",
+      "sha256": "579dcc28a372289707aac5401318ddb6c75c17ecb75cda582852ce73274393ba",
+      "lines": 246,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/test-loader.mjs",
+      "sha256": "8d0c15b50a43c8faeb3e7b8c4927713d2c1941d0cc6223f31e5a4d6fc556ebbd",
+      "lines": 8,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/test-register.mjs",
+      "sha256": "871466bd86b448ecf8c47946d7a0b3f6dc414aa760e6878b256de99c78473ab1",
+      "lines": 2,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/client/tsconfig.json",
+      "sha256": "1c39cb4b6de445e390041e120dce4158e630cc9f1ec0dcca5d8b18e074e66935",
+      "lines": 12,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/src/hash.rs",
+      "sha256": "a71ca38e9ecbc3ac371e4df2a9e4449982119dd78dd1c2f094bc6604a10510b3",
+      "lines": 151,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/src/lib.rs",
+      "sha256": "b88975ae5ee79767c07321ed5c41d34dc0b0b56243cfb81b3e525bd34389159b",
+      "lines": 571,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/src/pins.rs",
+      "sha256": "5ddbe9eb757a676341ce1ceec246d645336c9d0dc45eebcd8979a5f48456c488",
+      "lines": 9,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/src/test.rs",
+      "sha256": "ebf9832102398d6d668353bf54cae0c1057eaa2f7545fd08bb39d7df65fdbbf2",
+      "lines": 888,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/src/test/integration.rs",
+      "sha256": "f17a65dcf61b873559de2b1ae066dde0e31bbf7accf4b2d31d52cdcaef4e74a7",
+      "lines": 535,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/src/tree_zeros.rs",
+      "sha256": "a907352f19f8b703e72cb21fe6ee4c06dc7cc6f5f4007b4e4f5acf992767b602",
+      "lines": 40,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/src/verifier.rs",
+      "sha256": "bbf8931c745922654581c0d4d7ba11241891557dcb922fa6965e90a50476da3b",
+      "lines": 124,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/tools/deployment-authority.test.mjs",
+      "sha256": "70d30f8971aacd4289340de4d7d026695b0646a981690d88a0d94e28fb4bc298",
+      "lines": 56,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/tools/pin-verifiers.mjs",
+      "sha256": "8b40c5670950fb106aefbc3dd54faa43b36f6bc0c5cd94a74aa792b4b3fe35fc",
+      "lines": 41,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/tools/pin-verifiers.test.mjs",
+      "sha256": "0c407786e22a77cb5dc61b1102d8cf1f61ea982beefa69ce22a20d5b86e42c37",
+      "lines": 17,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/tools/prepare-deployment.mjs",
+      "sha256": "0bd394db33ea3338c1d0df405e3c1d8ebecaa8f5816b92383d02c1d24567e7bc",
+      "lines": 150,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/tools/prepare-deployment.test.mjs",
+      "sha256": "d79711fae163a52c028442bc2d6b52d257e8273892cdecc3ba65acbecc062389",
+      "lines": 50,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/private-pool/tools/verify-fixture-provenance.mjs",
+      "sha256": "3c9f0910134028cf87f8caa593a631ab75aebfdb9603bae0ce9de053b29f071d",
+      "lines": 35,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/zk-preimage/.gitignore",
+      "sha256": "29506b055189fa5f96f8af50ffc6d6b5c9355979b205586fb9db98b9ed9e9f68",
+      "lines": 3,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/zk-preimage/Cargo.toml",
+      "sha256": "980b8298054cab361efdd81b689dac0d31eefce95e6e08e84d89e385fe8e0cb3",
+      "lines": 29,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/zk-preimage/src/lib.rs",
+      "sha256": "64e0ae1ed44a2e9b90ee96cd22c3b1e9e4fc0e5cef5261e44958a6833b983ace",
+      "lines": 232,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "contracts/zk-preimage/src/test.rs",
+      "sha256": "1a780c9819a7cb42f788bf2431b990689efa824e93bca12d0732223a3b16994e",
+      "lines": 348,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "deployments/market-testnet.json",
+      "sha256": "f5df40c005d23a15dfd7de1e0379ec0043c2941973c52c1dc654481a79794e12",
+      "lines": 51,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "deployments/public-testnet.json",
+      "sha256": "9401031958e828761a3d13b3a0fe696b9da460a052d0812b848e2945fde0087e",
+      "lines": 25,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/.gitignore",
+      "sha256": "16d30e4462189fb14dd611bdb708c510630c576a1f35b9383e89a4352da36c97",
+      "lines": 1,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/eslint.config.js",
+      "sha256": "4efe97b16d1200fac0eaf07aa00930a8668b1f96a0be1891ace8c1e712ff0ccb",
+      "lines": 23,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/index.html",
+      "sha256": "675efb865700280a651256cfb1826eb22a22c631946ec8fc5b43608f3440fc3d",
+      "lines": 19,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/package.json",
+      "sha256": "f4a3a7edacd05c9d2a883b8f5be79956929f51bc8f68e674c43760c9dcc2f646",
+      "lines": 41,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/public/favicon.svg",
+      "sha256": "39f05901124d7cd5bb80ea7c82f658aff6ddd56022c0890fa298aeebc8546e35",
+      "lines": 1,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/App.tsx",
+      "sha256": "49b8a7d6377bcf278cb8ee1b7bb06f25b03857e4f31c292143c48246966f8144",
+      "lines": 149,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/Cursor.tsx",
+      "sha256": "f47875d591d8f5a47276a7d682040535b2c17286408ef0f1018ac08e91caa5d9",
+      "lines": 165,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/DepthGauge.tsx",
+      "sha256": "715b79761879e949b24aeaef024ee8f9a39f1241bda5869c508536715029364c",
+      "lines": 80,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/components/DetailWorld.tsx",
+      "sha256": "a223e9e77cdf086a0c35ca43ab6ec988b1ada6783b6f094675a929fea1ef2fb3",
+      "lines": 61,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/components/DiveBand.tsx",
+      "sha256": "7aa4fa428d4bc805be5c91a7649432b6e425642ab4802d52a483c862a3c4874e",
+      "lines": 6,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/components/ExampleArtwork.tsx",
+      "sha256": "8f08c380d74a944e4f38bae958459cbace1541444b117f3115448b9141fa8ff7",
+      "lines": 295,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/FlightPreference.tsx",
+      "sha256": "be123d522a4d51756755c7513ea39c5e4bc735395c62fbac523a3dd319835897",
+      "lines": 13,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/Footer.tsx",
+      "sha256": "10b6ddcc4622a6e3c04584f66f53288ae6d57db60825283bfe993e7b0d62d492",
+      "lines": 11,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/HowItWorksDialog.tsx",
+      "sha256": "ca80ebc23a7ef35a0e6b6f830e0d25b0b6c514c09bece04059b5442b2ade84d0",
+      "lines": 90,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/InstrumentExample.tsx",
+      "sha256": "635d9351cfa2496ee4255ceed651eba25648b0d0e083ad5acce8ed3cc4003201",
+      "lines": 159,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/InstrumentExplorer.tsx",
+      "sha256": "a29e33d8979fbfd018a664596cc667a0c9aef1a5858a2120e83f2ce3adef449e",
+      "lines": 119,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/InstrumentMechanism.tsx",
+      "sha256": "24564d7c7b2c1430b0a883a497f74e32742b7df07a9ad6650a1ac52949f3df2c",
+      "lines": 304,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/components/InstrumentObject.tsx",
+      "sha256": "0a1b5fe23b744b919bbc4d3a3e299aabb896aa24a1f04b6924d14ed514644dba",
+      "lines": 55,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/LedgerHero.tsx",
+      "sha256": "43c8a5531cc816109c5ef842df46964d13d73da2076718970c22e509ffc0f813",
+      "lines": 48,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/components/Loader.tsx",
+      "sha256": "074264fe048e123eb81459279a98e32665ff90cb931768248e43b11d2cbe6e86",
+      "lines": 35,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/components/NavPill.tsx",
+      "sha256": "02ea8f708345ab803c3d7b7409c145927e32b0b7daf7b2e441f5468c5f68ce76",
+      "lines": 101,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/Noise.tsx",
+      "sha256": "0b537ef45c1f2d8ca705fc9f3e3e808ec2046d9a151e8e721fad21add9583ed0",
+      "lines": 119,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/OrbitalScene.tsx",
+      "sha256": "693b65dae6271133e11abf99293429c381bfe5b78a32fae6f4aa68e8f6d37776",
+      "lines": 342,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/PodConditionTrial.tsx",
+      "sha256": "746bfa52c394fc697b042a22a8bf958f05b1512b28231067abfa478ddd6b8d4c",
+      "lines": 36,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/ProductRouteLink.tsx",
+      "sha256": "b74d5b85f128a84a6a898747db03d670deb6ed1b30c3e46f19dbdcd845f21d0a",
+      "lines": 22,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/ScrollProgress.tsx",
+      "sha256": "19579f564ad962ce586802343fe996d0f437804cb123b074cc38744eb7c26660",
+      "lines": 17,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/WordMarquee.tsx",
+      "sha256": "503ad864f4010eb47965e62e6f27ea345b63354bec6df3449ce962bb94435bad",
+      "lines": 34,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/components/WordmarkParticles.tsx",
+      "sha256": "f815b9173659f91eb25a9742fa571df520bc1b40409d8781189b4a79262cd081",
+      "lines": 118,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/instrumentExamples.ts",
+      "sha256": "9263410d4592e563046f1bcaf550a86bcfb9adf18e262aa4a6e2b440d5889a5c",
+      "lines": 114,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/instrumentMechanismState.ts",
+      "sha256": "0ec6285e1b792a8ca717e8cb255e5ffe336d626b1f80e8c64d8f81842f2ed6a3",
+      "lines": 55,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/podTrial.ts",
+      "sha256": "f83f517b4970b848408db7e812e08d0ea22aaacefcaf80be0d39b68fc6c7716d",
+      "lines": 22,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/productNavigation.ts",
+      "sha256": "1162847f8fd0d78efabee2e2865c0360ded9f1a08654f821928e9fb7e474a5ab",
+      "lines": 10,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/components/productRouteTransition.ts",
+      "sha256": "453ce9114f7358fd1462744974315461ce54670cf6f4b49e6dc6648c7841dac7",
+      "lines": 103,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/config.ts",
+      "sha256": "f4f51c18129e9f7e90127d1c3bf001b276897b1639fa8223f594675da0f1d44f",
+      "lines": 429,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/lib/api.ts",
+      "sha256": "b8e29b31aae8aa34717a54f9223b83b7b6613386f099a3549fa016b66717e9dd",
+      "lines": 35,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/lib/appAssetWarmup.ts",
+      "sha256": "4baeac0ee8e75f5b890497de811fc254ae14492edbb7ee36dc27d88bdc0a708f",
+      "lines": 60,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/lib/captcha.ts",
+      "sha256": "0a7e525f97d4d3ed50a3dceb10befe057ebf1238f81c706939bfd3b613736b82",
+      "lines": 43,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/lib/dino.ts",
+      "sha256": "f77c41f28e4ac7744161ce2752469b7c9930a360ed8174d9c7734645190f26e0",
+      "lines": 95,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/lib/fluid.ts",
+      "sha256": "f678a7ed2c389b7f27eed00c704640e3081b5dc1e73c0bad52c2cc0d047cd2a8",
+      "lines": 186,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/lib/motion.ts",
+      "sha256": "b93b36d48f740032afc15cb0bc894fe229fb0c8063eed33eed68538e5c78a551",
+      "lines": 28,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/lib/reveal.ts",
+      "sha256": "2504713a9d5b1c7d7817e8d335b98e79dcdbd548fe7c60454d7dae69506559dd",
+      "lines": 21,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/lib/routeScroll.ts",
+      "sha256": "fba9d108bc1a6eda0e9e7feecc06a6995611f4171d5bbd9be5702e7e6843adf9",
+      "lines": 5,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/lib/scramble.ts",
+      "sha256": "cbd06c8de73e047a156ce80ad461149d21c65e09b2b5e49f51486bf10dc29537",
+      "lines": 34,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/lib/smoothScroll.ts",
+      "sha256": "0fa9239d782fca90fc7de1d847afceba81e80fb8d3f0d5a9d10f8b85d32cb592",
+      "lines": 74,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/lib/url.ts",
+      "sha256": "10ce2462cb71b7189a0a4d4ab7d3a3c78835de56b5b440fcea97c37203cc5832",
+      "lines": 19,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/lib/validateConfig.ts",
+      "sha256": "b1a3a0aeb108f451553a7ba83435e82dae80979fc2a945571267562ad7b6379c",
+      "lines": 272,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/main.tsx",
+      "sha256": "c8ab650cb6f3d5bb3fc88e0d25d22a64c85ae1ef8f707da5ff3018569a226f67",
+      "lines": 17,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/pages/About.tsx",
+      "sha256": "7d5f61a7ba61af94faa098aebe93a9d8254341a66b1f66e6877fb6af90c9e47e",
+      "lines": 224,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/pages/Blog.tsx",
+      "sha256": "30a7582ccba06cb8f2c1a17ce90e841fcc04d9d249a7a69447365ec9e431ccf2",
+      "lines": 135,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/pages/BlogPost.tsx",
+      "sha256": "b28a2b1e3396415f1690ba0203829230a36c13c85d03408b252b0c3e9cb01602",
+      "lines": 35,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/pages/Contact.tsx",
+      "sha256": "2faab176869d73bacd4c29bc87a6cd57aec893ee8c9cc33c7b6d2813bbf7b7df",
+      "lines": 225,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/pages/Home.tsx",
+      "sha256": "7412973f7d696db857a2753c2e15e42755d53141ad647cfa311124e3c56be69a",
+      "lines": 43,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/pages/Instrument.tsx",
+      "sha256": "44db594ea75df116a60809f8ce3c4494e9232a2d0a2d685418de572d3dabe829",
+      "lines": 81,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/pages/Instruments.tsx",
+      "sha256": "4b18724c08d67aab6fb3ee22ac1b97507973e022ad8f37ad3a968fb6bc24964c",
+      "lines": 27,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/pages/Lab.tsx",
+      "sha256": "52aef3306b3ad2dad1345b8045adad85b3f207a91e0a2066ff99d4628b889759",
+      "lines": 255,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/pages/Ledger.tsx",
+      "sha256": "1dffa721387372c255db125e685c4e52b17f9b01fbe2b87fb7a5d11d0a40e92f",
+      "lines": 18,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/pages/NotFound.tsx",
+      "sha256": "60d69ed912ee1a969a74dac2ec3f054faa81d3cec1aaefcf97c27986116945c8",
+      "lines": 264,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/pages/Ramp.tsx",
+      "sha256": "b63366acf3ffb8fa1b25a850a74928f4b3e632f47e27aeda86402bd49bbdccea",
+      "lines": 18,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/pages/Work.tsx",
+      "sha256": "01b756cdcaac65091c1b3b1db1a2d5dd4100d954c0b0e09fece6e2ad17280995",
+      "lines": 74,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/pages/WorkDetail.tsx",
+      "sha256": "94529f2106c9aa62270676c2178ebef3468afa6a891feaedccc8827a8906832a",
+      "lines": 112,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/pages/instruments-data.ts",
+      "sha256": "4a968aef44fbd7bddc30ec5ac751c6274783e9b0639c845230c11a13478a943a",
+      "lines": 208,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/about.css",
+      "sha256": "18bba93e0e2fc9977ffcbdf00d9d4843d46a4d1e4752b243ffc22bc9e54bdf07",
+      "lines": 405,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/base.css",
+      "sha256": "ce60c15494f55fc1ac6330af1b00486f6c47370fd337b84c2cbc01a68fa9daa5",
+      "lines": 286,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/blog.css",
+      "sha256": "5c329c47ab7b0629fe5befb0895950d0a0a792fa7f28f0ed1787c5bd8ffd8b60",
+      "lines": 255,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/chrome.css",
+      "sha256": "5814e4ece59d690203bcc7a1efe762532b1c1b450c1e1dda843368805231c489",
+      "lines": 643,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/contact.css",
+      "sha256": "7a46cc4ca5cc01d0d0433d708735261a098787b0f650854cc77ee19017b4b178",
+      "lines": 310,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/cursor.css",
+      "sha256": "7c31752d0356e24ad2187d5bd310d3c679504c51a82db2a3116f65d0ae0b1cb1",
+      "lines": 132,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/detail-world.css",
+      "sha256": "a89166791f3e2e351216cdb03621f00abb34f4e67d81bc7e0c65c42a69bcc2e1",
+      "lines": 144,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/flight-preference.css",
+      "sha256": "11464eea926d057352b526197502e0b9a290a4db9386e428d615e7d5987754aa",
+      "lines": 12,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/home-gateway.css",
+      "sha256": "22f5772ce0c81225a3cae9688efd5622b858d81e09cae6d78836ed84dbdeb87d",
+      "lines": 39,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/home-hero.css",
+      "sha256": "e9ec0fc0879f4bc2e21aed855bcccdb4d88e2b0ce3d600fe8ff8210554bf87fd",
+      "lines": 505,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/home.css",
+      "sha256": "854d8c4def4fb6f166a46242797319304a3f7c8300415b2240cd6347308e22f7",
+      "lines": 730,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/instrument-example.css",
+      "sha256": "3a7907537a9849abc35556216204b0d0f612fdc512c95a0906e7da7e24a3fa9c",
+      "lines": 91,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/instrument-mechanism.css",
+      "sha256": "a88da78c82e405f4ce724690d4b01b959ac13213a509942a2518de6a1a9bec96",
+      "lines": 170,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/instrument-surfaces.css",
+      "sha256": "5fef649fb4abc7c0d1543a8e54097f26fade8ab558722811b4b637b794d2bb08",
+      "lines": 170,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/lab.css",
+      "sha256": "7a65c43f6e7dd3c0101de15a35bbc4ce1ff50f6e11339814acde4f9a73f98e9b",
+      "lines": 352,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/nav.css",
+      "sha256": "487bc4beb97edb49b670e7604311b4d7d98769e917ac4f0a1773b2c3082a04a4",
+      "lines": 590,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/notfound.css",
+      "sha256": "f266eee6a490ee9e942468117891354047bc18778a5b3075bfed317d18f4ee77",
+      "lines": 269,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/src/styles/orbital.css",
+      "sha256": "4334a28774b46178cb299da55b3fda2ff5d62407cf8da1da222e13decf01c0bb",
+      "lines": 617,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/pages.css",
+      "sha256": "05440781838cd97bdea0ad85a74f6c35c7e60d74e2311381a43578e215cccab9",
+      "lines": 155,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/pod-trial.css",
+      "sha256": "9177a135a390716185055213604af1fe36521e35b97bca06a152fdcd45ff4508",
+      "lines": 30,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/product-pages.css",
+      "sha256": "d48fa537c1252456de789d0e6865d2b9d0c0158f8e44546cd1a6db65631761d2",
+      "lines": 128,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/product-route-transition.css",
+      "sha256": "43fe22fad8c7776ad9b232d552f514e206b4bf18ccd50964f48456b64f10b437",
+      "lines": 22,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/styles/work.css",
+      "sha256": "503674fc58e5e72e701eaca3efe8d52760ba569bf85bf3c79c02a792f515fc13",
+      "lines": 378,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/src/types.ts",
+      "sha256": "25d7e5cc1c5e59c17cb46b5c77d6e2512929553f8e24482412ae2f1c43899b3a",
+      "lines": 601,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/tests/appAssetWarmup.test.ts",
+      "sha256": "7454fb68b46e31d4eb1464f80cea81def8a189d4cf1af645f5f12e250de7cb4d",
+      "lines": 67,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/captcha.test.ts",
+      "sha256": "379dcc9dc503a1cc986aac5f20c25367681c17dc5a124f75edce66e01d0c87e0",
+      "lines": 48,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/dino.test.ts",
+      "sha256": "96e6d8878586905cd29a0b63669de18bf698ae288a58d592eda093a3d85ab8b9",
+      "lines": 66,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/e2e/matrix.mjs",
+      "sha256": "39b80f074860df7555f1a1ffd41fe6cf2767f0902af347fb4e00b9736723f37d",
+      "lines": 555,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/fluid.test.ts",
+      "sha256": "0a39fa31521b038c007630ee674eee874ca32cf39d77106cc440ba04c0fa7a69",
+      "lines": 47,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/instrumentMechanism.test.ts",
+      "sha256": "6d12ed3b88d8114454cb6bd72dc2b118d99a6edeca89c1b1d20751162040342c",
+      "lines": 47,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/podTrial.test.ts",
+      "sha256": "8588ff9cf89badfd338408cfe828cb58ea7343408a709ac9be9bf0998ef11f8b",
+      "lines": 40,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/productRouteTransition.test.ts",
+      "sha256": "2ec487c71f417852a55f03fa098eff5231d9be63ae055d5121ebbb1455fc27ab",
+      "lines": 108,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/routeScroll.test.ts",
+      "sha256": "c12fa2ac279b9c1541534f47b956e124bfebb2923714133e399c77f1a9e0fd13",
+      "lines": 17,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/scramble.test.ts",
+      "sha256": "6049578492c12824d4045567be7b9a222911d55650253b77459e359106ac9d44",
+      "lines": 32,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/url.test.ts",
+      "sha256": "e12fbc589d7bde6585ccde41533d003e4d5bae7d01ec28eefd72b5dd02027846",
+      "lines": 25,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tests/validateConfig.test.ts",
+      "sha256": "b1e2cb1ce1e52f4768b068f5d1ae18bb1eea7ea685bca35e71eefefc04ca14af",
+      "lines": 72,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "landing/tsconfig.app.json",
+      "sha256": "843e8bed50f8fabfea6b2f6f252a27de28fcd87e4e0e8817f35c549cfa2b405d",
+      "lines": 26,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tsconfig.json",
+      "sha256": "770b4140bbb581e2dfd9ea9946ffc9c75a1d86ba7d2db5f77c83e37cbdf9d808",
+      "lines": 7,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/tsconfig.node.json",
+      "sha256": "088ef0ecec12d7315e1417c9e16b40f1fcc79535cfde3da3099e4b2649b6b933",
+      "lines": 23,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "landing/vite.config.ts",
+      "sha256": "88818286e3f34ea0e9706d5fc056569e73f4512c256efe8b8fbc7f893ca51a6b",
+      "lines": 17,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client-tests/catalog.test.ts",
+      "sha256": "e327f792abca47325b406535a6c97b0e0219ce5cbacc40220e08c487d8f82b12",
+      "lines": 66,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client-tests/commands-flow.test.ts",
+      "sha256": "77cd766a39a0dc69b88e9a3786b9e729f16d18468de84f34dc9e0fd876082e46",
+      "lines": 36,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client-tests/commands.test.ts",
+      "sha256": "84a595aaeeacaca5abfed5983d7665f6b9d70d1166049bf4e69671e301bb3a56",
+      "lines": 20,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client-tests/journal.test.ts",
+      "sha256": "29bbaad0446ba5333ea96f996dd512e994823d57f870e908faf2c6fefb18a39e",
+      "lines": 19,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client-tests/lifecycle.test.ts",
+      "sha256": "6ed7a264cc6a61f51c6d9113c1a52445fd1e910df2c3329fd1c0f34e0ee99ad5",
+      "lines": 43,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client-tests/protocol-disposal.test.ts",
+      "sha256": "dfc3790fb7d106709c463d117d0447d0030095c2eebf9aa223e965ef3481e260",
+      "lines": 12,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client-tests/publication.test.ts",
+      "sha256": "af7d1b157ddb700d82ab1d4620af965b204a054fd8f5ddc5d4b1c801567df101",
+      "lines": 123,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client-tests/reader.test.ts",
+      "sha256": "1a8d714e5712369c898a8a2ec6376053987d062faf8733ea2149fb27b22b7e63",
+      "lines": 55,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client-tests/release.test.ts",
+      "sha256": "a26422e273dd2241dabd391be7e426b6d36ac25211fa83d0ed18536d14a7507a",
+      "lines": 16,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client-tests/transaction-safety.test.ts",
+      "sha256": "9519145972e1a3d512d4d9082cc98f39e565df56a0bce9f084c61da8e0c91562",
+      "lines": 62,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/backup-bridge.d.mts",
+      "sha256": "04b55c4e0b7aeeebb1df2496617bae493a0fee7654a719b02f5bb77e37f7b03f",
+      "lines": 6,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/backup-bridge.mjs",
+      "sha256": "d022eddbda41eac0b2a6f374700e4c7de34c62db8e0224313402efa6ee375f36",
+      "lines": 2,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/catalog.ts",
+      "sha256": "1be1382072a26747119f60c59a0cc46085beb3066203a10fd4071aac54d5d5f3",
+      "lines": 90,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/commands.ts",
+      "sha256": "1da0b3cda8da21f58309697b8c20db35f504f12c915d6a0ccc139eeacfa4e2b2",
+      "lines": 76,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/journal.ts",
+      "sha256": "64ab84a89705279ef85772566c40071c2b170dac74ee7e422129adeae8ad52b3",
+      "lines": 93,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/lifecycle.ts",
+      "sha256": "85007a528bd1d4729d264772900493a1dae3b9172cb29fd32a17b4b601ea8fb6",
+      "lines": 72,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/merchant-vault.ts",
+      "sha256": "75dd5b2b9abbb75d261668b99549e9a2958c5caa5e450ff4862853e8763161a6",
+      "lines": 108,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/pins.ts",
+      "sha256": "efda9270228cafaa15239a51569b9bc04ad90b908c8902a344a3a517a4567343",
+      "lines": 7,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/protocol-types.ts",
+      "sha256": "5fc2cd23f4b0dc13e1787bd95e4ef166b0f4b96d584a72f4c5099789c8265f09",
+      "lines": 47,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/protocol.ts",
+      "sha256": "3638bdb3e1e632ff943fc389954d2067f5f260f251a389845493586985ebfd47",
+      "lines": 32,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/publication.ts",
+      "sha256": "8f757eb7c51ae509325cd714f20e9af9bfeaaebe13a329e3109c5bbb24ed120e",
+      "lines": 51,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/reader.ts",
+      "sha256": "3a721b92e02763139d73362ce3baf09ea9d300b7a8ac466ac12c4abd02c02e94",
+      "lines": 98,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/release.ts",
+      "sha256": "388f31276e7eb1f02ba1bd85479effa9bf24f9844757c235bbdeca4813f1ef1a",
+      "lines": 27,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/client/transaction-safety.ts",
+      "sha256": "e98749fa9b0451dec73e396b519cd3b558b9543b330ce41f7bdf2508f1645da1",
+      "lines": 58,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/migrations/0001_catalog.sql",
+      "sha256": "4b1c015c08ab834afe601797c04f8353c6aa996c56fcd8942c8b5a1a658b3fb9",
+      "lines": 34,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/migrations/0002_publication_receipts.sql",
+      "sha256": "f8a076248ee485a4155d0720d13a2cfab02bdf957d1ea9b22da452b497b7fc4e",
+      "lines": 3,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/package.json",
+      "sha256": "fe6291a4cd593b4b6285bc754fe5f1f595de81ec22ad39e9f3feef05703ca231",
+      "lines": 20,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/shared/codec.ts",
+      "sha256": "380e2d4c37a021a99dd2d980f736d30598ab874020df13f80f7a856f8bc0d234",
+      "lines": 101,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/src/catalog.ts",
+      "sha256": "c41771840a2ae2b09253e2d5ae9835e747d78a5b0f08173de35cff2ad0decde2",
+      "lines": 113,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/src/chain.ts",
+      "sha256": "01c113874fd72b614444e84fba7ef1a089dce748434cc7a91c67eb0062104e87",
+      "lines": 89,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/src/types.ts",
+      "sha256": "f1c4bf0ba8df5b6e3ce7bf76bbf7faadbb1040625940e3cb673e74b556ebc783",
+      "lines": 21,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/src/worker.ts",
+      "sha256": "595a80f649b94bb0b8f8b16cb9230a92efbc408c7fcf0eb076159ba545bb6386",
+      "lines": 7,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/tests/catalog.test.ts",
+      "sha256": "aaedc75e87814992f3357389b30185f2bce87ccc3d51c3f953db17482558a1e9",
+      "lines": 117,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/tests/chain-fixture.ts",
+      "sha256": "ffe8c1a2b496ca539a950bdeeb6beea77bd1ddc9de8d9215bd9e59ab07f709fb",
+      "lines": 32,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/tests/chain.test.ts",
+      "sha256": "58ce2df0ef890b014e8b2ee8cdb118526cc5e413d44e0133700702327f2490dd",
+      "lines": 53,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/tests/codec.test.ts",
+      "sha256": "0d779ba9e628b506f79ef61450440fc4dfd5c5963d20418908cb10551b6a3624",
+      "lines": 33,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/tests/journal-browser.test.ts",
+      "sha256": "e19864fd150f0083dfbe6c68f3b65c3ced39ba2805143eb604da02636f6342e3",
+      "lines": 48,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/tests/merchant-vault.test.ts",
+      "sha256": "73aa2a53f58e7655c32a03949d6a7d6a5d097da6d484c3e9918f7b1ee4bea4b1",
+      "lines": 99,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/tests/sqlite.ts",
+      "sha256": "6fd3fc59258fb301e72d825f0483dba513be8caf6d9d4338b0378fe0a36e944d",
+      "lines": 11,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/tests/worker.test.ts",
+      "sha256": "e1427055842caabbe126f4f858873a87d19a22bcb6014e7d49bbe9b8f31d3564",
+      "lines": 29,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/tsconfig.json",
+      "sha256": "a7cbd172013cc4867896082d799355d38754e1aa26db1f272501b26a8dc2c9c4",
+      "lines": 23,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/ui-tests/MarketMap.test.tsx",
+      "sha256": "3d226652da312a9da28599e494f6cdf7384ab16f349483fdaf8341fc0ec03e23",
+      "lines": 91,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/ui-tests/leaflet.stub.css",
+      "sha256": "31306022bcd694c7299cfb267bd9f0d8ed770d56256429fd9188aa862c852b5a",
+      "lines": 1,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/ui-tests/leaflet.stub.ts",
+      "sha256": "8fce2ee025206602fe9687954703c866b912c73a11f54f6091d8a4f0f35bcaab",
+      "lines": 2,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/vitest.config.ts",
+      "sha256": "b7c2c99afd9697844b60388ff7918ec9c972d690755c5c5f1b244c98fcd38d20",
+      "lines": 2,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/vitest.ui.config.mts",
+      "sha256": "f1f03add42d0ea80bf3e8eccb92027d2c28fd7adef2eb813167e8627e2a39e47",
+      "lines": 16,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "market/wrangler.toml",
+      "sha256": "c254261fdc2c0368de262ee384d6f1013577841d5ed5251325329dd2730315e7",
+      "lines": 36,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "package.json",
+      "sha256": "9a2ac39ba45cee53b579b1351c105b9e24657c16b21d98f3b4067b02460e020a",
+      "lines": 18,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "playwright.config.mjs",
+      "sha256": "69326365cb40f70df4b531cfd49b7ac7d34898e5107bdf250c7ca18801065f54",
+      "lines": 9,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/circuits/poseidon-encryption.circom",
+      "sha256": "c090ce7fe7ae288cf853a143051f1de5fb90d31a16f5fc5e0af47f369510aa65",
+      "lines": 56,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/circuits/primitives.circom",
+      "sha256": "e328210aa86370764782d5876bc31e135bd1e023821be870295d80bced69654d",
+      "lines": 93,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/circuits/revocation.circom",
+      "sha256": "53c7e30f85b9152a4738afbbad40aca9abc5a41173f8a6d5777f0f9cbf055817",
+      "lines": 21,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/circuits/test/poseidon-encryption-3.circom",
+      "sha256": "776526d2b9396a0b6937f861a370062bdbe82fc22b001101d4e8c300fcf9dcfe",
+      "lines": 18,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/circuits/test/subgroup.circom",
+      "sha256": "8c161fe1670a9e005b5af78d9ed634137721c91f1d9cfb80e54098fd3ae0f0c7",
+      "lines": 3,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/circuits/transition.circom",
+      "sha256": "f2493373cd29535b64fb410953459de716e812566c291233dad08f47a7887bd5",
+      "lines": 280,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/package.json",
+      "sha256": "eb7ae1dce23fe7b67adbca42e8613ad5cfe368059856343916e6a02d9924ac3f",
+      "lines": 30,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/browser-prover-entry.mjs",
+      "sha256": "cc91155979d82d073417194e2dd3d702336af1b9c4bf1d8a7f96c6e0fa3927eb",
+      "lines": 159,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/compile-circuits.mjs",
+      "sha256": "1ebc099ba7d1e3a2dfde0b1513a565d32a33a2b04e80063345b5faefce77e8cb",
+      "lines": 24,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/generate-host-fixtures.mjs",
+      "sha256": "528bbcdb94ee5e39058efe8469cd27eee2ddc81faa75f0014f6703c83d2ef86a",
+      "lines": 100,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/phase1-input.mjs",
+      "sha256": "6ce585b21d6fba53af409778b4eebc887c3aacb3f1e2834615f496a2226768e9",
+      "lines": 30,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/phase1-native-hashes.mjs",
+      "sha256": "27916a8f58585887fa285aaa562f0144dd9c0849bbb92be12a66ef7023df8689",
+      "lines": 40,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/phase1-native-loader.mjs",
+      "sha256": "cc448dc2fe67dc9caa6cc10398ebbeff11746667fab9f4a0158b6f5c4bcba8d9",
+      "lines": 28,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/phase1-sha256-chain.c",
+      "sha256": "87915504897527fba9d4cd86f82965e7901cf045c4ec2831b59f77fa6f376b20",
+      "lines": 46,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/prepare-development-keys.mjs",
+      "sha256": "22fa27eb230fc7df6f4fa7be6cebf33911c2d3674065da3b9f1d099115cda3fb",
+      "lines": 47,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/setup-development.mjs",
+      "sha256": "1ff135822c1b57512d12a774e88165212dc6f54e09ed40e2b4881dae72e218a4",
+      "lines": 28,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/verify-browser-prover.mjs",
+      "sha256": "e939039abf1c3e1b5804e68b67030466a8f27466ff736b54b6a8a3d777e4fcb8",
+      "lines": 107,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/verify-phase1-fast.mjs",
+      "sha256": "21fc680a511cd005856cd18dfa91f34ed20676498137b0f7b9ad1d05956c3257",
+      "lines": 40,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/verify-phase1.mjs",
+      "sha256": "e86c734d2841b42911cdb311541bba9076df8f3fe7d60c9215238f2d1e2ffb6a",
+      "lines": 24,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/scripts/write-prover-manifest.mjs",
+      "sha256": "c744ebf2502203f175e273d8012bd1add9db8d941eb04a4360d6dbbcba46df6a",
+      "lines": 27,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/archive.mjs",
+      "sha256": "0bf9841cff14173da66226a6f34321865b5f3b7bb5e13fbf3931a24bbe60c366",
+      "lines": 63,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/authorization.mjs",
+      "sha256": "7e7bc6b0ef63675bd926c0cd075ec56dc9f858bd5a157fbe1685e59f0b7efc36",
+      "lines": 224,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/backup.mjs",
+      "sha256": "eebf0aba9db92198f76870c08472817b05322c07f749bd5f1c57745700e44464",
+      "lines": 65,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/client.d.mts",
+      "sha256": "18082005a52726897594df03735f992f9d37e657ada262c8786a86a55586428a",
+      "lines": 14,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/client.mjs",
+      "sha256": "0bb9cdaa7c34d453fde1adeaa301e47a6cbc5762b0e9902434517d433fa938e1",
+      "lines": 213,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/credentials.d.mts",
+      "sha256": "5fdba3748cbac15d3694546235aeb2cc800050f75891dafb3b33089c48cb2536",
+      "lines": 30,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/credentials.mjs",
+      "sha256": "f84502cf70ec1ba0f0fdad77ef858a738051eca61d76da0b40ce7db0a37767d9",
+      "lines": 148,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/disclosure.mjs",
+      "sha256": "f240976cf984ffba0d2e17d143cb9016929dbe7ac884dbbdc12156234f0ae35c",
+      "lines": 52,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/eddsa-poseidon.cjs",
+      "sha256": "47017fad536cfc7cd7925df655a5c6a7fe21637e5b92d3542cc639e7b36bc0a3",
+      "lines": 3,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/encryption.mjs",
+      "sha256": "fd95008c9cb68a774aaf69edc4b5449f668b1f79cc84f70ad776e4e3f61ca666",
+      "lines": 49,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/identity.d.mts",
+      "sha256": "bf4e17078acd16d7810398ecdfc95173b58659ad306627a4c3a5af9811c3c7b8",
+      "lines": 4,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/identity.mjs",
+      "sha256": "c244460a813dd97bd51c5cf087fc657fd747904365176724cc25ca53a9f2f76b",
+      "lines": 35,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/index.mjs",
+      "sha256": "ec47bf38bcf0a9f059a049f68fa558606b172786ee604e2a11d3d7e2b3f9396b",
+      "lines": 4,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/model.d.mts",
+      "sha256": "0b10e64c4a09f2c8d6b2f8ae4de46aad2200f31ac6b23db75cf67ad0770a93f4",
+      "lines": 19,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/model.mjs",
+      "sha256": "6e95584a8817b7d4f0c380a19c0e75c456e4a68b125b7f188602198439ac53c2",
+      "lines": 215,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/operator-store.mjs",
+      "sha256": "ef9ad44fd5b80d91744c720ec1297dbe943322a8ad7cf8eb491e3ddbde41f238",
+      "lines": 118,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/planner.d.mts",
+      "sha256": "7a7b681825fc274a0868673d3b56bb822301d68944e4e401238356d4e3980a17",
+      "lines": 26,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/planner.mjs",
+      "sha256": "3e771f67376743abab7d182d2a7bd789eb286ed97bac9e025bc3904980272d6e",
+      "lines": 128,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/prover-assets.d.mts",
+      "sha256": "e8e631993fdb0d3eb900f5ebf2a190311ec5d5f7fa5a284a1df83009a116261d",
+      "lines": 4,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/prover-assets.mjs",
+      "sha256": "fe47e93c8267fedc28eef7381ee743501aed9ea84bb47b44616adc4de2fc4305",
+      "lines": 99,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/prover-worker-host.d.mts",
+      "sha256": "482523dff37e612429b5d28e0a9bd0e04d89665ddea0f5458fc920591f22b2a7",
+      "lines": 4,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/prover-worker-host.mjs",
+      "sha256": "be5ebdcb051853d232ef4e51e1be465d83c0ebe100f447fa6642f60f657764a1",
+      "lines": 41,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/prover-worker.mjs",
+      "sha256": "460f6a512f116766610424bac43fc4e4c5ecc8aea0564621c87106697cf2d348",
+      "lines": 32,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/prover.mjs",
+      "sha256": "ea62d9412e0d95d59b950f4ca53cd918561418c68554b38f418bb312eea158cc",
+      "lines": 149,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/recovery.d.mts",
+      "sha256": "74f972b10deb90f7c34b4a15caf9bdaf206e8f046694da8ae3760a8d9dbe83b3",
+      "lines": 19,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/recovery.mjs",
+      "sha256": "efb2cdc720669ccf4e5dcf6c4110717c3764da64944126153d4bd18ea8b439fe",
+      "lines": 139,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/statement.mjs",
+      "sha256": "038b5079a69238822d3fd6188ba82a809891549a794966b5d049ace6188c2b80",
+      "lines": 116,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/threshold.mjs",
+      "sha256": "4d2e6b9a15edba906d2534b795a5d91e2d2ee688947ea14254948f1d901406cc",
+      "lines": 254,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/validation.mjs",
+      "sha256": "c91e4c35d902b6b18c87827dfa52088aff63568e1ca5b37d200318de3fc1ee54",
+      "lines": 82,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/vault.d.mts",
+      "sha256": "fe4f299130a9f2773711ed7e520800827f060a51e4ed7ca6ad1fd225f6b0dbe6",
+      "lines": 49,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/vault.mjs",
+      "sha256": "13d7b5d37ddef066770bd3811b00d6898304ce0d84ec92799b11964c4e960bf9",
+      "lines": 153,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/verifier.mjs",
+      "sha256": "2f7350ba8ff00a3ab7b702b2d4bbc746a244c9daa613eb99f733652498567314",
+      "lines": 14,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/src/witness.mjs",
+      "sha256": "4a7f96c1c8e77ab817f94b5a4e7601d5da592b0bcd41901d0d395f3a7d541c03",
+      "lines": 158,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/archive.test.mjs",
+      "sha256": "c2e8a9013a3a3c7ee729406ae2573f4d13d36238041dc1a416bdb044a95f7c51",
+      "lines": 51,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/authorization.test.mjs",
+      "sha256": "1218101d72b5aa1c88bb0dd8e9b691b80667581ac2ad8582563d04a4cf8e8175",
+      "lines": 139,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/backup.test.mjs",
+      "sha256": "807db79c1d110bf2efa47d40b2ae6e2dc3bb6b413bc34b6d7d2a83c63aad3762",
+      "lines": 36,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/circuit-helpers.mjs",
+      "sha256": "1069c3cb35f2c42279daed6c20ff9677b619e6971d7406accb0c70fe902c08dc",
+      "lines": 18,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/client.test.mjs",
+      "sha256": "81b1b69dd549c17987af1a61173245e098bf16584a424c2dfc2e84545df2a57e",
+      "lines": 170,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/credential-errors.test.mjs",
+      "sha256": "8f93753d630ae2faf0533c326c2bf87672ca48e0415df42a2aa6a771f7e966ce",
+      "lines": 16,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/curve-circuit.test.mjs",
+      "sha256": "a656f5e101eae38e42f742f2e3842a7cf7d80520b77d5cb20d7ca6a84fa94bf6",
+      "lines": 23,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/disclosure-proof.test.mjs",
+      "sha256": "742c88f3b839d6e907d32a7aac06c042d70d708fb1895c28b3cdd671b305870a",
+      "lines": 155,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/disclosure.test.mjs",
+      "sha256": "5ed275ecc3276536ed572bdeafa62804270e741320803b1f86fdd38f2e3e16ca",
+      "lines": 49,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/encryption.test.mjs",
+      "sha256": "c53bdca27df837c8404d0e78d30a022262be4b9d71a1f59f4a533633236370e3",
+      "lines": 110,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/fixtures.mjs",
+      "sha256": "2280b192d22bcd0990fd15dad0cc7586331b002569a9d212cefc51ae0b4584da",
+      "lines": 29,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/identity.test.mjs",
+      "sha256": "1febd3eae19ee215f97004da5580dbd5fac9f5417a5ccceb9660d79a215d917a",
+      "lines": 26,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/model-fixtures.mjs",
+      "sha256": "349c3f0972907d791ae2ef0cb0638e9feea5ede4e8a7ff49f30d5f7c23977967",
+      "lines": 42,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/model.test.mjs",
+      "sha256": "53793b8e3f2dd17864989c3f0ddb01395dc9873ffbc708038a16e7a3b767a196",
+      "lines": 172,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/operator-store.test.mjs",
+      "sha256": "8b920370438044ec15b4543c2f1f9af24e2e71545174f81edb444e79d92044cc",
+      "lines": 108,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/phase1-input.test.mjs",
+      "sha256": "518b1c10ccce083fd103e0d97f7c3dde11cde4ac7ea922cce3bd11c803b8029e",
+      "lines": 52,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/phase1-native-hashes.test.mjs",
+      "sha256": "3672e1d0cc47d3703d40c2cbc9704260fce4ed9628b6696d950322aec94521cc",
+      "lines": 53,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/planner.test.mjs",
+      "sha256": "5c6b1b4eb2d97a86a20ad74236da4b76d2580bedf37e3c689b62048cda52dec6",
+      "lines": 138,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/prover-assets.test.mjs",
+      "sha256": "5ea4d49b85b17e06642e976943548fb989006cfa88c2fd21cc8cfec11c8c5ca0",
+      "lines": 140,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/prover-integration.test.mjs",
+      "sha256": "4067aadc1dc28891e4407cb1fba98517e342ae5c20e610be88e3d8a13798169c",
+      "lines": 45,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/prover-verification.test.mjs",
+      "sha256": "02d7e4cd0af290be367c4e9e4799f915f8c8c41d943d9e1a4305e88af85c9e69",
+      "lines": 53,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/prover-worker.test.mjs",
+      "sha256": "34382ed973d476e5cac62501250b6cd3501e09f3e3506e40d4dc89bc5f707568",
+      "lines": 81,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/prover.test.mjs",
+      "sha256": "b44bc62368c65efbaff63c8e97c9d08b5a79a2504aef24f6e573fb48c9661cab",
+      "lines": 98,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/recovery-flow.test.mjs",
+      "sha256": "43d150843258fc7fe0a45063326a30bbaea22cc51d1720ca070893e89e38338c",
+      "lines": 152,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/statement.test.mjs",
+      "sha256": "3d5ee4e17682fcb4f63d59ee7496d4c2e91367134c33b70d3a70f2ebbaab5f04",
+      "lines": 137,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/threshold.test.mjs",
+      "sha256": "9b7dce6ea00d922a603bb1bf68c0f5b5dd9e6f2ef3750d6ba0e74f4119829491",
+      "lines": 161,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/transition-circuit.test.mjs",
+      "sha256": "e0303bfc13496d762f42f8fee5705c6ed90850d770b115c6925c5e8401867fa5",
+      "lines": 155,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/vault.test.mjs",
+      "sha256": "fc2da70d72ebad68ac484263af7ee3f37d9f626531a8a818675ce8d80ff98afe",
+      "lines": 92,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/verifier.test.mjs",
+      "sha256": "d4db006230932db1f8848de8a21a303d10672103d21e714705a26f99a511f21b",
+      "lines": 24,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "privacy/test/witness.test.mjs",
+      "sha256": "574cabe4a0b3f59b4b9970d16f4ff7d4c294ecdb1139babf173726f68e569981",
+      "lines": 121,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/app-asset-manifest.mjs",
+      "sha256": "2cad5bb5be6ecea94c234760426a2a6fd77f812b6b2d15b4ba06d5c7643746e2",
+      "lines": 27,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/assemble-site.mjs",
+      "sha256": "97495d240b4858ffce90f199a3e2617450933a40ed2a593b0de6161de3abcceb",
+      "lines": 32,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "scripts/build_site.sh",
+      "sha256": "df7d0876a30231495c4e0f3090b008321672767b79d619006cc0510805ba9019",
+      "lines": 38,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/capture-revealed-landing.mjs",
+      "sha256": "af5d0b4f18e3a5483d7581791328603c88ab15885fadfe6b92e2fd6ff18783f9",
+      "lines": 79,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/deploy_testnet.sh",
+      "sha256": "6f42cc233cb645d72daf85a39964ed10ffa97ee01daaff5d6d6edf95ad98fdb5",
+      "lines": 141,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "scripts/detail-pages-check.mjs",
+      "sha256": "25bdfbbd12fa4998b6bf0739fc49042e3803955528d378041259d1a78415861d",
+      "lines": 254,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/fetch-private-prover.mjs",
+      "sha256": "5abe559e60bf0b35d346579fcf530b12e1ad5581e700d879f8d00750fa97f1a2",
+      "lines": 122,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/flight-visual-check.mjs",
+      "sha256": "0e32a72d8fb14c476a98e93ceb79053d78450da452e22c24694ced333468d733",
+      "lines": 79,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/inspect-flight-video.mjs",
+      "sha256": "da98e1c5bb47ab006ad7e3810e9027d93aaa3012e5bf9b46d7b4aef2a58965e4",
+      "lines": 55,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/browser-settle.mjs",
+      "sha256": "b904c4b9b9757160e56021920de23b1362f84ecfeaceb237fd6be0e4d52a3d9b",
+      "lines": 39,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/typography-audit.mjs",
+      "sha256": "7dc99dd2cf022df36efa0d572619bd8c6743f04487020620b7aab5cc08c71f3f",
+      "lines": 144,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/mock-pod-check.mjs",
+      "sha256": "20c99049989792185c80fb2c0ae276ff851d6bb4aaff01ec7f184e100f40f114",
+      "lines": 30,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/package-private-prover.mjs",
+      "sha256": "6f3e11604fa8605cb48a25423fc46cc378c706be5d5d503f0dc95715d6358cb3",
+      "lines": 141,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/preview-design-research.mjs",
+      "sha256": "1dcb8064ae13ed9b303a69468c2ec517c4b9f9d18ab879c2118ab548044f997d",
+      "lines": 23,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/preview-site.mjs",
+      "sha256": "dd9815e061bc30d787e870d740ec72f8d1d3660b25f2d03f1ccb08352502989d",
+      "lines": 26,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/profile-orbital-scene.mjs",
+      "sha256": "6ad9ba3790819cca5f2c56bc13f8358c0799e8063c4eaff7b5e51f93a7df85c7",
+      "lines": 177,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/release-expectations.mjs",
+      "sha256": "03131eaaef9ec9d4d1507716d540cc0b17647d86bf55d6c40af3e6fdcdad6290",
+      "lines": 44,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/release-integrity.mjs",
+      "sha256": "3fb0d97dd00978fc59edc4ef359c1575f43f531beb01d163407e9191189eb690",
+      "lines": 65,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/release-kernel-readback.mjs",
+      "sha256": "61092ac116ca61eab6f4b55793636aff4b5c027f0c24eacf585e54d9ae624748",
+      "lines": 28,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/research-app-interactions.mjs",
+      "sha256": "22a3d0c01fe62dc6ffff6bddcd6fdf343f73d4c867482516be3a776f7ec9d5de",
+      "lines": 49,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/research-crypto-design.mjs",
+      "sha256": "3eb934f777849a208adb75d9b85365d30f2fa2d63952b007f013a525a985fd44",
+      "lines": 52,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/scene-study.mjs",
+      "sha256": "2ab42710f2370fe6f094b9b14c92f25e33fd14c2c978664d947f6e0ae389bb20",
+      "lines": 33,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/setup.sh",
+      "sha256": "2272a175d91a5b866716a17852fd9f8a2239d2f05097121a10bb4866475c9fc9",
+      "lines": 80,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "scripts/site-headers.mjs",
+      "sha256": "9c473bab56e0e0cb637fbde745a70e2dadeacbfb75d4caedcb31465fb1afe8c1",
+      "lines": 41,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "scripts/static-preview-headers.mjs",
+      "sha256": "59fea80acf35002daac207461ebc80f9ee35b58f241d9db3afddaed6a4c57a18",
+      "lines": 20,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/test_deploy_testnet.py",
+      "sha256": "538af066bbb266a851bc73d2294dc278a1483656fc2159a9016d8f90168c3628",
+      "lines": 182,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "scripts/tests/app-asset-manifest.test.mjs",
+      "sha256": "8e01f3e4510caf825b32851e0165543f29f5681b54fbb53df2d9291b8cf7d49c",
+      "lines": 33,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/browser-settle.test.mjs",
+      "sha256": "d81cd06a9c0e1ca678b50efe477a87a62ea66d5de3f82f8578d631e9a29722df",
+      "lines": 52,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/fetch-private-prover.test.mjs",
+      "sha256": "4ae8aa89edfe3e83c2ac62c0bb3e02c259b5c2337e06ea5f9220e45ec6bb1f40",
+      "lines": 89,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/package-private-prover.test.mjs",
+      "sha256": "94ab930494f1784561950201cc0470c74067164e9f3d575c62c0f7e5d374c481",
+      "lines": 95,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/private-prover-fixture.mjs",
+      "sha256": "0353d80d21048caa9b6e951122d051fb1be731082ad04aeb206511cda443f96d",
+      "lines": 42,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/qa-selection.test.mjs",
+      "sha256": "16b8e1af9dab76fe04e373a76ccbabfb585c086a724338f8cb0d9a48378c87fc",
+      "lines": 29,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/release-expectations.test.mjs",
+      "sha256": "c6ad5b590af833f3ea22ad6047bce8cc416d8fc70a4a1b7b59ac5d5e23f20037",
+      "lines": 60,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/release-integrity.test.mjs",
+      "sha256": "97379da7423f55198861028c746613727e45eeac5803ed706c24c8c09230231a",
+      "lines": 83,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/release-kernel-readback.test.mjs",
+      "sha256": "a5497e2cddf2c9d8d1443377b32a0e962780005e89b94b0e6269d3263888d375",
+      "lines": 36,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/site-headers.test.mjs",
+      "sha256": "a5670cb449f6184813cce8f76c63d7b12838e193d715ebb844f1c121ea95421d",
+      "lines": 73,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "scripts/tests/static-preview-headers.test.mjs",
+      "sha256": "2b0efb727e5e56ecbd8ea0d2a699e5899ec249913c0c2dad41ce2577cc6b528e",
+      "lines": 47,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/verify-testnet-market-catalog.test.mjs",
+      "sha256": "a5f58ebf56d7ccd2553fef46f277ba225ff0788afa86b9757996a693a4fcd7ad",
+      "lines": 10,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/verify-testnet-market.test.mjs",
+      "sha256": "9fa0394f3362bb6d1188b268df485efc43576e36b0915d8d32ca6642ac6a1dc8",
+      "lines": 46,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-directory-header.mjs",
+      "sha256": "d2fd89c6f3e59376c251f593caaeb2201d594ad7709433f481f248a7fda270f1",
+      "lines": 125,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-document-paint.mjs",
+      "sha256": "fac0a41383af3bf9848047b316f8ba00e517a5d1c50f8ad15ffdbc33ae287b07",
+      "lines": 62,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-fade-price-arrow.mjs",
+      "sha256": "9fc27b0da66bd18de4eb57e8b453d66f8b3d20f523d17dfa4c413d5fa72eafb2",
+      "lines": 104,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-final-polish.mjs",
+      "sha256": "5998ff559e74b205f23a1e9dae951fec8bcf34fd0e0d9abbc5495879ea50549b",
+      "lines": 96,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-flight-handoff.mjs",
+      "sha256": "b134c6b909065e85542e9d85d2e22e1ade49529744289f3682ee0192c8b1e7e2",
+      "lines": 316,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "scripts/verify-holographic-ui.mjs",
+      "sha256": "e9b72ac2c4e2b69ddf0c9431a26c7cf032657f9e3a74e27c6cb4de12242fd9b3",
+      "lines": 343,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-home-gallery.mjs",
+      "sha256": "76dd694e85ed273d6cb8abadf62e2566c16a97133bf2be22e1a500cc9e58d739",
+      "lines": 11,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-home-refinements.mjs",
+      "sha256": "3bc0f5b65163ffaeee12e3ccd28043a8ef2666671e53cbd60552b8afa38f0ffb",
+      "lines": 80,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-immersive-world.mjs",
+      "sha256": "82a2623b9d2d796bfee3681eb2a27635d2ebc4d33531d56ba8234cdb27dcadec",
+      "lines": 105,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-instrument-examples.mjs",
+      "sha256": "3485eee4fbf901e12cd879e72318d8375a8b5ad6d8c041251f8a56302293e97b",
+      "lines": 262,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-instrument-journeys.mjs",
+      "sha256": "fb5611d571f3365ac2fee4a0f5d8bc8a3ede830335d6de623cbbf43db81e55d9",
+      "lines": 379,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-landing-motion.mjs",
+      "sha256": "fbaf21885046fad375dadee394bb58c7b202b21a89ce1743292369d71b61b2c9",
+      "lines": 133,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-ledger-long-amounts.mjs",
+      "sha256": "13bae3cb4132eec26395bc9e021791fd11356cb006b5b524b0b878a32ee0fea1",
+      "lines": 175,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-module-backdrop.mjs",
+      "sha256": "f0b5bc124d68305c91466440886c6bd4423ebdd79875a76c3a9974aafe747a26",
+      "lines": 90,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-navigation-preferences.mjs",
+      "sha256": "6eb2a72ca27ff68fd30735c70b636846f6caa2657e66915cd378cd7c6ae60efb",
+      "lines": 302,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-orbit-sensitivity.mjs",
+      "sha256": "d89630a6ab57a569aedeed72eb2f56ab09b2cf3103c47cc67d18a096bb875c2e",
+      "lines": 147,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-pod-trial.mjs",
+      "sha256": "ee456de29a56480ec0affc675064297dda95f3f435b81216c4a32edc743f4ec3",
+      "lines": 65,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-pointer-response.mjs",
+      "sha256": "533cceba67cffe4c608c615b7b6ef477cce913392cf7f2c207bc2b8519757b94",
+      "lines": 253,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "scripts/verify-private-journal.mjs",
+      "sha256": "b3faadb2e8d733e97680f7ffd83a5dcb03714c1fc953b4cf255534cbc0dfc9c4",
+      "lines": 186,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-private-pool.mjs",
+      "sha256": "e6fcf4adfd7e346e26ba82bbe34a05fa7dd66d523965b940988c2ea2a29f6561",
+      "lines": 68,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-product-pages.mjs",
+      "sha256": "0edb256b167a5106f0a206d177cbabf5eb87c026ee19dc85db6d55978d77e724",
+      "lines": 414,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    },
+    {
+      "path": "scripts/verify-production-release.mjs",
+      "sha256": "a63da966b21ea8106af355b68eb4677c35b3ab7f843fb2196dd5101f90854af4",
+      "lines": 145,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-star-render.mjs",
+      "sha256": "ab7df7eb75c51c76cd02ddd7e311864c9ab8737f25377884e251eedb5260066a",
+      "lines": 73,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-testnet-kernel.mjs",
+      "sha256": "3d53f1418c62edf7c3f2f0d9061eb96b182cade8106f359e9867b6f3f343a6de",
+      "lines": 183,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-testnet-market-catalog.mjs",
+      "sha256": "997015c390b1c979d891bbeb7718107f9744f38471606afa6671dec1805006f4",
+      "lines": 115,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-testnet-market.mjs",
+      "sha256": "df582e003fe7046bb6e2d1b0ea31dd0d981331917c99751327b4734e3edd8566",
+      "lines": 255,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-wallet-modal.mjs",
+      "sha256": "a1898717c45b37c4f108379a95b2024349479cfc979726c43a1188441921ad8d",
+      "lines": 56,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-workspace-layout.mjs",
+      "sha256": "fdc5e5ce7038c55e88449637d335abe53df5427b650b0b583afa7787c9d9f0b1",
+      "lines": 207,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-workspace-redesign.mjs",
+      "sha256": "ea8f1f5324717886d28beb24d740f33517ad9a62ec1100c40b353fcd5d4393fc",
+      "lines": 298,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/verify-workspace-ui.mjs",
+      "sha256": "e777deea30ee95e3c3a8cac88e89c9b39536370655585430aa24450ae96a5ded",
+      "lines": 281,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/visual-check.mjs",
+      "sha256": "03f75b01b979911ad617a2129f96e7c7543429f10a89b58d991cbad72e905ac3",
+      "lines": 31,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/black-hole.ts",
+      "sha256": "050a0290439fa7de938d38cbbd98438b41cec843ce4fd9d38dee881d655d9998",
+      "lines": 263,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/flight-handoff.ts",
+      "sha256": "189bd60d3b3ed8ec051eb1a6e783e85437c8312e600e021714fc7fca584f3146",
+      "lines": 94,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/flight-path.ts",
+      "sha256": "905edc1b3a3ea179da92d6e8e2448a5af612788e6e1b7c71ed14c94c5538e0bb",
+      "lines": 26,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/flight-preference.ts",
+      "sha256": "ea3f39072a494479bc457d18e5aa2b17869d44ae8adfff721616a8efbf925d55",
+      "lines": 37,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/instrument-orbit.ts",
+      "sha256": "f865b6c7d72105fa4192426bf40ec023be68f88375c6f2d15ef9cd74379a8ad6",
+      "lines": 272,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/module-camera.ts",
+      "sha256": "ed68221fd510d970b8ee64d97ef96d446ca0e925e484c1259ff0c944f6f8a03d",
+      "lines": 157,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/orbit-input.ts",
+      "sha256": "7cb6a01af5831d7e370225f8d01b370880b97693acadb0050e06a5e96749f5ad",
+      "lines": 204,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/pointer-aim.ts",
+      "sha256": "5933663a862ba1766785b545b6882ff650f21f0d2df4770e69b17c5593539bc5",
+      "lines": 47,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/scene-compositor.ts",
+      "sha256": "1790c74c15a634640e3689f6a00246161ace986dafd5052cf5f7560cc037ad42",
+      "lines": 43,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/space-scene.ts",
+      "sha256": "a95f217b32beb3be6c67871cab05576cf0c10fca4a6718963e88224bb663a4e0",
+      "lines": 1273,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "shared/star-field.ts",
+      "sha256": "5679129f7ec61dad1e2db774739e2934b1fa9a127db32ca989e9980c5d077649",
+      "lines": 105,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "tests/orbital-app.spec.mjs",
+      "sha256": "045a60b8fe2b554646ffcd14d02183b4118cc08f1404274aa7c36b5761a4d35b",
+      "lines": 285,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
+    }
+  ]
+}

@@ -70,7 +70,9 @@ async function fetchChunk(url,chunk,fetchImpl,timeoutMs){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);let reader;
  try{
   const response=await fetchImpl(url,{method:'GET',credentials:'omit',redirect:'error',signal:controller.signal});
-  ensure(response.status===200&&response.url===url&&!response.redirected,'Artifact fetch or redirect refused');ensure(response.body,'Missing artifact response body');
+  // Report only the requested public origin and transport flags. Do not log
+  // response headers/body or an untrusted redirect target in CI diagnostics.
+  ensure(response.status===200&&response.url===url&&!response.redirected,`Artifact fetch or redirect refused (HTTP ${response.status}; origin ${new URL(url).origin}; URL matches ${response.url===url}; redirected ${response.redirected})`);ensure(response.body,'Missing artifact response body');
   const length=response.headers.get('content-length'),encoding=response.headers.get('content-encoding');
   if(length!==null&&(!encoding||encoding==='identity'))ensure(/^(0|[1-9][0-9]*)$/.test(length)&&Number(length)===chunk.bytes,'Artifact response size differs');
   reader=response.body.getReader();const parts=[];let size=0;

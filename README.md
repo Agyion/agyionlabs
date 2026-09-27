@@ -80,11 +80,13 @@ The separate marketplace completed **20 included testnet transactions and 19 che
 
 A separate browser marketplace run restored the saved encrypted merchant key, created and published a real testnet offer, then completed a collector payment with an explicit fee review. The included settlement and both account balances were reconciled, including the returned merchant funding and unused network fee. This used a scripted wallet, with real RPC responses forwarded through a test HTTP adapter after host network changes interrupted Chrome. The run reached confirmed Recovery before reload; its final assertion incorrectly assumed the wallet would remain connected after reload. That failed assertion is retained and is not counted as a passing reconnect test.
 
+A later read-only check passed three recovery and reconnect checks without signing or sending another payment. It seeded a public journal record reconstructed from the confirmed settlement, verified it against the chain, reloaded the page and explicitly reconnected the wallet. This establishes persistence for that seeded record, not recovery of the original browser profile or operation of a real wallet extension.
+
 The compiled browser application generated and verified a fresh Groth16 proof, simulated it against testnet, blocked an excessive fee, recovered after a network interruption and handled an explicit signing rejection. That browser test used a scripted wallet adapter and submitted no transaction; it is not a real wallet extension test. The included private transactions used the actual client and dedicated CLI signing identities. The application supports native testnet XLM and Circle testnet USDC, but the XLM settlement runs do not establish actual USDC funding or a bank payout.
 
 The contracts and cryptographic code have automated tests for authorization, arithmetic, replay, conservation, invalid proofs and interrupted transactions. Dependency advisory scans and a source review are part of the development process. These results establish tested behavior. They are not an independent audit or proof that every possible exploit is absent.
 
-[Security boundaries and reporting](SECURITY.md) · [Payment contracts](contracts/) · [Private protocol](privacy/PROTOCOL_V2.md)
+[Review scope and verification limits](docs/VERIFICATION.md) · [Security boundaries and reporting](SECURITY.md) · [Payment contracts](contracts/) · [Private protocol](privacy/PROTOCOL_V2.md)
 
 ## Build and run
 
