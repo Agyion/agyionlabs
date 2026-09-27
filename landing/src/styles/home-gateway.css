@@ -10,6 +10,9 @@
 .home-horizon__network { color: #aba69d; font: 10px/1.5 var(--font-mono); }
 .home-colophon { position: relative; z-index: 2; background: #050609; color: #aba69d; display: flex; gap: 28px; flex-wrap: wrap; align-items: center; border-top: 1px solid #39342e; padding: 24px var(--orbital-gutter); font-size: 11px; transition: opacity .65s cubic-bezier(.22,1,.36,1); }
 .home-colophon__brand { font: 500 24px/1 var(--font-display); letter-spacing: -.04em; color: #f1eee7; }
+.home-colophon__identity { display: flex; align-items: center; gap: 12px; }
+.home-colophon__github { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: #aba69d; border-radius: 50%; }
+.home-colophon__github:focus-visible { outline: 2px solid #ed9850; outline-offset: 2px; }
 .home-colophon nav { display: flex; flex-wrap: wrap; gap: 26px; margin-left: auto; }
 .home-colophon nav a { display: inline-flex; align-items: center; min-height: 44px; }
 .home-colophon a:hover { color: #ed9850; }

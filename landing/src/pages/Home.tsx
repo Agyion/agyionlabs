@@ -30,7 +30,12 @@ export default function Home() {
         </div>
       </section>
       <footer className="home-colophon">
-        <Link to="/" className="home-colophon__brand">agyion labs</Link>
+        <div className="home-colophon__identity">
+          <Link to="/" className="home-colophon__brand">agyion labs</Link>
+          <a className="home-colophon__github" href="https://github.com/Agyion/agyionlabs" target="_blank" rel="noopener noreferrer" aria-label="Agyion source code on GitHub" title="GitHub">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" aria-hidden="true"><path d="M12 .75a11.25 11.25 0 0 0-3.56 21.92c.56.1.77-.24.77-.54v-2.1c-3.13.68-3.79-1.33-3.79-1.33-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.97 0 0 .95-.3 3.1 1.16a10.8 10.8 0 0 1 5.63 0c2.15-1.46 3.1-1.16 3.1-1.16.61 1.54.23 2.69.11 2.97.72.79 1.16 1.8 1.16 3.02 0 4.32-2.64 5.27-5.15 5.55.4.35.76 1.03.76 2.08v3.11c0 .3.2.65.78.54A11.25 11.25 0 0 0 12 .75Z" /></svg>
+          </a>
+        </div>
         <nav aria-label="Supporting tools"><Link to="/ramp">Ramp ↗</Link><Link to="/ledger">Ledger ↗</Link></nav>
       </footer>
     </div>
