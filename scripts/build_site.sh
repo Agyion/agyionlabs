@@ -23,6 +23,7 @@ say "workspace dependencies"
 (cd "$ROOT" && npm ci --no-audit --no-fund)
 (cd "$ROOT/privacy" && npm ci --no-audit --no-fund)
 (cd "$ROOT/contracts/private-pool/client" && npm ci --no-audit --no-fund)
+(cd "$ROOT/market" && npm ci --no-audit --no-fund)
 
 say "1/4 landing build (vite)"
 (cd "$LANDING" && npm ci --no-audit --no-fund && npm test -- --run && npm run build)

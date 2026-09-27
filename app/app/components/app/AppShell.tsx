@@ -7,6 +7,7 @@ import { useWallet } from "../../lib/useWallet";
 import { IS_MOCK } from "../../lib/config";
 import WalletBar from "./WalletBar";
 import FadePanel from "./FadePanel";
+import FadeMarketPanel from "../market/FadeMarketPanel";
 import PodPanel from "./PodPanel";
 import TriggerPanel from "./TriggerPanel";
 import EnvoyPanel from "./EnvoyPanel";
@@ -31,7 +32,7 @@ const TABS = [
   { id: "ledger", label: "Ledger" },
 ] as const;
 const HELP = {
-  fade: ["Set a falling price", "Claim at the current price", "Settle with venue proof"],
+  fade: ["Find a pickup or fund a listing", "Get a short lived merchant authorization", "Review the payment and confirm with your wallet"],
   pod: ["Save and check your encrypted keys", "Lock private funds until a ledger", "The recipient claims after unlock"],
   trigger: ["Choose the recipient and attester", "Save and check the encrypted credentials", "Claim with attestation or refund after expiry"],
   envoy: ["Delegate private notes with limits", "Revoke or reclaim as their owner", "Use Fade agent separately for public offers"],
@@ -196,7 +197,6 @@ export default function AppShell() {
           </div>
         </div>
         <div ref={drawerScroll} className="station-drawer-scroll">
-        {tab === "fade" && <ProtocolStatus readiness={readiness} />}
         <TransactionActivity wallet={wallet} />
         {helpOpen && <section id="instrument-help" className="station-help" aria-label={`How ${selected.label} works`}>
           <ol>{HELP[tab].map((step, index) => <li key={step}><span>0{index + 1}</span>{step}</li>)}</ol>
@@ -205,7 +205,7 @@ export default function AppShell() {
         <TransactionAvailability.Provider value={readiness.status === "ready"}><div key={deck.epoch}>
           {TABS.map(instrument => <section ref={instrument.id === tab ? consolePanel : undefined} key={instrument.id} className="station-console" role="tabpanel" id={`panel-${instrument.id}`} aria-labelledby={`tab-${instrument.id}`} tabIndex={-1} hidden={instrument.id !== tab}>
             {deck.visited.includes(instrument.id) && <InstrumentActivity.Provider value={panelOpen && instrument.id === tab}>
-              {instrument.id === "fade" && <FadePanel wallet={wallet} />}
+              {instrument.id === "fade" && <FadeMarketPanel wallet={wallet} active={panelOpen && tab === "fade"} publicRecordRequested={tab === "fade" && !!recordRef} legacy={<><ProtocolStatus readiness={readiness} /><FadePanel wallet={wallet} existingOnly={!IS_MOCK} /></>} />}
               {instrument.id === "pod" && <PrivateInstrumentPanel kind="pod" address={wallet.address} active={panelOpen && tab === "pod"} publicRecordRequested={tab === "pod" && !!recordRef} legacy={<><ProtocolStatus readiness={readiness} /><PodPanel wallet={wallet} existingOnly /></>} />}
               {instrument.id === "trigger" && <PrivateInstrumentPanel kind="trigger" address={wallet.address} active={panelOpen && tab === "trigger"} publicRecordRequested={tab === "trigger" && !!recordRef} legacy={<><ProtocolStatus readiness={readiness} /><TriggerPanel wallet={wallet} existingOnly /></>} />}
               {instrument.id === "envoy" && <PrivateInstrumentPanel kind="envoy" address={wallet.address} active={panelOpen && tab === "envoy"} publicRecordRequested={tab === "envoy" && !!recordRef} legacy={<><ProtocolStatus readiness={readiness} /><EnvoyPanel wallet={wallet} active={panelOpen && tab === "envoy"} /></>} />}

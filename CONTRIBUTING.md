@@ -7,7 +7,7 @@ published deployment. A successful local test is not a mainnet safety claim.
 ## Getting started
 
 Use Node.js 22 and the locked dependencies in the root, `app/`, `landing/`,
-`privacy/` and `contracts/private-pool/client/` directories. The contract checks
+`privacy/`, `market/` and `contracts/private-pool/client/` directories. The contract checks
 use Rust 1.96.1, the `wasm32v1-none` target and Soroban SDK 28. The deployment tools
 use Stellar CLI 28.0.0. The root README describes application configuration and
 the separately pinned development proving artifacts.
@@ -26,6 +26,12 @@ stellar contract build --locked --manifest-path contracts/agyion/Cargo.toml --op
 cargo test --locked --manifest-path contracts/agyion/Cargo.toml --features wasm-tests
 cargo clippy --locked --manifest-path contracts/agyion/Cargo.toml --all-targets --all-features -- -D warnings
 ```
+
+The separate marketplace uses the same three commands with
+`contracts/fade-market/Cargo.toml`. Build its actual WASM before enabling
+`wasm-tests`. `npm --prefix market test` covers the signed catalog, client,
+transaction recovery and merchant key custody. `npm run test:market-ui` covers
+the map interaction boundaries. Root `npm test` includes both.
 
 Routine privacy tests explicitly skip the expensive opt-in fresh circuit/proof
 runs. They are not evidence that those runs passed. The private verification

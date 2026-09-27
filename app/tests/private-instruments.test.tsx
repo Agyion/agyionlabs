@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { PreparedPrivateOperation, PrivateProtocolSnapshot } from '../app/lib/private/protocol-types';
 
 const boundary = vi.hoisted(() => ({ workspace: null as unknown, vault: null as unknown }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('../app/components/app/PrivateWorkspaceProvider', () => ({ usePrivateWorkspace: () => boundary.workspace }));
 vi.mock('../app/lib/privateVault', () => ({ usePrivateVault: () => boundary.vault }));
 vi.mock('../app/components/app/PrivateVault', () => ({ default: () => <div>Vault controls fixture</div> }));

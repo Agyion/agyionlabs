@@ -24,7 +24,11 @@ The [active public release](deployments/public-testnet.json) retains the existin
 
 A bakery has an unsold box at closing time. Its price falls as the collection deadline approaches. It can reach zero and become a reward for collecting the box, funded by the seller's pot.
 
-The contract freezes the price when a claim is confirmed. A signed handoff settles the payment. An eligible refund transaction returns the pot after a missed handoff or expiry. The seller still has to provide the item, and somebody must submit each transaction. A blockchain cannot verify a physical pickup on its own.
+The public marketplace pairs a funded offer with a signed shop and pickup description. A merchant can issue a short pickup quote for one collector, who reviews it and approves the payment. Optional reservations need a merchant authorization and expire after a bounded lease. An eligible refund transaction returns unused funding. The seller still has to provide the item, and somebody must submit each transaction. A blockchain cannot verify a physical pickup on its own.
+
+Walk-in quotes fix the price for at most 12 ledgers so the wallet signs the exact debit that will execute. A reservation fixes its price when admitted. Competing valid transitions have one winner according to network inclusion, not browser click time. Earlier Fade positions remain on their original contract with their original claim and handoff rules.
+
+[Marketplace release](deployments/market-testnet.json) · [Settlement rules](contracts/fade-market/SPECIFICATION.md) · [Public discovery](market/README.md)
 
 [Explore Fade](https://agyionlabs.dev/fade)
 
@@ -66,9 +70,15 @@ Privacy does not erase every observable fact. Deposits, withdrawals, fees, trans
 
 ## What is verified
 
+The counters below describe completed test runs on 27 September 2026. Balances are observations at the end of each run, not a live balance report.
+
 The public payment contract completed **23 included transactions and 17 checks** using dedicated test identities and native XLM. The checks covered settlement, recipient substitution, replay, competing claims, expiry, refund and revocation outcomes, including actual balance and reserve changes. Its original address and code remain active.
 
 The separate private pool completed **15 included transactions and 72 checks** across funding, Pod opening, Trigger settlement and refund, Envoy claims, revocation, owner recovery and withdrawals. The final pool XLM balance was zero. An additional **13 disclosure checks** opened an accepted record with three development trustee shares and rejected insufficient shares and invalid authorization scope. These tests used locally controlled identities and trustees.
+
+The separate marketplace completed **20 included testnet transactions and 19 checks**, including positive, zero and negative pickup prices, delayed inclusion of a fixed quote, reservation cancellation and reuse, stale authorization rejection, expiry and refunds. Its final XLM balance and recorded XLM/USDC obligations were zero. A real Cloudflare D1 check also verified that ten concurrent initial publications admit one revision and that rejected updates leave no partial record.
+
+A separate browser marketplace run restored the saved encrypted merchant key, created and published a real testnet offer, then completed a collector payment with an explicit fee review. The included settlement and both account balances were reconciled, including the returned merchant funding and unused network fee. This used a scripted wallet, with real RPC responses forwarded through a test HTTP adapter after host network changes interrupted Chrome. The run reached confirmed Recovery before reload; its final assertion incorrectly assumed the wallet would remain connected after reload. That failed assertion is retained and is not counted as a passing reconnect test.
 
 The compiled browser application generated and verified a fresh Groth16 proof, simulated it against testnet, blocked an excessive fee, recovered after a network interruption and handled an explicit signing rejection. That browser test used a scripted wallet adapter and submitted no transaction; it is not a real wallet extension test. The included private transactions used the actual client and dedicated CLI signing identities. The application supports native testnet XLM and Circle testnet USDC, but the XLM settlement runs do not establish actual USDC funding or a bank payout.
 
@@ -86,6 +96,7 @@ npm --prefix landing ci
 npm --prefix app ci
 npm --prefix privacy ci
 npm --prefix contracts/private-pool/client ci
+npm --prefix market ci
 ```
 
 Copy `app/.env.example` to `app/.env.local` and select an explicit mode. A testnet build requires the contract address, reviewed code hash and matching asset configuration. Never put a seed, wallet secret or trustee share in a public environment variable.
@@ -106,6 +117,7 @@ The combined site serves the landing pages and `/app/` from one origin. Build ti
 * `landing/`: product pages, examples and the orbital entry sequence
 * `contracts/`: public payment rules and the private note pool
 * `privacy/`: circuits, local proving, encrypted recovery and threshold disclosure
+* `market/`: signed public discovery, merchant key custody and marketplace transaction recovery
 * `shared/`: scene and navigation behavior shared by the app and landing site
 * `scripts/`: build, deployment and verification tools
 * `docs/`: product behavior, integration notes and operational limits

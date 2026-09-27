@@ -27,7 +27,7 @@ import { formatDraftMinor } from "./instrumentPresentation";
 
 type ClaimConfirmation = { claimant: string; ledger: number | null };
 
-export default function FadePanel({ wallet }: { wallet: WalletState }) {
+export default function FadePanel({ wallet, existingOnly = false }: { wallet: WalletState; existingOnly?: boolean }) {
   const [fade, setFade] = useState<(Fade & { settlement?: { price: bigint; claimantPaid: bigint; claimantReceived: bigint; sellerReceived: bigint } }) | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -107,6 +107,7 @@ export default function FadePanel({ wallet }: { wallet: WalletState }) {
       {!fade && (
         <SellerForm
           wallet={wallet}
+          existingOnly={existingOnly}
           onCreated={(f) => setFade(f)}
           onLoad={(f) => setFade(f)}
         />
@@ -138,10 +139,12 @@ export default function FadePanel({ wallet }: { wallet: WalletState }) {
 
 function SellerForm({
   wallet,
+  existingOnly = false,
   onCreated,
   onLoad,
 }: {
   wallet: WalletState;
+  existingOnly?: boolean;
   onCreated: (f: Fade) => void;
   onLoad: (f: Fade) => void;
 }) {
@@ -161,6 +164,7 @@ function SellerForm({
 
   // Prefill the mock venue key
   useEffect(() => {
+    if (existingOnly) return;
     const m = mockClient();
     if (m) setVenuePub(m.venuePubkey());
     else {
@@ -168,7 +172,7 @@ function SellerForm({
       setVenuePub(k.pubkeyHex);
       setVenueSecret(k.secret);
     }
-  }, []);
+  }, [existingOnly]);
 
   const copyVenueSecret = async () => {
     try { await navigator.clipboard.writeText(venueSecret); setBackupNote("Venue secret copied. Store it somewhere private."); }
@@ -249,7 +253,7 @@ function SellerForm({
 
   return (
     <>
-    <section className="fade-listing workbench-surface" aria-label="List a Fade">
+    {!existingOnly && <section className="fade-listing workbench-surface" aria-label="List a Fade">
       <div className="fade-price-ticket">
         <header className="workbench-heading"><h3>Set your price</h3></header>
         <div className="fade-price-editor">
@@ -302,7 +306,7 @@ function SellerForm({
           </FilledButton>
         </div>
       </div>
-    </section>
+    </section>}
     <section className="instrument-records">
           <header><h3>Load an existing Fade</h3></header>
           <div className="instrument-inline-control">
@@ -316,6 +320,7 @@ function SellerForm({
             <GhostButton onClick={() => void load()}>Load</GhostButton>
           </div>
     </section>
+    {existingOnly && error && <ErrorNote>{error}</ErrorNote>}
     </>
   );
 }

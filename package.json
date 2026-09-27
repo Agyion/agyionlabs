@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "bash scripts/build_site.sh",
-    "test": "npm --prefix landing test && npm --prefix app test && npm --prefix privacy test && npm --prefix contracts/private-pool/client test && node --test scripts/tests/*.test.mjs",
+    "test": "npm --prefix landing test && npm --prefix app test && npm --prefix privacy test && npm --prefix contracts/private-pool/client test && npm --prefix market test && npm run test:market-ui && node --test scripts/tests/*.test.mjs",
+    "test:market-ui": "node app/node_modules/vitest/vitest.mjs run --config market/vitest.ui.config.mts",
     "preview": "node scripts/preview-site.mjs",
     "check:private": "node scripts/verify-private-pool.mjs"
   },

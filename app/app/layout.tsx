@@ -3,6 +3,9 @@ import "./globals.css";
 import "./orbital.css";
 import "./console-surface.css";
 import "./instrument-workspaces.css";
+import "leaflet/dist/leaflet.css";
+import "./market-map.css";
+import "./market.css";
 import { FLIGHT_BRIDGE_SCRIPT } from "../../shared/flight-handoff";
 
 export const metadata: Metadata = {

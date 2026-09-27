@@ -31,8 +31,13 @@ jobs:
           npm --prefix app ci
           npm --prefix privacy ci
           npm --prefix contracts/private-pool/client ci
+          npm --prefix market ci
       - name: Application, privacy, client and tool tests
         run: npm test
+      - name: Browser persistence and concurrent submission guards
+        run: |
+          npx --no-install playwright install chromium
+          MARKET_JOURNAL_BROWSER_TEST=1 node --experimental-strip-types --test market/tests/journal-browser.test.ts
       - name: Type and style checks
         run: |
           npm --prefix app run typecheck
@@ -41,6 +46,20 @@ jobs:
           npm --prefix landing run check
       - name: Public proof fixture provenance
         run: node contracts/private-pool/tools/verify-fixture-provenance.mjs
+      - name: Verify public proving assets and build the static testnet site
+        run: |
+          node scripts/fetch-private-prover.mjs --development
+          npm --prefix landing run build
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { releaseExpectations } from './scripts/release-expectations.mjs';
+          const release = releaseExpectations({ EXPECTED_PUBLIC_RELEASE: 'active-testnet' });
+          execFileSync('npm', ['--prefix', 'app', 'run', 'build'], {
+            stdio: 'inherit',
+            env: { ...process.env, NEXT_PUBLIC_AGYION_MODE: 'soroban', NEXT_PUBLIC_AGYION_CONTRACT_ID: release.contractId, NEXT_PUBLIC_AGYION_WASM_HASH: release.wasmHash, NEXT_PUBLIC_SOROBAN_RPC_URL: 'https://soroban-testnet.stellar.org', NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE: 'Test SDF Network ; September 2015' }
+          });
+          NODE
+          node scripts/assemble-site.mjs
       - name: Dependency advisories
         run: |
           npm audit --audit-level=high
@@ -48,6 +67,7 @@ jobs:
           npm --prefix landing audit --audit-level=high
           npm --prefix privacy audit --audit-level=high
           npm --prefix contracts/private-pool/client audit --audit-level=high
+          npm --prefix market audit --audit-level=high
 
   contracts:
     runs-on: ubuntu-latest
@@ -77,11 +97,14 @@ jobs:
         run: |
           stellar contract build --locked --manifest-path contracts/agyion/Cargo.toml --optimize=false
           stellar contract build --locked --manifest-path contracts/private-pool/Cargo.toml --optimize=false
+          stellar contract build --locked --manifest-path contracts/fade-market/Cargo.toml --optimize=false
       - name: Native and WASM contract tests
         run: |
           cargo test --locked --manifest-path contracts/agyion/Cargo.toml --features wasm-tests
           cargo test --locked --manifest-path contracts/private-pool/Cargo.toml --features wasm-tests
+          cargo test --locked --manifest-path contracts/fade-market/Cargo.toml --features wasm-tests
       - name: Strict Rust checks
         run: |
           cargo clippy --locked --manifest-path contracts/agyion/Cargo.toml --all-targets --all-features -- -D warnings
           cargo clippy --locked --manifest-path contracts/private-pool/Cargo.toml --all-targets --all-features -- -D warnings
+          cargo clippy --locked --manifest-path contracts/fade-market/Cargo.toml --all-targets --all-features -- -D warnings

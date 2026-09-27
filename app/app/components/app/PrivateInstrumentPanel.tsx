@@ -6,6 +6,7 @@ import { Asset, Networks, StrKey } from '@stellar/stellar-sdk';
 import { usePrivateWorkspace } from './PrivateWorkspaceProvider';
 import PrivateVault from './PrivateVault';
 import PrivateTriggerAttester from './PrivateTriggerAttester';
+import EnvoyDiscovery from '../market/EnvoyDiscovery';
 import { usePrivateVault } from '../../lib/privateVault';
 import { CONFIG } from '../../lib/config';
 import { formatMinor, shortAddress, shortHex } from '../../lib/format';
@@ -37,9 +38,10 @@ export default function PrivateInstrumentPanel({ kind, address, legacy, publicRe
     {workspace.loading && <p role="status">Verifying the private workspace…</p>}
     {workspace.error && <p role="alert">{workspace.error}</p>}
     {workspace.vault && <PrivateReadyPanel kind={kind} address={address} active={active} />}
+    {kind === 'envoy' && <EnvoyDiscovery active={active} />}
     <details className="instrument-technical private-public-records" open={publicOpen} onToggle={event => setPublicOpen(event.currentTarget.open)}>
       <summary>{kind === 'envoy' ? 'Fade agent' : 'Existing public positions'}</summary>
-      <p>{kind === 'envoy' ? 'Authorize, run or revoke an agent for public Fade offers. This is separate from private note delegation.' : 'These positions use the public contract. Their amounts and addresses are public.'}</p>
+      <p>{kind === 'envoy' ? 'Manage an agent for earlier Fade records on the original public contract. These mandates do not authorize new marketplace pickups or private notes.' : 'These positions use the public contract. Their amounts and addresses are public.'}</p>
       {publicOpen && legacy}
     </details>
   </div>;

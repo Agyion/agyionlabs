@@ -1,0 +1,36 @@
+name = "agyion-fade-market-testnet"
+main = "src/worker.ts"
+compatibility_date = "2026-09-27"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+preview_urls = false
+routes = [{ pattern = "market-testnet.agyionlabs.dev", custom_domain = true }]
+
+# Exact testnet deployment with fixed walk-in quotes and bounded storage rent.
+[vars]
+MARKET_CONTRACT = "CCS7FTPT5XGKN7Q6Y3W3EIRPNF5LE7AV2FAVZ4YYERNGUBU24AAMCSPJ"
+MARKET_WASM_HASH = "b1947f2ac6bfa3f42535ed571b956c9fd1ab425b1441adca99d2c8c919ed1c6c"
+MARKET_ASSETS = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC,CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
+MARKET_RPC_URL = "https://soroban-testnet.stellar.org"
+ALLOWED_ORIGIN = "https://agyionlabs.dev"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "agyion-fade-market-testnet"
+database_id = "0e9277c7-2c46-49e3-aaf0-66de736a54a2"
+migrations_dir = "migrations"
+
+# Assign namespaces unused by other Workers in this Cloudflare account before deployment.
+# These are provider-local abuse controls, not global fairness guarantees.
+[[ratelimits]]
+name = "READ_RATE"
+namespace_id = "9202701"
+simple = { limit = 120, period = 60 }
+
+[[ratelimits]]
+name = "WRITE_RATE"
+namespace_id = "9202702"
+simple = { limit = 20, period = 60 }
+
+[observability]
+enabled = false

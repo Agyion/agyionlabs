@@ -19,6 +19,18 @@ The public application relies on its wallet extension, RPC provider, token issue
 
 Physical handoffs and external events depend on the configured signer. A contract can verify a signature without establishing that the signed statement is true. Transaction inclusion order does not establish equal network access or fair click order.
 
+The public marketplace catalog is a discovery snapshot. It cannot settle a
+payment, create a reservation or authorize the private pool. Merchant metadata
+is signed and bound to immutable contract terms; clients still reread the pinned
+contract before any transaction. One active reservation per seller and claimant
+is an address-level limit, not proof of a unique person. A merchant's key rotation
+preserves the key snapshot of already accepted short reservations. Keep those
+earlier backups until their leases end.
+
+Map tiles load only after an explicit request and go directly to OpenStreetMap.
+The provider receives the connection IP and viewed area. No automatic customer
+geolocation, route tracking or private-note data is used by public discovery.
+
 The private implementation has additional requirements. Its development setup does not establish an independent trusted setup ceremony. Locally operated threshold test keys do not establish independent trustee custody. A cooperating threshold can decrypt outside the application's approval workflow. Deposits, withdrawals, fees, submitting accounts and timing can reveal relationships even when note contents are encrypted.
 
 Browser storage can be deleted or rolled back. Losing private keys and their encrypted recovery backup can make funds unrecoverable. Archived contract state requires network restoration and normal transaction fees. Recovery must reject incomplete history rather than display an invented balance.

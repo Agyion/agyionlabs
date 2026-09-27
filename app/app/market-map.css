@@ -1,0 +1,22 @@
+.market-map { --map-ink:#f4eee5; --map-line:#49423a; --map-accent:#f2b571; color:var(--map-ink); border:1px solid var(--map-line); border-radius:14px; overflow:hidden; background:#171715; }
+.market-map__toolbar { display:flex; align-items:center; gap:16px; padding:16px; }
+.market-map button { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:10px 18px; border:1px solid var(--map-line); border-radius:8px; background:#252320; color:var(--map-ink); font:inherit; cursor:pointer; }
+.market-map button:focus-visible,.market-map a:focus-visible { outline:2px solid var(--map-accent); outline-offset:3px; }
+.market-map button:disabled { opacity:.55; cursor:default; }
+.market-map__toggle { flex-shrink:0; }
+.market-map__notice { margin:0; max-width:58ch; color:#c4bbb0; font-size:.875rem; line-height:1.5; }
+.market-map__body { position:relative; isolation:isolate; border-top:1px solid var(--map-line); }
+.market-map__canvas { width:100%; height:clamp(280px,45vh,440px); background:#e6e4df; color:#171715; }
+.market-map__canvas .leaflet-control-zoom a { color:#171715; }
+.market-map__attribution { padding:5px 12px; background:#ede9e2; color:#302e29; font-size:.75rem; line-height:1.5; text-align:right; }
+.market-map__attribution a { color:#214f68; text-decoration:underline; }
+.market-map__search { display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:14px 16px; }
+.market-map__search button { background:var(--map-accent); border-color:var(--map-accent); color:#21170b; font-weight:600; }
+.market-map__search span,.market-map__status { font-size:.875rem; line-height:1.5; color:#c4bbb0; }
+.market-map__status { margin:12px 16px 0; }
+.market-map-marker { background:transparent; border:0; }
+.market-map-pin { box-sizing:border-box; display:flex; align-items:center; justify-content:center; width:36px; height:36px; border:2px solid #fff8ec; border-radius:50%; background:#25221e; color:#fff8ec; font:700 14px/1 sans-serif; box-shadow:0 2px 5px #0005; }
+.market-map-pin--selected { background:#f2b571; color:#21170b; border-color:#21170b; }
+.market-map-marker:focus-visible .market-map-pin { outline:3px solid #b75108; outline-offset:3px; }
+.market-map-pin__label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+@media(max-width:540px) { .market-map__toolbar { align-items:flex-start; flex-direction:column; gap:10px; } .market-map__search { align-items:flex-start; flex-direction:column; } }

@@ -1,0 +1,20 @@
+{
+  "name": "@agyion/fade-market-catalog",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "tsc --noEmit && node --experimental-strip-types --test tests/*.test.ts && vitest run",
+    "typecheck": "tsc --noEmit",
+    "test:client": "vitest run"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "16.3.0",
+    "buffer": "6.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

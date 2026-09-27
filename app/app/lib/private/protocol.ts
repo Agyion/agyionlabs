@@ -3,7 +3,7 @@ import {Buffer} from 'buffer';
 import {Networks,StrKey,Transaction,TransactionBuilder,rpc} from '@stellar/stellar-sdk';
 import {createPoolReader,assertPoolReader,type PoolReader} from '../../../../contracts/private-pool/client/reader';
 import {assertPoolRelease,type PoolRelease} from '../../../../contracts/private-pool/client/release';
-import {createIndexedDbSubmissionJournal,type SubmissionJournal,type JournalAttempt} from '../../../../contracts/private-pool/client/journal';
+import {createIndexedDbSubmissionJournal,type SubmissionJournal} from '../../../../contracts/private-pool/client/journal';
 import {createTestnetSubmissionLifecycle,FeeBudgetExceededError,type SubmissionTransport,type PublicSubmission,type WalletSession,type PrivateWallet} from '../../../../contracts/private-pool/client/submission';
 import {createTestnetRevocationLifecycle,type PublicRevocation} from '../../../../contracts/private-pool/client/revocation';
 import type {PublicAddresses} from '../../../../contracts/private-pool/client/adapter';

@@ -16,7 +16,7 @@ app/tsconfig.tsbuildinfo
 playwright-report/
 test-results/
 
-app/.wrangler/
+.wrangler/
 contracts/private-pool/test_snapshots/
 
 # Local working notes and review output

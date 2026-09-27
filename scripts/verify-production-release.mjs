@@ -17,7 +17,7 @@ const userAgent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like
 const api=await request.newContext({userAgent});
 let browser;
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const panelHeadings={fade:'Set your price',pod:'Pod · Private',trigger:'Trigger · Private',envoy:'Envoy · Private',ramp:'Transfer',ledger:'Activity'};
+const panelHeadings={fade:'Find a pickup',pod:'Pod · Private',trigger:'Trigger · Private',envoy:'Envoy · Private',ramp:'Transfer',ledger:'Activity'};
 try{
  const verifiedAppBundles=[];
  const routes=[['/','index.html'],['/app/','app/index.html'],...['instruments','fade','pod','trigger','envoy','ramp','ledger'].map(x=>[`/${x}`,`${x}.html`]),['/app-assets.json','app-assets.json'],...['favicon.svg','favicon-96.png','favicon.ico','apple-touch-icon.png'].map(x=>[`/${x}`,x])];
@@ -114,8 +114,16 @@ try{
   expect(report.kernelReadRequests.some(request=>request.keys.includes(expectedFootprint)),'Browser reads the exact expected testnet kernel instance').toBe(true);
   report.protocolStatus.observedContractInstance=expected.contractId;
  }
- await expect(page.getByRole('button',{name:'Lock the pot',exact:true})).toBeDisabled();
- report.ui.push(expected.readiness==='ready'?'Reviewed kernel is ready; disconnected-wallet action remains disabled':'Protocol write gate remains disabled for the expected incompatible/unavailable kernel');
+ const fade=page.locator('#panel-fade');
+ await fade.getByRole('button',{name:'Sell',exact:true}).click();
+ await expect(fade.getByRole('button',{name:'Save listing and fund offer',exact:true})).toHaveCount(0);
+ await expect(fade.getByRole('button',{name:'Register merchant key',exact:true})).toHaveCount(0);
+ await expect(fade.getByRole('button',{name:'Connect wallet',exact:true})).toBeVisible();
+ await fade.getByRole('button',{name:'Find a pickup',exact:true}).click();
+ await fade.locator('summary').filter({hasText:'Existing public positions'}).click();
+ await expect(fade.getByRole('heading',{name:'Load an existing Fade',exact:true})).toBeVisible();
+ await expect(fade.getByRole('button',{name:'Lock the pot',exact:true})).toHaveCount(0);
+ report.ui.push(expected.readiness==='ready'?'Original kernel verified and original record reader preserved; disconnected marketplace cannot fund or register':'Original kernel gate remains unavailable as expected; disconnected marketplace cannot fund or register');
  await page.getByRole('button',{name:'Close instrument',exact:true}).click();
  await expect(page.locator('.station-workspace')).toBeHidden();await page.screenshot({path:`${output}/app-mobile-orbit.png`});
  report.status=report.pageErrors.length||report.consoleErrors.length||report.requestFailures.length||report.csp.length?'failed':'passed';

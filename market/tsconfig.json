@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "shared/**/*.ts",
+    "src/**/*.ts",
+    "tests/**/*.ts",
+    "client/**/*.ts",
+    "client-tests/**/*.ts",
+    "vitest.config.ts"
+  ]
+}
