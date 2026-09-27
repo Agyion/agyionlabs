@@ -5,8 +5,11 @@ Offline components prepare its next testnet verification phase: the immutable
 scenario plan, exact call binding, signing-time envelope validation, coherent
 accounting snapshots, fee reconciliation, concrete state and observation policies,
 a bounded raw RPC transport, strict local simulation assembly and a durable
-orchestration library with an offline verified replay reader.
-There is no runnable lifecycle CLI, identity preparation or funding adapter yet.
+orchestration library with an offline verified replay reader. A bounded CLI now
+supports protected identity preparation, one-attempt Testnet actor funding,
+read-only funding recovery and offline journal verification. Lifecycle preflight,
+credential/source signing, observation collection and contract execution adapters
+are still unfinished; the CLI does not yet execute a lifecycle step.
 The pure validators do no I/O. The journal writes protected local records and
 can invoke explicitly supplied preparation, signing and transport adapters;
 it supplies no live adapter, private key or funding implementation itself.
@@ -152,7 +155,10 @@ consumed. Neither condition clears the claim or authorizes a replacement.
 Every cooperating caller must share one protected source-lock directory. The
 library stores that directory in its immutable run manifest; it cannot coordinate
 callers deliberately selecting different directories. The future CLI must fix
-one canonical namespace and bind it to the original deployment context.
+one canonical namespace and bind it to the original deployment context. The new
+preparation helper fixes that namespace to
+`artifacts/public-v4-lifecycle/source-locks` and binds the original authority;
+the eventual executor must consume that exact returned context.
 
 The [concrete policy adapter](../scripts/lib/public-lifecycle-policies.mjs) now
 supplies both required policies. It has no validator override or serialized
@@ -353,14 +359,14 @@ now uses the same bounded thirty-second wait as its encryption checks. All
 seven vault UI tests and the final full workspace passed with real cryptography
 and every original assertion retained. The failed run remains preserved.
 
-The current runner seams passed 68 assembly checks, 92 snapshot/acquisition
+The preceding runner seams passed 68 assembly checks, 92 snapshot/acquisition
 checks and four read-only replay checks with the local artifact case enabled.
 The assembly tests include the unchanged real positive response above, its
 expired historical envelope, malformed raw responses and all 39 synthetic
 scheduled calls. Read-only replay rejects altered raw evidence and blocks
 successors for every unfinished claim state, without writing or releasing locks.
 
-The complete current local workspace passed 1,904 checks with thirteen explicit
+That complete local workspace passed 1,904 checks with thirteen explicit
 default skips, including 902 application and 610 tooling checks. The separate
 integration run also passed both the 38-step structural mode and the full
 39-step pinned-byte mode after the new replay assertions were added. These
@@ -371,10 +377,68 @@ The separate enabled run does not turn synthetic ledger responses into live
 contract execution evidence. A bounded independent peer review found no
 additional actionable defect in these changes; it was not an external audit.
 
+## Protected preparation, acquisition and funding
+
+The [operator entry point](../scripts/run-public-testnet-lifecycle.mjs) defaults
+to public plan information. Default invocation reads no operational files,
+generates no identities and constructs no transport. Effectful modes require an
+exact run name and full authority hash. There are no URL, source, fee, mainnet,
+automatic-execution or force-retry options.
+
+`--prepare ORIGINAL_RUN MANIFEST_SHA256 RUN_NAME` checks the pinned original
+deployment plan, public receipt and fixed seller alias before claiming a new
+run directory. It creates exactly two actor and five credential keys, checks all
+eight public roles are distinct and stores secrets exclusively with mode 0600
+inside new 0700 directories. Existing directory modes are never changed. The
+whole ancestor chain is checked, including parents above a private traversal
+barrier. A partial preparation permanently consumes its name. Loading rederives
+the public keys and plan and performs no subprocess, write or network request.
+Same-UID/root tampering, alternate privileged filesystem views and rollback are
+outside this local custody boundary.
+
+The [acquisition adapter](../scripts/lib/public-lifecycle-acquisition.mjs) obtains
+the exact fixed keys and a header for the same ledger. If the latest header has
+advanced, it makes one bounded historical-header request; it never relabels
+current entries as historical. Raw JSON and canonical replay projections are
+retained together under a two-MiB aggregate result bound. Key/value identities,
+metadata and supported entry extensions are checked. Headers are checked against
+their hashes and embedded ledger metadata, not independently verified consensus.
+Funding acquisition reads only one selected recipient or relayer account and
+permits absence without inventing a balance or state authorization.
+
+`--fund RUN_NAME PLAN_SHA256 recipient|relayer` requires an empty execution
+journal. It persists a role-bound claim before network work, verifies the account
+is absent and persists its attempt before one fixed Friendbot request. HTTP
+headers and body share a 30-second deadline; decoded response bytes are capped
+at one MiB. Exact bounded bytes are retained as base64. Timeouts, lost responses
+and even HTTP success remain unknown chain outcomes. Claims are never cleared,
+and there is no automatic top-up or second funding request.
+
+`--recover-fund RUN_NAME PLAN_SHA256 recipient|relayer` validates the durable
+scope, then only reads the selected account. A present account must have pristine
+authority and meet the reserve derived from its same-ledger header. The result
+reports an account observation, never a verified Friendbot transaction. Full
+remaining lifecycle spend/fee coverage still belongs to the initial state gate.
+Contradictory stored accepted-response flags, body hashes or role bindings fail.
+`--verify RUN_NAME PLAN_SHA256` performs the concrete offline journal replay
+described above; it establishes no fresh chain availability or source release.
+
+Focused preparation tests pass 20 cases, including a real two-child-process
+exclusive-directory race with exactly one winner. Acquisition passes 69 cases,
+Friendbot transport 59, durable funding 21, entry routing 32 and the extended
+readback suite 121. The funding race uses three concurrent promises with real
+exclusive filesystem records. Tests substitute original authority/CLI and network
+transports, use deterministic fixture identities and preserve failing cases
+before corrections. No new real identity, funding request, signature or lifecycle
+submission was made while implementing these adapters. The complete 39-step
+live sequence remains unverified.
+
 ## Remaining work
 
-The dedicated executor, protected identity preparation and one-time funding,
-raw evidence acquisition and live integration remain unfinished. The policy
+The dedicated executor, credential/source signing adapters, full observation
+collector, initial preflight integration and live integration remain unfinished.
+Protected preparation, one-attempt funding and bounded raw acquisition are now
+implemented with the isolated tests above. The policy
 modules, bounded transport and their full synthetic journal integration are
 verified within the scopes above. The remaining live adapters still require
 their own adversarial tests before the bounded live scenarios run. The initial

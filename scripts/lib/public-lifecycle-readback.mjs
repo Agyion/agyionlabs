@@ -176,6 +176,33 @@ function account(row, address, sequence, ledger) {
   }
   return { address, balance: a.balance().toString(), sequence, accountEntryXdr: bytes(a), lastModifiedLedgerSeq: row.lastModifiedLedgerSeq };
 }
+/** Bootstrap only: a pristine recipient/relayer account or its RPC absence.
+ * Header, transport, reserve and complete lifecycle budgets remain caller gates.
+ * Presence does not authenticate a Friendbot transaction or authorize spending. */
+export function verifyPublicLifecycleFundingAccount({ plan, role }, input) {
+  validatePublicLifecyclePlan(plan);
+  ensure(role === 'recipient' || role === 'relayer', 'FUNDING_ROLE');
+  const copied = plain(input); exact(copied, ['latestLedger', 'entries']);
+  ensure(ledgerNumber(copied.latestLedger), 'LEDGER');
+  ensure(Array.isArray(copied.entries) && copied.entries.length <= 1, 'ROWS');
+  for (const row of copied.entries) exact(row, ['key', 'val', 'lastModifiedLedgerSeq']);
+  const response = responseRows(copied), ledger = response.latestLedger;
+  let observed = null;
+  if (response.entries.length) {
+    const row = response.entries[0], address = plan.actors[role];
+    const key = xdr.LedgerKey.account(new xdr.LedgerKeyAccount({ accountId: new Address(address).toScAddress().accountId() }));
+    ensure(bytes(row.key) === bytes(key), 'KEY');
+    ensure(row.val.switch().name === 'account', 'TYPE');
+    ensure(bytes(row.val.account().accountId()) === bytes(key.account().accountId()), 'ACCOUNT_ID');
+    ensure(ledgerNumber(row.lastModifiedLedgerSeq) && row.lastModifiedLedgerSeq <= ledger, 'MODIFIED');
+    const sequence = row.val.account().seqNum().toString();
+    ensure(decimal(sequence, 64, true) >= 0n, 'ACCOUNT_SEQUENCE');
+    observed = Object.freeze(account(row, address, sequence, ledger));
+  }
+  return Object.freeze({ schema: 'agyion-public-lifecycle-funding-account-v1',
+    planSha256: hashPublicLifecyclePlan(plan), role, ledger, account: observed,
+    fundingTransactionAuthenticated: false });
+}
 function amount(value) {
   ensure(value.switch().name === 'scvI128', 'AMOUNT');
   const n = (value.i128().hi().toBigInt() << 64n) + value.i128().lo().toBigInt();

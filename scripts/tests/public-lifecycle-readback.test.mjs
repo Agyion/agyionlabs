@@ -281,3 +281,62 @@ test('neither query keys nor decoding mutates expectations or raw evidence', () 
   publicLifecycleReadbackKeys(f.plan, f.expected); verifyPublicLifecycleState(f, raw);
   assert.equal(JSON.stringify({ expected: f.expected, raw }), before);
 });
+
+function fundingFixture(role = 'recipient') {
+  const row = fixture().response.entries[role === 'recipient' ? 8 : 9];
+  return { latestLedger: 1000, entries: [{ key: b64(row.key), val: b64(row.val), lastModifiedLedgerSeq: 999 }] };
+}
+const fundingCheck = (response, role = 'recipient', selectedPlan = plan) => readback.verifyPublicLifecycleFundingAccount({ plan: selectedPlan, role }, response);
+test('funding account gate permits absent or pristine selected actor without claiming a funding transaction', () => {
+  assert.equal(typeof readback.verifyPublicLifecycleFundingAccount, 'function');
+  for (const role of ['recipient', 'relayer']) {
+    const result = fundingCheck(fundingFixture(role), role);
+    assert.equal(result.role, role); assert.equal(result.ledger, 1000);
+    assert.equal(result.account.address, plan.actors[role]); assert.equal(result.account.balance, '10000000000');
+    assert.equal(result.account.sequence, '4294967296000'); assert.equal(result.fundingTransactionAuthenticated, false);
+    assert.ok(Object.isFrozen(result)); assert.ok(Object.isFrozen(result.account));
+    const absent = fundingCheck({ latestLedger: 1000, entries: [] }, role);
+    assert.equal(absent.account, null); assert.equal(absent.fundingTransactionAuthenticated, false);
+  }
+});
+for (const role of ['seller', 'venue', '', null, 'recipient\n', {}, ['recipient']]) test(`funding rejects nonfundable role ${JSON.stringify(role)}`, () => {
+  assert.throws(() => fundingCheck(fundingFixture(), role), /LIFECYCLE_READBACK_/);
+});
+for (const [name, mutate] of [
+  ['duplicate', r => r.entries.push(r.entries[0])],
+  ['other actor key', r => { r.entries[0].key = fundingFixture('relayer').entries[0].key; }],
+  ['other actor value', r => { r.entries[0].val = fundingFixture('relayer').entries[0].val; }],
+  ['future modification', r => { r.entries[0].lastModifiedLedgerSeq = 1001; }],
+  ['zero modification', r => { r.entries[0].lastModifiedLedgerSeq = 0; }],
+  ['zero ledger', r => { r.latestLedger = 0; }],
+  ['fractional ledger', r => { r.latestLedger = 1000.5; }],
+  ['extra field', r => { r.verified = true; }],
+  ['account TTL', r => { r.entries[0].liveUntilLedgerSeq = 1001; }],
+  ['noncanonical key', r => { r.entries[0].key += '\n'; }],
+  ['bad value', r => { r.entries[0].val = 'AAAA'; }],
+  ['nonaccount value', r => { r.entries[0].val = b64(fixture().response.entries[0].val); }],
+]) test(`funding rejects ${name}`, () => {
+  const response = fundingFixture(); mutate(response);
+  assert.throws(() => fundingCheck(response), /LIFECYCLE_READBACK_/);
+});
+for (const [name, mutate] of [
+  ['negative balance', a => a.balance(xdr.Int64.fromString('-1'))],
+  ['negative sequence', a => a.seqNum(xdr.SequenceNumber.fromString('-1'))],
+  ['extra subentry', a => a.numSubEntries(1)],
+  ['flags', a => a.flags(1)],
+  ['domain', a => a.homeDomain('untrusted')],
+  ['changed threshold', a => a.thresholds(Buffer.from([1, 1, 0, 0]))],
+  ['zero master', a => a.thresholds(Buffer.from([0, 0, 0, 0]))],
+  ['liability', a => a.ext(new xdr.AccountEntryExt(1, new xdr.AccountEntryExtensionV1({ liabilities: new xdr.Liabilities({ buying: xdr.Int64.fromString('1'), selling: xdr.Int64.fromString('0') }), ext: new xdr.AccountEntryExtensionV1Ext(0) })))],
+]) test(`funding rejects account ${name}`, () => {
+  const response = fundingFixture(), val = xdr.LedgerEntryData.fromXDR(response.entries[0].val, 'base64');
+  mutate(val.account()); response.entries[0].val = b64(val);
+  assert.throws(() => fundingCheck(response), /LIFECYCLE_READBACK_/);
+});
+test('funding rejects accessor data without executing it and modified plan scope', () => {
+  const response = fundingFixture(); let reads = 0;
+  Object.defineProperty(response, 'entries', { enumerable: true, get() { reads++; throw Error('PRIVATE'); } });
+  assert.throws(() => fundingCheck(response), /LIFECYCLE_READBACK_/); assert.equal(reads, 0);
+  const changed = structuredClone(plan); changed.actors.seller = changed.actors.recipient;
+  assert.throws(() => fundingCheck(fundingFixture(), 'recipient', changed), /LIFECYCLE_PLAN_/);
+});
