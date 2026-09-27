@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T21:40:38.696566+00:00",
-  "sourceBaselineCommit": "bfd2d134e5cee8497dfa195adb65de40ce4fbae5",
+  "reviewedAt": "2026-09-27T22:40:01.290145+00:00",
+  "sourceBaselineCommit": "248a602f6bdd2b0341dce70fa3415bfebf0838c9",
   "websiteRelease": {
     "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
     "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
@@ -42,12 +42,12 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 606,
-    "lines": 79936,
+    "files": 608,
+    "lines": 80600,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 508,
-        "lines": 56109
+        "files": 510,
+        "lines": 56773
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 98,
@@ -2966,8 +2966,8 @@
     },
     {
       "path": "scripts/lib/public-lifecycle-acquisition.mjs",
-      "sha256": "580bfc70160f19f8553c50d6c2eaf839e381aad612c02e0a87a72e36e233f861",
-      "lines": 140,
+      "sha256": "74de7293ec7bc9cfc9f7241a3af465056386622ec94fa4ec591f7a91ed5fde48",
+      "lines": 143,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2978,8 +2978,8 @@
     },
     {
       "path": "scripts/lib/public-lifecycle-baseline.mjs",
-      "sha256": "e6e18b067a6f4b6d3ee69651fb971b3f0d8929c4f89e14c8ff0db997233a7f48",
-      "lines": 162,
+      "sha256": "e2443404696013f6495d921e338301f994a97ec67c07edd78972e9f7f28f3c3d",
+      "lines": 178,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3019,9 +3019,15 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/lib/public-lifecycle-observation-acquisition.mjs",
+      "sha256": "f4167eb97d05454b5b4f992ef18166b5284ccd1e0907c50a9cf984569d16244f",
+      "lines": 152,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/lib/public-lifecycle-observations.mjs",
-      "sha256": "80a6c63300f2d90fd66e9fd758812e64a57f7831de82bb1d630d1a46c6f90d35",
-      "lines": 248,
+      "sha256": "566135c7899a08b9739b84dd7be74f381d269ad401abbe82ae5b26e744d1264c",
+      "lines": 293,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3206,8 +3212,8 @@
     },
     {
       "path": "scripts/tests/helpers/public-lifecycle-observation-fixture.mjs",
-      "sha256": "7738dba0b147b06820b1be195d4ae4ce9d2e4cdd59ec27940386f0e29ad67f69",
-      "lines": 50,
+      "sha256": "43112b1c8ff72c83334ee00ed21ae489de1da3a8ddcd1b4111474bfd1bbbbfe3",
+      "lines": 51,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3266,8 +3272,8 @@
     },
     {
       "path": "scripts/tests/public-lifecycle-acquisition.test.mjs",
-      "sha256": "b174057fb681debdf20623f0b094ae1e88425abdddb7a508def6b74aae20aa77",
-      "lines": 191,
+      "sha256": "c0ed3ed98a5bf1c75e677b5788ed5225abf922ee60c2d1291c4f26c42b740923",
+      "lines": 231,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3278,8 +3284,8 @@
     },
     {
       "path": "scripts/tests/public-lifecycle-baseline.test.mjs",
-      "sha256": "ab64459942b664f00ff241ee0fb1f825198543177a6177f80ebc1f758717e697",
-      "lines": 212,
+      "sha256": "4ebbd17f3def72103c33274e20e12958a48b97af9d6e848864b196035220cb64",
+      "lines": 269,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3325,9 +3331,15 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/public-lifecycle-observation-acquisition.test.mjs",
+      "sha256": "e96d6f905aff575c0eaae9aa304eadf13978182c6b2f6aea956558019134c625",
+      "lines": 254,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/public-lifecycle-observations.test.mjs",
-      "sha256": "b60041a0c5f4ed0a0cff02adf012894770facefe0e764b095ded6ee130968f73",
-      "lines": 142,
+      "sha256": "d1781633eb729b7ae409327642f6b4ea1144c96522df62b63d17e0ef13e8b070",
+      "lines": 238,
       "reviewKind": "complete-source-read"
     },
     {
@@ -6256,5 +6268,254 @@
       }
     ],
     "boundary": "Fixed run-owned credentials and envelope signing plus initial baseline/zero-read acquisition are implemented and tested with isolated identities and substituted original authority/CLI/transport. Synthetic-key signatures are real local cryptography; genuine seller CLI signing success and a real zero-getter wire capture are not claimed. The signer is not a durable journal claim or live ledger/source preflight. Retained raw zero evidence is not automatically revalidated by the existing compact-zero journal parser. Complete observation/preflight integration and the 39-step live executor remain unfinished. No new operator identity, live RPC, funding, live signature, submission, deployment, website publication, application activation or independent audit claim."
+  },
+  "publicV4ObservationAcquisition": {
+    "status": "source-and-record-observation-acquisition-verified",
+    "sourceCommit": "248a602f6bdd2b0341dce70fa3415bfebf0838c9",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36354995944",
+    "sourceInventorySha256": "583a28a3c11beaa1ec4f2a49f57b90fff51f50b56583c03c6537048306a84ba5",
+    "newAuthoredFiles": 2,
+    "modifiedAuthoredFiles": 7,
+    "authoredLineIncrease": 664,
+    "localWorkspacePassed": 2368,
+    "localDefaultOptionalSkips": 13,
+    "hostedWorkspacePassed": 2367,
+    "hostedDefaultOptionalSkips": 14,
+    "sourceCoverage": {
+      "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/root-final-source-coverage.json",
+      "sha256": "d1c1886d7473df914b06a1ac515780518b70798bb613ff36a275e664c36d1d26"
+    },
+    "newRealIdentityPreparations": 0,
+    "newRealRpcRequests": 0,
+    "newFundingRequests": 0,
+    "newLiveSignatures": 0,
+    "newTransactionsSubmitted": 0,
+    "evidence": [
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-observation-acquisition-inventory/capture-increment.py",
+        "sha256": "6613d785d5290ec4dc993aaf419fda8d4ef76cf0d9160eb2e372cac9c4ce042c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-observation-acquisition-inventory/preparation-provenance.json",
+        "sha256": "52063e857d21f45243df6753eedf432e247d4e385a0cd794c8807665568cbc39"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-observation-acquisition-inventory/repository-inventory.json",
+        "sha256": "583a28a3c11beaa1ec4f2a49f57b90fff51f50b56583c03c6537048306a84ba5"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-observation-acquisition-inventory/summary.json",
+        "sha256": "c7bf3f4cfbdb0a3f544af4ea91dd7e1ccf7c9017a6c14aea0d310b4e55376bb4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-observation-acquisition-inventory/independent-verification.json",
+        "sha256": "a907624c8f1400ce1ca180d25de152c6b0fb057fb8707478d8eeb6ec154fcb51"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-observation-acquisition-inventory/frozen-inputs.json",
+        "sha256": "8e1c970c53e0ce4ed17c96416f04cc8122ba3fe48516489e90f7b83c84e814e6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/root-final-source-coverage.json",
+        "sha256": "d1c1886d7473df914b06a1ac515780518b70798bb613ff36a275e664c36d1d26"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/local-test-summary.source-bound.json",
+        "sha256": "b6b599b2b12d30f358b57462a28af2c9ad50707e2eb81f5719525b662b1d431f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/workspace.log",
+        "sha256": "47c5fa909bc73d339f73e381bb7f96d40a9fb84fb7719b5da7a97b39c7028de7"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/hosted-test-summary.json",
+        "sha256": "03a4d5327e87bedf410a7d1be82052edb1d3887e745e458a85b90abcbd423ac3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/hosted-ci.json",
+        "sha256": "bca7c0872bdae13680b63c4e0c2b51e5f4dbf59ac1b1e6db9be4842cd836e9de"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/hosted-ci.log",
+        "sha256": "aef75ea05f039d1327f873d352504b4d057f748518fbc7c181c254edcc88e384"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/root-review.md",
+        "sha256": "859a7b475488b4214a42aeae2af74d1ead595e237c5305a2bfb463eef8a59c1b"
+      },
+      {
+        "path": "docs/PUBLIC_V4_LIFECYCLE_PREPARATION.md",
+        "sha256": "73d7ff79c94ddd93d4c74eb7fdcfd49f72e4ab68e6de3b47f144978d3fed0e12"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/local-test-summary.json",
+        "sha256": "abe7d26ccf4c453dfbaf8c83312f6a9bba097423974f9ddd2181d71caaf48bf3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/root-ci-status.json",
+        "sha256": "bca7c0872bdae13680b63c4e0c2b51e5f4dbf59ac1b1e6db9be4842cd836e9de"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/root-ci-verification.json",
+        "sha256": "02ea6abb474cb56bc3222c0adce6e77cb9eeeb0fceaaf2e9d6565158883e646a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/root-journal-integration.log",
+        "sha256": "d94aa0a5a7dc666b203f315e31b6d2cccb67c9f19ad585fb8747b60317a99601"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/workspace-interruption.json",
+        "sha256": "58e4dfb5704b43dfae6e109ef9e7d31f074381fc57bca08fc655cc8dcc896c75"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/workspace-pre-final-interrupted.log",
+        "sha256": "afa22705cccb892d8def18082d6b8164b16cfff45903a2ee6ecbdece8c39bd1d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/acquisition-root/root-report.json",
+        "sha256": "bffb0001e63ab9b0728c912d4f510ae39f15eabe37a3b6fad82c8a382391c653"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/acquisition-root/red-v2.log",
+        "sha256": "636581506fe3fc158f21c1f6fbeab7c072aa6dda4529289542be2f4adcc7c2f0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/acquisition-root/signal-red.log",
+        "sha256": "0fd7eece04230b607672016c4fc5d746d15503120ea41eb46dba1e6134015e46"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/acquisition-root/green-v2.log",
+        "sha256": "78145f1ad611a3e150acd1ef3c673596ffc557bfc44823322803a10dd979cd27"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/acquisition-peer/review.json",
+        "sha256": "3b54bacc7048a761c5fd9e3d9afdc54b0772e98a38a2aaeb46a328ed77d5a5c9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/parser-peer/review.json",
+        "sha256": "d199dcbc2f8cfb1c0159734c4f89b388d6c2f7cf0a038de1516b962bcd175015"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/baseline-peer/review.json",
+        "sha256": "c3be84a871c2faed2e4194850a0754b358befcc9617db5baa839788261c7a827"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/observation-acquisition-peer/pre-freeze-review.json",
+        "sha256": "346a29d944a5d8ea6880657ecfe475f54322f5d5c886651d47f5134b364440b6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/observation-acquisition-peer/timing-finding.json",
+        "sha256": "e65f0dc9f256a9af2b624a1fef283988e203be6d675d38337e6237d326048aef"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/observation-acquisition-peer/final-review.json",
+        "sha256": "d6036e003559c90abdcdf3f118d8765332389180a9ca53d2f5296138923600fa"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/implementation/REPORT.md",
+        "sha256": "bd2f2198e8240a9bdb14e29e645ea584c876c9f9ca554f37f96645ef1d80046b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/implementation/source-coverage.json",
+        "sha256": "57672d8a15545207a90627780025780e4cc949cce2f238920b9186b289cc10fc"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/implementation/manifest.json",
+        "sha256": "c88bf8d26fe0a1332cd02248bcad925e98b1a3e651b828fb5eeef77ceafbb262"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/implementation/01-maintained-red.log",
+        "sha256": "590b00237e9c82bf26b3a04e94e44f4a7e29b9e975e94c2a2ef29fd89a65096c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/implementation/02-aggregate-red.log",
+        "sha256": "b50dcf55ae465c260f32cf9d98d7bd99efab5e0c353e9fe010f4673056d86156"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/implementation/05-actual-wasm-final.log",
+        "sha256": "c82f831763533f758371142888604988c243d0544413fbd45c22dbd8cd1a4b5c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/baseline-consistency/REPORT.md",
+        "sha256": "bd1f4d7cb0792a2c7ec930b983b09bf1ebee6634f084f6a380b2a4d39dae7942"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/baseline-consistency/source-coverage.json",
+        "sha256": "330d0938bd4eed7ab4f45f192aa84ec8cd70b6ddadc9d6b6cc1e93ebbfa02a97"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/baseline-consistency/manifest.json",
+        "sha256": "5a5ed49c80eb5c8f2173724af69a9595294e4f142a2f9f8dab089528282563c6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/baseline-consistency/01-targeted-red.log",
+        "sha256": "57cdea4f5e20e0004edd9030ccce88ffa513a5d523db11fb111f535ca383f3cf"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/observations-next/baseline-consistency/03-actual-wasm-final.log",
+        "sha256": "0aa1133925d06c70299f40b21a4fd157697011ab65e87f419511555325709f24"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/implementation/REPORT.md",
+        "sha256": "91f882d3a811cfac1a3554fe54e8d4ecbd4dbc8442808e957b854e46de605aad"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/implementation/source-coverage.json",
+        "sha256": "d16aa3bc89441d3fa89b8dd53e91d20e9fd80ba6829e8765f1e7f75bcde2785f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/implementation/verification.json",
+        "sha256": "f0f153e482d6b5929c145c6b8d5dec61e97a2efd63eab8b740998de1bfc4f920"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/implementation/manifest.json",
+        "sha256": "cf9a108fcd6a9d718d653ab745126278d5fc352e6f91f366c9c16b98f29d838a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/implementation/deadline-microtask-v2/RED.log",
+        "sha256": "fe523bdcdf652cb82c9ad1f90a3eac294b28509a1123fc677474e130c5db72e5"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/implementation/deadline-microtask-v2/GREEN-default.log",
+        "sha256": "7f55b805ab3006e3ba04d573fc671e229de8d6eb762153cdc3147dcd01954b1b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/implementation/deadline-microtask-v2/GREEN-pinned-wasm.log",
+        "sha256": "6594831782a716e17b30c59b3f8d088feb59b1d984a49e69dbc7327911d5f0a4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-observation-acquisition-inventory/helper-peer.json",
+        "sha256": "f26a8f7a7f314e4203c5b572b05f59957210b66505666a590c20eb0f2a15b682"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/raw-acquisition-plan/IMPLEMENTATION-PLAN.md",
+        "sha256": "c482e6c34d18f8abb7a6c3c575e8455d1fa304019cb0251ae915121151b57e49"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/raw-acquisition-plan/RAW-SCHEMA-SUPPLEMENT.md",
+        "sha256": "4c8b341f9dc196f06772f338e7259d488b8cce104c1516eb35fdf6dfbfa18afd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/independent-verification.json",
+        "sha256": "8539c836959e7bd4467895c3f2dabe40ffb51b87bb089fb9ec32ced5b46f4c2a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/peer-post-finalization.json",
+        "sha256": "c6698e67a454269cb9d7e291a4ef0d07ed70f41e9bb87e6aad849ad865f914fc"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/evidence-finalization.json",
+        "sha256": "2b59aac648a46312c68ee013dbad6d55a20cf5ae6f12106f374ff1997fcc94b4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-observation-acquisition-inventory/finalizer-inputs.json",
+        "sha256": "103bb442de42869a9afe4c20bb4ead12e7248c6a5e2fa852211544f4cafe3e0f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-observation-acquisition-inventory/finalize-observation-acquisition-evidence.py",
+        "sha256": "d58b80edf2aaa368cc063455b9362be4efc3e1bf7e02081a599049ca1121a69e"
+      }
+    ],
+    "boundary": "Strict pure observation validation and one record-mode negative-case acquisition are implemented with fixed plan/brand scope, raw replay, same-ledger zero evidence and bounded before/after snapshots. Tests use synthetic transport, deterministic fixture credentials and either an explicit executable-authentication-only double or opt-in exact local pinned code. Initial24 case composition is not a completed live39-step collector or executor. Successful ENFORCE and native-zero getter actual wire remain unconfirmed. Complete raw capture persistence and retrospective acquisition-time replay remain separate integration work. Capture clock guards do not impose an overall elapsed-time deadline; a never-settling trusted capability requires caller cancellation. No new operator identity, live RPC, funding, live signature, submission, deployment, website publication, application activation or independent audit claim."
   }
 }
