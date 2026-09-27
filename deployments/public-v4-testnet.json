@@ -1,0 +1,101 @@
+{
+  "schema": "agyion-guarded-public-testnet-checkpoint-v1",
+  "testOnly": true,
+  "status": "deployed-inactive",
+  "applicationActivation": false,
+  "verifiedAt": "2026-09-27T14:59:00.673Z",
+  "sourceCommit": "fba3b0961f3627c7e7bd1d0bde43359030baeb39",
+  "sourceChecks": "https://github.com/Agyion/agyionlabs/actions/runs/36327129298",
+  "networkPassphrase": "Test SDF Network ; September 2015",
+  "rpcUrl": "https://soroban-testnet.stellar.org",
+  "contractId": "CA3QJJNHN3TDSU3MYWVLO5N2NGFUBY4AO2J77TRPNHFI5VB5P26USEMZ",
+  "wasmSha256": "d101e0fea1852cf057049cc08695b9e26a8b3c6a82db58d4c2706db03a22b186",
+  "wasmBytes": 26696,
+  "protocolVersion": 4,
+  "assets": [
+    "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+    "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
+  ],
+  "reviewedManifestSha256": "e3094fa5482fef6b6efb986d54d2540dcbd5a426c65fc856c1b9565825d0f5fc",
+  "offlinePlanSha256": "21fb2aebbebd48c5802e89dadba72a2aaceb3d58642dda2d24bd28ae4471b6b7",
+  "fundingRequests": 1,
+  "deploymentTransactions": [
+    {
+      "phase": "upload",
+      "hash": "84509f5d9401c0bacffd292db9fa50f52c20fe84106772b396ed7a1b05b19434",
+      "ledger": 4899483,
+      "source": "GBDINNMPHA7LWJDAXS3G3NWCOLYLSPCER2Z4HENF2JE3ZKH7TVLF7PBF",
+      "signatureVerified": true,
+      "sequence": "21043097777471489",
+      "feeAuthorized": "70819358",
+      "resultFeeCharged": "61585685",
+      "operation": "uploadContractWasm",
+      "envelopeSha256": "29b45c5e2616cac158bb765a36cc580a6a9a6c8cacec9f2f72b1b5ad4236c398",
+      "resultMetaSha256": "b15ef44d2e4bad6da79c4aaaeb7820b2724292c455ef9f14c8c9d20e6ae0eb98"
+    },
+    {
+      "phase": "create",
+      "hash": "1367f4b10f2f03b155d09bff674005ec845001c93c9fd06dfe5bb556dacb65ed",
+      "ledger": 4899491,
+      "source": "GBDINNMPHA7LWJDAXS3G3NWCOLYLSPCER2Z4HENF2JE3ZKH7TVLF7PBF",
+      "signatureVerified": true,
+      "sequence": "21043097777471490",
+      "feeAuthorized": "267595",
+      "resultFeeCharged": "226282",
+      "operation": "createContractV2",
+      "envelopeSha256": "c8e4a9ce597994a4a4b3897bc1f160f21de4cd6a7a062d7aee2b1c770045bc68",
+      "resultMetaSha256": "bd443b68242f3fc69a0c9c1f566910526ab05e6bf9cff289ad8086cd1c0e9516"
+    }
+  ],
+  "authorizedFeeTotalStroops": "71086953",
+  "authorizedFeeCeilingStroops": "2700000000",
+  "feeBoundary": "Authorized maxima and TransactionResult feeCharged are recorded separately. These figures do not claim a final net wallet cost after every refund.",
+  "initialReadback": {
+    "ledger": 4899499,
+    "codeBytesAuthenticated": true,
+    "canonicalSacsObserved": true,
+    "accountingVersion": 4,
+    "liabilities": [
+      {
+        "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+        "amount": "0",
+        "liveUntilLedger": 5020450
+      },
+      {
+        "asset": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+        "amount": "0",
+        "liveUntilLedger": 5020450
+      }
+    ]
+  },
+  "separateReadback": {
+    "ledger": 4899510,
+    "reportSha256": "052f608a258f3f894dc8f2296b5efa0483ad750f13104d4531fd8da9c4469e85",
+    "decoderSha256": "499f5ae4e7992fa49b2d41eaa11cfdc9b998d69042deabb3eb6bd4d62593dc7a",
+    "sameRpcProvider": true,
+    "existingCodePins": [
+      {
+        "name": "original public V3",
+        "id": "CBIIHFELPAKC2KJD4NCJSB32BQO5QUBNEKHBMISFB4MVDKBVM6AJSRXT",
+        "hash": "1e6643028d6b397b3a762d4b5312eaf20f2744407686c78122d27c5a4dd8d378"
+      },
+      {
+        "name": "guarded private",
+        "id": "CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB",
+        "hash": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018"
+      },
+      {
+        "name": "original private recovery",
+        "id": "CDSK32ISKXRW6PX3ZMCHLUP4URNQSYNNH2GZU7ZSZJFL4FSEFQM25YHT",
+        "hash": "103f46d4eb97b021f2618e307970ce49993417901789e03760a4af512b7fee6e"
+      }
+    ]
+  },
+  "limits": [
+    "Separate internal decoder with the same SDK and configured RPC trust boundary, not an independent external audit.",
+    "No V4 instrument funding, payment or lifecycle was executed in this deployment checkpoint. Initial zero liability does not establish token custody or future solvency.",
+    "The application still selects the original public V3 kernel. No records, credentials, backups or pending transaction hashes were migrated.",
+    "Scoped public release selection, original-record recovery and source-account coordination remain activation gates.",
+    "Private pools and marketplace retain their existing application configuration. No production or exploit-absence guarantee."
+  ]
+}

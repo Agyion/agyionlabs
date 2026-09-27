@@ -1,16 +1,17 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T14:17:20.421538+00:00",
-  "sourceBaselineCommit": "ddeadf844baf05becb0e916d680bacdb5c9c7530",
+  "reviewedAt": "2026-09-27T15:05:27.214754+00:00",
+  "sourceBaselineCommit": "fba3b0961f3627c7e7bd1d0bde43359030baeb39",
   "websiteRelease": {
-    "workerVersion": "74556457-1e64-4fbc-a31b-c368cdccba08",
-    "sourceCommit": "ddeadf844baf05becb0e916d680bacdb5c9c7530",
+    "workerVersion": "11516227-d03a-4631-8ea9-1c4b67d0d904",
+    "sourceCommit": "fba3b0961f3627c7e7bd1d0bde43359030baeb39",
     "url": "https://agyionlabs.dev",
-    "verifiedAt": "2026-09-27T14:12:38.563Z",
-    "treeSha256": "34788c6835d0254736f3dd12754aab78066c502a91efdb0c91fff8ae5fb80431",
-    "treeHashScope": "All 104 local files including _headers; all 103 public files separately matched",
+    "verifiedAt": "2026-09-27T14:59:44.293Z",
+    "treeSha256": "d9793e035d5413ae38015680d4179300820d60e2fc8abe0c03286621597e346d",
+    "treeHashAlgorithm": "SHA256 of path NUL sha256 NUL decimal bytes LF in exact manifest.files order, sorted lexicographically by path-component tuples",
+    "treeHashScope": "All 104 frozen local files including _headers; 103 public files separately matched",
     "files": 103,
-    "bytes": 166318576,
+    "bytes": 166321464,
     "runtimeChangesFromSourceBaseline": [],
     "contractPinsChanged": false,
     "browserChecks": {
@@ -20,50 +21,26 @@
       "walletRequests": 0,
       "transactions": 0
     },
-    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36324431982",
-    "limits": "No new wallet transaction, vault ceremony, map-specific test or archival restoration; previous dated receipts remain separate.",
-    "earlierBrowserCheck": {
-      "status": "failed",
-      "httpChecks": 34,
-      "uiChecks": 0,
-      "failure": {
-        "message": "page.goto: net::ERR_NETWORK_CHANGED at https://agyionlabs.dev/\nCall log:\n\u001b[2m  - navigating to \"https://agyionlabs.dev/\", waiting until \"domcontentloaded\"\u001b[22m\n",
-        "stack": "page.goto: net::ERR_NETWORK_CHANGED at https://agyionlabs.dev/\nCall log:\n\u001b[2m  - navigating to \"https://agyionlabs.dev/\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at /home/apo110/agyion/scripts/verify-production-release.mjs:77:13"
-      },
-      "requestFailures": [
-        {
-          "url": "https://agyionlabs.dev/",
-          "error": "net::ERR_NETWORK_CHANGED"
-        }
-      ]
-    },
-    "browserBoundary": "Same verification assertions and original helpers; executable changed to matching Playwright-managed Chromium. First installed-Chrome navigation ERR_NETWORK_CHANGED failure retained. No inferred root cause, interception or TLS bypass."
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36327129298",
+    "limits": "Client preparation publication. Original public V3 remains selected. No new wallet, vault, map-specific or public-network archival test."
   },
-  "undeployedContractCandidates": [
-    {
-      "name": "public-kernel-v4",
-      "wasmSha256": "d101e0fea1852cf057049cc08695b9e26a8b3c6a82db58d4c2706db03a22b186",
-      "bytes": 26696,
-      "artifact": "unoptimized Stellar CLI 28.0.0 build",
-      "namedNativeAndWasmTests": 75
-    }
-  ],
+  "undeployedContractCandidates": [],
   "scope": "Tracked and nonignored first-party authored source, tests, configuration, styles, API declarations, vector assets and database migrations. Exact current bytes at this checkpoint.",
   "reviewKinds": {
     "complete-source-read": "The exact current hash has explicit complete source-read ranges from this development review. It does not imply a new reread during manifest generation.",
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 556,
-    "lines": 71272,
+    "files": 564,
+    "lines": 72328,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 455,
-        "lines": 48483
+        "files": 462,
+        "lines": 48168
       },
       "verified-baseline-plus-reviewed-diff": {
-        "files": 101,
-        "lines": 22789
+        "files": 102,
+        "lines": 24160
       }
     },
     "unresolvedFiles": 0,
@@ -79,9 +56,9 @@
   "limitations": [
     "Development source review is not an independent security audit, execution coverage, proof of cryptographic soundness or a guarantee that every exploit is absent.",
     "Passing tests do not establish source-read coverage. Testnet and browser evidence has separate scope and limitations.",
-    "These hashes are a dated source checkpoint. The website is identified by source commit, worker version and exact published bytes. Public V4 remains local. The guarded private pool is the current app default; old immutable contracts, records and notes keep their identity.",
+    "These hashes are a dated source checkpoint. The website is identified by source commit, worker version and exact published bytes. Public V4 is a separate deployed-inactive testnet candidate; public instrument lifecycles and compatible recovery remain activation gates. The guarded private pool is the current app default; old immutable contracts, records and notes keep their identity.",
     "Any subsequent source change requires renewed review evidence and manifest reconciliation.",
-    "Recovery-only restrictions apply to the current app, not older clients or direct calls. Original immutable contracts retain their documented backing limitation. Independent audit, production ceremony, independent trustees and live archival restoration remain outside the completed evidence."
+    "Recovery-only restrictions apply to the current app, not older clients or direct calls. Original immutable contracts retain their documented backing limitation. Independent audit, production ceremony, independent trustees and public-network archival restoration remain outside the completed evidence. The separate local archival integration is documented with its acceleration and receipt limits."
   ],
   "files": [
     {
@@ -404,9 +381,9 @@
     },
     {
       "path": "app/app/lib/agyionClient.ts",
-      "sha256": "087eeecb101e7b47f66b723900d5d50c04bcedaa80f3d9df86617eff7b98df6a",
-      "lines": 1304,
-      "reviewKind": "complete-source-read"
+      "sha256": "b4a72efb2e8bd45c798e078ddf044d57772b6193552182a1a8f7ce392fcdb4af",
+      "lines": 1371,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "app/app/lib/anchor.ts",
@@ -724,6 +701,12 @@
       "path": "app/tests/client-deployment-config.test.ts",
       "sha256": "d9842fc119462aee7b62d7fcfa9a51ee07cc9fa1f9d43c398f0162794d55c550",
       "lines": 38,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/client-public-v4.test.ts",
+      "sha256": "ac4a630d406aa82f5e0e6aa39fa7d438141d321e19f0318805ef113303329d89",
+      "lines": 195,
       "reviewKind": "complete-source-read"
     },
     {
@@ -1444,6 +1427,12 @@
       "path": "deployments/public-testnet.json",
       "sha256": "9401031958e828761a3d13b3a0fe696b9da460a052d0812b848e2945fde0087e",
       "lines": 25,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "deployments/public-v4-testnet.json",
+      "sha256": "147f532e29ebdaecddf357e3f819a73654d40307140b34a694e73fc92d22338f",
+      "lines": 101,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2887,6 +2876,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/deploy-public-testnet.mjs",
+      "sha256": "e17c8c3e91548e50adf2c2bb9b5082b72c1aceebb7b7b2c80ffe3306da9c7931",
+      "lines": 226,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/deploy_testnet.sh",
       "sha256": "b79a5ddaf48826f0da8b9755a29db00bef31c46e1eaa437e6e0d5c078dce96a7",
       "lines": 151,
@@ -2938,6 +2933,18 @@
       "path": "scripts/lib/private-json.mjs",
       "sha256": "4504d8f6ac1be67cf58e76423d66268158c605611bdd312cce3c2d6169b8230a",
       "lines": 5,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-deployment-plan.mjs",
+      "sha256": "0f0cbfbb4c9b2c143dd2c2bedef8e29daab68bf57c800ff77fc1e82f47c56de3",
+      "lines": 95,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-deployment-readback.mjs",
+      "sha256": "c9d610b58b40169acd06bd131363e158452d559e3dd777f89c120692e51b065a",
+      "lines": 75,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3061,6 +3068,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/deploy-public-testnet.test.mjs",
+      "sha256": "fded1d00121a5acb3e37e887286ec7d1d75bd9ce5e1e5545eaf5830b6b25e95e",
+      "lines": 87,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/fetch-private-prover.test.mjs",
       "sha256": "4ae8aa89edfe3e83c2ac62c0bb3e02c259b5c2337e06ea5f9220e45ec6bb1f40",
       "lines": 89,
@@ -3100,6 +3113,18 @@
       "path": "scripts/tests/private-prover-fixture.mjs",
       "sha256": "0353d80d21048caa9b6e951122d051fb1be731082ad04aeb206511cda443f96d",
       "lines": 42,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-deployment-plan.test.mjs",
+      "sha256": "4b3ea964b674cacdc14933e84d73546b561e4a672e5ef837e1da5fa6bd8ddcf0",
+      "lines": 130,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-deployment-readback.test.mjs",
+      "sha256": "0424dcaa9579aa79f8e8f9b7cc3a29d402171e26a8f6cae174f14159859421b4",
+      "lines": 80,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3783,6 +3808,43 @@
         "transactions": 0
       },
       "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36321991863"
+    },
+    {
+      "workerVersion": "74556457-1e64-4fbc-a31b-c368cdccba08",
+      "sourceCommit": "ddeadf844baf05becb0e916d680bacdb5c9c7530",
+      "url": "https://agyionlabs.dev",
+      "verifiedAt": "2026-09-27T14:12:38.563Z",
+      "treeSha256": "34788c6835d0254736f3dd12754aab78066c502a91efdb0c91fff8ae5fb80431",
+      "treeHashScope": "All 104 local files including _headers; all 103 public files separately matched",
+      "files": 103,
+      "bytes": 166318576,
+      "runtimeChangesFromSourceBaseline": [],
+      "contractPinsChanged": false,
+      "browserChecks": {
+        "http": 34,
+        "ui": 14,
+        "rpcTransport": "direct Playwright-managed Chromium networking",
+        "walletRequests": 0,
+        "transactions": 0
+      },
+      "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36324431982",
+      "limits": "No new wallet transaction, vault ceremony, map-specific test or archival restoration; previous dated receipts remain separate.",
+      "earlierBrowserCheck": {
+        "status": "failed",
+        "httpChecks": 34,
+        "uiChecks": 0,
+        "failure": {
+          "message": "page.goto: net::ERR_NETWORK_CHANGED at https://agyionlabs.dev/\nCall log:\n\u001b[2m  - navigating to \"https://agyionlabs.dev/\", waiting until \"domcontentloaded\"\u001b[22m\n",
+          "stack": "page.goto: net::ERR_NETWORK_CHANGED at https://agyionlabs.dev/\nCall log:\n\u001b[2m  - navigating to \"https://agyionlabs.dev/\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at /home/apo110/agyion/scripts/verify-production-release.mjs:77:13"
+        },
+        "requestFailures": [
+          {
+            "url": "https://agyionlabs.dev/",
+            "error": "net::ERR_NETWORK_CHANGED"
+          }
+        ]
+      },
+      "browserBoundary": "Same verification assertions and original helpers; executable changed to matching Playwright-managed Chromium. First installed-Chrome navigation ERR_NETWORK_CHANGED failure retained. No inferred root cause, interception or TLS bypass."
     }
   ],
   "recoveryCompatibility": {
@@ -3809,6 +3871,120 @@
       "Merchant expected epoch is still not enforced atomically by the immutable contract",
       "No application archival restoration workflow or actual archival integration test",
       "No independent audit, production setup or separate trustee custody"
+    ],
+    "historicalBoundary": "This section records the earlier ddeadf8 checkpoint. Its synthetic test does not claim the later separately documented isolated-ledger integration."
+  },
+  "sourceChangesAfterBaseline": [
+    {
+      "path": "deployments/public-v4-testnet.json",
+      "sha256": "147f532e29ebdaecddf357e3f819a73654d40307140b34a694e73fc92d22338f",
+      "purpose": "Added public evidence receipt; no runtime changes"
+    }
+  ],
+  "inactiveGuardedPublicRelease": {
+    "status": "deployed-inactive",
+    "contractId": "CA3QJJNHN3TDSU3MYWVLO5N2NGFUBY4AO2J77TRPNHFI5VB5P26USEMZ",
+    "wasmSha256": "d101e0fea1852cf057049cc08695b9e26a8b3c6a82db58d4c2706db03a22b186",
+    "receipt": "deployments/public-v4-testnet.json",
+    "report": "docs/PUBLIC_KERNEL_GUARDED_TESTNET.md",
+    "creationLedger": 4899491,
+    "initialReadbackLedger": 4899499,
+    "separateReadbackLedger": 4899510,
+    "instrumentLifecyclesExecuted": false,
+    "applicationActivation": false,
+    "workspacePassed": 1415,
+    "defaultSkipped": 6,
+    "contractTestsPassed": 150,
+    "explicitCryptoPassed": 47,
+    "browserJournalPassed": 4,
+    "separatePythonDeploymentChecksPassed": 14,
+    "dependencyScansWithoutAdvisories": 6
+  },
+  "localPrivateArchiveIntegration": {
+    "status": "passed-bounded-local-ledger",
+    "report": "docs/PRIVATE_ARCHIVE_RESTORE_TEST.md",
+    "localPool": "CB7TNUV2R5VLGEQJXNGF5TGLLFVYBSFBGWGASGTWBRACRIIIBW6QZZBX",
+    "wasmSha256": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018",
+    "hotArchiveLedger": 1054628,
+    "instanceRestoredAt": 1054669,
+    "positiveRestoredAt": 1054727,
+    "zeroRestoredAt": 1054768,
+    "liabilities": [
+      "4000000",
+      "0"
+    ],
+    "unchangedPersistentValues": 9,
+    "encryptedBackupReadRecovery": true,
+    "applicationRestorationWorkflow": false,
+    "publicNetworkRestoration": false,
+    "postRestorationSpendCovered": false,
+    "evidenceHashes": {
+      "final-evidence.json": "95dfb9d34843480e05f6df27d13763c62b103580cef158db005c977a1ac302d7",
+      "independent-verification.json": "8997088f9ea9e65ec1cec21ae094333865f13ac76dc80031d883b2560f774ed1",
+      "value-comparison-summary.json": "f53c19da42bc1da735a3519e3f2e4eba62a92f3c7f1b4a2e4c18211030b3f4a5",
+      "public-evidence-manifest.json": "e73e4f408deec82c382d97de943f7b4a98cefc3ec26658d5dc675e623128d158"
+    },
+    "limits": [
+      "Fixture sequence and process-local clock acceleration; no million-ledger replay or host clock change.",
+      "Positive restore inclusion from Core history bound to ledger header after retained captive RPC divergence; other restores have RPC result/metadata.",
+      "Reading a recovered note is not a post-restoration spend test.",
+      "No production application workflow, public-network restoration, independent audit, setup or custody claim."
+    ]
+  },
+  "localPrivateArchiveSpend": {
+    "status": "passed-bounded-local-ledger",
+    "report": "docs/PRIVATE_ARCHIVE_SPEND_TEST.md",
+    "localPool": "CB7TNUV2R5VLGEQJXNGF5TGLLFVYBSFBGWGASGTWBRACRIIIBW6QZZBX",
+    "wasmSha256": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018",
+    "sameOriginalRestoredNote": true,
+    "withdrawal": {
+      "amount": "4000000",
+      "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "destination": "GCENZF4XX54ZXLQE4VEZ3QDLADQAOMUIPO44X2AJNBLAYS6CJ2SBIWR2",
+      "hash": "fc2a5edfc7f595d5459382a4044d800613394678e08b4405d0c2290aa46cd06d",
+      "ledger": 1054770,
+      "status": "SUCCESS",
+      "maxFeeStroops": "215541656",
+      "resultFeeChargedStroops": "187368730"
+    },
+    "custodyAfter": "0",
+    "liabilityAfter": "0",
+    "recoveredUnspentNotesAfter": 0,
+    "persistentSpentNullifier": {
+      "value": true,
+      "modified": 1054770,
+      "liveUntil": 2108849,
+      "head": 1054772
+    },
+    "replay": {
+      "simulationOnly": true,
+      "error": "Spent (#9)",
+      "ledger": 1054772,
+      "proofWindowStillValid": true,
+      "sameOriginalProofAndOperation": true,
+      "rootAndIndexUnchanged": true,
+      "freshOuterSequence": "343597383691",
+      "signed": false,
+      "sent": false
+    },
+    "applicationRestorationWorkflow": false,
+    "publicNetworkRestoration": false,
+    "evidenceHashes": {
+      "final-evidence.json": "ce5edc19aa4bb37219e1688133e274dcbc8f498b6b2649fda3eda68813fe0472",
+      "rpc-inclusion-raw.json": "299309e3e0ceb6f711fca449344ec56071a9cbd2c8aaaeb77b076c70162a65c0",
+      "scope-review.json": "173ac1e1278e4829047775cc4d666035f8f4f1f3b82817587c2584650db33009",
+      "metadata-summary.json": "f60c8c97ebb18b75ac711e382e17bc2d0adfaf06020863df7e63c44a08c273d6",
+      "replay-context.json": "2a45d8296633ead43414aa43ff72f720d809bc8a4af83bdc0925f7d863502f50",
+      "replay-simulation.json": "8ac37878b29bf97f2a613d203b3a4e5b07a434af9631b6bd485d9c0d6abfe127",
+      "network-settings-decoded.json": "7165fb68d814f287e27c835e3e8e30d2852014337a6f7ceeb4d9100af1b80292",
+      "public-evidence-manifest.json": "32b49bdaa645c4f1212288871ace1d4e3af131a3a3b52d5300c7b17e6345915b",
+      "independent-review.json": "6de068efba1edfbc54433ef6bd43dcf9d6111396d2dd9a1193bffc595a460436",
+      "independent-review.md": "47af5c1ec54d7c27ae16ada26dbd50f0a49dec6407aed6970a7480a5ded28fe6"
+    },
+    "limits": [
+      "One isolated local withdrawal after the original archive test; the original checkpoint remains frozen with its own narrower scope.",
+      "Fixture sequence jump, per-process clock offset and deliberately selected local TTL settings; no public fee benchmark.",
+      "No application restoration workflow, public-network restoration, independent audit, setup, custody or exploit-absence guarantee."
     ]
   }
 }

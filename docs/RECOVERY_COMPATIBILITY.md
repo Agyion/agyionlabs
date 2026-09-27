@@ -63,6 +63,18 @@ This correction is in the separate accounting reader. It does not implement
 an application restoration operation. No live hot-archive restoration is
 claimed by the synthetic metadata regression.
 
+A later [isolated ledger integration](PRIVATE_ARCHIVE_RESTORE_TEST.md) exercised
+actual eviction and restoration with the exact guarded WASM. It confirmed the
+metadata ordering for both positive and zero counters and recovered the original
+encrypted note backup. Its sequence/clock acceleration and RPC receipt limits
+are documented separately. The application restoration workflow remains open.
+
+The [separate post-restoration spend test](PRIVATE_ARCHIVE_SPEND_TEST.md) then
+withdrew the original recovered note on that same isolated ledger. Included
+metadata reconciled custody and liability to zero. A fresh-sequence replay of
+the still-valid original proof failed specifically with the spent-nullifier
+error; it was simulated only and never signed or submitted.
+
 ## Verification boundaries
 
 The complete local workspace run passed 1,306 tests with six default optional

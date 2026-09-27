@@ -65,7 +65,10 @@ These are locally built, unoptimized artifacts. The private candidate now has a
 state. It is now the application default after separate actual XLM and USDC
 lifecycles, scoped disclosure and compatible browser recovery checks. The
 original private pool remains available for recovery; its chain permissions are
-unchanged. The public V4 candidate remains undeployed.
+unchanged. The [public V4 candidate](PUBLIC_KERNEL_GUARDED_TESTNET.md) is now
+deployed separately on testnet with verified initial accounting. It is not the
+application default; actual public lifecycles and compatible recovery remain
+activation gates.
 The public constructor fixes one to eight supported SACs. Both candidates check
 SAC executable identity through the host, initialize liabilities at construction,
 check existing backing before accepting new money or paying obligations, and

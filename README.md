@@ -96,12 +96,24 @@ The contracts and cryptographic code have automated tests for authorization, ari
 
 The [recovery compatibility follow-up](docs/RECOVERY_COMPATIBILITY.md) retains the actual included merchant key epoch and corrects an accounting-reader assumption about restored archive metadata. Its local workspace run passed 1,306 tests with six optional skips; the changed real browser journal test passed separately. It does not change deployed contract bytecode or establish live archive restoration.
 
+A separate [isolated ledger test](docs/PRIVATE_ARCHIVE_RESTORE_TEST.md) subsequently
+evicted and restored the exact guarded pool's persistent state. Both positive and
+zero liabilities, nine entry values and an encrypted note backup survived recovery.
+The report distinguishes accelerated local time, actual included restores and a
+retained RPC catchup failure. A [subsequent local withdrawal](docs/PRIVATE_ARCHIVE_SPEND_TEST.md)
+spent the original recovered note and rejected a replay of the same proof as
+already spent. Public-network restoration remains unverified;
+the user-facing restoration workflow still needs to be implemented.
+
 The current private testnet default and separate marketplace enforce aggregate
 backing guards. The original public kernel and original private pool retain their
 [documented issuer control limitation](docs/TOKEN_ISSUER_RISKS.md); immutable
 contracts cannot be repaired by changing the website. The current app blocks new
 funding into the old private profile, while older clients and direct calls remain
-possible. Public V4 is a reviewed local candidate, not an active deployment.
+possible. [Public V4](docs/PUBLIC_KERNEL_GUARDED_TESTNET.md) is deployed separately
+on testnet with authenticated code and initial accounting, but is not the app
+default. Public instrument lifecycles and compatible recovery remain activation
+gates.
 Existing records, private notes and backup scopes keep their original identities.
 
 [Review scope and verification limits](docs/VERIFICATION.md) · [Security boundaries and reporting](SECURITY.md) · [Payment contracts](contracts/) · [Private protocol](privacy/PROTOCOL_V2.md)

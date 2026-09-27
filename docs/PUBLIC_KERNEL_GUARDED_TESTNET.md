@@ -1,10 +1,11 @@
-# Guarded public kernel preparation
+# Guarded public kernel testnet checkpoint
 
 The public V4 kernel adds per-asset aggregate backing checks to public Fade,
-Pod and Trigger obligations. Its source and deployment tools are ready for a
-separate valueless testnet deployment. The application still selects the
-original V3 contract. This document does not claim activation, migration or an
-independent audit.
+Pod and Trigger obligations. A separate candidate was deployed and its initial
+state verified on valueless testnet. The application still selects the original
+V3 contract. This document does not claim activation, migration or an independent
+audit. The [public receipt](../deployments/public-v4-testnet.json) records the
+included transactions and exact readback boundaries.
 
 ## Fixed deployment boundary
 
@@ -12,6 +13,7 @@ independent audit.
 | --- | --- |
 | Network | Stellar Testnet |
 | Protocol | 4 |
+| Contract | `CA3QJJNHN3TDSU3MYWVLO5N2NGFUBY4AO2J77TRPNHFI5VB5P26USEMZ` |
 | WASM SHA-256 | `d101e0fea1852cf057049cc08695b9e26a8b3c6a82db58d4c2706db03a22b186` |
 | WASM bytes | 26,696 |
 | Constructor | One ordered vector: native XLM, then Circle testnet USDC |
@@ -40,6 +42,18 @@ activation. Missing entries, expiry, changed configuration, mismatched keys,
 duplicate rows and nonzero initial liabilities reject the readback. This check
 is scoped to initial state, not later custody or future solvency.
 
+Upload was included at ledger 4,899,483 and creation at ledger 4,899,491. Both
+initial submissions returned pending; lookup of their original hashes confirmed
+them without a second submission. The signed fee maxima totaled 7.1086953 test
+XLM, below the configured combined ceiling. This is not a final net cost claim.
+
+The full initial readback passed at ledger 4,899,499. A second internal decoder
+independently parsed the included signed envelopes and twelve ledger entries at
+ledger 4,899,510. It matched the code, constructor-derived address, ordered
+assets, version and live zero liabilities, and rechecked the original public and
+both private code identities. It used the same configured RPC provider and SDK
+XDR dependency, so it is not an independent external audit.
+
 ## Client compatibility
 
 The public client keeps V3 as its default. Selecting V4 explicitly requires a
@@ -61,15 +75,14 @@ transaction already submitted to the network.
 
 ## Remaining activation gates
 
-1. Deploy the separate candidate and authenticate its included creation and
-   initial state against the fixed plan.
-2. Exercise actual V4 public lifecycles with exact custody and liability
+1. Exercise actual V4 public lifecycles with exact custody and liability
    reconciliation. Synthetic readback and client tests do not prove inclusion.
-3. Integrate a compiled release catalogue and original-contract recovery across
+2. Integrate a compiled release catalogue and original-contract recovery across
    links, credentials, pending transactions and receipt scopes.
-4. Serialize submissions by source account and network across public releases,
+3. Serialize submissions by source account and network across public releases,
    including pending results and transaction preparation.
-5. Publish only after the exact source checks and a frozen website build pass.
+4. Publish activation only after the exact source checks and a frozen website
+   build pass. Publishing client preparation does not activate the new contract.
 
 ## Preparation verification
 
@@ -78,8 +91,12 @@ skips. This includes 862 application tests and 161 tooling tests. Type checking
 passed; lint retained three existing generation-ref cleanup warnings. The new
 client tests cover configuration refusal, recovery restrictions and retired
 sessions. Deployment tests cover offline behavior, protected files, exact
-constructor binding and malformed readbacks. They do not establish a successful
-live deployment.
+constructor binding and malformed readbacks. Their synthetic fixtures do not
+establish deployment; the actual included transactions above are separate
+evidence. The [exact hosted source run](https://github.com/Agyion/agyionlabs/actions/runs/36327129298)
+passed both jobs, including 150 contract tests, 47 explicitly enabled
+cryptographic checks and four browser journal checks. All six dependency scans
+reported no advisories.
 
 The exact original V3 and candidate V4 binaries contain the same five credential
 purpose tags. Their source domain builder binds the network and contract; the

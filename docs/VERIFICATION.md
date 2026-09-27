@@ -1,14 +1,14 @@
 # Verification checkpoint
 
-This record describes the development review on **27 September 2026**. The current website is Cloudflare version `74556457-1e64-4fbc-a31b-c368cdccba08`, built from `ddeadf844baf05becb0e916d680bacdb5c9c7530`. The guarded private pool is the default for new Pod, Trigger and Envoy flows. The original private profile remains accessible for recovery with its unchanged identity; the public kernel and marketplace pins are unchanged. The [source manifest](../deployments/source-review-2026-09-27.json) and [private testnet checkpoint](PRIVATE_POOL_GUARDED_TESTNET.md) separate source review, actual chain transactions, website publication and remaining limits.
+This record describes the development review on **27 September 2026**. The current website is Cloudflare version `11516227-d03a-4631-8ea9-1c4b67d0d904`, built from `fba3b0961f3627c7e7bd1d0bde43359030baeb39`. The guarded private pool is the default for new Pod, Trigger and Envoy flows. The original private profile remains accessible for recovery with its unchanged identity; the public kernel and marketplace pins are unchanged. The [source manifest](../deployments/source-review-2026-09-27.json) and [private testnet checkpoint](PRIVATE_POOL_GUARDED_TESTNET.md) separate source review, actual chain transactions, website publication and remaining limits.
 
 ## Source review
 
 | Evidence | Files | Current lines |
 | --- | ---: | ---: |
-| Exact current bytes with complete source-read evidence | 455 | 48,483 |
-| Verified reviewed baseline plus completely reviewed differences | 101 | 22,789 |
-| Total first-party authored scope | 556 | 71,272 |
+| Exact current bytes with complete source-read evidence | 462 | 48,168 |
+| Verified reviewed baseline plus completely reviewed differences | 102 | 24,160 |
+| Total first-party authored scope | 564 | 72,328 |
 | Unresolved files or line ranges at this snapshot | 0 | 0 |
 
 The first row uses explicit complete reading ranges matched to each current file hash. It does not mean every file was read again when this manifest was generated. The second row is composed coverage: the previously reviewed baseline was checked against Git bytes, every difference was reviewed, and unchanged, changed and deleted ranges were reconciled. It is not a fresh full-file reread.
@@ -17,7 +17,33 @@ The manifest lists each file's relative path, SHA-256, line count and review met
 
 ## Executed verification and limits
 
-The current recovery compatibility release passed 34 HTTP and 14 UI checks across all six instruments at desktop and mobile sizes. All 103 public files, totaling 166,318,576 bytes, matched the frozen local build. The 104-file local tree including `_headers` has SHA-256 `34788c6835d0254736f3dd12754aab78066c502a91efdb0c91fff8ae5fb80431`. The passing direct Playwright-managed Chromium run captured no page, console, request or CSP errors and made no wallet request or transaction. The preceding installed-Chrome attempt passed 34 HTTP checks but failed initial browser navigation with ERR_NETWORK_CHANGED and completed no UI checks. It remains a failed run. The retry changed only the executable and import paths needed to reuse the same verification helpers; it preserved every assertion and used no network interception or TLS bypass. The [exact hosted source run](https://github.com/Agyion/agyionlabs/actions/runs/36324431982) passed both jobs. The complete local workspace run passed 1,306 checks with six default skips, and the changed real Chromium journal test passed separately. [Corrections and remaining limits](RECOVERY_COMPATIBILITY.md) distinguish the metadata regression from actual archival restoration. This release does not relabel the previous vault, map or wallet checks as newly executed.
+The current client-preparation release passed 34 HTTP and 14 UI checks across all six instruments at desktop and mobile sizes. All 103 public files, totaling 166,321,464 bytes, matched the frozen build. The 104-file local tree, including `_headers`, has SHA-256 `d9793e035d5413ae38015680d4179300820d60e2fc8abe0c03286621597e346d`, computed from path, hash and byte-count records with NUL separators in the exact manifest order, sorted lexicographically by path-component tuples. Direct Playwright-managed Chromium captured no page, console, request or CSP errors. No wallet request or transaction occurred in that browser run. The original public V3 kernel remained ready. No new map-specific or vault test is claimed.
+
+The [exact hosted source run](https://github.com/Agyion/agyionlabs/actions/runs/36327129298) passed both jobs: 1,415 workspace checks with six default skips, 14 deployment-helper checks, 150 contract tests, 47 separately enabled cryptographic checks and four browser journal checks. All six advisory scans reported no advisories. The separate [public V4 deployment](PUBLIC_KERNEL_GUARDED_TESTNET.md) used two included testnet transactions. Two internal readers authenticated its exact code and initial zero accounting. It is deployed but not selected by the application. Public instrument lifecycles, original-record recovery and source-account coordination remain activation gates. This does not relabel an earlier private or public lifecycle as a V4 test.
+
+The separate [private archival test](PRIVATE_ARCHIVE_RESTORE_TEST.md) used the
+exact guarded WASM on an isolated Protocol 28 ledger. Real hot-archive eviction
+was followed by included base, positive-counter and zero-counter restores.
+Nine persistent values retained their exact bytes. Existing readers accepted
+the unchanged values with later counter modification metadata, and the original
+encrypted backup recovered the same note and snapshot. The fixture used a
+supported sequence jump and a process-local clock offset. A captive RPC catchup
+failure was preserved; positive inclusion was verified from Core history bound
+to the ledger header, while the other restores retained RPC result/metadata.
+This bounded local integration test does not implement the application's
+restoration workflow or establish public-network restoration.
+
+A [separate local spend checkpoint](PRIVATE_ARCHIVE_SPEND_TEST.md) subsequently
+withdrew the same recovered note at ledger 1,054,770, with its own successful
+RPC envelope, result and metadata. The operation reduced custody and liability
+from 4,000,000 to zero and created the spent nullifier. A second simulation
+reused the original proof with a fresh outer sequence while its window and root
+remained valid; it returned the exact spent-nullifier error. There was one
+signed submission and no second signature or send. The explicitly reviewed
+local fee ceiling and actual fixture TTL configuration are documented separately;
+neither changes application limits or establishes public-network fee behavior.
+
+The preceding recovery compatibility release passed 34 HTTP and 14 UI checks across all six instruments at desktop and mobile sizes. All 103 public files, totaling 166,318,576 bytes, matched the frozen local build. The 104-file local tree including `_headers` has SHA-256 `34788c6835d0254736f3dd12754aab78066c502a91efdb0c91fff8ae5fb80431`. The passing direct Playwright-managed Chromium run captured no page, console, request or CSP errors and made no wallet request or transaction. The preceding installed-Chrome attempt passed 34 HTTP checks but failed initial browser navigation with ERR_NETWORK_CHANGED and completed no UI checks. It remains a failed run. The retry changed only the executable and import paths needed to reuse the same verification helpers; it preserved every assertion and used no network interception or TLS bypass. The [exact hosted source run](https://github.com/Agyion/agyionlabs/actions/runs/36324431982) passed both jobs. The complete local workspace run passed 1,306 checks with six default skips, and the changed real Chromium journal test passed separately. [Corrections and remaining limits](RECOVERY_COMPATIBILITY.md) distinguish the metadata regression from actual archival restoration. This release does not relabel the previous vault, map or wallet checks as newly executed.
 
 The preceding `bb24b068` website passed 34 HTTP checks, 14 UI checks covering all six instruments at desktop and mobile sizes, and nine real encrypted-vault recovery checks across both private profiles. All 103 public files, totaling 166,316,881 bytes, matched the local build. The complete local tree, including `_headers`, has SHA-256 `ef9305f0c45857b89184f2d882650099816ca9356def20d90af7ab13a261e64e`. The passing general-site and vault runs captured no JavaScript, console or request errors; the general-site run also captured no CSP violations. The general site and map checks used the installed Chrome; the passing vault run used Playwright-managed Chromium with the same assertions. They used no network interception, wallet connection or transaction.
 
@@ -27,7 +53,7 @@ Map verification covered an empty initial catalogue without global map tiles, lo
 
 At the earlier map checkpoint, the local workspace run passed 1,247 tests with six default optional skips. Final focused reruns after the remaining refinements passed all 789 app tests, all 16 marketplace UI tests, and four header tests. The unchanged other suites plus those final reruns cover 1,251 passing checks; this is an aggregate of the recorded runs, not one final monolithic run. Three explicitly enabled private browser journal checks also passed, including source reservation across different private profiles and reload. They use synthetic records and do not establish a live cross-profile transaction. The earlier cryptographic and contract test checkpoints below remain separately dated.
 
-Before guarded-pool activation, the compiled release catalogue permitted only the original verified private pool. Profile changes retire old vault capabilities and fee approvals; public pending recovery validates the original record without proving, signing or resending. Its transport and outer status lookup are bounded. Recovery-only funding restrictions are tested at preparation, proof and signing boundaries, and were then validated against both actual compiled profiles before publication. The additive liability reader is tested separately and is not pointed at the old pool, which has no liability counter. The guarded private pool subsequently completed its real private lifecycles and activation; public V4 remains undeployed. Fresh independent peer review, production setup and independently held trustee keys remain outstanding.
+Before guarded-pool activation, the compiled release catalogue permitted only the original verified private pool. Profile changes retire old vault capabilities and fee approvals; public pending recovery validates the original record without proving, signing or resending. Its transport and outer status lookup are bounded. Recovery-only funding restrictions are tested at preparation, proof and signing boundaries, and were then validated against both actual compiled profiles before publication. The additive liability reader is tested separately and is not pointed at the old pool, which has no liability counter. The guarded private pool subsequently completed its real private lifecycles and activation; public V4 was still undeployed at that earlier checkpoint. Fresh independent peer review, production setup and independently held trustee keys remain outstanding.
 
 The subsequent private UI changes passed all 804 app tests, including recovery visibility without an available vault, blocked unknown profiles, selected assets, recovery-only controls and stale callback regressions. Type checking and the static build passed; lint retained three generation-counter cleanup warnings, one of them pre-existing. Those tests using synthetic second profiles established UI isolation; later actual second-pool evidence is described separately. Same-account pending refreshes now keep the newest result. Scoped encrypted downloads cannot finish in a replacement workspace. An initial file-input reset regression was reproduced and corrected before the final native-browser checks.
 
