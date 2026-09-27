@@ -1,59 +1,28 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T11:51:01.021924+00:00",
-  "sourceBaselineCommit": "1a6effdc4c4c7b4116837f3287dd6515c2ce40b2",
+  "reviewedAt": "2026-09-27T12:18:36.565635+00:00",
+  "sourceBaselineCommit": "598ab2f93134af88501967b7379b79434fef0315",
   "websiteRelease": {
-    "workerVersion": "b689440d-c297-4503-bf91-7bfb3970a509",
+    "workerVersion": "bcfa6538-0fac-449b-a0da-46c74c342770",
+    "sourceCommit": "598ab2f93134af88501967b7379b79434fef0315",
     "url": "https://agyionlabs.dev",
-    "verifiedAt": "2026-09-27T10:38:27.279Z",
-    "treeSha256": "e6a0a39594ddaf0dee4743c00ba69cc132a554b8835d10b6dab84de06c46e7dc",
-    "treeHashScope": "All 104 local build files including local _headers configuration; all 103 public files separately matched.",
+    "verifiedAt": "2026-09-27T12:14:58.210Z",
+    "treeSha256": "c3f189e85ac579536d805101a97914cb54f43903f1e71485fb2f02671426c6ea",
+    "treeHashScope": "All 104 local files including _headers; all 103 public files separately matched",
     "files": 103,
-    "bytes": 166309505,
+    "bytes": 166315936,
     "runtimeChangesFromSourceBaseline": [],
-    "contractPinsChanged": false,
+    "contractPinsChanged": true,
+    "pinChangeScope": "Guarded private default with original recovery profile retained. Public kernel and marketplace unchanged.",
     "browserChecks": {
       "http": 34,
       "ui": 14,
-      "map": 8,
-      "localVaultLifecycle": 6,
+      "localVaultLifecycle": 9,
+      "liveVaultLifecycle": 9,
       "rpcTransport": "direct Chrome networking",
       "walletRequests": 0,
-      "transactions": 0,
-      "locationTest": "Emulated coordinates after explicit browser permission, not operator location.",
-      "vaultTest": "Fresh unfunded local keys, scoped encrypted download/check, wrong-password rejection, restore and locked reload."
-    },
-    "earlierMapTransportFailures": [
-      {
-        "url": "https://soroban-testnet.stellar.org/",
-        "error": "net::ERR_NETWORK_CHANGED"
-      },
-      {
-        "url": "https://market-testnet.agyionlabs.dev/v1/offers",
-        "error": "net::ERR_NETWORK_CHANGED"
-      }
-    ],
-    "latestMapCheck": {
-      "status": "passed",
-      "at": "2026-09-27T10:40:36.388Z",
-      "assertions": 8,
-      "pageErrors": [],
-      "transportFailures": [
-        {
-          "url": "https://tile.openstreetmap.org/11/1189/768.png",
-          "error": "net::ERR_NETWORK_CHANGED"
-        },
-        {
-          "url": "https://tile.openstreetmap.org/11/1188/767.png",
-          "error": "net::ERR_NETWORK_CHANGED"
-        },
-        {
-          "url": "https://tile.openstreetmap.org/11/1189/767.png",
-          "error": "net::ERR_NETWORK_CHANGED"
-        }
-      ]
-    },
-    "sourceCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe"
+      "transactions": 0
+    }
   },
   "undeployedContractCandidates": [
     {
@@ -71,11 +40,11 @@
   },
   "counts": {
     "files": 553,
-    "lines": 70283,
+    "lines": 70810,
     "byReviewKind": {
       "complete-source-read": {
         "files": 454,
-        "lines": 47723
+        "lines": 48250
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 99,
@@ -95,9 +64,9 @@
   "limitations": [
     "Development source review is not an independent security audit, execution coverage, proof of cryptographic soundness or a guarantee that every exploit is absent.",
     "Passing tests do not establish source-read coverage. Testnet and browser evidence has separate scope and limitations.",
-    "These hashes are a dated source checkpoint. The website release is identified separately by its source commit, worker version and published bytes. Public V4 remains a local artifact; the guarded private pool is deployed separately. Existing immutable addresses are not replaced.",
+    "These hashes are a dated source checkpoint. The website is identified by source commit, worker version and exact published bytes. Public V4 remains local. The guarded private pool is the current app default; old immutable contracts, records and notes keep their identity.",
     "Any subsequent source change requires renewed review evidence and manifest reconciliation.",
-    "The published website still uses the original private pool. The prepared source now selects the guarded pool for new funding and retains the unchanged original profile for recovery. USDC lifecycle completion and live application publication remain gates; source preparation alone is not live activation."
+    "Recovery-only restrictions apply to the current app, not older clients or direct calls. Original immutable contracts retain their documented backing limitation. Independent audit, production ceremony, independent trustees and live archival restoration remain outside the completed evidence."
   ],
   "files": [
     {
@@ -1434,8 +1403,8 @@
     },
     {
       "path": "deployments/private-pool-guarded-testnet.json",
-      "sha256": "da21d08c301a685a23b40e3de45dc6857f09cf6da07f7bec65c3f754d640f12a",
-      "lines": 71,
+      "sha256": "c8380fb3987a9269da58e039bceacfbe09aa2d7ea6a16fcbd973d691dfdc9438",
+      "lines": 598,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3419,19 +3388,6 @@
       "reviewKind": "verified-baseline-plus-reviewed-diff"
     }
   ],
-  "deployedInactiveContractCandidates": [
-    {
-      "name": "private-pool-with-backing-accounting",
-      "wasmSha256": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018",
-      "bytes": 34248,
-      "artifact": "unoptimized Stellar CLI 28.0.0 build",
-      "namedNativeAndWasmTests": 44,
-      "pool": "CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB",
-      "applicationDefault": false,
-      "checkpoint": "deployments/private-pool-guarded-testnet.json",
-      "status": "Deployment and initial state verified; real lifecycle and activation gates remain"
-    }
-  ],
   "deploymentTooling": {
     "localTestsPassed": 97,
     "sourceChangesAfterBaseline": [
@@ -3479,10 +3435,75 @@
       "installedDependenciesReused": true,
       "emptyArtifactDirectoryAtStart": true
     },
-    "earlierHostedFailure": "https://github.com/Agyion/agyionlabs/actions/runs/36315479003"
+    "earlierHostedFailure": "https://github.com/Agyion/agyionlabs/actions/runs/36315479003",
+    "sourceBaselineCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe"
   },
-  "preparedPrivateActivation": {
-    "status": "prepared locally; not published",
+  "previousWebsiteRelease": {
+    "workerVersion": "b689440d-c297-4503-bf91-7bfb3970a509",
+    "url": "https://agyionlabs.dev",
+    "verifiedAt": "2026-09-27T10:38:27.279Z",
+    "treeSha256": "e6a0a39594ddaf0dee4743c00ba69cc132a554b8835d10b6dab84de06c46e7dc",
+    "treeHashScope": "All 104 local build files including local _headers configuration; all 103 public files separately matched.",
+    "files": 103,
+    "bytes": 166309505,
+    "runtimeChangesFromSourceBaseline": [],
+    "contractPinsChanged": false,
+    "browserChecks": {
+      "http": 34,
+      "ui": 14,
+      "map": 8,
+      "localVaultLifecycle": 6,
+      "rpcTransport": "direct Chrome networking",
+      "walletRequests": 0,
+      "transactions": 0,
+      "locationTest": "Emulated coordinates after explicit browser permission, not operator location.",
+      "vaultTest": "Fresh unfunded local keys, scoped encrypted download/check, wrong-password rejection, restore and locked reload."
+    },
+    "earlierMapTransportFailures": [
+      {
+        "url": "https://soroban-testnet.stellar.org/",
+        "error": "net::ERR_NETWORK_CHANGED"
+      },
+      {
+        "url": "https://market-testnet.agyionlabs.dev/v1/offers",
+        "error": "net::ERR_NETWORK_CHANGED"
+      }
+    ],
+    "latestMapCheck": {
+      "status": "passed",
+      "at": "2026-09-27T10:40:36.388Z",
+      "assertions": 8,
+      "pageErrors": [],
+      "transportFailures": [
+        {
+          "url": "https://tile.openstreetmap.org/11/1189/768.png",
+          "error": "net::ERR_NETWORK_CHANGED"
+        },
+        {
+          "url": "https://tile.openstreetmap.org/11/1188/767.png",
+          "error": "net::ERR_NETWORK_CHANGED"
+        },
+        {
+          "url": "https://tile.openstreetmap.org/11/1189/767.png",
+          "error": "net::ERR_NETWORK_CHANGED"
+        }
+      ]
+    },
+    "sourceCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe"
+  },
+  "activeGuardedPrivateRelease": {
+    "name": "private-pool-with-backing-accounting",
+    "wasmSha256": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018",
+    "bytes": 34248,
+    "artifact": "unoptimized Stellar CLI 28.0.0 build",
+    "namedNativeAndWasmTests": 44,
+    "pool": "CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB",
+    "applicationDefault": true,
+    "checkpoint": "deployments/private-pool-guarded-testnet.json",
+    "status": "Actual XLM and USDC lifecycles, scoped disclosure, compatible recovery and website activation verified"
+  },
+  "privateActivation": {
+    "status": "published and verified",
     "defaultKey": "private-testnet-accounting",
     "recoveryKey": "private-testnet-original",
     "sourceChangesAfterBaseline": [
@@ -3514,12 +3535,36 @@
     "nativeLifecycleChecks": 122,
     "nativeIncludedTransactions": 15,
     "thresholdDisclosureChecks": 13,
-    "usdcLifecycle": "running; no completed claim",
+    "usdcLifecycle": "passed:124 checks and15 included transactions",
     "generalLocalBrowser": {
       "http": 34,
       "ui": 14,
       "status": "failed",
       "boundary": "Local static bytes routed at production browser origin for catalogue CORS; direct chain/catalogue traffic. Two external mock-anchor network-change failures retained."
+    },
+    "sourceBaselineCommit": "1a6effdc4c4c7b4116837f3287dd6515c2ce40b2",
+    "sourceCommit": "598ab2f93134af88501967b7379b79434fef0315",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36317078829",
+    "liveBrowserChecks": 9,
+    "browserProof": {
+      "status": "passed",
+      "checks": 6,
+      "proofAndPreparationMs": 78919,
+      "scriptedWalletSigningRequests": 1,
+      "actualSignatures": 0,
+      "transactions": 0,
+      "boundary": "Actual new-profile compiled UI, fresh browser proof and real testnet responses forwarded through a bounded Node HTTP adapter after direct Chrome network-change failures. RPC adapter allows only reads and simulation. Scripted Freighter explicitly refuses signing. No real extension approval, signature, send or direct-browser-network success claim."
+    },
+    "priorDirectBrowserProofFailure": {
+      "checksCompleted": 0,
+      "networkChangeFailures": 3,
+      "signatureRequests": 0,
+      "transactions": 0
+    },
+    "priorAdapterTestSelectorFailure": {
+      "checksCompleted": 1,
+      "applicationErrors": 0,
+      "transactions": 0
     }
   }
 }

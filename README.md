@@ -74,7 +74,9 @@ The counters below describe completed test runs on 27 September 2026. Balances a
 
 The public payment contract completed **23 included transactions and 17 checks** using dedicated test identities and native XLM. The checks covered settlement, recipient substitution, replay, competing claims, expiry, refund and revocation outcomes, including actual balance and reserve changes. Its original address and code remain active.
 
-The separate private pool completed **15 included transactions and 72 checks** across funding, Pod opening, Trigger settlement and refund, Envoy claims, revocation, owner recovery and withdrawals. The final pool XLM balance was zero. An additional **13 disclosure checks** opened an accepted record with three development trustee shares and rejected insufficient shares and invalid authorization scope. These tests used locally controlled identities and trustees.
+The original private pool previously completed **15 included transactions and 72 checks** across funding, Pod opening, Trigger settlement and refund, Envoy claims, revocation, owner recovery and withdrawals. The final pool XLM balance was zero. An additional **13 disclosure checks** opened an accepted record with three development trustee shares and rejected insufficient shares and invalid authorization scope. These tests used locally controlled identities and trustees.
+
+A subsequent [guarded private pool release](docs/PRIVATE_POOL_GUARDED_TESTNET.md) is now the testnet default. It completed **15 XLM transactions with 122 checks** and **15 Circle testnet USDC transactions with 124 checks**. Each flow reconciled aggregate liabilities and actual custody; both assets finished their runs with zero pool balance and liability. Scoped disclosure passed another 13 checks against an accepted new-pool record. The original pool remains accessible for recovery without moving its notes or changing its backup scope.
 
 The separate marketplace completed **20 included testnet transactions and 19 checks**, including positive, zero and negative pickup prices, delayed inclusion of a fixed quote, reservation cancellation and reuse, stale authorization rejection, expiry and refunds. Its final XLM balance and recorded XLM/USDC obligations were zero. A real Cloudflare D1 check also verified that ten concurrent initial publications admit one revision and that rejected updates leave no partial record.
 
@@ -86,18 +88,17 @@ A later read-only check passed three recovery and reconnect checks without signi
 
 A separate test used the actual Freighter 5.48.0 extension in a fresh browser profile on the published site. The app rejected the wrong network; cancellation sent nothing. One explicitly approved merchant registration reached testnet, and its real transaction journal survived page reload and explicit wallet reconnection. The included envelope and account signature matched the reviewed transaction; the actual charged fee was independently verified within its limit. This used direct browser networking and a dedicated valueless test account. Its scope was merchant registration, not an instrument payment or private proof. [Freighter verification](docs/FREIGHTER_TESTNET_VERIFICATION.md).
 
-The compiled browser application generated and verified a fresh Groth16 proof, simulated it against testnet, blocked an excessive fee, recovered after a network interruption and handled an explicit signing rejection. That browser test used a scripted wallet adapter and submitted no transaction; it is not a real wallet extension test. The included private transactions used the actual client and dedicated CLI signing identities. The application supports native testnet XLM and Circle testnet USDC. The separate USDC marketplace run above does not establish private-pool USDC settlement or a bank payout.
+The compiled browser application generated and verified a fresh Groth16 proof, simulated it against testnet, blocked an excessive fee, recovered after a network interruption and handled an explicit signing rejection. That browser test used a scripted wallet adapter and submitted no transaction; it is not a real wallet extension test. The included private transactions used the actual client and dedicated CLI signing identities. The application supports native testnet XLM and Circle testnet USDC. The later guarded private-pool run above separately establishes the tested USDC flows with a CLI signer. Neither establishes a bank payout or an actual browser wallet private payment.
 
 The contracts and cryptographic code have automated tests for authorization, arithmetic, replay, conservation, invalid proofs and interrupted transactions. Dependency advisory scans and a source review are part of the development process. These results establish tested behavior. They are not an independent audit or proof that every possible exploit is absent.
 
-The latest contract source adds aggregate backing guards for new public and
-private deployments. Those candidates have not replaced the immutable contracts
-used by the application. Existing records and private notes retain their original
-deployment and recovery scope. The [issuer control review](docs/TOKEN_ISSUER_RISKS.md)
-records the reproduced limitation, tested candidate behavior and remaining
-deployment compatibility work. The [guarded private candidate](docs/PRIVATE_POOL_GUARDED_TESTNET.md)
-now has a separate verified testnet deployment; instrument lifecycle checks and
-application activation remain separate gates.
+The current private testnet default and separate marketplace enforce aggregate
+backing guards. The original public kernel and original private pool retain their
+[documented issuer control limitation](docs/TOKEN_ISSUER_RISKS.md); immutable
+contracts cannot be repaired by changing the website. The current app blocks new
+funding into the old private profile, while older clients and direct calls remain
+possible. Public V4 is a reviewed local candidate, not an active deployment.
+Existing records, private notes and backup scopes keep their original identities.
 
 [Review scope and verification limits](docs/VERIFICATION.md) · [Security boundaries and reporting](SECURITY.md) · [Payment contracts](contracts/) · [Private protocol](privacy/PROTOCOL_V2.md)
 

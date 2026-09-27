@@ -9,7 +9,7 @@ claim while the remaining shared balance cannot cover all outstanding claims.
 
 ## Active testnet contracts
 
-The active public kernel and private pool have no aggregate liability guard.
+The original public kernel and original private pool have no aggregate liability guard. The current private application default uses the guarded deployment described below.
 Local tests using their exact deployed WASM reproduced the following behavior:
 
 | Deployment | Reproduced result with a synthetic clawback enabled SAC |
@@ -24,14 +24,14 @@ authorization bypass. Failed private withdrawal preserved the nullifier, root,
 record archive and balances. Passing a characterization test means the described
 undesired behavior was reproduced; it does not mean the issue is fixed.
 
-The exact active artifacts were fetched through official testnet RPC and checked
+The exact original artifacts were fetched through official testnet RPC and checked
 against their deployed instance and expected hash before local execution:
 
 * Public kernel: `1e6643028d6b397b3a762d4b5312eaf20f2744407686c78122d27c5a4dd8d378`.
 * Private pool: `103f46d4eb97b021f2618e307970ce49993417901789e03760a4af512b7fee6e`.
 * Marketplace: `b1947f2ac6bfa3f42535ed571b956c9fd1ab425b1441adca99d2c8c919ed1c6c`.
 
-The public kernel and private pool are immutable. A website update cannot add
+The original public kernel and private pool are immutable. A website update cannot add
 this guard to those existing contracts or move their positions to a new one.
 Existing authorizations, records, notes and recovery remain attached to their
 original deployment.
@@ -62,8 +62,10 @@ The current source implements these guards for fresh immutable deployments:
 
 These are locally built, unoptimized artifacts. The private candidate now has a
 [separate testnet deployment](PRIVATE_POOL_GUARDED_TESTNET.md) with verified initial
-state. It has not replaced the original application pool. The public V4 candidate
-remains undeployed.
+state. It is now the application default after separate actual XLM and USDC
+lifecycles, scoped disclosure and compatible browser recovery checks. The
+original private pool remains available for recovery; its chain permissions are
+unchanged. The public V4 candidate remains undeployed.
 The public constructor fixes one to eight supported SACs. Both candidates check
 SAC executable identity through the host, initialize liabilities at construction,
 check existing backing before accepting new money or paying obligations, and
