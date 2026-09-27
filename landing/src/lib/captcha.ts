@@ -1,4 +1,4 @@
-/* Math captcha — pure, unit-tested. */
+/* Math captcha: pure, unit-tested. */
 
 export interface CaptchaChallenge {
   a: number
@@ -17,7 +17,7 @@ export function verifyChallenge(challenge: CaptchaChallenge, input: string): boo
   return Number.isFinite(n) && n === challenge.answer
 }
 
-/* Contact form field validation — kept pure for the unit tests. */
+/* Contact form field validation: kept pure for the unit tests. */
 
 export interface FieldRule {
   required: boolean

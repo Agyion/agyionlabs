@@ -63,3 +63,11 @@ test('security headers stay unchanged and Cloudflare header limits are respected
   assert.ok(document.split('\n').filter(line => line.startsWith('/')).length <= 100);
   assert.ok(document.split('\n').every(line => line.length <= 2000));
 });
+
+test('content-addressed private prover data is immutable binary data without CDN rewriting', () => {
+  const headers = responseHeaders(buildSiteHeaders(csp), '/zk/private/' + 'a'.repeat(64) + '.bin');
+  assert.equal(headers['cache-control'], 'public, max-age=31536000, immutable, no-transform');
+  assert.equal(headers['content-type'], 'application/octet-stream');
+  assert.equal(headers['x-content-type-options'], 'nosniff');
+  assert.equal(headers['content-security-policy'], csp);
+});

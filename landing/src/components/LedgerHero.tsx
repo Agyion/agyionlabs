@@ -1,4 +1,4 @@
-/* Ledger hero primitive — a descent-ledger composition: top mono data strip,
+/* Ledger hero primitive: a descent-ledger composition: top mono data strip,
  * a weight-contrast word pair (solid 800 + outline 340, offset), the desc as
  * a right column, and a hairline that draws itself in. Shared by work / lab /
  * blog / contact heroes; entrance via .is-entered. */

@@ -1,5 +1,5 @@
 /**
- * errors.ts — turn raw Soroban/RPC failures into one-line human messages.
+ * errors.ts: turn raw Soroban/RPC failures into one-line human messages.
  *
  * Simulation failures arrive as a wall of diagnostic events ("HostError:
  * Error(Contract, #13) Event log (newest first): ..."). Judges should see the
@@ -7,7 +7,7 @@
  * friendly and pass through untouched.
  */
 
-import { AgyionError } from "./hakClient";
+import { AgyionError } from "./agyionClient";
 
 const CONTRACT_CODES: Record<string, string> = {
   "#1": "Record not found on the network: check the id.",
@@ -66,7 +66,7 @@ export function humanizeError(e: unknown): string {
     return CONTRACT_CODES[codeMatch[1]];
   }
 
-  // Already short enough — don't mangle it
+  // Already short enough: don't mangle it
   if (raw.length <= 150 && !raw.includes("Event log")) return raw;
 
   // Wall-of-text fallback: first line, trimmed

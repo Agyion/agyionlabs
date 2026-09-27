@@ -19,20 +19,22 @@ import { TransactionAvailability } from "../ui";
 import ProtocolStatus from "./ProtocolStatus";
 import TransactionActivity from "./TransactionActivity";
 import OrbitalBackdrop from "./OrbitalBackdrop";
+import PrivateWorkspaceProvider from "./PrivateWorkspaceProvider";
+import PrivateInstrumentPanel from "./PrivateInstrumentPanel";
 
 const TABS = [
-  { id: "fade", label: "Fade", note: "Falling prices" },
-  { id: "pod", label: "Pod", note: "Timed savings" },
-  { id: "trigger", label: "Trigger", note: "Payment approvals" },
-  { id: "envoy", label: "Envoy", note: "Delegated claims" },
-  { id: "ramp", label: "Ramp", note: "Test transfers" },
-  { id: "ledger", label: "Ledger", note: "Receipts" },
+  { id: "fade", label: "Fade" },
+  { id: "pod", label: "Pod" },
+  { id: "trigger", label: "Trigger" },
+  { id: "envoy", label: "Envoy" },
+  { id: "ramp", label: "Ramp" },
+  { id: "ledger", label: "Ledger" },
 ] as const;
 const HELP = {
   fade: ["Set a falling price", "Claim at the current price", "Settle with venue proof"],
-  pod: ["Save a secret and lock funds", "Reach the unlock ledger", "Sign locally for your recipient wallet"],
-  trigger: ["Fund the escrow", "Attester signs its proof", "Submit proof, or refund after expiry"],
-  envoy: ["Authorize one agent", "Up to 50 claims at price ≤ 0", "Payments go to the mandate owner"],
+  pod: ["Save and check your encrypted keys", "Lock private funds until a ledger", "The recipient claims after unlock"],
+  trigger: ["Choose the recipient and attester", "Save and check the encrypted credentials", "Claim with attestation or refund after expiry"],
+  envoy: ["Delegate private notes with limits", "Revoke or reclaim as their owner", "Use Fade agent separately for public offers"],
   ramp: ["Authenticate your test wallet", "Register a test deposit or withdrawal", "Follow the anchor’s transaction status"],
   ledger: ["Review this device’s activity", "Recheck uncertain transactions", "Open the matching record"],
 } as const;
@@ -143,6 +145,7 @@ export default function AppShell() {
   };
 
   return (
+    <PrivateWorkspaceProvider address={wallet.address}>
     <main ref={appRoot} data-protocol-readiness={readiness.status} className={`station-app ${arrival && !reduced ? "station-arriving" : ""} ${panelOpen ? "is-panel-open" : ""}`}>
       <button className="station-skip" type="button" onClick={openConsole}>Skip to console</button>
       <header ref={topbar} className="station-topbar">
@@ -155,14 +158,6 @@ export default function AppShell() {
 
       <section className="station-vista" id="orbit" aria-label="Orbital station">
         <OrbitalBackdrop selected={tab} reduced={reduced} onSelect={select} onArrival={setArrival} exploreRequest={0} selectionRequest={selectionRequest} panelOpen={panelOpen} />
-        <div className="station-vista__heading" aria-hidden={panelOpen}>
-          <p className="station-kicker">{IS_MOCK ? "Local simulation" : "Stellar testnet"}</p>
-          <div className="station-instrument-title" key={tab}>
-            <h1>{selected.label}</h1>
-            <p className="station-intro">{selected.note}</p>
-          </div>
-          <button className="station-open-instrument" type="button" tabIndex={panelOpen ? -1 : 0} onClick={openConsole}>Open {selected.label} <span aria-hidden="true">↓</span></button>
-        </div>
         <div className="station-scene-footer">
           <p className="station-orbit-help" id="orbit-controls"><span className="station-pointer-help">Drag to orbit · Scroll to approach</span><span className="station-touch-help">Drag to orbit · Pinch to approach</span></p>
           <nav className="station-dock" role="tablist" aria-label="Console instruments">
@@ -201,19 +196,19 @@ export default function AppShell() {
           </div>
         </div>
         <div ref={drawerScroll} className="station-drawer-scroll">
-        {tab !== "ramp" && tab !== "ledger" && <ProtocolStatus readiness={readiness} />}
+        {tab === "fade" && <ProtocolStatus readiness={readiness} />}
         <TransactionActivity wallet={wallet} />
         {helpOpen && <section id="instrument-help" className="station-help" aria-label={`How ${selected.label} works`}>
           <ol>{HELP[tab].map((step, index) => <li key={step}><span>0{index + 1}</span>{step}</li>)}</ol>
-          <p>{tab === "pod" ? "Keep the secret outside the app; never reuse it. Only its signature is submitted. Amounts and wallet addresses remain public." : tab === "ramp" ? "Test sandbox only. No real bank transfer or currency exchange." : tab === "ledger" ? "Local history is not proof of settlement. Check the network result." : "A transaction must be submitted and confirmed for funds to move."}</p>
+          <p>{tab === "pod" ? "Keep the encrypted recovery files and their passwords. A Pod sender cannot refund a recipient's locked funds." : tab === "ramp" ? "Test sandbox only. No real bank transfer or currency exchange." : tab === "ledger" ? "Local history is not proof of settlement. Check the network result." : "A transaction must be submitted and confirmed for funds to move."}</p>
         </section>}
         <TransactionAvailability.Provider value={readiness.status === "ready"}><div key={deck.epoch}>
           {TABS.map(instrument => <section ref={instrument.id === tab ? consolePanel : undefined} key={instrument.id} className="station-console" role="tabpanel" id={`panel-${instrument.id}`} aria-labelledby={`tab-${instrument.id}`} tabIndex={-1} hidden={instrument.id !== tab}>
             {deck.visited.includes(instrument.id) && <InstrumentActivity.Provider value={panelOpen && instrument.id === tab}>
               {instrument.id === "fade" && <FadePanel wallet={wallet} />}
-              {instrument.id === "pod" && <PodPanel wallet={wallet} />}
-              {instrument.id === "trigger" && <TriggerPanel wallet={wallet} />}
-              {instrument.id === "envoy" && <EnvoyPanel wallet={wallet} active={panelOpen && tab === "envoy"} />}
+              {instrument.id === "pod" && <PrivateInstrumentPanel kind="pod" address={wallet.address} active={panelOpen && tab === "pod"} publicRecordRequested={tab === "pod" && !!recordRef} legacy={<><ProtocolStatus readiness={readiness} /><PodPanel wallet={wallet} existingOnly /></>} />}
+              {instrument.id === "trigger" && <PrivateInstrumentPanel kind="trigger" address={wallet.address} active={panelOpen && tab === "trigger"} publicRecordRequested={tab === "trigger" && !!recordRef} legacy={<><ProtocolStatus readiness={readiness} /><TriggerPanel wallet={wallet} existingOnly /></>} />}
+              {instrument.id === "envoy" && <PrivateInstrumentPanel kind="envoy" address={wallet.address} active={panelOpen && tab === "envoy"} publicRecordRequested={tab === "envoy" && !!recordRef} legacy={<><ProtocolStatus readiness={readiness} /><EnvoyPanel wallet={wallet} active={panelOpen && tab === "envoy"} /></>} />}
               {instrument.id === "ramp" && <RampPanel wallet={wallet} />}
               {instrument.id === "ledger" && <LedgerPanel wallet={wallet} />}
             </InstrumentActivity.Provider>}
@@ -227,5 +222,6 @@ export default function AppShell() {
       </aside>
       </section>
     </main>
+    </PrivateWorkspaceProvider>
   );
 }

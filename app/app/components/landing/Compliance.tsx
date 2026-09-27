@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Compliance — two-column asymmetric (§4.5): plain-language paragraphs left,
+ * Compliance: two-column asymmetric (§4.5): plain-language paragraphs left,
  * a ledger-style mono table of visible vs. sealed right. Quiet, no badges.
  */
 

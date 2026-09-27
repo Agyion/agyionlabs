@@ -1,18 +1,18 @@
 "use client";
 
 /**
- * Hero — the money lifecycle as a deterministic, code-drawn loop (v3).
+ * Hero: the money lifecycle as a deterministic, code-drawn loop (v3).
  *
  * No scroll linkage anywhere: one linear clock (framer `animate`, repeat:
  * Infinity) drives a four-act scene, frame-accurate and identical for every
  * visitor regardless of mouse sensitivity:
- *   1. Lock    (0–14%)   capsule fades in, seal strokes draw closed, pot settles
- *   2. Wait    (14–58%)  terracotta curve draws down, tabular price ticks;
+ *   1. Lock    (0 to 14%)   capsule fades in, seal strokes draw closed, pot settles
+ *   2. Wait    (14 to 58%)  terracotta curve draws down, tabular price ticks;
  *                        the tail crosses zero into ember with a soft pulse
- *   3. Prove   (58–74%)  condition stamp (stroke check) + funds converge,
+ *   3. Prove   (58 to 74%)  condition stamp (stroke check) + funds converge,
  *                        capsule opens
- *   4. Return  (74–94%)  ghosted alternative timeline in sand
- *   …then the scene composts out (94–100%) and the loop begins again.
+ *   4. Return  (74 to 94%)  ghosted alternative timeline in sand
+ *   …then the scene composts out (94 to 100%) and the loop begins again.
  *
  * Act labels are clickable: the clock jumps to that act and keeps running.
  * prefers-reduced-motion: the clock parks at the "proven" moment, fully drawn.
@@ -35,7 +35,7 @@ import { ArrowLink, Eyebrow } from "../ui";
 
 const LOOP = 16; // seconds per full lifecycle
 const START = 1200; // demo price in TRY
-const END = -180; // below zero — the wow beat
+const END = -180; // below zero: the wow beat
 const ACTS = ["Lock", "Wait", "Prove", "Execute or return"];
 const ACT_MID = [0.07, 0.36, 0.66, 0.85];
 
@@ -199,7 +199,7 @@ export default function Hero() {
             <ArrowLink href="/app">Open the app</ArrowLink>
           </motion.div>
 
-          {/* Act labels — the loop's clock face; click to jump */}
+          {/* Act labels: the loop's clock face; click to jump */}
           <motion.div
             className="mt-12 flex flex-wrap items-start gap-5"
             initial={reduced ? false : { opacity: 0 }}
@@ -247,7 +247,7 @@ export default function Hero() {
                 0.00
               </text>
 
-              {/* ghost alternative timeline — the unproven branch (act 4) */}
+              {/* ghost alternative timeline: the unproven branch (act 4) */}
               <motion.path
                 d="M 20 96 C 160 116, 300 152, 540 132"
                 stroke="var(--sand)"
@@ -262,7 +262,7 @@ export default function Hero() {
                 unproven → returned
               </motion.text>
 
-              {/* decay curve — terracotta, tail crosses zero into ember */}
+              {/* decay curve: terracotta, tail crosses zero into ember */}
               <motion.path
                 d={CURVE}
                 stroke="var(--accent)"
@@ -290,7 +290,7 @@ export default function Hero() {
               {/* the capsule + lock seal (act 1); opens when proven (act 3) */}
               <motion.g style={{ opacity: capsuleOpacity, y: capsuleY }}>
                 <motion.g style={{ opacity: capsuleDim }}>
-                  {/* capsule body — two halves that part at proof */}
+                  {/* capsule body: two halves that part at proof */}
                   <motion.g style={{ y: capTopY }}>
                     <path
                       d="M 74 34 a 22 22 0 0 1 44 0 v 12 h -44 z"
@@ -327,7 +327,7 @@ export default function Hero() {
                 </motion.g>
               </motion.g>
 
-              {/* condition stamp (act 3) — stroke-drawn check, not emoji */}
+              {/* condition stamp (act 3): stroke-drawn check, not emoji */}
               <motion.g>
                 <motion.circle
                   cx="470" cy="72" r="30"
@@ -350,7 +350,7 @@ export default function Hero() {
               </motion.g>
             </svg>
 
-            {/* locked amount — settles into place (act 1), parked in the
+            {/* locked amount: settles into place (act 1), parked in the
                 quiet bottom-left corner so the curve never crosses it */}
             <motion.div
               className="absolute bottom-[4%] left-[4%] hidden md:block"
@@ -362,7 +362,7 @@ export default function Hero() {
               <div className="tnum font-serif text-[34px] text-ink">1,000.00 TRY</div>
             </motion.div>
 
-            {/* the live price — serif tabular, ember below zero */}
+            {/* the live price: serif tabular, ember below zero */}
             <div className="absolute right-[4%] top-[55%] text-right md:top-[32%]">
               <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
                 Price
@@ -382,7 +382,7 @@ export default function Hero() {
               </motion.div>
             </div>
 
-            {/* converging particles — money resolves toward the claimant */}
+            {/* converging particles: money resolves toward the claimant */}
             {particles.map((p, i) => (
               <Particle key={i} sx={p.sx} sy={p.sy} delay={p.delay} progress={converge} />
             ))}

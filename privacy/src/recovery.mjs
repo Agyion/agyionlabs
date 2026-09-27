@@ -21,6 +21,7 @@
  */
 import {createArchiveRebuilder} from './archive.mjs';
 import {exportVaultKeys} from './vault.mjs';
+import {credentialViewKeys} from './credentials.mjs';
 import {domainField} from './identity.mjs';
 import {fieldElement,fieldArray,bounded,nullifier} from './model.mjs';
 import {record,hex,uint,domain,bindDomain,equal,fail,freeze} from './validation.mjs';
@@ -73,7 +74,8 @@ async function read(call,signal){
 }
 
 export async function recoverPrivateArchive(value,signal){
- const o=record(value,['profile','scope','vault','client','reader'],'recoveryOptions');
+ const withCredentials=Object.hasOwn(value??{},'credentials');
+ const o=record(value,['profile','scope','vault','client','reader',...(withCredentials?['credentials']:[])],'recoveryOptions');
  // Snapshot caller configuration and authenticate the vault brand before any
  // await/read. Other profile facts must come from a pinned release, not RPC.
  const p=record(o.profile,['domain','assetPolicyRoot','epoch','auditor'],'profile');
@@ -83,9 +85,10 @@ export async function recoverPrivateArchive(value,signal){
  const rebuild=createArchiveRebuilder(profile),client=methods(o.client,['scanRecord','readNote','forget']);
  const reader=record(o.reader,['readState','readRecordIdAt','readRecord','readRevocationAt'],'reader');
  ensure(Object.values(reader).every(fn=>typeof fn==='function'),'TRUSTED_READER_REQUIRED');
- const viewKeys=[...new Set([keys.viewScalar,...keys.grants.map(g=>g.viewScalar)])];
+ const viewKeys=[...new Set([keys.viewScalar,...keys.grants.map(g=>g.viewScalar),...credentialViewKeys(withCredentials?o.credentials:[],o.vault)])];
  const batches=[];for(let i=0;i<viewKeys.length;i+=32)batches.push(Object.freeze(viewKeys.slice(i,i+32)));
- const created=new Set(),found=new Map();
+ const created=new Set(),found=new Map(),usedGrantIds=new Set();
+ const grantByView=new Map(o.vault.public.grants.map(g=>[g.viewPoint.join(':'),g.id]));
  try{
   const state=stateOf(await read(()=>reader.readState({signal}),signal));
   const options=Object.freeze({snapshotId:state.snapshotId,signal});
@@ -110,7 +113,11 @@ export async function recoverPrivateArchive(value,signal){
      created.add(handle);equal(handle.recordId,id,'recordId');ensure(handle.slot===0||handle.slot===1,'INCOMING_SLOT_REQUIRED');
      const commitment=core[14+handle.slot];equal(handle.commitment,commitment.toString(),'commitment');
      if(found.has(handle.commitment)){client.forget(handle);created.delete(handle);continue;}
-     found.set(handle.commitment,{note:handle,index:core[11]+BigInt(handle.slot),nullifier:nullifier(client.readNote(handle))});
+     const opening=client.readNote(handle),grantId=grantByView.get(opening.slice(20,22).map(String).join(':'));
+     // Include spent historical notes: a previously shared grant view key must
+     // never be reused for a new recipient after the original note is spent.
+     if(grantId)usedGrantIds.add(grantId);
+     found.set(handle.commitment,{note:handle,index:core[11]+BigInt(handle.slot),nullifier:nullifier(opening)});
     }
     // Cached readers may resolve entirely as microtasks. Yield a browser task
     // between bounded batches so user cancellation/input can actually run.
@@ -127,6 +134,6 @@ export async function recoverPrivateArchive(value,signal){
   }
   // No await after the final state check/publication. No plaintext note or
   // nullifier is returned; note openings require the client's explicit API.
-  return Object.freeze({kind:'RecoveredPrivateArchive',state,archive,notes:Object.freeze(notes)});
+  return Object.freeze({kind:'RecoveredPrivateArchive',state,archive,notes:Object.freeze(notes),usedGrantIds:Object.freeze([...usedGrantIds].sort())});
  }catch(error){for(const handle of created)client.forget(handle);throw error;}
 }

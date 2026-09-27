@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * useWallet — wallet state for the app shell.
+ * useWallet: wallet state for the app shell.
  * Kit connect/disconnect or a test secret; keeps the client factory in sync.
  */
 

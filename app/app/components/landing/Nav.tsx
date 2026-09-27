@@ -2,7 +2,7 @@
 "use client";
 
 /**
- * Nav — top bar + floating CTA pill (§3.3: hidden until ~100vh, slides down)
+ * Nav: top bar + floating CTA pill (§3.3: hidden until ~100vh, slides down)
  */
 
 import { useEffect, useState } from "react";

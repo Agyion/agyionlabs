@@ -52,7 +52,7 @@ export function validateConfig(cfg: SiteConfig): string[] {
     if (r.thumbs.length !== 2) errs.push(`menu row "${r.id}": needs exactly 2 thumbs`)
   }
   if (cfg.menu.rows.length < 2 || cfg.menu.rows.length > 7)
-    errs.push(`menu.rows: ${cfg.menu.rows.length} rows — engine supports 2..7`)
+    errs.push(`menu.rows: ${cfg.menu.rows.length} rows: engine supports 2..7`)
 
   /* cursor + noise numeric bases */
   if (cfg.cursor.magnetStrength < 0 || cfg.cursor.magnetStrength > 1)
@@ -66,7 +66,7 @@ export function validateConfig(cfg: SiteConfig): string[] {
   if (cfg.home.loader.holdMs < 0 || cfg.home.loader.dismissMs < cfg.home.loader.holdMs)
     errs.push('home.loader: dismissMs must be >= holdMs >= 0')
   if (cfg.home.cube.faces.length !== 6)
-    errs.push(`home.cube.faces: ${cfg.home.cube.faces.length} — a cube has exactly 6 faces`)
+    errs.push(`home.cube.faces: ${cfg.home.cube.faces.length}: a cube has exactly 6 faces`)
   if (!cfg.home.hero.brandWord.trim()) errs.push('home.hero.brandWord is empty')
   if (cfg.home.hero.brandWordOutline !== undefined && !cfg.home.hero.brandWordOutline.trim())
     errs.push('home.hero.brandWordOutline: empty string')
@@ -179,7 +179,7 @@ export function validateConfig(cfg: SiteConfig): string[] {
 
   /* about */
   if (cfg.about.cube.faces.length !== 6)
-    errs.push(`about.cube.faces: ${cfg.about.cube.faces.length} — carousel has exactly 6 faces`)
+    errs.push(`about.cube.faces: ${cfg.about.cube.faces.length}: carousel has exactly 6 faces`)
   if (cfg.about.years.to < cfg.about.years.from) errs.push('about.years: to < from')
   checkUnique(cfg.about.roster.clients.map((c) => c.name), 'about.roster.clients', errs)
 
@@ -231,7 +231,7 @@ export function validateConfig(cfg: SiteConfig): string[] {
   if (cfg.notFound.messages.length === 0) errs.push('notFound.messages: empty')
   if (!cfg.notFound.ctaHref.startsWith('/')) errs.push('notFound.ctaHref must start with /')
 
-  /* interface copy — every engine string must be present and non-empty */
+  /* interface copy: every engine string must be present and non-empty */
   if (!cfg.copy || typeof cfg.copy !== 'object') {
     errs.push('copy: missing interface copy groups (ui/a11y/cursor)')
   } else {

@@ -15,8 +15,24 @@ const source=Keypair.fromRawEd25519Seed(Buffer.alloc(32,93)).publicKey();
 const pool=JSON.parse(readFileSync(new URL('../fixtures/host-config.json',import.meta.url),'utf8')).pool;
 function attempt():PublicAttempt{return {version:1,hash:'11'.repeat(32),sequence:'101',callHash:'22'.repeat(32),retryOf:null,releaseId:'33'.repeat(32),pool,source,recordId:fixture.ciphertextDigest,publicSignals:fixture.publicSignals};}
 
+const revoked=JSON.parse(readFileSync(new URL('../fixtures/verified-v2/proofs/13-revoke-envoy.json',import.meta.url),'utf8'));
+const revocationId=hash(Buffer.concat([Buffer.from('AGYION_REVOKE_INTENT_V2\0'),...revoked.publicSignals.map((n:string)=>fieldBytes(BigInt(n))),Buffer.from(revoked.ownerKey,'hex')])).toString('hex');
+function revokeAttempt(){return {version:2,operation:'revoke',hash:'66'.repeat(32),sequence:'102',callHash:'77'.repeat(32),retryOf:null,releaseId:'33'.repeat(32),pool,source,recordId:revocationId,publicSignals:revoked.publicSignals,ownerKey:revoked.ownerKey,revocationIndex:'0'};}
+test('typed revocation journal preserves four-input intent and blocks a submit using the same source',()=>{
+ const a=snapshotAttempt(revokeAttempt() as unknown as PublicAttempt);
+ assert.equal(a.publicSignals.length,4);assert.equal(a.recordId,revocationId);
+ const {version,hash,sequence,callHash,retryOf,revocationIndex,...intent}=a as any;
+ const submit=attempt(),{version:sv,hash:sh,sequence:ss,callHash:sc,retryOf:sr,...submitIntent}=submit;
+ const keys=reservationKeys(intent),submitKeys=reservationKeys(submitIntent);
+ assert.equal(keys.filter(k=>submitKeys.includes(k)).length,1);
+ assert.throws(()=>snapshotAttempt({...revokeAttempt(),ownerKey:'12'.repeat(32)} as unknown as PublicAttempt));
+ assert.throws(()=>snapshotAttempt({...revokeAttempt(),revocationIndex:'18446744073709551615'} as unknown as PublicAttempt));
+ assert.throws(()=>snapshotAttempt({...revokeAttempt(),signature:revoked.signature} as unknown as PublicAttempt));
+});
+
 test('public journal snapshots reject secrets, aliases, corruption and getter-backed vectors',()=>{
  const a=snapshotAttempt(attempt());assert.ok(Object.isFrozen(a.publicSignals));
+ assert.equal(hash(Buffer.from(JSON.stringify(a))).toString('hex'),'b817a712d12bacd9034c070847c4ef1bf6b42b7781ef8372aead13401f293b7e');
  assert.throws(()=>snapshotAttempt({...attempt(),privateKey:'secret'} as PublicAttempt));
  assert.throws(()=>snapshotAttempt({...attempt(),sequence:'01'}));
  assert.throws(()=>snapshotAttempt({...attempt(),recordId:'44'.repeat(32)}));
@@ -43,6 +59,27 @@ test('real browser IndexedDB keeps atomic reservations across connections/reload
  const context=await browser.newContext();let external=0;await context.route('**/*',(route:any)=>new URL(route.request().url()).origin===base?route.continue():(external++,route.abort()));
  const page=await context.newPage();await page.goto(base);await page.waitForFunction(()=>typeof (globalThis as any).journalFactory==='function');
  const name='agyion.journal.test.'+Date.now(),a=attempt();
+ // Construct a genuine schema-v1 database before opening the current journal.
+ // Its old serialized bytes/hash must survive an upgrade without a rewrite.
+ const legacy=snapshotAttempt(a),legacyDigest=hash(Buffer.from(JSON.stringify(legacy))).toString('hex');
+ const {version:lv,hash:lh,sequence:ls,callHash:lc,retryOf:lr,...legacyIntent}=legacy;
+ const migration=await page.evaluate(async({name,legacy,digest,keys,revoke}:any)=>{
+  const open=indexedDB.open(name,1);open.onupgradeneeded=()=>{for(const [store,keyPath] of [['attempts','hash'],['terminals','hash'],['reservations','key']])open.result.createObjectStore(store,{keyPath});};
+  const db=await new Promise<IDBDatabase>((resolve,reject)=>{open.onsuccess=()=>resolve(open.result);open.onerror=()=>reject(open.error)});
+  const tx=db.transaction(['attempts','reservations'],'readwrite');tx.objectStore('attempts').add({hash:legacy.hash,attempt:legacy,digest});
+  for(const key of keys)tx.objectStore('reservations').add({key,hash:legacy.hash});
+  await new Promise<void>((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onabort=()=>reject(tx.error)});let oldClosed=false;
+  db.onversionchange=()=>{oldClosed=true;db.close()};
+  const f=(globalThis as any).journalFactory,j=await f({name});
+  const saved=await j.get(legacy.hash);let conflict=false;try{await j.commit(revoke)}catch{conflict=true}
+  const rollback=await j.get(revoke.hash)===null;
+  await j.terminal({hash:legacy.hash,status:'known_not_sent',reason:'cancelled'});await j.commit(revoke);j.close();
+  const reload=await f({name}),pending=await reload.pending();const revSaved=await reload.get(revoke.hash);reload.close();
+  const verify=indexedDB.open(name,2);const read=await new Promise<IDBDatabase>((resolve,reject)=>{verify.onsuccess=()=>resolve(verify.result);verify.onerror=()=>reject(verify.error)});
+  const req=read.transaction('attempts').objectStore('attempts').get(legacy.hash);const raw:any=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});read.close();
+  return {oldClosed,preserved:JSON.stringify(saved.attempt)===JSON.stringify(legacy)&&raw.digest===digest&&JSON.stringify(raw.attempt)===JSON.stringify(legacy),conflict,rollback,pending:pending.length===1&&pending[0].hash===revoke.hash,typed:revSaved.attempt.version===2&&revSaved.attempt.publicSignals.length===4};
+ },{name:name+'.migration',legacy,digest:legacyDigest,keys:reservationKeys(legacyIntent),revoke:revokeAttempt()});
+ assert.deepEqual(migration,{oldClosed:true,preserved:true,conflict:true,rollback:true,pending:true,typed:true});
  const first=await page.evaluate(async({name,a}:any)=>{
   const f=(globalThis as any).journalFactory,j1=await f({name}),j2=await f({name});
   const results=await Promise.allSettled([j1.commit(a),j2.commit(a)]);

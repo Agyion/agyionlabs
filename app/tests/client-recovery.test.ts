@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { rpc } from '@stellar/stellar-sdk';
-import { SorobanAgyionClient } from '../app/lib/hakClient';
+import { SorobanAgyionClient } from '../app/lib/agyionClient';
 import { listTransactionAttempts, reconcileTransactionAttempts, unresolvedTransaction } from '../app/lib/transactionReceipts';
 import { unregisterSigner } from '../app/lib/wallet';
 import { installRecoveryLocks, recoveryTransactionFixture } from './recovery-fixture';

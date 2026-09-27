@@ -2,7 +2,7 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { useLedger } from '../app/lib/useLedger';
-import type { AgyionClient } from '../app/lib/hakClient';
+import type { AgyionClient } from '../app/lib/agyionClient';
 afterEach(()=>{cleanup();vi.useRealTimers()});
 it('never invents ledgers between polls and clears stale data after RPC failure',async()=>{
  vi.useFakeTimers();const currentLedger=vi.fn().mockResolvedValueOnce(123).mockRejectedValue(new Error('offline'));

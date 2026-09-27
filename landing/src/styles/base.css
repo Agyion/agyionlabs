@@ -1,4 +1,4 @@
-/* Design system — fonts, tokens, reset. */
+/* Design system: fonts, tokens, reset. */
 
 @font-face {
   font-family: 'Bricolage Grotesque';
@@ -16,7 +16,7 @@
   font-display: swap;
 }
 
-/* Pixel face is used only for the 404 runner scoreboard — game-context
+/* Pixel face is used only for the 404 runner scoreboard: game-context
  * micro-use. */
 @font-face {
   font-family: 'Bitcount Grid Single';
@@ -58,7 +58,7 @@
   /* depth-zone program ("scroll = descent").
    * App derives five zone palettes from config.theme.depthZones; without that
    * key every zone resolves to the classic uniform canvas/ink (backward
-   * compatible — zones become no-ops). */
+   * compatible: zones become no-ops). */
   --dz0-bg: var(--canvas);
   --dz1-bg: var(--canvas);
   --dz2-bg: var(--canvas);
@@ -91,7 +91,7 @@
   --font-pixel: 'Bitcount Grid Single', monospace;
   --font-mono: 'Space Mono', 'Courier New', monospace;
 
-  /* fluid type scale — root + clamps */
+  /* fluid type scale: root + clamps */
   --text-root: clamp(13px, 12.4px + 0.2vw, 16px);
   --text-2xs: clamp(0.625rem, 0.6rem + 0.1vw, 0.6875rem);
   --text-xs: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);

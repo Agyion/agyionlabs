@@ -100,6 +100,22 @@ test('pool self-destinations reject before local verification, signing or durabl
   assert.equal(h.verifications,0);assert.equal(h.signs,0);assert.equal(h.sends,0);assert.equal(h.journal.rows.size,0);
  }
 });
+test('fee rejection exposes the exact simulated total without asking for a signature',async()=>{
+ const h=await harness();h.hooks.simulation=()=>{const s=simulation();s.transactionData.setResourceFee('10001');return s;};
+ await assert.rejects(h.client.submit(h.candidate,emptyAddresses),error=>{
+  assert.equal((error as Error).message,'FEE_BUDGET_EXCEEDED');
+  assert.equal((error as {feeStroops:string}).feeStroops,'10101');assert.equal((error as {maxFeeStroops:string}).maxFeeStroops,'10000');return true;
+ });assert.equal(h.signs,0);assert.equal(h.sends,0);assert.equal(h.journal.rows.size,0);
+});
+test('RPC XDR from an independently installed SDK module graph preserves confirmed and failed inclusion',async()=>{
+ const foreign=createRequire(new URL('../../../app/package.json',import.meta.url))('@stellar/stellar-sdk');
+ assert.notEqual(foreign.xdr.TransactionMeta,xdr.TransactionMeta,'test must exercise a separate XDR constructor graph');
+ for(const status of ['SUCCESS','FAILED'] as const){const h=await harness();if(status==='FAILED')h.setMode('failed');
+  const server=new foreign.rpc.Server(h.release.rpcUrl);server._getTransaction=async()=>wire(h.lastTx!,fixture.ciphertextDigest,status);
+  h.transport.getTransaction=async id=>server.getTransaction(id);
+  const result=await h.client.submit(h.candidate,emptyAddresses);assert.equal(result.status,status==='SUCCESS'?'confirmed':'failed');assert.equal(h.sends,1);
+ }
+});
 test('fee, simulation return/auth/restoration and mutable simulation argument are checked before signing',async()=>{
  for(const variant of ['fee','retval','auth','restore','mutation'] as const){
   const h=await harness();h.hooks.simulation=tx=>{const s=simulation();

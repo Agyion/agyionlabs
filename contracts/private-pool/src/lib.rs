@@ -1,6 +1,6 @@
 #![no_std]
 //! Experimental testnet-only private pool. Real, immutable Groth16 keys are
-//! mandatory; missing artifacts fail closed. No public HAK funds are migrated.
+//! mandatory; missing artifacts fail closed. No public Agyion funds are migrated.
 mod hash;
 mod pins;
 mod tree_zeros;

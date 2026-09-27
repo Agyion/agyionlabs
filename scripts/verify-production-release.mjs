@@ -17,7 +17,7 @@ const userAgent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like
 const api=await request.newContext({userAgent});
 let browser;
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const panelHeadings={fade:'Set your price',pod:'Save until later',trigger:'Set payment conditions',envoy:'Authorize an agent',ramp:'Transfer',ledger:'Activity'};
+const panelHeadings={fade:'Set your price',pod:'Pod · Private',trigger:'Trigger · Private',envoy:'Envoy · Private',ramp:'Transfer',ledger:'Activity'};
 try{
  const verifiedAppBundles=[];
  const routes=[['/','index.html'],['/app/','app/index.html'],...['instruments','fade','pod','trigger','envoy','ramp','ledger'].map(x=>[`/${x}`,`${x}.html`]),['/app-assets.json','app-assets.json'],...['favicon.svg','favicon-96.png','favicon.ico','apple-touch-icon.png'].map(x=>[`/${x}`,x])];
@@ -83,12 +83,19 @@ try{
  report.ui.push('Landing scene and canonical Instruments navigation');
  await page.goto(`${base}/app/?tab=fade`,{waitUntil:'domcontentloaded'});
  await expect(page.locator('.orbital-backdrop')).toHaveClass(/is-ready/,{timeout:60000});
+ await expect(page.locator('.station-dock [role="tab"]')).toHaveCount(6);
+ await expect(page.locator('.station-open-instrument')).toHaveCount(0);
  await waitForFonts(page);
  for(const width of [1440,390]){
   await page.setViewportSize({width,height:width===1440?1000:844});
   for(const id of ['fade','pod','trigger','envoy','ramp','ledger']){
    await page.locator(`#tab-${id}`).click();await expect(page.locator(`#panel-${id}`)).toBeVisible();
    await expect(page.locator(`#panel-${id}`).getByRole('heading',{name:panelHeadings[id],exact:true}),`${id}: actual task interface`).toBeVisible();
+   if(['pod','trigger','envoy'].includes(id)){
+    await expect(page.locator(`#panel-${id} [data-private-instrument="${id}"]`)).toBeVisible();
+    await expect(page.locator(`#panel-${id}`).getByText('Experimental testnet. One operator holds the development trustee keys. Deposits, withdrawals and fee payers remain public.',{exact:true})).toBeVisible();
+    await expect(page.locator(`#panel-${id}`).getByRole('button',{name:'Prepare private operation',exact:true})).toBeDisabled();
+   }
    await settleRenderedPage(page,{selector:`#panel-${id}`});
    await page.locator('.station-drawer-scroll').evaluate(el=>{el.scrollTop=0});
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

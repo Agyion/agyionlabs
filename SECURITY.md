@@ -23,6 +23,10 @@ The private implementation has additional requirements. Its development setup do
 
 Browser storage can be deleted or rolled back. Losing private keys and their encrypted recovery backup can make funds unrecoverable. Archived contract state requires network restoration and normal transaction fees. Recovery must reject incomplete history rather than display an invented balance.
 
+The [authorized disclosure model](docs/PRIVACY_DISCLOSURE.md) distinguishes
+technical decryption, protocol identifiers and legal identity. The live
+development committee is not an independent legal disclosure service.
+
 ## Reporting a vulnerability
 
 Contact the repository maintainer through an established private channel to arrange confidential disclosure. Include the affected commit and component, preconditions, expected impact and a minimal reproduction using local fixtures or valueless testnet assets.

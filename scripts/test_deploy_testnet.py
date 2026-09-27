@@ -62,11 +62,11 @@ class DeployHelperTests(unittest.TestCase):
         self.script = root / 'scripts/deploy_testnet.sh'
         self.script.parent.mkdir()
         shutil.copy2(SCRIPT, self.script)
-        contract_dir = root / 'contracts/hak'
+        contract_dir = root / 'contracts/agyion'
         contract_dir.mkdir(parents=True)
-        (contract_dir / 'Cargo.toml').write_text('[package]\nname="hak"\n')
+        (contract_dir / 'Cargo.toml').write_text('[package]\nname="agyion"\n')
         (contract_dir / 'Cargo.lock').write_text('# fixture\n')
-        self.wasm = contract_dir / 'target/wasm32v1-none/release/hak.wasm'
+        self.wasm = contract_dir / 'target/wasm32v1-none/release/agyion.wasm'
         self.wasm.parent.mkdir(parents=True)
         self.wasm.write_bytes(b'\0asm\x01\0\0\0')
         self.bin = root / 'bin'
@@ -95,7 +95,7 @@ class DeployHelperTests(unittest.TestCase):
         forbidden = [('keys', 'generate'), ('keys', 'fund'), ('contract', 'build'), ('contract', 'deploy'), ('contract', 'invoke')]
         self.assertFalse(any(tuple(call[1:3]) in forbidden for call in calls), calls)
         self.assertFalse(any(call[0] == 'cargo' and call[1:2] == ['test'] for call in calls), calls)
-        self.assertIn('NEXT_PUBLIC_HAK_CONTRACT_ID=', result.stdout)
+        self.assertIn('NEXT_PUBLIC_AGYION_CONTRACT_ID=', result.stdout)
         self.assertIn('DRY_RUN=0', result.stdout)
 
     def test_rejects_mainnet_before_any_cli_call(self):
@@ -131,8 +131,8 @@ class DeployHelperTests(unittest.TestCase):
             self.assertEqual(call[call.index('--rpc-url') + 1], RPC)
             self.assertEqual(call[call.index('--network-passphrase') + 1], PASSPHRASE)
         self.assertFalse(any(call[1:3] in [['keys', 'generate'], ['keys', 'fund']] for call in calls), calls)
-        self.assertIn(f'NEXT_PUBLIC_HAK_CONTRACT_ID={CONTRACT}', result.stdout)
-        self.assertIn('NEXT_PUBLIC_HAK_MODE=soroban', result.stdout)
+        self.assertIn(f'NEXT_PUBLIC_AGYION_CONTRACT_ID={CONTRACT}', result.stdout)
+        self.assertIn('NEXT_PUBLIC_AGYION_MODE=soroban', result.stdout)
         self.assertFalse(any('issuer' in value or 'change-trust' in value or 'payment' in value for call in calls for value in call))
 
     def test_new_identity_is_dedicated_testnet_alias_only(self):
@@ -149,7 +149,7 @@ class DeployHelperTests(unittest.TestCase):
     def test_failed_protocol_readback_does_not_print_success_config(self):
         result, _ = self.run_script(DRY_RUN='0', STUB_PROTOCOL_VERSION='1')
         self.assertNotEqual(result.returncode, 0)
-        self.assertNotIn(f'NEXT_PUBLIC_HAK_CONTRACT_ID={CONTRACT}', result.stdout)
+        self.assertNotIn(f'NEXT_PUBLIC_AGYION_CONTRACT_ID={CONTRACT}', result.stdout)
         self.assertIn(CONTRACT, result.stdout + result.stderr)
 
     def test_published_pin_requires_identical_fetched_wasm(self):
@@ -163,19 +163,19 @@ class DeployHelperTests(unittest.TestCase):
         self.assertEqual(fetch[fetch.index('--rpc-url') + 1], RPC)
         import hashlib
         digest = hashlib.sha256(self.wasm.read_bytes()).hexdigest()
-        self.assertIn(f'NEXT_PUBLIC_HAK_WASM_HASH={digest}', result.stdout)
+        self.assertIn(f'NEXT_PUBLIC_AGYION_WASM_HASH={digest}', result.stdout)
 
     def test_mismatched_deployed_code_never_emits_ready_configuration(self):
         result, _ = self.run_script(DRY_RUN='0', STUB_FETCH_WRONG='1')
         self.assertNotEqual(result.returncode, 0)
-        self.assertNotIn(f'NEXT_PUBLIC_HAK_CONTRACT_ID={CONTRACT}', result.stdout)
-        self.assertNotIn('NEXT_PUBLIC_HAK_WASM_HASH=', result.stdout)
+        self.assertNotIn(f'NEXT_PUBLIC_AGYION_CONTRACT_ID={CONTRACT}', result.stdout)
+        self.assertNotIn('NEXT_PUBLIC_AGYION_WASM_HASH=', result.stdout)
 
     def test_failed_code_readback_never_emits_ready_configuration(self):
         result, _ = self.run_script(DRY_RUN='0', STUB_FETCH_FAIL='1')
         self.assertNotEqual(result.returncode, 0)
-        self.assertNotIn(f'NEXT_PUBLIC_HAK_CONTRACT_ID={CONTRACT}', result.stdout)
-        self.assertNotIn('NEXT_PUBLIC_HAK_WASM_HASH=', result.stdout)
+        self.assertNotIn(f'NEXT_PUBLIC_AGYION_CONTRACT_ID={CONTRACT}', result.stdout)
+        self.assertNotIn('NEXT_PUBLIC_AGYION_WASM_HASH=', result.stdout)
 
 
 if __name__ == '__main__':

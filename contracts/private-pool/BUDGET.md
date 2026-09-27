@@ -1,4 +1,39 @@
-# Local host feasibility measurements — 2026-09-26
+# Private pool resource measurements
+
+## Included testnet settlement: 2026-09-27
+
+The deployed development pool `CDSK32ISKXRW6PX3ZMCHLUP4URNQSYNNH2GZU7ZSZJFL4FSEFQM25YHT`
+was read back with WASM SHA256
+`103f46d4eb97b021f2618e307970ce49993417901789e03760a4af512b7fee6e`.
+A dedicated test identity deposited and withdrew 0.1 valueless native XLM.
+Real local proofs, exact included transaction envelopes and the complete encrypted
+archive were checked. The restored vault recovered its note after the deposit;
+after withdrawal the note was spent and there were no unresolved attempts.
+
+| Transaction | Included ledger | Signed fee budget, XLM | Charged fee, XLM | Storage rent, XLM |
+| --- | ---: | ---: | ---: | ---: |
+| Deposit | 4891177 | 7.3034786 | 6.3517393 | 6.3352205 |
+| Withdrawal | 4891253 | 7.2077869 | 6.2683998 | 6.2548024 |
+
+Public transaction hashes:
+
+* Deposit: `17bd11aef2b27e2bb99eb2380fdab7aeb45cf89a1b7192c573747b69478ed5ac`
+* Withdrawal: `2755bf7840085653e3de89bb07701d64a23d3eb6a6be4e2e42f1d71b371fc630`
+
+These are network observations, not a price promise. Storage rent dominated this
+run. The contract extends retained records to the network's maximum TTL, so CPU
+benchmarks alone cannot predict fees. An initial 1 XLM fee cap rejected the
+deposit before signing. A separate explicit 10 XLM cap was used for the test.
+The application must show the simulated total before wallet signing, enforce
+the user's cap and never raise it automatically.
+
+This run used a CLI test signer and a local durable test journal. It does not
+establish browser wallet operation, USDC settlement, mobile performance,
+independent setup or mainnet economics. The included deposit also exposed a
+client compatibility bug between separate SDK module copies; after correction,
+the original hash was reconciled without sending the deposit again.
+
+## Local host feasibility: 2026-09-26
 
 Measured in an isolated `/tmp/agyion-poseidon-benchmark` contract with installed
 Soroban SDK 28.0.0 / host 28.0.2, native host budget counters and compiled WASM

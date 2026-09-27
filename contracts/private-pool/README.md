@@ -1,7 +1,8 @@
 # Experimental private pool
 
-Implements the separate testnet profile in `privacy/PROTOCOL_V2.md`. It does not
-migrate public HAK balances or enable privacy on the existing app.
+Implements the separate testnet profile in `privacy/PROTOCOL_V2.md`. The published
+app uses this pool for experimental private instruments. It does not migrate or
+hide existing public Agyion balances.
 
 Actual development Groth16 verifying-key hashes are installed in `src/pins.rs`.
 Construction requires those exact 157-input and 4-input keys. Zero pins explicitly
@@ -50,10 +51,13 @@ The pinned-key build and unchanged ABI are recorded in
 `artifacts/privacy-v2/pool-build.json`. Full WASM's maximum observed local cost is
 89,224,962 CPU / 3,531,897 memory bytes. All 86 host CPU/memory cost-model rows match
 the read-only testnet snapshot at ledger 4,881,984, protocol 28; that snapshot permits
-400M instructions / 40 MiB memory per transaction. See [resource results](RESOURCE_RESULTS.md)
-for storage/event measurements and limitations. Actual RPC simulation/inclusion,
-full transaction-envelope size, real archival restoration and deployment remain
-unverified; local proof execution is not a live transaction.
+400M instructions / 40 MiB memory per transaction. See [the release requirements](RELEASE.md)
+for operational gates and resource limits. Subsequent testnet deployment,
+simulation and inclusion checks completed 15 transactions covering private Pod,
+Trigger and Envoy lifecycles, including withdrawals and a zero final pool XLM
+balance. The live run and browser fee measurements are described in [BUDGET.md](BUDGET.md).
+Actual archival restoration remains unverified. Neither local proof execution nor
+testnet inclusion establishes independent audit, trustee custody or mainnet readiness.
 
 ## Reproduction and dependencies
 

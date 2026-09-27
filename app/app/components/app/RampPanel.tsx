@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * RampPanel — On/Off-ramp against the official hackathon TR mock anchor.
+ * RampPanel: On/Off-ramp against the official hackathon TR mock anchor.
  *
  * Flow: authenticate (SEP-10) → see the TRY/USDC rate (SEP-38) → deposit TRY
  * and get bank instructions (SEP-6) → withdraw USDC back to a TRY IBAN.
  *
  * Honesty notes are part of the design: the anchor is a sandbox, the bank leg
- * is simulated, and mock contract mode does not affect this panel — the ramp
+ * is simulated, and mock contract mode does not affect this panel: the ramp
  * talks to the real testnet anchor either way.
  */
 

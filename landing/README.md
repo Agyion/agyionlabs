@@ -1,6 +1,6 @@
 # fluid-studio
 
-> **Historical scaffold notes:** the current Agyion landing uses Home, six instrument/supporting detail routes and a shared orbital scene. `src/config.ts` retains unused template sections and is not the source of truth for current product behavior. The configuration and structure descriptions below concern the original scaffold. Current product, privacy and release boundaries are in the [root README](../README.md), [HANDOFF](../HANDOFF.md) and [limitations](../docs/LIMITATIONS.md). No landing animation performs a transaction.
+> **Historical scaffold notes:** the current Agyion landing uses Home, six instrument/supporting detail routes and a shared orbital scene. `src/config.ts` retains unused template sections and is not the source of truth for current product behavior. The configuration and structure descriptions below concern the original scaffold. Current product, privacy and release boundaries are in the [root README](../README.md), [security policy](../SECURITY.md) and [limitations](../docs/LIMITATIONS.md). No landing animation performs a transaction.
 
 A dark, immersive creative-studio website template.
 Built with Vite, React 19, strict TypeScript, Lenis, and GSAP ScrollTrigger.

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { SorobanAgyionClient } from '../app/lib/hakClient';
+import { SorobanAgyionClient } from '../app/lib/agyionClient';
 import { useProtocolReadiness } from '../app/lib/useProtocolReadiness';
-import type { AgyionClient } from '../app/lib/hakClient';
+import type { AgyionClient } from '../app/lib/agyionClient';
 afterEach(cleanup);
 function client(result:()=>Promise<any>){const c=new SorobanAgyionClient({rpcUrl:'https://example.com',contractId:'C'+'A'.repeat(55),networkPassphrase:'test'});(c as any).bindings=async()=>({protocol_version:result});return c;}
 it('distinguishes an actual version mismatch from an unavailable RPC',async()=>{

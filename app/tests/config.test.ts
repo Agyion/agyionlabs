@@ -12,7 +12,7 @@ describe('kernel mode configuration', () => {
     ['mock', 'mock', true],
     ['soroban', 'soroban', false],
   ] as const)('accepts %j as %s mode', async (configured, expected, isMock) => {
-    vi.stubEnv('NEXT_PUBLIC_HAK_MODE', configured);
+    vi.stubEnv('NEXT_PUBLIC_AGYION_MODE', configured);
 
     const { CONFIG, IS_MOCK } = await import('../app/lib/config');
 
@@ -23,10 +23,10 @@ describe('kernel mode configuration', () => {
   it.each(['', ' ', '\t\n', 'MOCK', 'Soroban', ' mock', 'soroban ', 'unknown'])(
     'rejects invalid mode %j before it can select a chain client',
     async (configured) => {
-      vi.stubEnv('NEXT_PUBLIC_HAK_MODE', configured);
+      vi.stubEnv('NEXT_PUBLIC_AGYION_MODE', configured);
 
       await expect(import('../app/lib/config')).rejects.toThrow(
-        /NEXT_PUBLIC_HAK_MODE.*mock.*soroban/,
+        /NEXT_PUBLIC_AGYION_MODE.*mock.*soroban/,
       );
     },
   );

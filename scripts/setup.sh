@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # =============================================================================
-# HAK MVP — Toolchain kontrol scripti
+# Agyion MVP: Toolchain kontrol scripti
 # -----------------------------------------------------------------------------
-# Gerekenleri ve nedenlerini SPEC §1/§4/§5'e göre denetler:
-#   - Rust + wasm32v1-none target  → contracts/hak (Soroban, §1/§3)
-#   - stellar CLI                  → deploy + testnet kimlikleri (§5)
-#   - Node.js + npm                → app/ Next.js 14 (§4)
-#   - docker + docker compose      → Anchor Platform quick-run (§5)
+# Kontrat, uygulama ve Anchor araçlarını denetler:
+#   - Rust + wasm32v1-none target  → contracts/agyion (Soroban)
+#   - stellar CLI                  → deploy + testnet kimlikleri
+#   - Node.js + npm                → app/ Next.js 15, privacy/
+#   - docker + docker compose      → Anchor Platform quick-run
 # Sadece KONTROL eder; hiçbir şey kurmaz, sistemi değiştirmez.
 # Çıkış kodu: zorunlu eksik varsa 1, yoksa 0.
 # =============================================================================
@@ -52,7 +52,7 @@ echo "== Node.js (frontend) =="
 if command -v node >/dev/null 2>&1; then
   pass "node: $(node --version)"
 else
-  miss "node yok → Node 18+ (Next.js 14 için)"
+  miss "node yok → Node 22 kullanın (doğrulanan çalışma ortamı)"
 fi
 if command -v npm >/dev/null 2>&1; then
   pass "npm: $(npm --version)"

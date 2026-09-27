@@ -3,7 +3,7 @@ import React from 'react';
 import { webcrypto } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { Fade, Mandate, Pod, Trigger } from '../app/lib/hakClient';
+import type { Fade, Mandate, Pod, Trigger } from '../app/lib/agyionClient';
 import type { WalletState } from '../app/lib/useWallet';
 
 const boundary = vi.hoisted(() => ({ mock: false, signer: null as unknown, walletVersion: 0, walletListeners: new Set<() => void>(), getClient: vi.fn(), mockClient: vi.fn(), listEntries: vi.fn(), buildProofPack: vi.fn(), downloadProofPack: vi.fn(), authenticate: vi.fn(), depositTry: vi.fn(), withdrawTry: vi.fn(), transactionStatus: vi.fn(), sendAnchorPayment: vi.fn(), listAnchorPayments: vi.fn(), reconcileAnchorPayments: vi.fn(), loadAccount: vi.fn(), tryUsdcPrice: vi.fn() }));
@@ -77,6 +77,23 @@ const preparePod = () => {
   fireEvent.click(screen.getByRole('button', { name: /prepare pod secret/i }));
   fireEvent.click(screen.getByRole('checkbox', { name: /^I saved this secret outside this page/i }));
 };
+
+describe('explicit access to existing public positions', () => {
+  it.each([
+    ['Pod', PodPanel, 'Bury the pod'],
+    ['Trigger', TriggerPanel, 'Lock the escrow'],
+    ['Mandate', EnvoyPanel, 'Grant mandate'],
+  ] as const)('keeps %s lookup without offering new public creation', (name, Panel, createLabel) => {
+    render(<Panel wallet={connected} existingOnly />);
+    expect(screen.getByRole('button', { name: /^Load/i })).toBeTruthy();
+    expect(screen.getByLabelText(`Load ${name.toLowerCase()} by id`)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: createLabel })).toBeNull();
+    expect(screen.queryByText(/Save until later|Write the condition|Authorize an agent/)).toBeNull();
+    expect(client.create_pod).not.toHaveBeenCalled();
+    expect(client.create_trigger).not.toHaveBeenCalled();
+    expect(client.create_mandate).not.toHaveBeenCalled();
+  });
+});
 
 describe('read-only instrument drafts', () => {
   it.each([

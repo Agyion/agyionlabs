@@ -16,6 +16,8 @@ The agreement determines who may move the funds, which evidence they need and wh
 
 **Current release: Stellar testnet.** The public contract is deployed and the application verifies its network and exact code before enabling transactions. Real money, independent security certification and complete transaction anonymity are not claims of this release.
 
+The [active public release](deployments/public-testnet.json) retains the existing contract address and code pin so previous public positions and transaction recovery keep working. The renamed contract deployment is recorded as an inactive research/test release. Adding the separate private pool does not move funds or reinterpret public record IDs.
+
 ## Four ways to use it
 
 ### Fade
@@ -58,15 +60,17 @@ The private implementation uses local Groth16 proofs, encrypted notes, nullifier
 
 Privacy does not erase every observable fact. Deposits, withdrawals, fees, transaction timing and the submitting account can remain public. A small pool can provide little practical anonymity. A quorum of disclosure trustees can cooperate outside the application, so independent custody and operational controls still matter.
 
-**Integration status:** the circuits, pool, prover, vault and recovery modules have executable tests. The published release currently uses the public instruments. The active implementation work connects the actual private pool and these modules to the existing app. Development setup keys and locally operated trustees will remain explicitly labelled as such. Existing public records do not become private through a UI change.
+**Integration status:** the published testnet app connects Pod, Trigger and Envoy to the separate private pool, with browser proof generation, an encrypted vault, explicit fee approval and transaction recovery. Existing public positions remain accessible through their original contract. Development setup keys and locally operated trustees are explicitly labelled. Existing public records do not become private through a UI change.
 
-[Protocol and threat model](privacy/PROTOCOL_V2.md) · [Security boundaries](SECURITY.md)
+[Protocol and threat model](privacy/PROTOCOL_V2.md) · [Authorized disclosure](docs/PRIVACY_DISCLOSURE.md) · [Security boundaries](SECURITY.md)
 
 ## What is verified
 
-The current public testnet release completed **23 included transactions and 17 checks** using dedicated test identities and native XLM. The checks covered settlement, recipient substitution, replay, competing claims, expiry, refund and revocation outcomes, including actual balance and reserve changes.
+The public payment contract completed **23 included transactions and 17 checks** using dedicated test identities and native XLM. The checks covered settlement, recipient substitution, replay, competing claims, expiry, refund and revocation outcomes, including actual balance and reserve changes. Its original address and code remain active.
 
-The final published browser check passed **34 artifact and HTTP checks plus 14 interface checks**, with the expected contract identity and no recorded JavaScript, network or CSP errors in that run. The application uses Circle testnet USDC by default. Its token identity and metadata were checked, but the XLM settlement run does not establish an actual USDC funding or bank payout.
+The separate private pool completed **15 included transactions and 72 checks** across funding, Pod opening, Trigger settlement and refund, Envoy claims, revocation, owner recovery and withdrawals. The final pool XLM balance was zero. An additional **13 disclosure checks** opened an accepted record with three development trustee shares and rejected insufficient shares and invalid authorization scope. These tests used locally controlled identities and trustees.
+
+The compiled browser application generated and verified a fresh Groth16 proof, simulated it against testnet, blocked an excessive fee, recovered after a network interruption and handled an explicit signing rejection. That browser test used a scripted wallet adapter and submitted no transaction; it is not a real wallet extension test. The included private transactions used the actual client and dedicated CLI signing identities. The application supports native testnet XLM and Circle testnet USDC, but the XLM settlement runs do not establish actual USDC funding or a bank payout.
 
 The contracts and cryptographic code have automated tests for authorization, arithmetic, replay, conservation, invalid proofs and interrupted transactions. Dependency advisory scans and a source review are part of the development process. These results establish tested behavior. They are not an independent audit or proof that every possible exploit is absent.
 
@@ -86,6 +90,8 @@ npm --prefix contracts/private-pool/client ci
 
 Copy `app/.env.example` to `app/.env.local` and select an explicit mode. A testnet build requires the contract address, reviewed code hash and matching asset configuration. Never put a seed, wallet secret or trustee share in a public environment variable.
 
+The private app build also requires six public development proving artifacts, excluded from Git. Acquire the exact reviewed runtime bytes with `node scripts/fetch-private-prover.mjs --development`. The download and build both verify committed file and chunk pins, circuit sources, dependency lock and verifier identity. The cache contains public runtime files, not trustee shares or setup secrets. Missing or changed files stop the build. This does not reproduce or independently verify the setup ceremony; see [private development requirements](privacy/README.md). The published asset endpoint must match this checkout.
+
 ```sh
 npm test
 npm run build
@@ -102,9 +108,11 @@ The combined site serves the landing pages and `/app/` from one origin. Build ti
 * `privacy/`: circuits, local proving, encrypted recovery and threshold disclosure
 * `shared/`: scene and navigation behavior shared by the app and landing site
 * `scripts/`: build, deployment and verification tools
-* `docs/`: architecture, source review and reproducible evidence
+* `docs/`: product behavior, integration notes and operational limits
 
 Development continues directly on `main`. Product code, executable tests and technical documentation live in the repository. Local work notes and raw verification output are excluded.
+
+[Contribution and verification guide](CONTRIBUTING.md)
 
 ## Project background
 

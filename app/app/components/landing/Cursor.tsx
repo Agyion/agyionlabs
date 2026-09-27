@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Cursor — custom cursor follower (§3.3). Desktop landing only; 8px ink dot
+ * Cursor: custom cursor follower (§3.3). Desktop landing only; 8px ink dot
  * + 40px ring trailing with lerp ~0.12; ring expands over interactive
  * elements. Disabled on touch and under prefers-reduced-motion.
  */

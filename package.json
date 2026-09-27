@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "bash scripts/build_site.sh",
-    "test": "npm --prefix landing test && npm --prefix app test && npm --prefix privacy test && node --test scripts/tests/*.test.mjs",
+    "test": "npm --prefix landing test && npm --prefix app test && npm --prefix privacy test && npm --prefix contracts/private-pool/client test && node --test scripts/tests/*.test.mjs",
     "preview": "node scripts/preview-site.mjs",
     "check:private": "node scripts/verify-private-pool.mjs"
   },

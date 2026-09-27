@@ -1,14 +1,14 @@
-# Current limitations — 26 September 2026
+# Current limitations
 
-This describes the current **local source**, not an upgrade of historical deployments. The [release record](verification/2026-09-26-cloudflare-release.md) identifies the earlier published frontend; [kernel V3](../contracts/hak/SECURITY_PROTOCOL.md) requires a fresh deployment. Old funds do not migrate automatically. This review used local files, not a live provider/network check.
+These are source and operational boundaries. [Kernel V3](../contracts/agyion/SECURITY_PROTOCOL.md) requires a compatible deployment; old funds do not migrate through a frontend update. Source checks alone do not establish the state of a live deployment. See the [security policy](../SECURITY.md).
 
-## 1. Public chain data; no private-instrument protocol
+## 1. Public application data and the separate experimental pool
 
-Amounts, assets, funders, recipients and timing are public. Generic instrument labels do not make accounts anonymous. Fade remains public by product decision. Current Pod V3 removes raw-secret disclosure from the claim path; it does not hide payment data.
+In the retained public payment contract, amounts, assets, funders, recipients and timing are public. Generic instrument labels do not make accounts anonymous. Fade remains public by product decision. Public Pod V3 removes raw-secret disclosure from the claim path; it does not hide payment data. The separate private pool is now integrated into the testnet app for Pod, Trigger and Envoy. Its deposits, withdrawals, fee payer and timing remain observable.
 
 The independent zk-preimage module proves only knowledge of a Poseidon preimage under a pinned demo verification key. It does not bind Pod, recipient, network, contract or a spent nullifier and authorizes no kernel payment. Local fixtures do not establish setup provenance, a production ceremony, an audit or target-network costs.
 
-The isolated privacy package validates research data shapes and canonical bytes. Its installed-verifier registry is empty and all proof acceptance/activation fails closed. Shielded assets, encryption, DKG, verifiable decryption shares and M-of-N disclosure remain proposed work. A colluding threshold quorum may decrypt other records under its epoch key; a request-scope validator cannot make that impossible. See the [design](security/2026-09-26/private-instruments-design.md) and [ZK review](security/2026-09-26/zk-eerc-review.md).
+The legacy privacy v1 parser has an empty installed-verifier registry and rejects proof acceptance. The separate experimental v2 package implements circuits, encryption and threshold disclosure; it does not make public application records private. Independent setup and trustee custody remain production release gates. A colluding threshold quorum may decrypt other records under its epoch key; request-scope validation cannot make that impossible. See [PROTOCOL_V2](../privacy/PROTOCOL_V2.md) and the [private-pool release requirements](../contracts/private-pool/RELEASE.md).
 
 ## 2. Attesters are trusted keys, not verified real-world facts
 
@@ -16,7 +16,7 @@ Fade handoff and Trigger attestation use Ed25519 signatures. The demo generates 
 
 ## 3. Credential custody and Pod recovery
 
-New Pod seeds use browser randomness, are not persisted by the current flow, and sign locally. The user must save the seed before funding. Leaving the Pod panel or changing wallet session clears UI-held seeds. This does not guarantee memory erasure or cancel an operation already handed to the transaction client. Anyone retaining the seed, including the creator, can authorize a recipient after unlock. **There is no Pod refund, rotation or admin key recovery.**
+In the retained public Pod flow, new seeds use browser randomness, are not persisted by the flow, and sign locally. The user must save the seed before funding. Leaving the public Pod panel or changing wallet session clears UI-held seeds. This does not guarantee memory erasure or cancel an operation already handed to the transaction client. Anyone retaining the seed, including the creator, can authorize a recipient after unlock. **There is no public Pod refund, rotation or admin key recovery.** Private instruments use a separately scoped encrypted vault and require an actual saved backup to be checked before funding. Losing the private vault credentials can still make funds inaccessible; threshold disclosure does not recover spending keys.
 
 Test-wallet signer keys are memory-only and testnet-restricted. Other demo credentials differ: Trigger/Envoy and saved venue identities use sessionStorage. Trigger's password-style input masks its appearance; it does not encrypt the value or storage. Same-origin scripts and a compromised page can access these secrets. Do not delete existing keys silently: active records may still depend on them. Explicit backup and migration remain necessary.
 

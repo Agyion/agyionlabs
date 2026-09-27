@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * TriggerPanel — event escrow (§5), two-pane.
+ * TriggerPanel: event escrow (§5), two-pane.
  *
  * Left: the condition spec as readable clauses (serif) with mono parameters.
- * Right: the attestation feed — each event a row with a timestamp (mono) and
+ * Right: the attestation feed: each event a row with a timestamp (mono) and
  * a stroke-drawn status mark; pending = sand, executed = olive, disputed/failed
  * = ember. Execution flips the escrow balance with the house easing.
  *
- * Framing: general conditional escrow — a deposit returns if a condition is
+ * Framing: general conditional escrow: a deposit returns if a condition is
  * NOT attested, pays out when an independent attester signs that it happened.
  */
 
@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { getClient, mockClient, SECONDS_PER_LEDGER } from "../../lib/client";
 import { humanizeError } from "../../lib/errors";
-import { TRIGGER_STATE, type Trigger } from "../../lib/hakClient";
+import { TRIGGER_STATE, type Trigger } from "../../lib/agyionClient";
 import { useLedger } from "../../lib/useLedger";
 import { formatMinor, formatRemaining, parseMinor, shortAddress, shortHex } from "../../lib/format";
 import { logEntry } from "../../lib/ledgerLog";
@@ -36,7 +36,7 @@ interface AttestEvent {
   note: string;
 }
 
-export default function TriggerPanel({ wallet }: { wallet: WalletState }) {
+export default function TriggerPanel({ wallet, existingOnly = false }: { wallet: WalletState; existingOnly?: boolean }) {
   const [triggers, setTriggers] = useState<Trigger[]>([]);
   const [events, setEvents] = useState<AttestEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -75,13 +75,13 @@ export default function TriggerPanel({ wallet }: { wallet: WalletState }) {
 
   return (
     <div className="instrument-panel panel-trigger">
-          <CreateTrigger
+          {!existingOnly && <CreateTrigger
             wallet={wallet}
             onCreated={(id) => void refresh(id)}
             setError={setError}
             setNotice={setNotice}
             pushEvent={pushEvent}
-          />
+          />}
       <div className="instrument-feedback">
         {error && <ErrorNote>{error}</ErrorNote>}
         {notice && <OkNote>{notice}</OkNote>}
@@ -429,7 +429,7 @@ function TriggerActions({
   );
 }
 
-/** Attestation feed — rows with mono timestamps and lifecycle colors */
+/** Attestation feed: rows with mono timestamps and lifecycle colors */
 function AttestFeed({ events }: { events: AttestEvent[] }) {
   return (
     <div className="instrument-section">

@@ -41,7 +41,7 @@ export interface SiteTheme {
    * Depth-zone colour program ("scroll = descent"):
    * five band backgrounds from the water surface down to the abyss. Sections
    * opt into zones via page markup; ink/line/accent/muted per zone are
-   * derived by the engine (luminance). Optional — without it every zone
+   * derived by the engine (luminance). Optional: without it every zone
    * resolves to the uniform canvas/ink (classic behaviour).
    */
   depthZones?: { surface: string; drift: string; twilight: string; deep: string; abyss: string }
@@ -234,7 +234,7 @@ export interface HomeHero {
   /**
    * Hero composition variant: 'banner' (default) keeps the top-spread
    * giant word + bottom object; 'poster' centres the giant word as a
-   * monument; 'ledger' re-composes the hero as a descent ledger — top mono
+   * monument; 'ledger' re-composes the hero as a descent ledger: top mono
    * data strip, giant
    * word pair (solid + outline, weight-contrast), left-anchored sub, right
    * meta column, and the wave images as a uniform specimen rail.
@@ -284,7 +284,7 @@ export interface HomeStatement {
   spotlight?: { baseOpacity?: number; farBlurPx?: number; scramble?: boolean }
   /**
    * Manifesto form: replaces the scattered-letter
-   * scatterboard with long editorial lines — each line is one scroll beat
+   * scatterboard with long editorial lines: each line is one scroll beat
    * lit by the same spotlight curve (dim/blur far from centre). `em` marks
    * the substring rendered in the zone accent. Optional; when present it
    * takes precedence over `groups`. Section height/spotlight mechanism
@@ -318,7 +318,7 @@ export interface HomeGallery {
   card?: { minPx: number; vw: number; maxPx: number; aspect: string }
 }
 
-/** Cube stage sizing — min(vw×W, vh×H)×scale (zoomed scene). */
+/** Cube stage sizing: min(vw×W, vh×H)×scale (zoomed scene). */
 export interface HomeCubeZoom {
   vw: number
   vh: number
@@ -521,7 +521,7 @@ export interface NotFoundConfig {
 export interface UiCopy {
   skipLink: string
   cubeCaption: string
-  /** Gallery figcaption suffix, e.g. '01 — FRAGMENT'. */
+  /** Gallery figcaption suffix, e.g. '01: FRAGMENT'. */
   galleryFragmentLabel: string
   notFoundHint: string
   notFoundGameOver: string
@@ -586,7 +586,7 @@ export interface SiteConfig {
    * rail with tick marks, a drop marker tracking scroll progress and a mono
    * depth readout (−N M). Replaces the classic top progress bar when
    * enabled. Desktop only; reduced-motion safe (position, no animation).
-   * Optional — absent/disabled keeps the classic top progress bar.
+   * Optional: absent/disabled keeps the classic top progress bar.
    */
   depthGauge?: { enabled: boolean; maxDepthM?: number }
   footer: FooterConfig

@@ -418,7 +418,7 @@
 }
 
 /* ---------- ledger row composition ----------
- * Same rows, same swap hover, same row-anchored thumbs — re-composed as an
+ * Same rows, same swap hover, same row-anchored thumbs: re-composed as an
  * index table: mono number cell left, capitalised display title, sub label
  * in a right column. */
 .nav-shell--ledger .menu-row {

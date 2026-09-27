@@ -1,6 +1,6 @@
 import { Account, Keypair, Networks, StrKey, rpc, scValToNative, type Transaction } from '@stellar/stellar-sdk';
 import { afterEach, expect, it, vi } from 'vitest';
-import { MockAgyionClient, SorobanAgyionClient } from '../app/lib/hakClient';
+import { MockAgyionClient, SorobanAgyionClient } from '../app/lib/agyionClient';
 import { podPublicKey, signPodCreation, signPodClaim } from '../app/lib/signers';
 const seed='37'.repeat(32), funder=Keypair.random().publicKey(), recipient=Keypair.random().publicKey();
 const asset=StrKey.encodeContract(Buffer.alloc(32,3)), contractId=StrKey.encodeContract(Buffer.alloc(32,4));

@@ -1,4 +1,4 @@
-/* Auto marquee strip (footer / work / contact) — seamless CSS loop over a
+/* Auto marquee strip (footer / work / contact): seamless CSS loop over a
  * doubled set of words. */
 import { useMemo } from 'react'
 

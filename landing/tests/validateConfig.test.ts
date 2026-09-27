@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { config } from '../src/config'
 import { validateConfig } from '../src/lib/validateConfig'
 
-/* config holds functions (blog.errorLabel) — JSON clone drops them, which is
+/* config holds functions (blog.errorLabel): JSON clone drops them, which is
  * fine because validateConfig never invokes them. */
 const cloneConfig = () => JSON.parse(JSON.stringify(config)) as typeof config
 

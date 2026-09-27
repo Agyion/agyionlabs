@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * PodPanel — time capsule (§5).
+ * PodPanel: time capsule (§5).
  *
  * Create: a saved random credential proves key possession. Claim: sign the Pod
  * and connected recipient locally; only the public key and signatures reach RPC.
@@ -11,7 +11,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { InstrumentActivity } from "../../lib/instrumentActivity";
 import { getClient, mockClient, SECONDS_PER_LEDGER } from "../../lib/client";
 import { humanizeError } from "../../lib/errors";
-import { POD_STATE, type Pod } from "../../lib/hakClient";
+import { POD_STATE, type Pod } from "../../lib/agyionClient";
 import { useLedger } from "../../lib/useLedger";
 import { formatMinor, formatRemaining, parseMinor, shortAddress, shortHex } from "../../lib/format";
 import { logEntry } from "../../lib/ledgerLog";
@@ -40,7 +40,7 @@ function usePodSecretLifetime(address: string | null, clear: () => void) {
   };
 }
 
-export default function PodPanel({ wallet }: { wallet: WalletState }) {
+export default function PodPanel({ wallet, existingOnly = false }: { wallet: WalletState; existingOnly?: boolean }) {
   const [sessionVersion, setSessionVersion] = useState(walletSessionVersion);
   useEffect(() => onWalletSessionChange(() => setSessionVersion(walletSessionVersion())), []);
   const [pods, setPods] = useState<Pod[]>([]);
@@ -78,12 +78,12 @@ export default function PodPanel({ wallet }: { wallet: WalletState }) {
 
   return (
     <div className="instrument-panel panel-pod">
-          <CreatePod
+          {!existingOnly && <CreatePod
             wallet={wallet}
             onCreated={(id) => void refresh(id)}
             setError={setError}
             setNotice={setNotice}
-          />
+          />}
       <div className="instrument-feedback">
         {error && <ErrorNote>{error}</ErrorNote>}
         {notice && <OkNote>{notice}</OkNote>}

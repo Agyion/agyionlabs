@@ -2,7 +2,7 @@
 name = "zk-preimage"
 version = "0.1.0"
 edition = "2021"
-description = "Groth16 (BN254) preimage-knowledge verifier for Agyion — Poseidon(preimage) == hash"
+description = "Groth16 (BN254) preimage-knowledge verifier for Agyion: Poseidon(preimage) == hash"
 license = "MIT"
 
 [lib]

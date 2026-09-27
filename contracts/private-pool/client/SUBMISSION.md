@@ -1,8 +1,8 @@
 # Testnet submission and public recovery journal
 
 This browser-compatible module is an implemented, experimentally reviewed
-transaction boundary. It is not connected to the published application and does
-not configure a live pool, committee or production ceremony. Its local tests use
+transaction boundary. It does not configure a live pool, committee or production
+ceremony. Its local tests use
 real saved Groth16 proofs and actual Stellar SDK transactions/signatures, with
 explicitly synthetic RPC and ledger responses. They do not submit funds.
 
@@ -94,7 +94,9 @@ evidence are stored. No witness, key, signed XDR or proof is persisted. Public
 metadata is still sensitive to correlation; same-origin scripts and browser
 storage readers can inspect it. Do not present it as encrypted wallet recovery.
 
-`pending()` discovers unresolved public attempts after reload. Filter by the
+`pending()` discovers unresolved public attempts after reload. It now returns
+both version 1 submit attempts and version 2 revocation attempts; dispatch each
+to the matching lifecycle described in [REVOCATION.md](./REVOCATION.md). Filter by the
 current release and source before displaying/reconciling; never treat a local
 result as a private balance. `find(intent)` returns the latest immutable attempt
 in an explicit retry chain. Every read and mutation audits all retained bases,
@@ -110,7 +112,7 @@ covers two real pages, reload, atomic conflicts and injected storage corruption;
 it does not simulate power loss. Keep unknown attempts locked and surface recovery
 errors to the user rather than creating a fresh journal.
 
-## Integration still required
+## Application integration responsibilities
 
 The application must supply the reviewed release/prover pins, session adapter,
 RPC transport, explicit transaction/fee confirmation, pending-activity UI and

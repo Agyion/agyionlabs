@@ -1,5 +1,5 @@
 /**
- * accountOps.ts — classic Stellar account helpers for the live (soroban) flow.
+ * accountOps.ts: classic Stellar account helpers for the live (soroban) flow.
  *
  * A fresh testnet key cannot use the product until it is (1) funded with XLM
  * for fees and (2) holding a USDC trustline. The anchor deposit then tops the
@@ -18,7 +18,7 @@ import {
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
 import { CONFIG } from "./config";
-import type { TransactionSigner } from "./hakClient";
+import type { TransactionSigner } from "./agyionClient";
 import { assertSignedTransactionMatches, walletSessionVersion } from "./wallet";
 import { listAnchorPayments, rememberAnchorPayment, updateAnchorPayment, withAnchorPaymentLock, type AnchorPaymentIntent } from "./anchorPayments";
 
@@ -40,7 +40,7 @@ export async function friendbotFund(address: string): Promise<void> {
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     if (body.includes("createAccountAlreadyExist")) {
-      return; // already funded — fine
+      return; // already funded: fine
     }
     throw new AccountOpError(`Friendbot refused (${res.status}). Try again in a few seconds.`);
   }

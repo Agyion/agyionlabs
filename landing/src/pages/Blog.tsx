@@ -1,4 +1,4 @@
-/* Blog list — simulated fetch: skeleton → rows | error. Hover-follow image. */
+/* Blog list: simulated fetch: skeleton → rows | error. Hover-follow image. */
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { config } from '../config'

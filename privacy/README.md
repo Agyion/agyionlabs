@@ -1,4 +1,4 @@
-# Agyion private instruments — experimental v2
+# Agyion private instruments: experimental v2
 
 `src/model.mjs`, `witness.mjs`, `encryption.mjs`, `threshold.mjs`,
 `authorization.mjs` and `backup.mjs` implement the new v2 protocol in
@@ -6,15 +6,19 @@
 instrument authority, Merkle membership/append, revocation and all five encrypted
 envelopes. The separate [Soroban pool](../contracts/private-pool/README.md)
 verifies the exact public vector and stores full encrypted records. Fade stays
-public. The live application's historical HAK adapter is a separate protocol.
+public. The public Agyion adapter is a separate protocol. The private application
+coordinator uses this v2 pool, with its own pinned deployment and encrypted vault.
+See [authorized disclosure](../docs/PRIVACY_DISCLOSURE.md) for the actual opening
+capability, the live testnet evidence and the legal/operational boundaries.
 
 This is an **experimental development profile**, not an independently audited
 release or Avalanche eERC bytecode. The public PSE phase1 transcript was fully
 verified; Agyion's circuit-specific development phase2 is single-operator;
-independent ceremony, independent trustee custody, operational recovery and a
-reviewed application integration are release requirements. A test count or
-local proof must never enable real-user deposits by itself. Current work and
-verification evidence are tracked in [EXECUTION_V2.md](EXECUTION_V2.md).
+independent ceremony, independent trustee custody and operational recovery remain
+requirements for a production release. The published testnet app now integrates
+the actual pool, prover, vault and transaction coordinator. A test count or
+local proof must never enable real-user deposits by itself. The current format and trust boundaries are documented in
+[PROTOCOL_V2.md](PROTOCOL_V2.md) and the [security policy](../SECURITY.md).
 
 `npm run check:private` from the repository root rebuilds the pool and checks the
 committed real public proofs in native and WASM execution, client boundaries,
@@ -23,8 +27,7 @@ under `artifacts/private-pool-check/`. Install both `privacy/` and
 `contracts/private-pool/client/` locked Node dependencies first; Rust, the
 `wasm32v1-none` target and Stellar CLI are required. This command uses no signing
 key or network account and does not generate a setup or enable funding. Actual
-fresh proving/browser/disclosure checks have separate commands in the execution
-ledger; routine unit skips must not be mistaken for those checks.
+fresh proving/browser/disclosure checks have separate development scripts; routine unit skips must not be mistaken for those checks.
 
 Install pinned dependencies with `npm --prefix privacy ci`, then run
 `npm --prefix privacy test`. Real full-circuit witness checks are separate:
@@ -42,16 +45,15 @@ The v2 JS modules use the root MIT license except where their dependency or
 composition requires otherwise. Circuit composition is GPL-3.0-or-later; see
 [LICENSE-CIRCUITS](LICENSE-CIRCUITS) and [DEPENDENCIES.md](DEPENDENCIES.md).
 
-## Historical v1 parser API — remains permanently closed
+## Historical v1 parser API: remains permanently closed
 
 The older `src/index.mjs` API below implements **structural validation and
 canonical serialization only**. Its recognized v1 suite remains permanently
 closed. The new v2 implementation does not relabel v1 parsing as proof acceptance.
 
-The [historical implementation plan](IMPLEMENTATION_PLAN.md) describes that
-completed parser-only checkpoint. Its old dependency-free scope does not apply
-to v2. The initial [protocol design](../docs/security/2026-09-26/private-instruments-design.md)
-is superseded by PROTOCOL_V2.md where the formats differ.
+The parser-only checkpoint has a narrower scope than v2. Use
+[PROTOCOL_V2.md](PROTOCOL_V2.md) for the current private-instrument format;
+its circuits and cryptographic dependencies are separate from this legacy API.
 
 ## Public API
 
@@ -118,7 +120,7 @@ All integers use unsigned big-endian fixed width. No JSON key ordering enters th
 
 Input byte arrays larger than 1,024 bytes are rejected before copying or decoding. The decoder copies the actual `Uint8Array` view (including Node `Buffer` views), ignoring supplied length, iterator and method overrides. Shared backing buffers, detached views and proxy wrappers are rejected. Unsupported magic/suite/tags/counts, short inputs and extra bytes fail. The 320-byte literal fixture in `test/fixtures.mjs` is hand-specified and independent of the production encoder. No Rust codec or circuit has yet been conformance-tested against this research format; changing it requires a new version/vector.
 
-## One-record disclosure request
+## Historical v1 one-record disclosure parser
 
 Exact fields: `version`, `domain`, `epoch`, `ledger`, `requestId`, `recordHash`, `ciphertextDigest`, `requesterPublicKey`, `policyDigest`, `purposeDigest`, `fields`, `trusteeIds`.
 
@@ -130,6 +132,12 @@ Context has exactly `{ domain, epoch, currentLedger, recordHash, ciphertextDiges
 
 Context must come from the caller's authenticated policy/authorization processing. This package does not verify those signatures or authorization, does not consume request IDs to prevent repeated processing, and does not establish that trustees control shares or represent independent parties. Re-check current ledger/epoch/policy before any future share release. A parsed request never authorizes disclosure by itself.
 
-## Future work, deliberately absent
+## Historical v1 activation remains absent
 
-There is no real verifier installed for the recognized research suite. Format recognition is not suite activation. A future integration needs independently reviewed circuits, value/authority constraints, proof-to-ciphertext consistency, real key/point/signature validation, DKG and verifiable shares, durable spent/request state, setup provenance, audit evidence and actual Soroban/mobile benchmarks. It must also preserve the public Fade boundary and disclose the ability of a colluding quorum to open other records under its epoch.
+There is no verifier installed for the legacy parser suite described above. It
+remains closed and is not the v2 proof or disclosure implementation. Current v2
+uses real circuits, pool verification, signed decision requests, verifiable
+threshold replies and durable replay checks. Its remaining independent setup,
+trustee custody, legal process and audit requirements are described in the
+[disclosure model](../docs/PRIVACY_DISCLOSURE.md). A colluding decryption quorum
+can bypass the application policy for records under its epoch.

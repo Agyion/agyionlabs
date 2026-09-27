@@ -1,4 +1,4 @@
-/* Work list — split hero + 2-col archive grid + coming-soon marquee. */
+/* Work list: split hero + 2-col archive grid + coming-soon marquee. */
 import { useLayoutEffect, useRef } from 'react'
 import { config } from '../config'
 import { gsap } from '../lib/smoothScroll'
@@ -54,12 +54,12 @@ export default function Work() {
               <div className="work-card__blur" aria-hidden="true" />
               <div className="work-card__blend" aria-hidden="true" />
               <div className="work-card__meta" aria-hidden="true">
-                <span className="work-card__index">{p.index} — {p.year}</span>
+                <span className="work-card__index">{p.index}: {p.year}</span>
                 <span className="work-card__action">{work.previewLabel}</span>
               </div>
             </div>
             <div className="work-card__info">
-              <div className="work-card__date">{p.tags.join(' · ')} — {p.year}</div>
+              <div className="work-card__date">{p.tags.join(' · ')}: {p.year}</div>
               <div className="work-card__title">{p.title}</div>
               <div className="work-card__subtitle">{p.subTitle}</div>
             </div>

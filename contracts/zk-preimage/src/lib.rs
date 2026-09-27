@@ -1,5 +1,5 @@
 #![no_std]
-//! # zk-preimage — Groth16 (BN254) preimage-knowledge verifier
+//! # zk-preimage: Groth16 (BN254) preimage-knowledge verifier
 //!
 //! Verifies Groth16 proofs for the circuit `circuits/preimage.circom`:
 //!
@@ -17,7 +17,7 @@
 //!
 //! * G1 point: 64 bytes, `be(X) || be(Y)` (uncompressed, EIP-196 style).
 //! * G2 point: 128 bytes, `be(X) || be(Y)` where each Fq2 element is
-//!   `be(c1) || be(c0)` — **imaginary part first** (EIP-197). snarkjs JSON
+//!   `be(c1) || be(c0)`: **imaginary part first** (EIP-197). snarkjs JSON
 //!   exports Fq2 coordinates as `[c0, c1]`, so the pair must be swapped.
 //! * Field element (Fr): 32-byte big-endian integer.
 //! * Proof blob: 256 bytes = `A (64) || B (128) || C (64)`.

@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { Address, Keypair, StrKey, hash } from '@stellar/stellar-sdk';
 import * as signing from '../app/lib/signers';
-import fixture from '../../contracts/hak/fixtures/pod-v3.json';
+import fixture from '../../contracts/agyion/fixtures/pod-v3.json';
 const seed='01'.repeat(32), key=Keypair.fromRawEd25519Seed(Buffer.from(seed,'hex'));
 const funder=Keypair.fromRawEd25519Seed(Buffer.alloc(32,2)).publicKey();
 const recipient=Keypair.fromRawEd25519Seed(Buffer.alloc(32,3)).publicKey();

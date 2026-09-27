@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * HowItWorks — sticky left rail (four stage labels activate on scroll),
+ * HowItWorks: sticky left rail (four stage labels activate on scroll),
  * right column: one paragraph + one interactive micro-demo per stage (§4.2).
  * The Fade stage demo is playable: drag the decay rate and watch the curve
  * and the price recompute live.
@@ -137,7 +137,7 @@ function DecayPlayground() {
   const ticks = 80;
   const floor = -200;
 
-  // the bead's own clock — sweeps 0..80 ticks, pauses off-screen
+  // the bead's own clock: sweeps 0..80 ticks, pauses off-screen
   const [now, setNow] = useState(0);
   useEffect(() => {
     if (!inView || reduced) return;

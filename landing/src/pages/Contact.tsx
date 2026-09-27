@@ -1,4 +1,4 @@
-/* Contact — split hero, underline form, service/budget tag selection,
+/* Contact: split hero, underline form, service/budget tag selection,
  * math captcha, inline bilingual validation, demo submit, pixel marquee. */
 import { useMemo, useState } from 'react'
 import { config } from '../config'
@@ -53,7 +53,7 @@ export default function Contact() {
       return
     }
     setSending(true)
-    /* demo stub — no backend; resolves locally */
+    /* demo stub: no backend; resolves locally */
     window.setTimeout(() => {
       setSending(false)
       setSent(true)

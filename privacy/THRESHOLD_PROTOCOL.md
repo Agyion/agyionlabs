@@ -53,7 +53,7 @@ The caller converts K's affine coordinates into the two field elements accepted
 by `encryption.mjs`; that module provides the circuit-compatible Poseidon cipher.
 This module does not add another payload cipher.
 
-A trustee produces D_i = [s_i]R and a Chaum–Pedersen proof that its discrete log
+A trustee produces D_i = [s_i]R and a Chaum and Pedersen proof that its discrete log
 relative to the transcript-derived public share Y_i is the same. Its challenge
 binds the suite, complete epoch transcript hash, domain, epoch, trustee ID,
 request ID, record hash, ciphertext digest, authorization digest, R, Y_i, D_i,

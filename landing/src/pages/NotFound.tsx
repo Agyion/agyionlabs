@@ -1,4 +1,4 @@
-/* 404 — pixel face with mouse-tracking eyes, glitch heading, typewriter,
+/* 404: pixel face with mouse-tracking eyes, glitch heading, typewriter,
  * and an embedded dino runner (space/click to jump, hi-score persisted). */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
@@ -188,7 +188,7 @@ export default function NotFound() {
     try {
       window.localStorage.setItem(HI_KEY, String(state.hiScore))
     } catch {
-      /* private mode — non-fatal */
+      /* private mode: non-fatal */
     }
   }, [state.hiScore])
 

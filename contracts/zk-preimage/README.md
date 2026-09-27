@@ -1,4 +1,4 @@
-# zk-preimage — Groth16 Preimage-Knowledge Verifier (BN254)
+# zk-preimage: Groth16 Preimage-Knowledge Verifier (BN254)
 
 An independent experimental proof verifier, not Agyion payment privacy: a Soroban contract that
 verifies **Groth16 proofs over BN254** for the statement
@@ -6,7 +6,7 @@ verifies **Groth16 proofs over BN254** for the statement
 > *"I know a `preimage` such that `Poseidon(preimage) == hash`"*
 
 using Soroban's native BN254 host functions (CAP-0074 pairing/G1 ops,
-CAP-0080 MSM). No curve arithmetic runs in WASM — the heavy math executes
+CAP-0080 MSM). No curve arithmetic runs in WASM: the heavy math executes
 at Stellar Core level.
 
 For the hackathon this ships as an **independent, self-contained proof
@@ -43,7 +43,7 @@ pub fn verify(env: Env, proof: Bytes, public_inputs: Vec<Bytes>) -> bool
 * Public field elements must be canonical integers strictly below the BN254
   scalar modulus. Alternate encodings such as `hash + modulus` return `false`.
 * Returns `false` for malformed blobs / wrong input counts; off-curve points
-  are rejected by the host (tx traps — also rejection).
+  are rejected by the host (tx traps: also rejection).
 
 ### Encoding gotcha (documented so nobody else trips on it)
 
@@ -66,8 +66,8 @@ evaluated as one host pairing product:
 
 | Metric | Value |
 |---|---|
-| Groth16 `verify` — CPU instructions (WASM contract) | **~26.4M** |
-| Groth16 `verify` — CPU instructions (native test host) | ~26.0M |
+| Groth16 `verify`: CPU instructions (WASM contract) | **~26.4M** |
+| Groth16 `verify`: CPU instructions (native test host) | ~26.0M |
 | Memory bytes (WASM) | ~1.5 MB |
 | Proof size on-chain | **256 bytes** |
 | Verifying key size | 576 bytes (4 points + 2 IC points) |
@@ -96,7 +96,7 @@ snarkjs groth16 prove build/circuit_final.zkey build/w.wtns proof.json public.js
 snarkjs groth16 verify vk.json public.json proof.json   # off-chain sanity check
 ```
 
-> **Trusted setup caveat:** the ceremony above uses throwaway local entropy —
+> **Trusted setup caveat:** the ceremony above uses throwaway local entropy :
 > fine for a demo, **not** for production. A real deployment needs a
 > multi-party ceremony (or a reused, well-attested per-circuit setup).
 
@@ -109,16 +109,16 @@ cargo test --features wasm-tests # includes fresh WASM verification/security che
 cd ../../circuits && npm ci --ignore-scripts && npm test
 ```
 
-* `valid_proof_verifies_on_chain` — the committed snarkjs proof verifies `true`
-* `wasm_verify_instruction_measurement` — same, against the compiled WASM, prints cost
-* `corrupted_proof_is_rejected` — swapped/truncated/bit-flipped proofs → `false`/trap
-* `wrong_public_input_is_rejected` — `hash+1`, wrong arity → `false`
+* `valid_proof_verifies_on_chain`: the committed snarkjs proof verifies `true`
+* `wasm_verify_instruction_measurement`: same, against the compiled WASM, prints cost
+* `corrupted_proof_is_rejected`: swapped/truncated/bit-flipped proofs → `false`/trap
+* `wrong_public_input_is_rejected`: `hash+1`, wrong arity → `false`
 * `init_twice_panics`, `proof_and_key_sizes`
 
 ## Pod integration roadmap (bridge notes)
 
 Current local Pod V3 uses a random Ed25519 claim key and recipient/domain-bound
-signatures, as documented in [the security protocol](../hak/SECURITY_PROTOCOL.md).
+signatures, as documented in [the security protocol](../agyion/SECURITY_PROTOCOL.md).
 The earlier SHA-256 reveal and V2 commit/reveal designs are superseded; neither
 provided anonymity. This independent circuit proves only
 `Poseidon(preimage) == hash`; it does **not** bind a recipient, Pod ID, contract,
@@ -135,7 +135,7 @@ public signal and must not be presented as a generic arbitrary-circuit verifier.
 ## Known limitations
 
 * Demo-grade trusted setup (see above).
-* No replay/nullifier protection at the verifier level — it answers "is this
+* No replay/nullifier protection at the verifier level: it answers "is this
   proof valid for this hash", nothing more. Replay protection belongs to the
   calling contract (Pod state machine already closes replays for claims).
 * VK is pinned and write-once (`init` panics on second call); key rotation

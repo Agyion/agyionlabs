@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * PageWipe — page-enter transition (§3.3): three sheets (sand → cream →
+ * PageWipe: page-enter transition (§3.3): three sheets (sand → cream →
  * ink) slide up and out, staggered 60ms apart, once on mount. Time-based,
  * not scroll-linked. Skipped entirely under prefers-reduced-motion.
  */

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { hydrateRoot, type Root } from 'react-dom/client';
-import type { AgyionClient, ProtocolReadiness } from '../app/lib/hakClient';
+import type { AgyionClient, ProtocolReadiness } from '../app/lib/agyionClient';
 
 const route = vi.hoisted(() => ({ search: '', push: vi.fn(), address: null as string | null, client: null as AgyionClient | null }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: route.push }), useSearchParams: () => new URLSearchParams(route.search) }));
@@ -13,6 +13,8 @@ vi.mock('../app/lib/config', () => ({ IS_MOCK: true }));
 vi.mock('../app/lib/client', () => ({ getClient: () => route.client }));
 vi.mock('../app/components/app/TransactionActivity', () => ({ default: () => null }));
 vi.mock('../app/components/app/WalletBar', () => ({ default: () => null }));
+vi.mock('../app/components/app/PrivateWorkspaceProvider', () => ({ default: ({children}: {children: React.ReactNode}) => <>{children}</> }));
+vi.mock('../app/components/app/PrivateInstrumentPanel', () => ({ default: () => null }));
 vi.mock('../app/components/app/FadePanel', () => ({ default: () => <input aria-label="Draft amount" defaultValue="100" /> }));
 vi.mock('../app/components/app/PodPanel', () => ({ default: () => null }));
 vi.mock('../app/components/app/TriggerPanel', () => ({ default: () => null }));
@@ -151,6 +153,26 @@ describe('AppShell motion and instrument interaction', () => {
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.getByTestId('backdrop').getAttribute('data-open')).toBe('false');
     expect(document.activeElement?.id).toBe('tab-pod');
+  });
+
+  it('uses one dock without a duplicate launch card and preserves keyboard opening and close focus', () => {
+    const view = render(<AppShell />);
+    expect(screen.getAllByRole('tablist')).toHaveLength(1);
+    expect(screen.getAllByRole('tab')).toHaveLength(6);
+    expect(screen.queryByRole('button', { name: /^Open (Fade|Pod|Trigger|Envoy|Ramp|Ledger)/ })).toBeNull();
+    const fade = screen.getByRole('tab', { name: 'Fade' });
+    fireEvent.keyDown(fade, { key: 'ArrowRight' });
+    expect(route.push).toHaveBeenCalledWith('/app/?tab=pod', { scroll: false });
+    expect(document.activeElement?.id).toBe('tab-pod');
+    route.search = 'tab=pod';
+    view.rerender(<AppShell />);
+    expect(screen.getByRole('tabpanel').id).toBe('panel-pod');
+    expect(screen.getByTestId('backdrop').getAttribute('data-open')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Close instrument' }));
+    expect(screen.getByTestId('backdrop').getAttribute('data-open')).toBe('false');
+    expect(document.activeElement?.id).toBe('tab-pod');
+    expect(screen.queryByRole('button', { name: /^Open (Fade|Pod|Trigger|Envoy|Ramp|Ledger)/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Skip to console' })).toBeTruthy();
   });
 
   it('routes picked 3D modules to their instrument and closes through the retained orbit control', () => {

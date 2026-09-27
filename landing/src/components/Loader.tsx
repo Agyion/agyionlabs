@@ -1,4 +1,4 @@
-/* Home entry loader — brand mark overlay, dismissed at the config'd time,
+/* Home entry loader: brand mark overlay, dismissed at the config'd time,
  * removed from the DOM right after the fade. */
 import { useEffect, useState } from 'react'
 import { config } from '../config'

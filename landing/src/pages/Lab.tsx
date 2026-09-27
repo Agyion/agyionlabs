@@ -1,4 +1,4 @@
-/* Lab — split hero, category tabs (desktop), 48-col scatterboard,
+/* Lab: split hero, category tabs (desktop), 48-col scatterboard,
  * video lightbox (clip reveal, custom controls, progress, mute, toast). */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { config } from '../config'
@@ -241,7 +241,7 @@ export default function Lab() {
                 </div>
               </div>
               <div className="lightbox__caption">
-                {active.title} — {active.date}
+                {active.title}: {active.date}
               </div>
             </div>
           </div>

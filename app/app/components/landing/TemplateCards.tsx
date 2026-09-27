@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * TemplateCards — v3. No sticky stack, no scroll parallax (scroll-linked
+ * TemplateCards: v3. No sticky stack, no scroll parallax (scroll-linked
  * motion is banned). Instead: staggered entrances, hover layer shifts, and
  * four always-on signature micro-motions that run on their own clocks,
  * paused when off-screen (§3.4). Cards alternate direction for editorial

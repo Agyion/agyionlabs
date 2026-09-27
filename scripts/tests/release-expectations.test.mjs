@@ -4,9 +4,9 @@ import { releaseExpectations, readinessPattern, assertPublishedKernelBundle } fr
 
 const contractId = 'CDVLAU6DHK5HXO72WAMJWZD7V5NAOEUT2NQ6OJKJXJM4G4NPKEK2VGMQ';
 const wasmHash = 'd06ada3ec51a6d4a47e599a1997a345e9316a717f3259b09bbdc1aa28e69f841';
-const ready = { EXPECTED_PROTOCOL_READINESS: 'ready', EXPECTED_HAK_CONTRACT_ID: contractId, EXPECTED_HAK_WASM_HASH: wasmHash };
+const ready = { EXPECTED_PROTOCOL_READINESS: 'ready', EXPECTED_AGYION_CONTRACT_ID: contractId, EXPECTED_AGYION_WASM_HASH: wasmHash };
 
-test('keeps the default old-kernel gate and requires explicit pins for ready', () => {
+test('keeps the default verification gate closed and requires explicit pins for ready', () => {
   const previous = releaseExpectations();
   assert.equal(previous.base, 'https://agyionlabs.dev');
   assert.equal(previous.readiness, 'blocked');
@@ -20,17 +20,31 @@ test('keeps the default old-kernel gate and requires explicit pins for ready', (
   for (const status of ['unavailable', 'incompatible', 'ready-ish']) assert.ok(!readinessPattern('ready').test(status));
 });
 
+test('selects only the active reviewed release and rejects conflicting identity or readiness', () => {
+  const expected = releaseExpectations({ EXPECTED_PUBLIC_RELEASE: 'active-testnet' });
+  assert.equal(expected.readiness, 'ready');
+  assert.equal(expected.contractId, 'CBIIHFELPAKC2KJD4NCJSB32BQO5QUBNEKHBMISFB4MVDKBVM6AJSRXT');
+  assert.equal(expected.wasmHash, '1e6643028d6b397b3a762d4b5312eaf20f2744407686c78122d27c5a4dd8d378');
+  for (const extra of [
+    { EXPECTED_PUBLIC_RELEASE: 'renamed-testnet' },
+    { EXPECTED_AGYION_CONTRACT_ID: contractId },
+    { EXPECTED_AGYION_WASM_HASH: wasmHash },
+    { EXPECTED_PROTOCOL_READINESS: 'blocked' },
+  ]) assert.throws(() => releaseExpectations({ EXPECTED_PUBLIC_RELEASE: 'active-testnet', ...extra }), /release|conflict/i);
+  assert.deepEqual(releaseExpectations({ EXPECTED_PUBLIC_RELEASE: 'active-testnet', EXPECTED_AGYION_CONTRACT_ID: expected.contractId, EXPECTED_AGYION_WASM_HASH: expected.wasmHash, EXPECTED_PROTOCOL_READINESS: 'ready' }), expected);
+});
+
 test('rejects malformed target, status and incomplete identity before browser work', () => {
   for (const PUBLIC_BASE_URL of ['ftp://example.test', 'https://user:secret@example.test', 'https://example.test/path', 'https://example.test/?x', 'https://example.test/#x']) {
     assert.throws(() => releaseExpectations({ PUBLIC_BASE_URL }));
   }
   for (const env of [
     { EXPECTED_PROTOCOL_READINESS: 'anything' },
-    { ...ready, EXPECTED_HAK_CONTRACT_ID: undefined },
-    { ...ready, EXPECTED_HAK_WASM_HASH: undefined },
-    { ...ready, EXPECTED_HAK_CONTRACT_ID: '../../keys' },
-    { ...ready, EXPECTED_HAK_WASM_HASH: wasmHash.toUpperCase() },
-    { EXPECTED_HAK_CONTRACT_ID: contractId },
+    { ...ready, EXPECTED_AGYION_CONTRACT_ID: undefined },
+    { ...ready, EXPECTED_AGYION_WASM_HASH: undefined },
+    { ...ready, EXPECTED_AGYION_CONTRACT_ID: '../../keys' },
+    { ...ready, EXPECTED_AGYION_WASM_HASH: wasmHash.toUpperCase() },
+    { EXPECTED_AGYION_CONTRACT_ID: contractId },
   ]) assert.throws(() => releaseExpectations(env));
 });
 

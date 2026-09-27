@@ -104,7 +104,7 @@ function EnvoyScene({ input }: { input: MechanismInputs }) {
       <path className="im-mandate-depth" d="M0 20L20 0H241L265 23V147L246 166H20L0 146Z" />
       <path className="im-mandate" d="M0 11L15 -5H246L265 13V137L246 155H18L0 136Z" />
       <path className="im-edge" d="M11 19L22 7H239M12 22V128" /><path className="im-mandate-lines" d="M26 53H239M26 93H239M26 132H239" />
-      <text className="im-node-label" x="26" y="35">MANDATE</text><text className="im-annotation" x="237" y="35" textAnchor="end">HAK / ENVOY</text>
+      <text className="im-node-label" x="26" y="35">MANDATE</text><text className="im-annotation" x="237" y="35" textAnchor="end">AGYION / ENVOY</text>
       <text className="im-annotation" x="26" y="78">CLAIMS</text><text className="im-rule-value" x="239" y="78" textAnchor="end">{String(input.claims).padStart(2, '0')} / 50</text>
       <text className="im-annotation" x="26" y="118">EXPIRY</text><text className="im-rule-value" x="239" y="118" textAnchor="end">{input.expired ? 'REACHED' : 'IN WINDOW'}</text>
       <path data-motion="revoke-cut" className="im-revoke-cut" d="M15 142L252 6" />

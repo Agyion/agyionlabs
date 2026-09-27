@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
-# build_site.sh — birleşik site build'i (landing + app tek Worker'da)
+# build_site.sh: birleşik site build'i (landing + app tek Worker'da)
 # -----------------------------------------------------------------------------
 #   landing/  (Vite + React 19, Fluid Studio türevi) → dist/  → site/ kökü
 #   app/      (Next.js static export, soroban mode)  → out/   → site/app/index.html
 #
-# Çıktı: app/site/ — wrangler.toml'un [assets] dizini; `npx wrangler deploy`
+# Çıktı: app/site/: wrangler.toml'un [assets] dizini; `npx wrangler deploy`
 # (app/ altından) tek Worker'a yükler: `/` landing, `/app` ürün.
 # =============================================================================
 set -euo pipefail
@@ -21,6 +21,8 @@ say() { printf '\033[1;34m[site]\033[0m %s\n' "$*"; }
 
 say "workspace dependencies"
 (cd "$ROOT" && npm ci --no-audit --no-fund)
+(cd "$ROOT/privacy" && npm ci --no-audit --no-fund)
+(cd "$ROOT/contracts/private-pool/client" && npm ci --no-audit --no-fund)
 
 say "1/4 landing build (vite)"
 (cd "$LANDING" && npm ci --no-audit --no-fund && npm test -- --run && npm run build)

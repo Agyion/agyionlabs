@@ -32,3 +32,50 @@ test('worker host preserves local proof payload, rejects concurrent work and ter
     assert.equal(await adapter.verify('bad',[]),false);
   } finally {if(previous===undefined)delete globalThis.Worker;else globalThis.Worker=previous;}
 });
+
+test('abort terminates initialization and removes its cancellation listener',{timeout:1500},async()=>{
+  const previous=globalThis.Worker;let instance,removed=0;
+  class WaitingWorker {
+    constructor(){instance=this;}
+    addEventListener(){}
+    postMessage(){}
+    terminate(){this.terminated=true;}
+  }
+  globalThis.Worker=WaitingWorker;
+  const controller=new AbortController();
+  const originalRemove=controller.signal.removeEventListener.bind(controller.signal);
+  controller.signal.removeEventListener=(...args)=>{removed++;originalRemove(...args);};
+  try {
+    const initialization=createLocalGroth16WorkerProver({}, {signal:controller.signal});
+    controller.abort();
+    await assert.rejects(initialization,/LOCAL_PROVER_FAILED/);
+    assert.equal(instance.terminated,true);
+    assert.equal(removed,1);
+    instance=undefined;
+    await assert.rejects(createLocalGroth16WorkerProver({}, {signal:controller.signal}),/LOCAL_WORKER_CLOSED/);
+    assert.equal(instance,undefined,'already cancelled operations must not create another worker');
+  } finally {if(previous===undefined)delete globalThis.Worker;else globalThis.Worker=previous;}
+});
+
+test('abort after initialization closes an in-flight proof without returning a late success',{timeout:1500},async()=>{
+  const previous=globalThis.Worker;let instance;
+  class ControlledWorker {
+    listeners={};sent=[];
+    constructor(){instance=this;}
+    addEventListener(type,handler){this.listeners[type]=handler;}
+    postMessage(message){this.sent.push(message);if(message.type==='init')queueMicrotask(()=>this.reply({ready:true}));}
+    reply(result){this.listeners.message({data:{id:this.sent.at(-1).id,ok:true,result}});}
+    terminate(){this.terminated=true;}
+  }
+  globalThis.Worker=ControlledWorker;
+  try {
+    const controller=new AbortController();
+    const adapter=await createLocalGroth16WorkerProver({}, {signal:controller.signal});
+    const pending=adapter.prove({privateField:123n});
+    controller.abort();
+    instance.reply({proof:'late result',publicSignals:[]});
+    await assert.rejects(pending,/LOCAL_WORKER_CLOSED/);
+    assert.equal(instance.terminated,true);
+    await assert.rejects(adapter.prove({}),/LOCAL_WORKER_CLOSED/);
+  } finally {if(previous===undefined)delete globalThis.Worker;else globalThis.Worker=previous;}
+});

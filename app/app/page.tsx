@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Agyion landing v3 — section plan per design_brief §4, but every clock is
+ * Agyion landing v3: section plan per design_brief §4, but every clock is
  * the page's own: no scroll-linked animation anywhere. Entrance staggering,
  * endless loops, hover micro-interactions, time-triggered transitions.
  */

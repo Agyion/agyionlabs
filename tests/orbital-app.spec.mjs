@@ -277,6 +277,9 @@ test('closing and reopening an instrument preserves its unsent form draft', asyn
   await expect(page.locator('#panel-pod')).toBeVisible();
   await expect(amount).toHaveValue('731.25'); await expect(minutes).toHaveValue('13');
   await page.getByRole('button', { name: 'Close instrument', exact: true }).click();
-  await page.getByRole('button', { name: /^Open Pod/ }).click();
+  await expect(page.getByRole('button', { name: /^Open (Fade|Pod|Trigger|Envoy|Ramp|Ledger)/ })).toHaveCount(0);
+  await expect(page.locator('#tab-pod')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#panel-pod')).toBeVisible();
   await expect(amount).toHaveValue('731.25'); await expect(minutes).toHaveValue('13');
 });

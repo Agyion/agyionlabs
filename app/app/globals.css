@@ -35,7 +35,7 @@
 }
 
 /* ------------------------------------------------------------------
-   agyionlabs — landing design language on the app console.
+   agyionlabs: landing design language on the app console.
    Tokens mirror landing/src/config.ts + base.css exactly:
    canvas #000, surface #121512, ink #fff, accent #1fd48c,
    muted #8a8a8a, faint #666, depth zones abyss/deep/twilight.
@@ -49,13 +49,13 @@
   --muted: #8a8a8a;
   --faint: #666666;
   --accent: #1fd48c;
-  --ember: #f2a65a; /* warm alarm — below zero, expired, rejected, mock */
-  --olive: #35c77f; /* executed / opened — success */
+  --ember: #f2a65a; /* warm alarm: below zero, expired, rejected, mock */
+  --olive: #35c77f; /* executed / opened: success */
   --sand: #26302a; /* decorative lifelines inside visualizations */
   --paper: #000000; /* curve handles sit on the canvas */
   --hairline: rgba(255, 255, 255, 0.14);
   --hairline-strong: rgba(255, 255, 255, 0.26);
-  /* depth zones ("scroll = descent") — abyss/deep reserved for
+  /* depth zones ("scroll = descent"): abyss/deep reserved for
    * footers, empty states and accent wells */
   --abyss: #04100b;
   --deep: #0e2c22;
@@ -104,14 +104,14 @@ a:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-/* Display defaults — landing language: Bricolage 800, tight track */
+/* Display defaults: landing language: Bricolage 800, tight track */
 .display {
   font-family: var(--font-serif), system-ui, sans-serif;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
 
-/* Mono kicker with leading rule — the landing eyebrow */
+/* Mono kicker with leading rule: the landing eyebrow */
 .eyebrow {
   font-family: var(--font-mono), monospace;
   font-size: 11px;
@@ -131,7 +131,7 @@ a:focus-visible {
 }
 
 /* ------------------------------------------------------------------
-   Mini ledger hero — the landing LedgerHero composition scaled down
+   Mini ledger hero: the landing LedgerHero composition scaled down
    for a console: 3-cell mono strip, solid + outline word pair,
    hairline that draws itself in, right-aligned desc. Pure CSS entrance
    (panels remount per tab switch, so mount == enter).
@@ -286,7 +286,7 @@ a:focus-visible {
 }
 
 /* ------------------------------------------------------------------
-   Lifecycle chip — mono micro-label, hairline pill, status dot
+   Lifecycle chip: mono micro-label, hairline pill, status dot
    (the landing pg-life__chip, console-sized).
 ------------------------------------------------------------------- */
 
@@ -324,7 +324,7 @@ a:focus-visible {
 }
 
 /* ------------------------------------------------------------------
-   Buttons — primary: accent fill, ink sweep on hover; secondary:
+   Buttons: primary: accent fill, ink sweep on hover; secondary:
    hairline outline. Mono uppercase labels, max radius --pill-radius.
 ------------------------------------------------------------------- */
 
@@ -452,7 +452,7 @@ a:focus-visible {
   background: rgba(255, 255, 255, 0.02);
 }
 
-/* Template cards — hover layer shift (landing page only) */
+/* Template cards: hover layer shift (landing page only) */
 .template-card {
   transition: border-color 300ms ease;
 }

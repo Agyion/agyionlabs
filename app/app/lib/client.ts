@@ -1,9 +1,9 @@
 /**
- * client.ts — AgyionClient factory: mock or real Soroban binding by config
+ * client.ts: AgyionClient factory: mock or real Soroban binding by config
  */
 
 import { CONFIG, IS_MOCK } from "./config";
-import { AgyionClient, MockAgyionClient, SorobanAgyionClient } from "./hakClient";
+import { AgyionClient, MockAgyionClient, SorobanAgyionClient } from "./agyionClient";
 import { defaultSigner, walletSessionVersion } from "./wallet";
 import { Asset } from "@stellar/stellar-sdk";
 
@@ -21,9 +21,9 @@ export function getClient(): AgyionClient {
   }
   const signer = defaultSigner();
   if (!CONFIG.contractId)
-    throw new Error("NEXT_PUBLIC_HAK_CONTRACT_ID is not set (the contract ID comes from config).");
+    throw new Error("NEXT_PUBLIC_AGYION_CONTRACT_ID is not set (the contract ID comes from config).");
   if (!/^[a-f0-9]{64}$/.test(CONFIG.contractWasmHash))
-    throw new Error("NEXT_PUBLIC_HAK_WASM_HASH must pin the reviewed deployed kernel before transactions are enabled.");
+    throw new Error("NEXT_PUBLIC_AGYION_WASM_HASH must pin the reviewed deployed kernel before transactions are enabled.");
   // Ramp's classic asset and the instruments' SAC must identify the same asset.
   if (new Asset(CONFIG.assetCode, CONFIG.assetAddress).contractId(CONFIG.networkPassphrase) !== CONFIG.assetContractId)
     throw new Error("The configured asset issuer, code and network do not match the instrument asset contract (SAC).");
@@ -43,7 +43,7 @@ export function resetClient(): void {
   single = null;
 }
 
-/** Mock-only helpers (demo buttons in the UI) — safe when no wallet is connected */
+/** Mock-only helpers (demo buttons in the UI): safe when no wallet is connected */
 export function mockClient(): MockAgyionClient | null {
   try {
     const c = getClient();

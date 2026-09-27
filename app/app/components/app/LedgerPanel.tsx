@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * LedgerPanel — the user's own history (§5).
+ * LedgerPanel: the user's own history (§5).
  *
  * IBM Plex Mono table, 1px hairlines, no zebra striping. Status chips are
  * text-only in lifecycle colors. Rows expand inline into the detail.

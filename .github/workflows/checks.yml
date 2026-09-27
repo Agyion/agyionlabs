@@ -1,0 +1,87 @@
+name: Source and contract checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22.23.2
+      - name: Install locked workspace dependencies
+        run: |
+          npm ci
+          npm --prefix landing ci
+          npm --prefix app ci
+          npm --prefix privacy ci
+          npm --prefix contracts/private-pool/client ci
+      - name: Application, privacy, client and tool tests
+        run: npm test
+      - name: Type and style checks
+        run: |
+          npm --prefix app run typecheck
+          npm --prefix app run lint
+          npm --prefix landing run lint
+          npm --prefix landing run check
+      - name: Public proof fixture provenance
+        run: node contracts/private-pool/tools/verify-fixture-provenance.mjs
+      - name: Dependency advisories
+        run: |
+          npm audit --audit-level=high
+          npm --prefix app audit --audit-level=high
+          npm --prefix landing audit --audit-level=high
+          npm --prefix privacy audit --audit-level=high
+          npm --prefix contracts/private-pool/client audit --audit-level=high
+
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CARGO_BUILD_JOBS: 2
+      PRIVATE_POOL_ARTIFACTS: ${{ github.workspace }}/contracts/private-pool/fixtures/verified-v2
+      PRIVATE_POOL_RESULTS: ${{ github.workspace }}/artifacts/ci-private
+      PRIVATE_POOL_WASM: ${{ github.workspace }}/contracts/private-pool/target/wasm32v1-none/release/private_pool.wasm
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: 1.96.1
+          targets: wasm32v1-none
+          components: clippy
+      - name: Install the pinned Stellar contract builder
+        run: |
+          mkdir -p "$RUNNER_TEMP/stellar-bin"
+          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 https://github.com/stellar/stellar-cli/releases/download/v28.0.0/stellar-cli-28.0.0-x86_64-unknown-linux-gnu.tar.gz --output "$RUNNER_TEMP/stellar.tar.gz"
+          printf '%s  %s\n' '207544486734fccb4df1afc4a7745478f9f1e21688b2f9506f0ef36f60ce3fdc' "$RUNNER_TEMP/stellar.tar.gz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/stellar.tar.gz" -C "$RUNNER_TEMP/stellar-bin"
+          printf '%s\n' "$RUNNER_TEMP/stellar-bin" >> "$GITHUB_PATH"
+      - name: Build actual WASM test inputs
+        run: |
+          stellar contract build --locked --manifest-path contracts/agyion/Cargo.toml --optimize=false
+          stellar contract build --locked --manifest-path contracts/private-pool/Cargo.toml --optimize=false
+      - name: Native and WASM contract tests
+        run: |
+          cargo test --locked --manifest-path contracts/agyion/Cargo.toml --features wasm-tests
+          cargo test --locked --manifest-path contracts/private-pool/Cargo.toml --features wasm-tests
+      - name: Strict Rust checks
+        run: |
+          cargo clippy --locked --manifest-path contracts/agyion/Cargo.toml --all-targets --all-features -- -D warnings
+          cargo clippy --locked --manifest-path contracts/private-pool/Cargo.toml --all-targets --all-features -- -D warnings

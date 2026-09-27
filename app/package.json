@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node ../scripts/package-private-prover.mjs --development --acquired-runtime",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

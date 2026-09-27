@@ -108,7 +108,7 @@ export function updateTransactionAttempt(hash: string, scope: TransactionScope, 
   if (['status','ledger','refId','recorded'].every(key=>merged[key as keyof TransactionAttempt]===current[key as keyof TransactionAttempt])) return;
   appendRecoveryEvidence(EVIDENCE,evidence,'agyion:transactions');
 }
-/** HAK allocates positive u64 record IDs; never coerce a malformed decoded result. */
+/** Agyion allocates positive u64 record IDs; never coerce a malformed decoded result. */
 export function creationRecordId(value: unknown): string | null {
   return typeof value === "bigint" && value > 0n && value <= 0xffff_ffff_ffff_ffffn ? String(value) : null;
 }

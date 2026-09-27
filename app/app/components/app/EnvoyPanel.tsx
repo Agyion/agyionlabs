@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * EnvoyPanel — on-chain limited mandate (§5).
+ * EnvoyPanel: on-chain limited mandate (§5).
  *
  * The effective permission is a bounded number of zero/negative-price Fade
  * claims for the owner, before expiry. Monetary fields remain part of the
@@ -21,7 +21,7 @@ import {
   priceAtLedger,
   type Fade,
   type Mandate,
-} from "../../lib/hakClient";
+} from "../../lib/agyionClient";
 import { useLedger } from "../../lib/useLedger";
 import { formatMinor, parseMinor, shortAddress, shortHex } from "../../lib/format";
 import { logEntry } from "../../lib/ledgerLog";
@@ -40,7 +40,7 @@ interface AgentEvent {
   note: string;
 }
 
-export default function EnvoyPanel({ wallet, active = true }: { wallet: WalletState; active?: boolean }) {
+export default function EnvoyPanel({ wallet, active = true, existingOnly = false }: { wallet: WalletState; active?: boolean; existingOnly?: boolean }) {
   const [mandates, setMandates] = useState<Mandate[]>([]);
   const [agentSecret, setAgentSecret] = useState("");
   const [agentPub, setAgentPub] = useState("");
@@ -114,14 +114,14 @@ export default function EnvoyPanel({ wallet, active = true }: { wallet: WalletSt
 
   return (
     <div className="instrument-panel panel-envoy">
-          <CreateMandate
+          {!existingOnly && <CreateMandate
             wallet={wallet}
             agentPub={agentPub}
             generateAgent={generateAgent}
             onCreated={onMandateCreated}
             setError={setError}
             setNotice={setNotice}
-          />
+          />}
       <div className="instrument-feedback">
         {error && <ErrorNote>{error}</ErrorNote>}
         {notice && <OkNote>{notice}</OkNote>}
@@ -465,7 +465,7 @@ function MandateCard({
 
   const attemptNow = () => void attemptClaim("manual");
 
-  /** Mock demo: a fade priced at 90% of max_per_tx — inside the cap, above the default threshold */
+  /** Mock demo: a fade priced at 90% of max_per_tx: inside the cap, above the default threshold */
   const demoFade = async () => {
     const m = mockClient();
     if (!m) return;
@@ -565,7 +565,7 @@ function MandateCard({
             <Row k="scope" v="Fade claims at zero or a negative price" />
             <Row k="recipient · owner" v={shortAddress(mandate.owner)} />
             <Row k="agent" v={shortHex(mandate.agent_pubkey)} />
-            {/* claim-count cap (audit v2 fix): the active bound — monetary caps are dead under price<=0 */}
+            {/* claim-count cap (audit v2 fix): the active bound: monetary caps are dead under price<=0 */}
             <Row k="claims" v={`${mandate.claims_used} / ${MAX_CLAIMS_PER_MANDATE}`} />
             <Row k="valid until" v={`ledger ${mandate.valid_until}`} />
           </div>
@@ -706,7 +706,7 @@ function LimitRings({
       <circle cx="90" cy="90" r="28" fill="none" stroke={dim ? "var(--hairline)" : "var(--sand)"} strokeWidth="1" />
       {/* owner at the center */}
       <circle cx="90" cy="90" r="3" fill="var(--ink)" />
-      {/* the agent dot — stops at the wall when rejected */}
+      {/* the agent dot: stops at the wall when rejected */}
       <circle cx={rejected ? 90 + 46 : cx} cy={rejected ? 90 : cy} r="4.5" fill={dotColor} />
       {rejected && !reduced && (
         <motion.circle

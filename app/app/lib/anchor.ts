@@ -1,12 +1,12 @@
 /**
- * anchor.ts — client for the official hackathon TR mock anchor
+ * anchor.ts: client for the official hackathon TR mock anchor
  *
  *   Anchor:  https://tr-mock-anchor.fly.dev  (stellar.toml verified)
  *   Rail:    TRY <-> USDC (Circle testnet issuer, see CONFIG.assetAddress)
- *   SEP-10   /auth    — web authentication; required by every SEP-6 endpoint
- *   SEP-6    /sep6    — programmatic deposit/withdraw (this anchor has NO SEP-24)
- *   SEP-38   /sep38   — indicative TRY/USDC prices (fee = 0.5% spread over mid)
- *   SEP-12   /sep12   — KYC (the sandbox auto-accepts; no PII leaves the browser)
+ *   SEP-10   /auth   : web authentication; required by every SEP-6 endpoint
+ *   SEP-6    /sep6   : programmatic deposit/withdraw (this anchor has NO SEP-24)
+ *   SEP-38   /sep38  : indicative TRY/USDC prices (fee = 0.5% spread over mid)
+ *   SEP-12   /sep12  : KYC (the sandbox auto-accepts; no PII leaves the browser)
  *
  * Funding method: bank_account only (FAST/EFT simulated by the sandbox).
  *
@@ -18,7 +18,7 @@
  */
 
 import { CONFIG } from "./config";
-import type { TransactionSigner } from "./hakClient";
+import type { TransactionSigner } from "./agyionClient";
 import { Buffer } from "buffer";
 import { StellarToml, StrKey, WebAuth } from "@stellar/stellar-sdk";
 import { assertSignedTransactionMatches, onWalletSessionChange, walletSessionVersion } from "./wallet";
@@ -138,7 +138,7 @@ async function anchorFetch(path: string, token?: string): Promise<unknown> {
   try {
     body = await res.json();
   } catch {
-    /* non-JSON body — handled below */
+    /* non-JSON body: handled below */
   }
 
   if (!res.ok) {
@@ -168,7 +168,7 @@ function num(v: unknown): number | undefined {
 // SEP-6 info
 // ---------------------------------------------------------------------------
 
-/** GET /sep6/info — the anchor's capability sheet (no auth required). */
+/** GET /sep6/info: the anchor's capability sheet (no auth required). */
 export async function sep6Info(): Promise<Sep6Info> {
   const body = (await anchorFetch("/sep6/info")) as Sep6Info;
   if (!body || typeof body !== "object" || !body.deposit) {
@@ -326,7 +326,7 @@ export function clearAnchorSession(account?: string): void {
  * Start a TRY deposit. The anchor replies with bank instructions (IBAN +
  * reference memo); the bank leg itself is simulated by the sandbox.
  *
- * Note: this anchor serves SEP-6 the classic way — GET with query params.
+ * Note: this anchor serves SEP-6 the classic way: GET with query params.
  */
 export async function depositTry(
   token: string,
@@ -393,7 +393,7 @@ export async function withdrawTry(
   };
 }
 
-/** GET /sep6/transaction?id=... — poll a deposit/withdraw status. */
+/** GET /sep6/transaction?id=...: poll a deposit/withdraw status. */
 export async function transactionStatus(
   token: string,
   id: string,

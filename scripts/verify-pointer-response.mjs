@@ -221,7 +221,7 @@ try {
             const evidence = { label, before, after: await matrix(page), noSelection: true, noNavigation: true, reducedSceneOnlyPixelProof: reduced, pixelChange, clearing, preservedDraft: draft };
             report.previewMeasurements.push(evidence);
             if (clearing) {
-              // The prior strict PNG comparison detected 1–2/255 background
+              // The prior strict PNG comparison detected 1 to 2/255 background
               // presentation differences outside the bays. Keep that bound
               // explicit, while requiring every changed preview pixel to clear.
               expect(clearing.previewMaskPixels).toBeGreaterThan(200);

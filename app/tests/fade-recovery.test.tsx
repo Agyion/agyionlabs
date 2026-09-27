@@ -2,7 +2,7 @@
 import React from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { Fade } from '../app/lib/hakClient';
+import type { Fade } from '../app/lib/agyionClient';
 import type { WalletState } from '../app/lib/useWallet';
 
 const boundary = vi.hoisted(() => ({ getClient: vi.fn(), mockClient: vi.fn(), generation: 0, fresh: true, ledger: 1000 as number | null }));

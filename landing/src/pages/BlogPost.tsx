@@ -1,4 +1,4 @@
-/* Blog detail — local data, back link, pixel date, hero image, body. */
+/* Blog detail: local data, back link, pixel date, hero image, body. */
 import { Link, useParams } from 'react-router'
 import { config } from '../config'
 import { getPost } from '../lib/api'

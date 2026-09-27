@@ -26,7 +26,7 @@ for(const file of ['index.html','app/index.html','404.html']) {
   if(!/\bsrc\s*=/.test(match[1]) && match[2].trim()) hashes.add(`'sha256-${createHash('sha256').update(match[2]).digest('base64')}'`);
  }
 }
-const csp=`default-src 'self'; script-src 'self' ${[...hashes].join(' ')}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-src https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`;
+const csp=`default-src 'self'; script-src 'self' 'wasm-unsafe-eval' ${[...hashes].join(' ')}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-src https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`;
 if(csp.length+30>2000) throw new Error('CSP exceeds Cloudflare _headers line limit');
 await writeFile(path.join(site,'_headers'),buildSiteHeaders(csp));
 console.log(`Combined site ready (${hashes.size} inline script hashes; ${csp.length} CSP characters).`);

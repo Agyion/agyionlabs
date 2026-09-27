@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Keypair, Networks, StrKey } from '@stellar/stellar-sdk';
-import { SorobanAgyionClient } from '../app/lib/hakClient';
+import { SorobanAgyionClient } from '../app/lib/agyionClient';
 import { getClient, resetClient } from '../app/lib/client';
 import { CONFIG } from '../app/lib/config';
 

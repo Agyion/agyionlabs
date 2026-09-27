@@ -1,4 +1,4 @@
-/* 404 runner — pure game logic, unit-tested. The component only renders
+/* 404 runner: pure game logic, unit-tested. The component only renders
  * state produced here and forwards input events.
  */
 

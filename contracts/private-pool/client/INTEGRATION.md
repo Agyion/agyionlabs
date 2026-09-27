@@ -1,11 +1,15 @@
 # Private-pool application boundary
 
-2026-09-26. This client is not enabled in the published application. It now
-includes a public-call encoder, verified release/archive reader, wallet submission
-lifecycle and durable public transaction journal. Actual native/WASM proof chains
-have passed with source-pinned development keys. These components neither deploy
-a pool nor migrate an existing HAK balance. Witnesses and keys never belong in
-the transaction journal or RPC arguments.
+2026-09-27. The application source now connects this client through
+[`app/app/lib/private/protocol.ts`](../../../app/app/lib/private/protocol.ts).
+The path includes a public-call encoder, verified release/archive reader,
+submission and revocation lifecycles, and a durable public transaction journal.
+The selected development pool is deployed on testnet; application publication
+and browser-wallet settlement require their own release verification. Existing
+public Agyion balances are not migrated. Witnesses and keys never belong in the
+transaction journal or RPC arguments. The
+[coordinator guide](../../../app/app/lib/private/README.md) describes current
+backup, credential, fee, cancellation and pending-recovery behavior.
 
 ## Included and checked
 
@@ -46,17 +50,17 @@ IndexedDB atomic writes and Web Locks, with immutable public attempts and audite
 reservations across tabs and reload. Storage deletion/rollback or hostile code on
 the same origin remain outside this local guarantee.
 
-## Minimum application work before enabling testnet funding
+## Application boundaries required for each enabled release
 
 | Existing source | Required separate private path |
 | --- | --- |
-| `app/app/lib/config.ts`, `client.ts` | Supply a reviewed private-pool release profile to the implemented release verifier/reader, separate from HAK. Independently pin both VKs and local prover artifacts as well as deployed code, assets and DKG. No active profile is fabricated from test fixtures. |
+| `app/app/lib/config.ts`, `client.ts` | Supply a reviewed private-pool release profile to the implemented release verifier/reader, separate from Agyion. Independently pin both VKs and local prover artifacts as well as deployed code, assets and DKG. No active profile is fabricated from test fixtures. |
 | `privacy/src/verifier.mjs` | Keep its historical research suite registry closed. The real pinned v2 Groth16 adapter in `prover.mjs` is separate; returning true from an injected test callback must never activate the app. |
 | `privacy/src/client.mjs`, `witness.mjs` | Run the actual prover in a local worker with pinned artifacts. Only public signals/proof cross into this contract adapter. Handle progress, cancellation, proving failures and stale append roots without auto-signing or auto-resubmission. |
 | `privacy/src/vault.mjs`, `recovery.mjs` | Wire the implemented complete key vault and verified archive reconstruction into the app. Before deposit or a new grant, require saving the encrypted key file, reselecting that file and checking its full material. Note/draft backups alone do not replace the complete vault. Recovery must use a pinned trusted chain reader and its full snapshot/count checks. |
-| `app/app/lib/wallet.ts`, `hakClient.ts` | Adapt the existing wallet/session to the implemented testnet submission lifecycle and same pinned RPC. Present the transaction facts and explicit fee cap before signing. Do not call generated `signAndSend()` directly from a panel. |
+| `app/app/lib/wallet.ts`, `agyionClient.ts` | Adapt the existing wallet/session to the implemented testnet submission lifecycle and same pinned RPC. Present the transaction facts and explicit fee cap before signing. Do not call generated `signAndSend()` directly from a panel. |
 | `app/app/lib/transactionReceipts.ts`, `recoveryStorage.ts` | Render and reconcile the separate IndexedDB private journal, including pending entries recovered after reload. Unknown inclusion blocks duplicates; a known pre-broadcast refusal needs an explicit retry. Balance still comes from verified archive reconstruction, never a local success label. |
-| `app/app/components/app/AppShell.tsx`, `PodPanel.tsx`, `TriggerPanel.tsx`, `EnvoyPanel.tsx` | Keep public HAK controls and public-data disclosures intact. Private notes have a separate balance, eligibility and recovery model. A private deposit must show its public token/amount/funder, public fee/destination if present, exact testnet pool and mandatory backup acknowledgement. Fade remains public. |
+| `app/app/components/app/AppShell.tsx`, `PodPanel.tsx`, `TriggerPanel.tsx`, `EnvoyPanel.tsx` | Keep public Agyion controls and public-data disclosures intact. Private notes have a separate balance, eligibility and recovery model. A private deposit must show its public token/amount/funder, public fee/destination if present, exact testnet pool and mandatory backup acknowledgement. Fade remains public. |
 
 The application vertical slice is one asset: wallet deposit into a private
 cash note, local encrypted backup, event/record scan, private transfer, reload
@@ -78,7 +82,7 @@ missing read or an RPC failure into an unspent note or an empty pool.
 
 The current application has no deployed private-pool profile or connected private
 funding UI. The separate reader, wallet lifecycle, journal, worker and key/archive
-recovery modules are implemented; they are not imported into the published HAK
+recovery modules are implemented; they are not imported into the published Agyion
 panels. Real proofs, actual local SDK signatures, synthetic RPC reconciliation and
 actual browser storage tests do not establish live product integration. Full
 native/WASM execution and rollback/resource checks are in `../RESOURCE_RESULTS.md`.

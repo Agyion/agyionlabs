@@ -1,6 +1,6 @@
-# anchor/ — Self-Host Anchor Alternatifi (demo yolu değil)
+# anchor/: Self-Host Anchor Alternatifi (demo yolu değil)
 
-> **Kaynak durumu — 26 Eylül 2026:** Uygulamanın varsayılan sağlayıcısı hackathon TR mock anchor'ıdır: `https://tr-mock-anchor.fly.dev`. İstemci SEP-6, SEP-10, SEP-12 ve SEP-38 akışlarını kullanır; güncel destek ve ücretler sağlayıcının yanıtlarından alınmalıdır. Bu incelemede sağlayıcıya bağlanılmadı. Kendi anchor'ımızı işlettiğimiz veya gerçek TRY aktardığımız iddiası yoktur. Bu klasör, kurulup doğrulanmış bir yedek servis değil, ayrı kurulum gerektiren tarihsel SEP-24 yapılandırma örneğidir.
+> **Kaynak durumu: 26 Eylül 2026:** Uygulamanın varsayılan sağlayıcısı hackathon TR mock anchor'ıdır: `https://tr-mock-anchor.fly.dev`. İstemci SEP-6, SEP-10, SEP-12 ve SEP-38 akışlarını kullanır; güncel destek ve ücretler sağlayıcının yanıtlarından alınmalıdır. Bu incelemede sağlayıcıya bağlanılmadı. Kendi anchor'ımızı işlettiğimiz veya gerçek TRY aktardığımız iddiası yoktur. Bu klasör, kurulup doğrulanmış bir yedek servis değil, ayrı kurulum gerektiren tarihsel SEP-24 yapılandırma örneğidir.
 
 Bu örnek, temsilî test varlıklarını ve simüle banka bacağını tarif eder. Issuer, dağıtım hesabı, varlık izinleri ve servis sürümü ayrı doğrulanmadan gerçek bir anchor kurulumu sayılmaz.
 
@@ -49,8 +49,8 @@ Bu MVP'nin banka bacağı **simüle edilir**; gerçek FAST/EFT hareketi veya TRY
 
 Kendi anchor'ınızı kaldırmak yerine hazır test ortamları:
 
-- **tr-mock-anchor.fly.dev** — resmî hackathon TR mock anchor'ı; **birincil demo yolu budur** (SEP-6, TRY↔USDC). Uygulama bunu kutudan çıkar çıkmaz kullanır (`NEXT_PUBLIC_ANCHOR_URL`).
-- **testanchor.stellar.org** — SDF'in referans test anchor'ı (home domain: `testanchor.stellar.org`). SEP-24 akışını hızlıca denemek için en kestirme yol; ancak **tTRY tanımlı değildir** ve banka bacağı yine simülasyondur.
+- **tr-mock-anchor.fly.dev**: resmî hackathon TR mock anchor'ı; **birincil demo yolu budur** (SEP-6, TRY↔USDC). Uygulama bunu kutudan çıkar çıkmaz kullanır (`NEXT_PUBLIC_ANCHOR_URL`).
+- **testanchor.stellar.org**: SDF'in referans test anchor'ı (home domain: `testanchor.stellar.org`). SEP-24 akışını hızlıca denemek için en kestirme yol; ancak **tTRY tanımlı değildir** ve banka bacağı yine simülasyondur.
 - Kendi `tTRY`'nizi demo cüzdana elle trustline + `payment` ile dağıtmak (anchor'sız minimum yol): "anchor TRY" kriterinin zincir tarafını gösterir, SEP-24 etkileşimini göstermez.
 
 ## Bilinen tuzaklar

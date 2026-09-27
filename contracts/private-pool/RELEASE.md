@@ -1,7 +1,7 @@
 # Activation boundary for the experimental private pool
 
 The source implements and locally verifies a separate private-note system.
-It does not upgrade the existing HAK deployment, migrate existing balances,
+It does not upgrade the existing Agyion deployment, migrate existing balances,
 turn the current public Pod/Trigger/Envoy into private records, or enable
 deposits in the published application. Fade remains public.
 

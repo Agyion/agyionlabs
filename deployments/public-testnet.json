@@ -1,0 +1,25 @@
+{
+  "schema": "agyion-public-releases-v1",
+  "active": {
+    "key": "active-testnet",
+    "status": "active-public-default",
+    "networkPassphrase": "Test SDF Network ; September 2015",
+    "rpcUrl": "https://soroban-testnet.stellar.org",
+    "contractId": "CBIIHFELPAKC2KJD4NCJSB32BQO5QUBNEKHBMISFB4MVDKBVM6AJSRXT",
+    "wasmHash": "1e6643028d6b397b3a762d4b5312eaf20f2744407686c78122d27c5a4dd8d378",
+    "protocolVersion": 3,
+    "assetContractId": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+    "purpose": "Preserve existing public records, credentials and recovery scopes while adding the separate private pool."
+  },
+  "inactive": [
+    {
+      "key": "renamed-testnet",
+      "status": "inactive-research-and-test-deployment",
+      "networkPassphrase": "Test SDF Network ; September 2015",
+      "contractId": "CCAZ7XQERQEF4AM7DOS6QSREILBC74FXNASAJZQE7OKYUCRWXHLI3ZPB",
+      "wasmHash": "bce9e56ef654d4fb694d7b813337f90024fc8361982dce490024032c65499fc8",
+      "protocolVersion": 3,
+      "purpose": "Renamed build validation. It has separate storage and is not selected by the public application. No funds or record IDs were migrated."
+    }
+  ]
+}

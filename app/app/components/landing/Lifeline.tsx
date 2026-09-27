@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Lifeline — one continuous pale-sand stroke flowing down the page margin
- * (the "wire" the money travels). v3: no scroll linkage — the wire draws
+ * Lifeline: one continuous pale-sand stroke flowing down the page margin
+ * (the "wire" the money travels). v3: no scroll linkage: the wire draws
  * itself on its own clock: a slow self-draw loop, plus a warm pulse that
  * runs along the wire like current. Desktop only, reduced-motion off.
  */
@@ -41,7 +41,7 @@ export default function Lifeline() {
   return (
     <div className="pointer-events-none fixed left-3 top-0 z-0 hidden h-full xl:block" aria-hidden>
       <svg width={w} height={height} className="h-full">
-        {/* the wire draws itself in, holds, releases — an endless breath */}
+        {/* the wire draws itself in, holds, releases: an endless breath */}
         <motion.path
           d={d}
           stroke="var(--sand)"

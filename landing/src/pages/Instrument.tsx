@@ -28,16 +28,16 @@ const DETAILS: Record<CoreInstrument, InstrumentDetail> = {
     name: 'Pod',
     promise: 'Your key. Its own time.',
     steps: [
-      { label: 'Save the key', text: 'Keep a fresh claim key before locking funds. The contract records its public key.' },
+      { label: 'Back up', text: 'Save and check your encrypted vault and the recipient credential before locking private funds.' },
       { label: 'Set the time', text: 'Choose the unlock ledger. The capsule cannot open before it arrives.' },
-      { label: 'Sign to open', text: 'The claim key signs for your recipient wallet locally. Submit the signature to claim after unlock.' },
+      { label: 'Prove to open', text: 'The recipient uses their saved keys to create a local proof and claim after unlock.' },
     ],
-    caveat: 'Keep the claim key: it cannot be recovered. Amounts and wallet addresses are public.',
+    caveat: 'Keep your encrypted backup and its password. A Pod sender cannot reclaim the recipient’s locked funds.',
     notes: [
-      'The key stays on your device. The public key, amounts and wallet addresses remain visible on the network.',
+      'Private notes use local proofs and encrypted recovery. Deposits, withdrawals, transaction timing and fee payers remain observable.',
       'The unlock condition uses ledger time; a displayed countdown is an estimate.',
       'Long locks may need storage extension or restoration; there is no automatic keeper.',
-      'The separate experimental privacy pool is not active in this app.',
+      'Existing public positions remain accessible through their original contract and saved credentials. They do not become private.',
     ],
   },
   trigger: {
@@ -52,6 +52,7 @@ const DETAILS: Record<CoreInstrument, InstrumentDetail> = {
     notes: [
       'Choose the attester deliberately: its configured key is the accepted source of proof.',
       'Expiry is not an automatic refund; submit the claim and confirm the transaction result.',
+      'New private escrows require saved encrypted credentials. Existing public escrows remain accessible separately.',
     ],
   },
   envoy: {
@@ -68,6 +69,7 @@ const DETAILS: Record<CoreInstrument, InstrumentDetail> = {
       'Each delegated claim must pass signature and contract permission checks.',
       'A mandate does not grant unrestricted wallet access or arbitrary payment destinations.',
       'Revocation must be confirmed; an expired or revoked mandate cannot authorize another claim.',
+      'This example shows the public Fade agent. Private note delegation has separate amount, claim-count, expiry and recovery rules in the app.',
     ],
   },
 }

@@ -1,0 +1,124 @@
+{
+  "config": {
+    "version": "1",
+    "suite": "experimental-babyjub-feldman-v1",
+    "domain": {
+      "networkId": "cee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472",
+      "contractId": "e4ade91255e36f3efbcb0475d1fca45b0961ad3e8d9a7f32ca4abe16442c19ae"
+    },
+    "epoch": "1",
+    "sessionId": "36054667c490d24691b233ded94e35762655d947e1afcfb8b8e75751a42f234b",
+    "threshold": "3",
+    "trustees": [
+      {
+        "id": "1",
+        "authPublicKey": "6427e652f10018bcf3e04d8c7c0f079f3e4b903fe9390bae35e28f1f7f75258e"
+      },
+      {
+        "id": "2",
+        "authPublicKey": "1ace0a3d1c459327d24e7fa61132aa5969cbc41105cbff07559787b0f768f082"
+      },
+      {
+        "id": "3",
+        "authPublicKey": "e71ea3bc092e3028f82cada348af48a03d77c5d2ad762b9e3c3547cd48515f4b"
+      },
+      {
+        "id": "4",
+        "authPublicKey": "5acbd4114dde23dacceeb6ba410fc534ad44f1cfa88211ecb808c272e4ad0778"
+      },
+      {
+        "id": "5",
+        "authPublicKey": "95ffec3257f897b937bca1ad386d21e813a7e31879ffc21cb42214e537071246"
+      }
+    ]
+  },
+  "packages": [
+    {
+      "version": "1",
+      "configHash": "df1810d6a96b5516793e38f7a53af868252582f25f93247d8b99df45547bb39c",
+      "dealerId": "1",
+      "commitments": [
+        "76406f020626ef84a0b04d19cee777431722e490181bcd7432b5add639f56622",
+        "6f4a5f4f3ec1440b4f5cf79d19c8a4b52bd0722c341982590baecf7fcade9c82",
+        "07a58f0ee566f1e4bcdf8db77fb1aad38b92fd22a6c7f0e06d33482364e299a7"
+      ],
+      "signature": "6a9cfd4b178d7bbbd1f96d4a130f2f06180c8f4df7dcfc3b2eb509e14125a0d548b5cc899e5610c9b688225f8c12e3000e2d437c861fd1f88eb979b495fcab0d"
+    },
+    {
+      "version": "1",
+      "configHash": "df1810d6a96b5516793e38f7a53af868252582f25f93247d8b99df45547bb39c",
+      "dealerId": "2",
+      "commitments": [
+        "630ed086a1271cb816b843d027611c6b4119bf1df7848c67a6590e41533da78e",
+        "0c5c2356e22ba7fd52ef0c712bb68a1ec5cdbda2d379a47fa1287a38a87260a0",
+        "6132f8c2b5ec345eaeda88b8d7c8076184e09683cb57b4089277e3d45a8b76a9"
+      ],
+      "signature": "68298406ce54848de4d877c8516294ac40b3b52f4646aa999fe181c801add8a0d908530569f8fe0969350dd5ff7ba15ec0045f79ab9209448f98f7ebd7498b04"
+    },
+    {
+      "version": "1",
+      "configHash": "df1810d6a96b5516793e38f7a53af868252582f25f93247d8b99df45547bb39c",
+      "dealerId": "3",
+      "commitments": [
+        "8c2fcb452cf15c666a728de1a213f93e0a17a97f31d8e40113da42a30619160b",
+        "da5a420f92f35e9c816a8e2994ed979772f53479542f4c93a5c25221c4ce1a86",
+        "5b7b729a39e5e35ba907e8aa20cb67d252660126720e819c8032a22888ca3108"
+      ],
+      "signature": "b2a4db4bf9f8476a92f8583272d6e99d24ff2c11ae9274bbe35ee298e9cccc22c1176b47098bed4e307c709fc0016845044163fad2d8258719484402bc081609"
+    },
+    {
+      "version": "1",
+      "configHash": "df1810d6a96b5516793e38f7a53af868252582f25f93247d8b99df45547bb39c",
+      "dealerId": "4",
+      "commitments": [
+        "50aa146660d8ed435888c676fce3e16811fcfad97f3f9464140aaeae2a1f5fa0",
+        "96323d7e0ae5f85254724b9f484553a8c768d94be565a74032c48e56f8c3e90a",
+        "170553c01d5ca6aa566351ab76974dacbe5588b26124532343051cac31bbdd12"
+      ],
+      "signature": "2205254e8c9cbf90f1d3d77c70c54d36ed4556ac4822fe992c30c9617a2d27a72149a95bcd73ddd67537fabdc8dcc6dcfa6a5cdaf591dd91eff2aebe6c64ec02"
+    },
+    {
+      "version": "1",
+      "configHash": "df1810d6a96b5516793e38f7a53af868252582f25f93247d8b99df45547bb39c",
+      "dealerId": "5",
+      "commitments": [
+        "c1288dda2d5127cef18625d094539c14cf523eb8e4609acca58691b51a55809b",
+        "b5cde60ccc74c92bc61afb626329c067094c90b8676a5c6ff6e051e1adc02fae",
+        "908fa108c576bf985cfbfbf013711bceab4f08453fa23d8cd21e031f82b03c91"
+      ],
+      "signature": "69e772923ec079ad209b895e6f07d8a543c860cfe8b464b1f9266d1df93525a9b36dae8bf9c33a146586ebaf423e86ed51ae44bdf92f0d363eb00fc657b0ac07"
+    }
+  ],
+  "acceptances": [
+    {
+      "version": "1",
+      "transcriptHash": "ae78c15050922efcd08fdd2cdcfce1bba2b5efd5c34e401436bca4eb58b242cb",
+      "trusteeId": "1",
+      "signature": "d3c37ef17e6b5a52008312eaf0254b6cd6808322b26b241ec78c18169741c3a5c5fc8b2d7b8534ef7f26e8add828d4aba8905f28159b4f6c0a12fd2013383707"
+    },
+    {
+      "version": "1",
+      "transcriptHash": "ae78c15050922efcd08fdd2cdcfce1bba2b5efd5c34e401436bca4eb58b242cb",
+      "trusteeId": "2",
+      "signature": "b647cf7281c3c2a0e0ec7a3903c33cc6076fc28e33998d590ab5d367daa9d95009e3f9fb91beaa5a463748e847e7f506ac640bf669431708c4994616fb812607"
+    },
+    {
+      "version": "1",
+      "transcriptHash": "ae78c15050922efcd08fdd2cdcfce1bba2b5efd5c34e401436bca4eb58b242cb",
+      "trusteeId": "3",
+      "signature": "2592ff95ae0765ef5d7497f240fbde8252548c97f49d6bee0bd1b7a6c5ccec58ea4137f7609e258e34ef5002426921eab6460a0aee924cde3f580540816a8a01"
+    },
+    {
+      "version": "1",
+      "transcriptHash": "ae78c15050922efcd08fdd2cdcfce1bba2b5efd5c34e401436bca4eb58b242cb",
+      "trusteeId": "4",
+      "signature": "cb8a2ff2dd73d0104440ce8a22dba5612731e9b407995818fdbdb8ee39f34345bb338d2f1d8516945e114effa37067208ab72f8c2ee4e8b73f47ff0cbb241f04"
+    },
+    {
+      "version": "1",
+      "transcriptHash": "ae78c15050922efcd08fdd2cdcfce1bba2b5efd5c34e401436bca4eb58b242cb",
+      "trusteeId": "5",
+      "signature": "7caf96f8d5c10f41aec36a5401bf2eea2026d46cad7802135764de60481e1eb18129b8e410dd0b43eebc7185f6e6bf62c598d609257e0553f5ec813cb7a15a0a"
+    }
+  ]
+}

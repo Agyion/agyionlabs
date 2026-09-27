@@ -232,3 +232,43 @@
 @media(prefers-reduced-motion:reduce) {
   .instrument-panel .field-input {transition:none}
 }
+
+.private-instrument {display:grid;gap:24px;min-width:0}
+.private-introduction p {max-width:62ch;color:var(--muted);line-height:1.6;margin-top:12px}
+.private-account,.private-operation,.private-review,.private-notes {padding:28px;display:grid;gap:22px}
+.private-account header {display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.private-account ul {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0}
+.private-account li {display:flex;align-items:baseline;justify-content:space-between;gap:16px;border-bottom:1px solid var(--hairline);padding:12px 0}
+.private-account li strong {font-size:24px;font-variant-numeric:tabular-nums}
+.private-instrument .instrument-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.private-instrument .instrument-field {min-width:0;display:grid;gap:10px}
+.private-instrument input[type=file] {width:100%;min-width:0;font-size:13px;line-height:1.7;overflow:hidden}
+.private-instrument input::file-selector-button {border:1px solid var(--hairline);border-radius:4px;background:#29231f;color:var(--ink);padding:8px 12px;margin-right:10px;cursor:pointer}
+.private-actions {display:flex;flex-wrap:wrap;gap:8px}
+.private-actions button {padding:10px 14px;border:1px solid var(--hairline);border-radius:6px;font-size:14px}
+.private-actions button[aria-pressed=true] {border-color:var(--accent);color:var(--accent);background:#2b221b}
+.private-instrument .btn {min-height:42px;justify-content:center;text-align:center}
+.private-vault-disclosure>summary {padding:20px 28px;cursor:pointer;font-size:15px}
+.private-vault-disclosure>.instrument-section {padding:8px 28px 28px;display:grid;gap:18px}
+.private-vault-disclosure form {display:grid;gap:18px}
+.private-vault-disclosure button {padding:10px 18px}
+.private-review dl {display:grid;gap:12px}
+.private-review dl>div {display:flex;align-items:baseline;justify-content:space-between;gap:20px;border-bottom:1px solid var(--hairline);padding-bottom:12px}
+.private-review dd {text-align:right;font-variant-numeric:tabular-nums}
+.private-credential-export,.private-note {display:grid;gap:18px;border-top:1px solid var(--hairline);padding-top:22px}
+.private-pending {display:grid;gap:14px}
+.private-public-records>p {margin-block:18px}
+.private-instrument .instrument-technical[open] {display:grid;gap:18px}
+.private-fee-dialog {color:var(--ink);padding:32px;max-width:520px;width:calc(100% - 32px);margin:auto}
+.private-fee-dialog::backdrop {background:rgba(4,3,3,.82);backdrop-filter:blur(4px)}
+.private-fee-dialog h2 {font-size:24px;margin-bottom:22px}
+.private-fee-dialog p {margin-block:16px;line-height:1.6}
+.private-fee-dialog .instrument-actions {margin-top:24px;justify-content:space-between}
+@media(max-width:600px) {
+  .private-account,.private-operation,.private-review,.private-notes {padding:20px}
+  .private-instrument .instrument-fields,.private-account ul {grid-template-columns:1fr}
+  .private-vault-disclosure>summary {padding:18px 20px}
+  .private-vault-disclosure>.instrument-section {padding:4px 20px 20px}
+  .private-review dl>div {display:grid;gap:6px}
+  .private-review dd {text-align:left}
+}

@@ -1,20 +1,20 @@
 /**
- * zk.ts — Groth16 (BN254) preimage-proof helper for the zk-preimage contract.
+ * zk.ts: Groth16 (BN254) preimage-proof helper for the zk-preimage contract.
  *
  * Loads snarkjs artifacts (vk.json / proof.json / public.json), re-encodes
  * them into the Soroban host byte format, and calls the contract's
  * `verify(proof, public_inputs) -> bool` via RPC simulation (read-only).
  *
  * MODE:
- *   - soroban mode (NEXT_PUBLIC_HAK_MODE=soroban): fully functional.
- *   - mock mode (default demo): DISABLED — the mock client has no chain,
+ *   - soroban mode (NEXT_PUBLIC_AGYION_MODE=soroban): fully functional.
+ *   - mock mode (default demo): DISABLED: the mock client has no chain,
  *     so there is nothing to verify against. `zkVerifyProof` throws
  *     `ZkDisabledError` in mock mode; the UI should hide ZK affordances.
  *
  * ENCODING (mirrors contracts/zk-preimage/src/test.rs):
  *   - G1: 64 bytes  be(X) || be(Y)
  *   - G2: 128 bytes be(X) || be(Y), each Fq2 as be(c1) || be(c0)
- *         (EIP-197 imaginary-first; snarkjs JSON is [c0, c1] — swap!)
+ *         (EIP-197 imaginary-first; snarkjs JSON is [c0, c1]: swap!)
  *   - Fr: 32-byte big-endian decimal
  *   - proof blob: pi_a(64) || pi_b(128) || pi_c(64) = 256 bytes
  */
@@ -23,7 +23,7 @@ import { Buffer } from "buffer";
 import { Account, Contract, TransactionBuilder, rpc, xdr } from "@stellar/stellar-sdk";
 
 export const ZK_ENABLED =
-  (process.env.NEXT_PUBLIC_HAK_MODE ?? "mock") !== "mock";
+  (process.env.NEXT_PUBLIC_AGYION_MODE ?? "mock") !== "mock";
 
 /** Default artifact location (copied from circuits/ into app/public/zk). */
 export const ZK_ARTIFACTS_BASE = "/zk";
@@ -31,7 +31,7 @@ export const ZK_ARTIFACTS_BASE = "/zk";
 export class ZkDisabledError extends Error {
   constructor() {
     super(
-      "ZK verifier is disabled in mock mode — set NEXT_PUBLIC_HAK_MODE=soroban " +
+      "ZK verifier is disabled in mock mode: set NEXT_PUBLIC_AGYION_MODE=soroban " +
         "and provide a deployed zk-preimage contract id.",
     );
     this.name = "ZkDisabledError";
@@ -213,7 +213,7 @@ export async function zkVerifyProof(opts: ZkVerifyOptions): Promise<boolean> {
     xdr.ScVal.scvVec(publicScVals),
   );
 
-  // Simulation only — a throwaway source account is fine.
+  // Simulation only: a throwaway source account is fine.
   const dummy = new Account(
     "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
     "0",

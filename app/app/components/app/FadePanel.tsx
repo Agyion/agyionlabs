@@ -10,7 +10,7 @@ import {
   FADE_STATE,
   priceAtLedger,
   type Fade,
-} from "../../lib/hakClient";
+} from "../../lib/agyionClient";
 import { useLedgerStatus } from "../../lib/useLedger";
 import { formatMinor, formatRemaining, parseMinor, shortAddress, shortHex } from "../../lib/format";
 import { logEntry } from "../../lib/ledgerLog";
@@ -464,7 +464,7 @@ function FadeStage({
           <DecayCurve fade={fade} ledger={priceLedger} scrub={scrub} onScrub={setScrub} frozen={fade.claimed_at != null} />
         </div>
 
-        {/* right rail — parameters in mono */}
+        {/* right rail: parameters in mono */}
         <aside className="instrument-aside instrument-section space-y-4">
           <header><h3>Listing terms</h3></header>
           <RailRow k="Locked pot" v={`${formatMinor(fade.pot)} ${CONFIG.assetCode}`} />

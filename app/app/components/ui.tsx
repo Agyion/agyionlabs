@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * ui.tsx — shared primitives, in the landing's design language:
+ * ui.tsx: shared primitives, in the landing's design language:
  * mono uppercase micro-labels, hairline + flat-surface frames, accent fill
  * with ink-sweep hover for the single primary action per screen.
  */
@@ -24,7 +24,7 @@ export function Eyebrow({ children, dark = false }: { children: ReactNode; dark?
 }
 
 /**
- * PanelHero — the mini LedgerHero every console panel gets: a 3-cell mono
+ * PanelHero: the mini LedgerHero every console panel gets: a 3-cell mono
  * meta strip, the instrument name as a solid + outline word pair, and a
  * hairline that draws itself in above the right-aligned description.
  */
@@ -64,7 +64,7 @@ export function PanelHero({
   );
 }
 
-/** Text + arrow link — quiet tertiary action (dup-hover slide) */
+/** Text + arrow link: quiet tertiary action (dup-hover slide) */
 export function ArrowLink({
   children,
   href,
@@ -101,7 +101,7 @@ export function ArrowLink({
   );
 }
 
-/** The single filled moment on a screen — accent fill, ink sweep on hover */
+/** The single filled moment on a screen: accent fill, ink sweep on hover */
 export function FilledButton({
   children,
   onClick,
@@ -137,7 +137,7 @@ export function FilledButton({
   );
 }
 
-/** Quiet secondary action — hairline outline, hover turns signal green */
+/** Quiet secondary action: hairline outline, hover turns signal green */
 export function GhostButton({
   children,
   onClick,
@@ -194,7 +194,7 @@ export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   );
 }
 
-/** Ember carries negative states — never red (warm alarm, not danger) */
+/** Ember carries negative states: never red (warm alarm, not danger) */
 export function ErrorNote({ children }: { children: ReactNode }) {
   if (!children) return null;
   return (
@@ -221,7 +221,7 @@ export function OkNote({ children }: { children: ReactNode }) {
   );
 }
 
-/** Lifecycle chip — mono, hairline pill, status dot (landing pg-life__chip) */
+/** Lifecycle chip: mono, hairline pill, status dot (landing pg-life__chip) */
 export function StatusChip({ status }: { status: "locked" | "executed" | "returned" | "rejected" | "recorded" }) {
   const color =
     status === "locked"
@@ -264,7 +264,7 @@ export function StateChip({
 }
 
 /**
- * Media slot — shows /media/<name> when the generated asset exists,
+ * Media slot: shows /media/<name> when the generated asset exists,
  * otherwise a dark grain placeholder (assets are produced separately).
  */
 export function MediaSlot({
@@ -300,7 +300,7 @@ export function MediaSlot({
   );
 }
 
-/** Hand-drawn-feel inline SVG stroke icons — 1.5px, round caps */
+/** Hand-drawn-feel inline SVG stroke icons: 1.5px, round caps */
 export function Icon({ kind, size = 20, color = "currentColor" }: { kind: "fade" | "pod" | "trigger" | "envoy" | "check" | "lock" | "arrow"; size?: number; color?: string }) {
   const s = { stroke: color, strokeWidth: 1.5, fill: "none", strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   return (

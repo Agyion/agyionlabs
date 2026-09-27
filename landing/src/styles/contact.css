@@ -1,4 +1,4 @@
-/* Contact — underline inputs, service/budget tags, math captcha, marquee. */
+/* Contact: underline inputs, service/budget tags, math captcha, marquee. */
 
 .contact-form-wrap {
   padding: 0 var(--side-pad) clamp(80px, 12vh, 160px);
@@ -90,7 +90,7 @@
   display: block;
 }
 
-/* honeypot — humans never see it */
+/* honeypot: humans never see it */
 .form-hp {
   position: absolute;
   left: -9999px;

@@ -1,4 +1,4 @@
-/* Work detail — full-bleed hero (img scale 1.08→1 scrub), overview,
+/* Work detail: full-bleed hero (img scale 1.08→1 scrub), overview,
  * 2-col case grid with scroll reveal, prev/next arrows. */
 import { useLayoutEffect, useRef } from 'react'
 import { Link, useParams } from 'react-router'
@@ -30,7 +30,7 @@ export default function WorkDetail() {
         },
       )
 
-      /* case grid reveal — clip + rise, once per item */
+      /* case grid reveal: clip + rise, once per item */
       gsap.utils.toArray<HTMLElement>('.wd-grid__item img').forEach((el) => {
         gsap.fromTo(
           el,

@@ -2,7 +2,7 @@ import { Account, Asset, Keypair, Networks, Operation, StellarToml, Transaction,
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { authenticate, clearAnchorSession, depositTry, withdrawTry, transactionStatus } from '../app/lib/anchor';
 import { registerSigner, unregisterSigner } from '../app/lib/wallet';
-import type { TransactionSigner } from '../app/lib/hakClient';
+import type { TransactionSigner } from '../app/lib/agyionClient';
 
 const server = Keypair.random();
 const client = Keypair.random();

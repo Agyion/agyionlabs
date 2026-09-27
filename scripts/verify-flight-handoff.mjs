@@ -104,7 +104,7 @@ await page.addInitScript(({ recordLaunchGeometry }) => {
     const headingStyle = heading ? getComputedStyle(heading) : null;
     const state = {
       kind: 'state', phase, ready, bridge: Boolean(bridge), bridgeLoaded: Boolean(bridge?.complete && bridge.naturalWidth),
-      headingOpacity: headingStyle ? Number(headingStyle.opacity) : null,
+      headingPresent: Boolean(heading), headingOpacity: headingStyle ? Number(headingStyle.opacity) : null,
       headingVisibility: headingStyle?.visibility ?? null,
       footerOpacity: footer ? Number(getComputedStyle(footer).opacity) : null,
     };
@@ -255,7 +255,7 @@ try {
   expect(result.checks.landingShaderLinksDuringFlight, 'The detailed station must be prepared before launch, never compiled during its approach').toBe(0);
   const exposedUnreadyStates = appStates.filter(event => event.phase !== null && !event.ready && !event.bridge);
   result.checks.controlsHiddenUntilGraphics = exposedUnreadyStates.every(event =>
-    (event.headingVisibility === 'hidden' || event.headingOpacity === 0) && event.footerOpacity <= .11);
+    (event.headingPresent === false || event.headingVisibility === 'hidden' || event.headingOpacity === 0) && event.footerOpacity <= .11);
   expect(result.checks.controlsHiddenUntilGraphics, 'App controls must not flash before the destination renderer is ready').toBe(true);
   await shot('05-destination-ready');
   await page.waitForTimeout(6500);

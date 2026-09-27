@@ -107,3 +107,24 @@ test('cancellation during a read prevents later requests and archive reads canno
  const reader=createPoolReader(release,{fetch:f.fetcher}),s=await reader.readState();f.setHead(1009);
  await assert.rejects(reader.readRecord(f.id,{snapshotId:s.snapshotId}),/older or invalid ledger/i);
 });
+
+test('transient network failures retry only the same read and retain all release checks',async()=>{
+ const f=setup(),release=await verifyPoolRelease(f.manifest,f.dkg);let attempts=0;const bodies:string[]=[];
+ const reader=createPoolReader(release,{fetch:async(url,init)=>{bodies.push(String(init?.body));if(++attempts<=2)throw new TypeError('Failed to fetch');return f.fetcher(url,init);}});
+ assert.equal((await reader.readState()).recordCount,1n);
+ assert.deepEqual(bodies.slice(0,3),[bodies[0],bodies[0],bodies[0]]);
+ assert.deepEqual(f.calls,['getNetwork','getLedgerEntries','getLedgerEntries']);
+ f.instance('ff'.repeat(32));await assert.rejects(reader.readState(),/bytecode|wasm/i);
+});
+
+test('network retries are bounded, cancellation interrupts backoff, and invalid responses are never retried',async()=>{
+ const f=setup(),release=await verifyPoolRelease(f.manifest,f.dkg);let calls=0;
+ await assert.rejects(createPoolReader(release,{fetch:async()=>{calls++;throw new TypeError('Failed to fetch');}}).readState(),/fetch/);
+ assert.equal(calls,3);
+ const control=new AbortController();calls=0;
+ const stopped=createPoolReader(release,{fetch:async()=>{calls++;setTimeout(()=>control.abort(),20);throw new TypeError('Failed to fetch');}});
+ await assert.rejects(stopped.readState({signal:control.signal}));assert.equal(calls,1);
+ for(const response of [()=>new Response('unavailable',{status:503}),()=>new Response('{invalid'),()=>new Response(JSON.stringify({jsonrpc:'2.0',id:999,result:{}}))]){
+  calls=0;await assert.rejects(createPoolReader(release,{fetch:async()=>{calls++;return response();}}).readState());assert.equal(calls,1);
+ }
+});

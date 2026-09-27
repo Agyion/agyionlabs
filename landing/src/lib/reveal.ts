@@ -1,7 +1,7 @@
-/* Scroll-enter reveal — one IntersectionObserver per scan, elements marked
+/* Scroll-enter reveal: one IntersectionObserver per scan, elements marked
  * with data-reveal get .is-revealed once (CSS drives the transition).
  * Reduced-motion: the global RM rule collapses transitions, so the class
- * flip lands instantly — no content ever stays hidden. */
+ * flip lands instantly: no content ever stays hidden. */
 export function initReveals(root: ParentNode = document): () => void {
   const els = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]'))
   if (!els.length) return () => {}

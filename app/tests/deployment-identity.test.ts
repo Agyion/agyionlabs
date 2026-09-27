@@ -1,6 +1,6 @@
 import { Address, Networks, StrKey, xdr, rpc } from '@stellar/stellar-sdk';
 import { describe, expect, it, vi } from 'vitest';
-import { SorobanAgyionClient } from '../app/lib/hakClient';
+import { SorobanAgyionClient } from '../app/lib/agyionClient';
 
 const contract = StrKey.encodeContract(Buffer.alloc(32, 3));
 const other = StrKey.encodeContract(Buffer.alloc(32, 4));

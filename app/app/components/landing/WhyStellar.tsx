@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * WhyStellar — dark ink interlude (§4.4). v3: no scroll scrub — the big
+ * WhyStellar: dark ink interlude (§4.4). v3: no scroll scrub: the big
  * stat counts up on entrance, a mono ledger ticker increments on Stellar's
  * ~5s rhythm, and the sand wire carries a slow traveling pulse.
  */
@@ -47,7 +47,7 @@ export default function WhyStellar() {
     return c.stop;
   }, [inView, reduced, count]);
 
-  // Live ledger ticker — increments every 5s while the section is on screen
+  // Live ledger ticker: increments every 5s while the section is on screen
   const [ledger, setLedger] = useState(582_341);
   useEffect(() => {
     if (!inView || reduced) return;
@@ -80,7 +80,7 @@ export default function WhyStellar() {
               {" "}seconds to certainty
             </span>
           </div>
-          {/* live ledger tick — the chain breathing in real time */}
+          {/* live ledger tick: the chain breathing in real time */}
           <div className="flex items-center gap-2 pb-3 font-mono text-[12px]" style={{ color: "#8A948D" }}>
             <span
               className={`inline-block h-1.5 w-1.5 rounded-full ${reduced ? "" : "stage-dot"}`}
@@ -111,7 +111,7 @@ export default function WhyStellar() {
           ))}
         </div>
 
-        {/* lifeline passes through, warming the section — draws in on
+        {/* lifeline passes through, warming the section: draws in on
             entrance, then carries a slow traveling pulse forever */}
         <svg viewBox="0 0 1200 60" className="mt-20 w-full" aria-hidden>
           <motion.path

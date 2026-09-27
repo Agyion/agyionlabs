@@ -15,7 +15,7 @@ For allocation, the current contract guarantees **at most one successful claiman
 
 ## What the current contract actually does
 
-Sources: [Fade implementation](../../contracts/hak/src/fade.rs), [Envoy implementation](../../contracts/hak/src/envoy.rs), [V3 security protocol](../../contracts/hak/SECURITY_PROTOCOL.md), [limitations](../LIMITATIONS.md). The historical [SPEC](../../SPEC.md) is explicitly superseded.
+Sources: [Fade implementation](../../contracts/agyion/src/fade.rs), [Envoy implementation](../../contracts/agyion/src/envoy.rs), [V3 security protocol](../../contracts/agyion/SECURITY_PROTOCOL.md), [limitations](../LIMITATIONS.md). Use the current security protocol for credential layouts and authorization rules.
 
 | Stage | Present behavior | Consequence for a physical transaction |
 | --- | --- | --- |

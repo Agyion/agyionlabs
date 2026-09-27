@@ -2,7 +2,7 @@
 
 /** Display the last verified height; only a fresh poll authorizes ledger-sensitive actions. */
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { AgyionClient } from "./hakClient";
+import type { AgyionClient } from "./agyionClient";
 import { useInstrumentActivity } from "./instrumentActivity";
 export interface LedgerStatus { ledger: number | null; fresh: boolean; status: "checking" | "fresh" | "stale"; refresh: () => void }
 export function useLedgerStatus(client: AgyionClient | null, refreshMs = 5_000): LedgerStatus {

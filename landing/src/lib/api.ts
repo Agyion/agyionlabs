@@ -1,4 +1,4 @@
-/* Demo blog API — local data behind an async seam so the list page shows
+/* Demo blog API: local data behind an async seam so the list page shows
  * real loading skeleton / success / error states without a backend.
  * `?blogError=1` (or localStorage 'blog:force-error') forces the error path,
  * which is how the acceptance matrix exercises it.

@@ -1,5 +1,5 @@
 /**
- * format.ts — minor-unit (7 decimals) conversions and display helpers
+ * format.ts: minor-unit (7 decimals) conversions and display helpers
  */
 
 import { CONFIG } from "./config";

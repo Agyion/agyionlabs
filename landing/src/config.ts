@@ -1,4 +1,4 @@
-/* Instance content — the ONLY file a typical adaptation edits.
+/* Instance content: the ONLY file a typical adaptation edits.
  * Schema: src/types.ts. Runtime checks: src/lib/validateConfig.ts.
  */
 import type { SiteConfig } from './types'
@@ -131,7 +131,7 @@ export const config: SiteConfig = {
         { label: 'Open the app', href: '/app/', primary: true },
         { label: 'Explore instruments', href: '/instruments' },
       ],
-      /* descent ledger — data strip, weight-contrast
+      /* descent ledger: data strip, weight-contrast
        * word pair, left sub, specimen rail */
       composition: 'ledger',
       titleVw: 18,
@@ -202,7 +202,7 @@ export const config: SiteConfig = {
     gallery: {
       heading: 'FOUR INSTRUMENTS',
       heightPx: 3800,
-      /* cards measure 648×486 / 535×402 — landscape, near half-viewport */
+      /* cards measure 648×486 / 535×402: landscape, near half-viewport */
       card: { minPx: 420, vw: 45, maxPx: 648, aspect: '4 / 3' },
       images: [
         img('/media/agyion-fade.png', 'FADE: descending price instrument'),
@@ -219,7 +219,7 @@ export const config: SiteConfig = {
     },
   },
 
-  /* ---- unused template sections (landing page only — routes stripped).
+  /* ---- unused template sections (landing page only: routes stripped).
    * Kept schema-valid so the engine and validator stay happy; re-add the
    * routes in App.tsx to re-enable. */
   about: {

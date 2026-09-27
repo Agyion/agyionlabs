@@ -1,8 +1,8 @@
-/* Depth gauge — signature chrome ("scroll = descent").
+/* Depth gauge: signature chrome ("scroll = descent").
  * Fixed right-edge rail: hairline track, major tick marks with mono depth
  * labels, a drop marker lerped to scroll progress and a live depth readout.
  * Replaces the top progress bar when config.depthGauge.enabled is set.
- * Desktop only (CSS hides < 1024px); reduced-motion safe — the marker is
+ * Desktop only (CSS hides < 1024px); reduced-motion safe: the marker is
  * position-driven, no autonomous animation. Self-adapting contrast via
  * mix-blend-mode: difference (same treatment as the cursor). */
 import { useEffect, useRef } from 'react'

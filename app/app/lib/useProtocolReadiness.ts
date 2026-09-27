@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import type { AgyionClient, ProtocolReadiness } from "./hakClient";
+import type { AgyionClient, ProtocolReadiness } from "./agyionClient";
 export function useProtocolReadiness(client: AgyionClient | null) {
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<{ client: AgyionClient; attempt: number; status: ProtocolReadiness } | null>(null);

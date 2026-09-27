@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CtaFooter — serif headline + single terracotta arrow-link, then a footer
+ * CtaFooter: serif headline + single terracotta arrow-link, then a footer
  * with the one slow auto-scrolling strip of template illustrations
  * (pause on hover) and a colophon (§4.6).
  */
@@ -37,7 +37,7 @@ export default function CtaFooter() {
       </section>
 
       <footer className="border-t" style={{ borderColor: "var(--hairline)" }}>
-        {/* the single allowed marquee — slow, pauses on hover */}
+        {/* the single allowed marquee: slow, pauses on hover */}
         <div className="overflow-hidden py-8" aria-hidden>
           <div className={`flex w-max gap-8 ${reduced ? "" : "strip"}`}>
             {[...STRIP, ...STRIP, ...STRIP, ...STRIP].map((s, i) => (

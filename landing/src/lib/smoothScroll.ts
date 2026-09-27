@@ -1,6 +1,6 @@
 /* Smooth-scroll + scroll-effect engine.
  * Lenis (lerp 0.09) drives native scroll; GSAP ScrollTrigger consumes it.
- * Reduced-motion: Lenis is never created — native scroll, effects static.
+ * Reduced-motion: Lenis is never created: native scroll, effects static.
  */
 import Lenis from 'lenis'
 import gsap from 'gsap'
@@ -37,7 +37,7 @@ export function destroySmoothScroll() {
   lenis = null
 }
 
-/** Toggles html.show-nav-scroll past the threshold — the fixed-logo ↔ pill
+/** Toggles html.show-nav-scroll past the threshold: the fixed-logo ↔ pill
  * handoff. Returns the cleanup. */
 export function initNavScrollClass(threshold = SCROLL_CLASS_THRESHOLD): () => void {
   const onScroll = () => {

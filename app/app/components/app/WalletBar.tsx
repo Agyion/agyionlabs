@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * WalletBar — connect via Stellar Wallets Kit (Freighter & co).
+ * WalletBar: connect via Stellar Wallets Kit (Freighter & co).
  * The test-secret field only exists in mock mode (local development);
  * the live soroban build is wallet-only.
  * Chrome: frosted capsule with a status dot (green connected / amber mock).

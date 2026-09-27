@@ -1,8 +1,8 @@
 /**
- * signers.ts — ed25519 payload + signature helpers (SPEC_V2 payload layouts)
+ * signers.ts: ed25519 payload + signature helpers (SPEC_V2 payload layouts)
  *
  * The contract verifies three credential types, each with an exact byte
- * layout (see contracts/hak/src/*.rs):
+ * layout (see contracts/agyion/src/*.rs):
  *
  *   V2 prefix: action tag + network hash + contract Address XDR, then:
  *   handoff : fade_id(8B BE)     || claimant Address XDR    || ts(8B BE)
@@ -88,7 +88,7 @@ export function keypairFromSecret(secret: string): Keypair {
   throw new Error("Invalid key: expected an S... secret or a 64-char hex seed");
 }
 
-/** Raw ed25519 public key (BytesN<32> hex) — what the contract stores */
+/** Raw ed25519 public key (BytesN<32> hex): what the contract stores */
 export function publicKeyHex(secret: string): string {
   return Buffer.from(keypairFromSecret(secret).rawPublicKey()).toString("hex");
 }

@@ -38,6 +38,29 @@ function field(v: Uint8Array): bigint {
  const n = BigInt(`0x${Buffer.from(v).toString('hex')}`); fieldBytes(n); return n;
 }
 function abort(signal?: AbortSignal): void { signal?.throwIfAborted(); }
+function backoff(milliseconds: number, signal: AbortSignal): Promise<void> {
+ signal.throwIfAborted();
+ return new Promise((resolve,reject) => {
+  const stop = () => { clearTimeout(timer); signal.removeEventListener('abort',stop); reject(signal.reason); };
+  const timer = setTimeout(() => { signal.removeEventListener('abort',stop); resolve(); },milliseconds);
+  signal.addEventListener('abort',stop,{once:true});
+  if(signal.aborted) stop();
+ });
+}
+/** Only these read-only requests may retry a failed fetch. JSON, XDR, pin,
+ * HTTP and archive validation failures are never retried or relaxed. All
+ * attempts share the original timeout; no signing/submission API uses this. */
+async function fetchRead(fetcher: typeof fetch, url: string, init: RequestInit & {signal: AbortSignal}): Promise<Response> {
+ for(let attempt=0;;attempt++) {
+  init.signal.throwIfAborted();
+  try { return await fetcher(url,init); }
+  catch(error) {
+   init.signal.throwIfAborted();
+   if(!(error instanceof TypeError) || attempt>=2) throw error;
+   await backoff(attempt===0?200:600,init.signal);
+  }
+ }
+}
 const udt = (name: string) => xdr.ScSpecTypeDef.scSpecTypeUdt(new xdr.ScSpecTypeUdt({name}));
 const key = (name: string, value?: xdr.ScVal) => xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(name), ...(value ? [value] : [])]);
 const MAX_RESPONSE = 1024 * 1024;
@@ -69,7 +92,7 @@ export function createPoolReader(release: PoolRelease, options: {fetch?: typeof 
   const timeout = new AbortController(); const timer = setTimeout(() => timeout.abort(new PoolReadError('RPC_UNAVAILABLE','Pool RPC timed out')), 15000);
   const forwarded = () => timeout.abort(signal?.reason); signal?.addEventListener('abort',forwarded,{once:true});
   try {
-   const response = await fetcher(release.rpcUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id,method,params}),credentials:'omit',redirect:'error',cache:'no-store',signal:timeout.signal});
+   const response = await fetchRead(fetcher,release.rpcUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id,method,params}),credentials:'omit',redirect:'error',cache:'no-store',signal:timeout.signal});
    const body: any = await boundedJson(response); abort(signal); timeout.signal.throwIfAborted();
    ensure(body && body.jsonrpc === '2.0' && body.id === id && Object.hasOwn(body,'result') && !Object.hasOwn(body,'error'), 'Invalid or failed pool RPC response','RPC_UNAVAILABLE');
    ensure(body.result && typeof body.result === 'object' && !Array.isArray(body.result), 'Invalid pool RPC result'); return body.result;

@@ -1,52 +1,28 @@
-# Vercel + agyionlabs.dev Deployment Rehberi
-(dev-guide-generator SOP'u: ön koşul → adımlar → sorun giderme → cheatsheet)
+# Website deployment
 
-## Ön koşullar
-- Repo GitHub'da public (submission şartı) — `hak-project.zip` içeriğini kendi GitHub'ına push'la
-- Vercel hesabı (GitHub ile giriş)
-- Domain: agyionlabs.dev (alındı ✓)
-- Testnet deploy yapılmış, contract ID elde (scripts/deploy_testnet.sh)
+The combined website is built from the Vite landing and the Next.js application.
+Its current deployment configuration is Cloudflare `wrangler.toml`, with static
+assets assembled under `app/site`. This file no longer describes a separate
+Vercel deployment or a query-string mock fallback.
 
-## Adımlar
+Use the [root README](../README.md) for build and release commands and the
+[application README](../app/README.md) for build-time environment variables.
+`NEXT_PUBLIC_AGYION_CONTRACT_ID` and `NEXT_PUBLIC_AGYION_WASM_HASH` must identify
+the same verified deployed kernel. The RPC and network keys are
+`NEXT_PUBLIC_SOROBAN_RPC_URL` and `NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE`.
+Changing configuration requires rebuilding the browser assets.
 
-### 1. Repo → Vercel
-1. GitHub repo: `hak` (veya seçilen marka adı) olarak push'la.
-2. Vercel → "Add New Project" → repo'yu import et.
-3. **Root Directory:** `app` (monorepo — kritik ayar!)
-4. Framework preset: Next.js (otomatik algılar). Build command: `npm run build`. Output: default.
+Use the active identity in [the public release record](../deployments/public-testnet.json).
+The existing V3 contract remains the public default; renaming its source does not
+migrate its records to another address. The separately deployed renamed build is
+an inactive research/test deployment. The private pool has its own release
+configuration and does not change the meaning of existing public record IDs.
 
-### 2. Env değişkenleri (Vercel → Project → Settings → Environment Variables)
-```
-NEXT_PUBLIC_HAK_MODE=soroban            # canlı kontrat modu (mock için: mock)
-NEXT_PUBLIC_HAK_CONTRACT_ID=<deploy'dan gelen C...>
-NEXT_PUBLIC_HAK_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
-NEXT_PUBLIC_HAK_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
-```
+For the active public release verification target, set
+`EXPECTED_PUBLIC_RELEASE=active-testnet`. This selects its exact code/address pair
+and requires `ready`; conflicting explicit pins are rejected. Without this explicit
+selection or explicit pins/readiness, the verifier retains its closed default.
 
-### 3. Domain bağlama (agyionlabs.dev)
-1. Vercel → Project → Settings → Domains → `agyionlabs.dev` ekle.
-2. Registrar'ın DNS panelinde (domain'i aldığın yer):
-   - **A kaydı:** `@` → `76.76.21.21` (Vercel anycast)
-   - **CNAME:** `www` → `cname.vercel-dns.com`
-3. Vercel SSL'i otomatik verir (birkaç dakika). Demo'dan önce `https://agyionlabs.dev` açıldığını doğrula.
-
-### 4. Demo stratejisi
-- Ana demo URL: `https://agyionlabs.dev` (soroban modu).
-- Yedek: `?mode=mock` veya ayrı preview deployment (mock mod) — salon interneti ölürse mock modda dahi akış gösterilir (dürüst not: jüriye "bu mock" denir, canlısı video + testnet tx linkleriyle desteklenir).
-- Submission'a koy: live URL + GitHub repo + contract ID tablosu.
-
-## Sorun giderme
-| Belirti | Çare |
-|---|---|
-| Build "root directory" hatası | Vercel root'u `app` olarak ayarladın mı? |
-| `NEXT_PUBLIC_*` görünmüyor | Env'ler build-time gömülür — değişiklikte redeploy şart |
-| Domain DNS yayılmadı | 24 saate kadar sürebilir; hackathon'da vercel.app URL'sini yedek tut |
-| RPC timeout | soroban-testnet yavaşsa retry; mock moda düş |
-
-## Cheatsheet
-```
-push → Vercel auto-deploy → agyionlabs.dev
-env değişikliği → redeploy şart
-mock fallback → ?mode=mock
-contract ID değişirse → env güncelle + redeploy
-```
+A successful build is not a deployment receipt. Verify the published files,
+headers and contract readiness before calling a release complete. See the
+[security policy](../SECURITY.md) for current release boundaries.

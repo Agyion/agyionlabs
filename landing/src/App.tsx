@@ -81,7 +81,7 @@ export default function App() {
     root.setProperty('--glow', t.glow)
     root.setProperty('--muted', t.muted)
     root.setProperty('--faint', t.faint)
-    /* frosted chrome (dock form): surface at 78% — derived here so the
+    /* frosted chrome (dock form): surface at 78%: derived here so the
      * computed background stays a plain rgba() for any surface hex */
     const h = t.surface.replace('#', '')
     const v = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16)

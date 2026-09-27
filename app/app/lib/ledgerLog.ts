@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * ledgerLog.ts — the Ledger: the user's own transaction history.
+ * ledgerLog.ts: the Ledger: the user's own transaction history.
  *
  * Every template action (create / claim / attest / revoke / …) appends an
  * entry to a localStorage log. Entries carry the ledger height at the time
  * of the action; in soroban mode they may also carry the tx hash.
  *
- * Proof Pack: a signed JSON export of the log — sha256 checksum of the
+ * Proof Pack: a signed JSON export of the log: sha256 checksum of the
  * canonical payload plus an ed25519 signature when a test-secret signer is
  * active. Verifiable offline against the export itself.
  */
@@ -209,7 +209,7 @@ export function clearLog(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Proof Pack — signed JSON export
+// Proof Pack: signed JSON export
 // ---------------------------------------------------------------------------
 
 export interface ProofPack {

@@ -38,15 +38,7 @@
 .orbital-canvas canvas:active {cursor:grabbing}
 .orbital-canvas canvas:focus-visible {outline:1px solid rgba(232,183,123,.55);outline-offset:-8px}
 .station-vista:after {content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(7,9,13,.3),transparent 36%),linear-gradient(0deg,#07090d,rgba(7,9,13,.64) 9%,transparent 27%)}
-.station-vista__heading {position:absolute;z-index:2;left:clamp(24px,5vw,76px);top:calc(var(--station-top) + clamp(32px,6vh,64px));max-width:310px;pointer-events:none;visibility:visible;--muted:#c5cbd3;text-shadow:0 1px 3px #000,0 0 14px rgba(0,0,0,.65);transition:opacity .55s,transform .8s var(--flight-ease),visibility 0s}
-.station-vista__heading:before {content:"";position:absolute;z-index:-1;inset:-70px -130px -70px -80px;pointer-events:none;background:radial-gradient(ellipse closest-side,rgba(0,0,0,.9),rgba(0,0,0,.72) 48%,transparent)}
-.station-kicker,.station-orbit-help {font-family:var(--font-mono);font-size:10px;letter-spacing:.02em}
-.station-kicker {color:var(--muted);margin:0 0 17px}
-.station-vista__heading h1 {font-family:var(--font-serif);font-size:clamp(40px,4.3vw,64px);font-weight:450;line-height:1.04;letter-spacing:-.055em;margin:0 0 8px}
-.station-intro {font-size:13px;line-height:1.65;color:var(--muted);margin:0}
-.station-instrument-title {animation:instrument-arrival .85s var(--flight-ease) both}
-.station-open-instrument {pointer-events:auto;display:inline-flex;align-items:center;gap:27px;min-height:42px;margin-top:24px;font-size:12px;color:var(--ink);border-bottom:1px solid var(--hairline-strong);transition:color .35s,border-color .35s}
-.station-open-instrument:hover {color:var(--accent);border-color:var(--accent)}
+.station-orbit-help {font-family:var(--font-mono);font-size:10px;letter-spacing:.02em}
 .station-scene-footer {position:absolute;z-index:6;left:clamp(24px,5vw,76px);right:clamp(24px,5vw,76px);bottom:0;pointer-events:none;transition:opacity 1s,transform 1.3s var(--flight-ease)}
 .station-orbit-help {color:#c5cbd3;text-shadow:0 1px 3px #000,0 0 8px #000;margin:0 0 25px;text-align:right;font-size:9px;transition:opacity .4s}
 .station-touch-help {display:none}
@@ -63,8 +55,6 @@
 .station-dock button:is(:hover,:focus-visible) .station-dock__name:after {opacity:.65;transform:scaleX(1)}
 .station-dock__note {font-size:11px;color:var(--muted)}
 .is-panel-open .station-orbit-help {opacity:0;visibility:hidden}
-.is-panel-open .station-vista__heading {opacity:0;transform:translateY(-10px);visibility:hidden;transition:opacity .45s,transform .65s var(--flight-ease),visibility 0s .45s}
-.is-panel-open .station-open-instrument {pointer-events:none}
 
 /* An open projection frame. Reading surfaces are local; space stays visible
    through its gutters and the diagrams, with no scene dimmer or blur pass. */
@@ -266,9 +256,7 @@
 .ledger-column-head {display:grid;grid-template-columns:minmax(180px,1.2fr) minmax(120px,1fr) minmax(115px,.7fr) minmax(75px,.6fr) 18px;gap:28px;padding:15px 4px;color:var(--muted);font-size:10px}
 .panel-ledger>.instrument-disclosure {padding:10px 14px;background:rgba(10,25,36,.76);border-left:1px solid var(--hairline)}
 .station-arriving .station-topbar {opacity:0;transform:translateY(-100%);visibility:hidden;transition:none}
-.station-arriving .station-vista__heading {opacity:0;transform:translateY(12px);visibility:hidden;transition:none}
 .station-arriving .station-scene-footer {opacity:.1;transform:translateY(16px);transition:none}
-@keyframes instrument-arrival {from {opacity:0;transform:translateY(14px)}to {opacity:1;transform:translateY(0)}}
 @keyframes console-arrival {from {opacity:0;transform:translateY(8px)}to {opacity:1;transform:translateY(0)}}
 @keyframes projection-arrival {from {opacity:0;transform:translateY(7px);clip-path:inset(0 0 10%)}to {opacity:1;transform:translateY(0);clip-path:inset(0)}}
 /* Local reading plates leave the world visible in the workspace gutters. */
@@ -353,9 +341,6 @@
   .station-topbar>.flex {gap:8px;max-width:100%;flex:1}
   .station-topbar>.wallet-bar:has(.wallet-account,.wallet-error) {flex-basis:100%;justify-content:flex-start}
   .wallet-error {text-align:left}
-  .station-vista__heading {top:calc(var(--station-top) + 26px);left:22px}
-  .station-kicker {font-size:9px;margin-bottom:13px}.station-vista__heading h1{font-size:42px}
-  .station-intro {font-size:12px}.station-open-instrument{font-size:11px;margin-top:12px}
   .station-workspace {top:calc(var(--station-top) + 10px);bottom:68px;width:calc(100% - 20px);border-radius:2px}
   .station-workspace-header {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:16px 18px 14px;gap:8px;position:relative}
   .station-workspace-title {min-width:0;padding-right:0;overflow-wrap:anywhere}
@@ -416,6 +401,6 @@
 }
 @media(prefers-reduced-motion:reduce){
   html {scroll-behavior:auto}
-  .station-arriving .station-vista__heading,.station-arriving .station-scene-footer {opacity:1;transform:none}
+  .station-arriving .station-scene-footer {opacity:1;transform:none}
   .station-app *,.station-app *:before,.station-app *:after {animation-duration:.001ms!important;transition-duration:.001ms!important;animation-delay:0ms!important;transition-delay:0ms!important}
 }

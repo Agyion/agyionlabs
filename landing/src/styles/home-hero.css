@@ -1,7 +1,7 @@
-/* Home hero — ledger/poster/banner compositions, fluid ambience slot,
+/* Home hero: ledger/poster/banner compositions, fluid ambience slot,
  * specimen rail, word columns. Sections live in home.css. */
 
-/* Home — ledger hero, word marquee, 3D cube, manifesto statement, scroll
+/* Home: ledger hero, word marquee, 3D cube, manifesto statement, scroll
  * gallery. Depth-zone tokens, Bricolage display voice. */
 
 /* ---------- hero intro panel ---------- */
@@ -113,7 +113,7 @@
 }
 
 /* floating card stack (central object + small cards pressing
- * the hero bottom edge) — middle wave image raised as the main card, the
+ * the hero bottom edge): middle wave image raised as the main card, the
  * rest clustered around it, staggered and tilted, with deep shadows */
 .home-hero__stack {
   position: absolute;
@@ -215,7 +215,7 @@
 }
 
 /* overlapping-card strip: cards overlap with deep
- * shadows, dimmed to 0.55, the middle card raised + lit — pressed on the hero. */
+ * shadows, dimmed to 0.55, the middle card raised + lit: pressed on the hero. */
 .home-hero__wave--overlap {
   bottom: -9vh;
   gap: 0;

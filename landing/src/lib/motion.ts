@@ -1,4 +1,4 @@
-/* Motion preference helpers — every atmosphere/scroll effect degrades here. */
+/* Motion preference helpers: every atmosphere/scroll effect degrades here. */
 import { useEffect, useState } from 'react'
 
 const QUERY = '(prefers-reduced-motion: reduce)'

@@ -1,10 +1,10 @@
 /**
- * wallet.ts — wallet abstraction (SPEC §4)
+ * wallet.ts: wallet abstraction (SPEC §4)
  *
  * "Wallet: Stellar Wallets Kit; otherwise a secret-key field in test mode
  * (shown with a demo note)."
  *
- * - The TransactionSigner interface (hakClient.ts) is wallet-agnostic.
+ * - The TransactionSigner interface (agyionClient.ts) is wallet-agnostic.
  * - When the Wallets Kit connects, an adapter implements this interface and
  *   plugs in via registerSigner().
  * - Without the kit, TestSecretWallet: a secret-key field, testnet/demo only.
@@ -12,7 +12,7 @@
 
 import { Buffer } from "buffer";
 import { Keypair, Networks, StrKey, Transaction, TransactionBuilder } from "@stellar/stellar-sdk";
-import type { TransactionSigner } from "./hakClient";
+import type { TransactionSigner } from "./agyionClient";
 import { CONFIG } from "./config";
 
 let active: TransactionSigner | null = null;
@@ -101,7 +101,7 @@ export class TestSecretWallet implements TransactionSigner {
     return tx.toXDR();
   }
 
-  /** Sign arbitrary bytes — used for the Proof Pack export signature */
+  /** Sign arbitrary bytes: used for the Proof Pack export signature */
   signBytes(payload: Uint8Array): string {
     return Buffer.from(this.key().sign(Buffer.from(payload))).toString("hex");
   }

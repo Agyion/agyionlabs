@@ -10,7 +10,7 @@ import {Client} from './bindings.ts';
 import {prepareSubmit,fieldBytes,type PublicAddresses} from './adapter.ts';
 import {assertPoolRelease,type PoolRelease} from './release.ts';
 import {assertPoolReader} from './reader.ts';
-import {snapshotAttempt,snapshotIntent,type PublicAttempt,type SubmissionJournal,type TerminalEvidence} from './journal.ts';
+import {snapshotAttempt,snapshotIntent,type PublicAttempt,type JournalAttempt,type SubmissionJournal,type TerminalEvidence} from './journal.ts';
 import {accountField,assetField} from '../../../privacy/src/identity.mjs';
 
 export interface WalletSession {id:string;account:string;networkPassphrase:string}
@@ -39,6 +39,11 @@ export interface SubmissionOptions {
   /** Explicit caller/user fee budget, including Soroban resource fee, in stroops. */
   maxFeeStroops:string;
 }
+/** Public simulation evidence; never contains a proof, XDR or key material. */
+export class FeeBudgetExceededError extends Error {
+ constructor(readonly feeStroops:string,readonly maxFeeStroops:string){super('FEE_BUDGET_EXCEEDED');this.name='FeeBudgetExceededError';}
+}
+function enforceFeeBudget(fee:string,cap:bigint){if(BigInt(fee)>cap)throw new FeeBudgetExceededError(fee,cap.toString());}
 function ensure(ok:unknown,code:string):asserts ok {if(!ok)throw new Error(code);}
 function plain(value:unknown,keys:readonly string[]):Record<string,unknown>{
  ensure(!!value&&typeof value==='object'&&Object.getPrototypeOf(value)===Object.prototype,'INVALID_PUBLIC_INPUT');
@@ -99,15 +104,22 @@ function signedTransaction(requested:Transaction,returned:string,account:string)
  const key=Keypair.fromPublicKey(account);ensure(signed.signatures.some(s=>key.verify(signed.hash(),s.signature())),'EXPECTED_WALLET_SIGNATURE_REQUIRED');
  return signed;
 }
-function boundEnvelope(outcome:rpc.Api.GetTransactionResponse,attempt:PublicAttempt):xdr.TransactionResultResult|xdr.InnerTransactionResultResult|null {
+/** RPC adapters can use an independently bundled copy of the same SDK. XDR
+ * classes are not interoperable by instanceof identity; normalize public wire
+ * bytes into this SDK before parsing or hashing them. Never skip validation. */
+function wireXdr(value:{toXDR(format:'base64'):string}):string {
+ const encoded=value.toXDR('base64');ensure(typeof encoded==='string'&&encoded.length>0&&encoded.length<=16*1024*1024,'INVALID_RPC_XDR');return encoded;
+}
+function validTransactionMeta(value:xdr.TransactionMeta):boolean{try{return xdr.TransactionMeta.isValid(xdr.TransactionMeta.fromXDR(wireXdr(value),'base64'))}catch{return false;}}
+function boundEnvelope(outcome:rpc.Api.GetTransactionResponse,attempt:JournalAttempt):xdr.TransactionResultResult|xdr.InnerTransactionResultResult|null {
  try{
   if(outcome.txHash!==attempt.hash||(outcome.status!=='SUCCESS'&&outcome.status!=='FAILED')||!positiveLedger(outcome.ledger))return null;
-  const envelope=TransactionBuilder.fromXDR(outcome.envelopeXdr,Networks.TESTNET);
+  const envelope=TransactionBuilder.fromXDR(wireXdr(outcome.envelopeXdr),Networks.TESTNET);
   const wrapped=envelope instanceof FeeBumpTransaction;if(outcome.feeBump!==wrapped)return null;
   const tx=wrapped?envelope.innerTransaction:envelope;if(!(tx instanceof Transaction)||tx.hash().toString('hex')!==attempt.hash||tx.source!==attempt.source||tx.sequence!==attempt.sequence||callDigest(tx)!==attempt.callHash)return null;
-  const invocation=functionOf(tx).func.invokeContract();if(Address.fromScAddress(invocation.contractAddress()).toString()!==attempt.pool||invocation.functionName().toString()!=='submit')return null;
+  const invocation=functionOf(tx).func.invokeContract();if(Address.fromScAddress(invocation.contractAddress()).toString()!==attempt.pool||invocation.functionName().toString()!==(attempt.version===1?'submit':'revoke'))return null;
   const key=Keypair.fromPublicKey(attempt.source);if(!tx.signatures.some(s=>key.verify(tx.hash(),s.signature())))return null;
-  const result=outcome.resultXdr.result();
+  const result=xdr.TransactionResult.fromXDR(wireXdr(outcome.resultXdr),'base64').result();
   if(wrapped){
    // A third party can wrap the unchanged signed inner transaction. The RPC
    // indexes both hashes but returns the OUTER envelope/result. A failed outer
@@ -119,14 +131,14 @@ function boundEnvelope(outcome:rpc.Api.GetTransactionResponse,attempt:PublicAtte
   return result.switch().name===(outcome.status==='SUCCESS'?'txSuccess':'txFailed')?result:null;
  }catch{return null;}
 }
-function successMeta(outcome:rpc.Api.GetSuccessfulTransactionResponse,recordId:string,result:xdr.TransactionResultResult|xdr.InnerTransactionResultResult):boolean {
+function successMeta(outcome:rpc.Api.GetSuccessfulTransactionResponse,recordId:string|null,result:xdr.TransactionResultResult|xdr.InnerTransactionResultResult):boolean {
  try{
   if(result.switch().name!=='txSuccess')return false;
   const operations=result.results();if(operations.length!==1||operations[0].switch().name!=='opInner')return false;
   const op=operations[0].tr();if(op.switch().name!=='invokeHostFunction'||op.invokeHostFunctionResult().switch().name!=='invokeHostFunctionSuccess')return false;
-  const meta=outcome.resultMetaXdr,version=meta.switch();
+  const meta=xdr.TransactionMeta.fromXDR(wireXdr(outcome.resultMetaXdr),'base64'),version=meta.switch();
   const rv=version===3?meta.v3().sorobanMeta()?.returnValue():version===4?meta.v4().sorobanMeta()?.returnValue():null;
-  if(!rv||rv.switch().name!=='scvBytes'||rv.bytes().toString('hex')!==recordId)return false;
+  if(!rv||(recordId===null?rv.switch().name!=='scvVoid':rv.switch().name!=='scvBytes'||rv.bytes().toString('hex')!==recordId))return false;
   const events=version===3?meta.v3().sorobanMeta()!.events():meta.v4().operations()[0]?.events();if(!events)return false;
   const preimage=new xdr.InvokeHostFunctionSuccessPreImage({returnValue:rv,events});
   return hash(preimage.toXDR()).equals(op.invokeHostFunctionResult().success());
@@ -142,12 +154,16 @@ function failedOperation(result:xdr.TransactionResultResult|xdr.InnerTransaction
 }
 function outcome(attempt:PublicAttempt,terminal:TerminalEvidence|null):SubmissionOutcome{return Object.freeze({kind:'PrivateSubmissionOutcome',hash:attempt.hash,recordId:attempt.recordId,source:attempt.source,releaseId:attempt.releaseId,status:terminal?.status??'pending',ledger:terminal&&'ledger'in terminal?terminal.ledger:null});}
 
+/** Shared strict transaction checks for the two private-pool entry points. */
+export const submissionSafety=Object.freeze({ensure,plain,session,sameSession,checkpoint,sameCheckpoint,positiveLedger,functionOf,callDigest,signedTransaction,boundEnvelope,successMeta,failedOperation,enforceFeeBudget,validTransactionMeta});
+
 export function createTestnetSubmissionLifecycle(options:SubmissionOptions){
  assertPoolRelease(options.release);assertPoolReader(options.reader,options.release);const {release,wallet,reader,transport,journal,verifyLocal}=options;
  ensure(release.networkPassphrase===Networks.TESTNET&&typeof verifyLocal==='function','TESTNET_RELEASE_REQUIRED');
  ensure(typeof options.maxFeeStroops==='string'&&/^[1-9][0-9]{0,9}$/.test(options.maxFeeStroops)&&BigInt(options.maxFeeStroops)<=0xffffffffn,'EXPLICIT_FEE_BUDGET_REQUIRED');const feeCap=BigInt(options.maxFeeStroops);
  const spec=new Client({contractId:release.pool,networkPassphrase:Networks.TESTNET,rpcUrl:release.rpcUrl}).spec;
- async function reconcileAttempt(attempt:PublicAttempt):Promise<SubmissionOutcome>{
+ async function reconcileAttempt(attempt:JournalAttempt):Promise<SubmissionOutcome>{
+  ensure(attempt.version===1,'SUBMISSION_ATTEMPT_REQUIRED');
   ensure(attempt.releaseId===release.scope.profileId&&attempt.pool===release.pool,'ATTEMPT_RELEASE_MISMATCH');
   const existing=await journal.get(attempt.hash);ensure(existing,'PENDING_ATTEMPT_REQUIRED');if(existing.terminal)return outcome(attempt,existing.terminal);
   try{
@@ -156,7 +172,7 @@ export function createTestnetSubmissionLifecycle(options:SubmissionOptions){
    const result=boundEnvelope(response,attempt);if(!result)return outcome(attempt,null);
    let evidence:TerminalEvidence;
    if(response.status==='FAILED'){
-    if(!failedOperation(result)||!xdr.TransactionMeta.isValid(response.resultMetaXdr))return outcome(attempt,null);
+    if(!failedOperation(result)||!validTransactionMeta(response.resultMetaXdr))return outcome(attempt,null);
     evidence={hash:attempt.hash,status:'failed',ledger:response.ledger};
    }else if(response.status==='SUCCESS'){
     if(!successMeta(response,attempt.recordId,result))return outcome(attempt,null);
@@ -194,7 +210,7 @@ export function createTestnetSubmissionLifecycle(options:SubmissionOptions){
     ensure(simulation.result.retval.switch().name==='scvBytes'&&simulation.result.retval.bytes().toString('hex')===c.intent.recordId,'SIMULATION_RECORD_MISMATCH');
     current(simulation.latestLedger,c.fields);
     const assembled=rpc.assembleTransaction(TransactionBuilder.fromXDR(rawXdr,Networks.TESTNET) as Transaction,simulation).build();
-    ensure(BigInt(assembled.fee)<=feeCap,'FEE_BUDGET_EXCEEDED');simulationAuth(assembled,expectedFunction,release,c.fields,c.args);
+    enforceFeeBudget(assembled.fee,feeCap);simulationAuth(assembled,expectedFunction,release,c.fields,c.args);
     sameCheckpoint(checkpoint(await reader.readState()),initial);sameSession(wallet,expectedSession);
     current((await transport.getLatestLedger()).sequence,c.fields);sameSession(wallet,expectedSession);
     const returned=await wallet.signTransaction(assembled.toXDR(),Networks.TESTNET,expectedSession.account);sameSession(wallet,expectedSession);

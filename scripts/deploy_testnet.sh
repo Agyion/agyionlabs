@@ -28,9 +28,9 @@ STELLAR_BIN="${STELLAR_BIN:-stellar}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly ROOT
-readonly CONTRACT_DIR="$ROOT/contracts/hak"
+readonly CONTRACT_DIR="$ROOT/contracts/agyion"
 readonly MANIFEST="$CONTRACT_DIR/Cargo.toml"
-readonly WASM_FILE="$CONTRACT_DIR/target/wasm32v1-none/release/hak.wasm"
+readonly WASM_FILE="$CONTRACT_DIR/target/wasm32v1-none/release/agyion.wasm"
 readonly NETWORK_ARGS=(--rpc-url "$TESTNET_RPC" --network-passphrase "$TESTNET_PASSPHRASE")
 cd "$ROOT"
 
@@ -67,14 +67,14 @@ fi
 print_config() {
   local contract_id="$1"
   local wasm_hash="$2"
-  printf '\nNEXT_PUBLIC_HAK_MODE=soroban\n'
-  printf 'NEXT_PUBLIC_HAK_CONTRACT_ID=%s\n' "$contract_id"
-  printf 'NEXT_PUBLIC_HAK_WASM_HASH=%s\n' "$wasm_hash"
+  printf '\nNEXT_PUBLIC_AGYION_MODE=soroban\n'
+  printf 'NEXT_PUBLIC_AGYION_CONTRACT_ID=%s\n' "$contract_id"
+  printf 'NEXT_PUBLIC_AGYION_WASM_HASH=%s\n' "$wasm_hash"
   printf 'NEXT_PUBLIC_SOROBAN_RPC_URL=%s\n' "$TESTNET_RPC"
   printf 'NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE="%s"\n' "$TESTNET_PASSPHRASE"
-  printf 'NEXT_PUBLIC_HAK_ASSET_CODE=USDC\n'
-  printf 'NEXT_PUBLIC_HAK_ASSET_ADDRESS=GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5\n'
-  printf 'NEXT_PUBLIC_HAK_ASSET_CONTRACT_ID=CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA\n'
+  printf 'NEXT_PUBLIC_AGYION_ASSET_CODE=USDC\n'
+  printf 'NEXT_PUBLIC_AGYION_ASSET_ADDRESS=GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5\n'
+  printf 'NEXT_PUBLIC_AGYION_ASSET_CONTRACT_ID=CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA\n'
 }
 
 if [[ "$DRY_RUN" == '1' ]]; then

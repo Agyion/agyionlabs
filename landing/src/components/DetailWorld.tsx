@@ -48,7 +48,7 @@ export default function DetailWorld({ id, name, caveat, notes, environment }: De
         </div>
         <section className="product-rules" aria-label={`${name} protocol details`}>
           <details className="product-limits"><summary>Protocol details <span aria-hidden="true">+</span></summary>
-            <ul>{notes.map(note => <li key={note}>{note}</li>)}{id !== 'ramp' && id !== 'ledger' && <li>The current app uses public testnet records. Protected writes require a compatible V3 deployment. The separate experimental privacy pool is not live.</li>}</ul>
+            <ul>{notes.map(note => <li key={note}>{note}</li>)}{id !== 'ramp' && id !== 'ledger' && <li>Testnet only. Fade and existing public positions stay public. Private Pod, Trigger and Envoy use an experimental pool with development setup keys and trustees held by one operator. Public deposits, withdrawals and fee payers can reveal relationships.</li>}</ul>
           </details>
         </section>
         <footer className="product-footer">

@@ -1,4 +1,4 @@
-/* About — pixel marquee hero, showreel expansion scrub, year counter,
+/* About: pixel marquee hero, showreel expansion scrub, year counter,
  * 6-face capability cube carousel, roster with cursor-follow image. */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { config } from '../config'

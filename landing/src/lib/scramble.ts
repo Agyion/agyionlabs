@@ -1,4 +1,4 @@
-/* Text scramble reveal — resolves random glyphs into the target string
+/* Text scramble reveal: resolves random glyphs into the target string
  * left-to-right. Lightweight interval implementation, no plugin dependency.
  * Callers must skip this entirely under reduced-motion. */
 const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&/=+'

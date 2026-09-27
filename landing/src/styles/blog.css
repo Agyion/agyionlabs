@@ -1,4 +1,4 @@
-/* Blog — async row list with skeleton / error states + cursor-follow thumb. */
+/* Blog: async row list with skeleton / error states + cursor-follow thumb. */
 
 .blog-wrap {
   padding: 0 clamp(18px, 1.6vw, 30px) clamp(80px, 12vh, 160px);

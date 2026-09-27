@@ -59,11 +59,6 @@
 .station-dock__name:after {content:none}
 .station-dock button:is(:hover,:focus-visible) .station-dock__name {transform:none}
 .station-dock button:focus-visible {outline:2px solid #f6ddb3;outline-offset:2px}
-.station-vista__heading {padding:20px 24px;border:1px solid #d9c5a929;border-radius:16px;background:rgba(15,17,19,.9);text-shadow:none;max-width:290px}
-.station-vista__heading:before {content:none}
-.station-vista__heading h1 {font-size:42px}
-.station-kicker {margin-bottom:13px}
-.station-open-instrument {margin-top:18px}
 @media(max-width:850px) {
   .station-workspace {width:calc(100% - 36px);top:calc(var(--station-top) + 12px);bottom:96px;border-radius:18px}
   .station-drawer-scroll {padding:20px}
@@ -92,9 +87,6 @@
   .station-dock {padding:4px;gap:1px;border-radius:13px}
   .station-dock button,.station-dock button:first-of-type {min-height:50px;padding:8px 2px;border-radius:8px}
   .station-dock__name {font-size:14px;letter-spacing:-.02em}
-  .station-vista__heading {padding:16px 18px;left:20px;top:calc(var(--station-top) + 20px);max-width:240px}
-  .station-vista__heading h1 {font-size:36px}
-  .station-intro {font-size:16px}
   .station-orbit-help {margin-left:12px;margin-bottom:14px}
   .station-help {padding:15px}
 }

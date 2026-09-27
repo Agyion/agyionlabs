@@ -1,5 +1,5 @@
 /**
- * walletsKit.ts — Stellar Wallets Kit integration (SPEC §4)
+ * walletsKit.ts: Stellar Wallets Kit integration (SPEC §4)
  *
  * One connect button → kit auth modal (currently Freighter) → signing flows into the TransactionSigner abstraction
  * (wallet.ts registerSigner is the injection point).
@@ -17,7 +17,7 @@
  * enters SSR or the first bundle.
  */
 
-import type { TransactionSigner } from "./hakClient";
+import type { TransactionSigner } from "./agyionClient";
 import { activeSigner, assertSignedTransactionMatches, registerSigner, unregisterSigner, walletSessionVersion } from "./wallet";
 import { CONFIG } from "./config";
 import { Networks, StrKey } from "@stellar/stellar-sdk";

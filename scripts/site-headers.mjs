@@ -19,6 +19,10 @@ export function buildSiteHeaders(csp) {
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+/zk/private/*
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+  Content-Type: application/octet-stream
+
 /app/*
   Cache-Control: public, max-age=0, must-revalidate
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Keypair } from '@stellar/stellar-sdk';
-import { MockAgyionClient, SorobanAgyionClient } from '../app/lib/hakClient';
+import { MockAgyionClient, SorobanAgyionClient } from '../app/lib/agyionClient';
 import { podPublicKey, signPodCreation, signPodClaim } from '../app/lib/signers';
 import { formatMinor, parseMinor } from '../app/lib/format';
 import { installRecoveryLocks, recoveryTransactionFixture } from './recovery-fixture';

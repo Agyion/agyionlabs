@@ -15,5 +15,5 @@ export const isExternalHref = (href: string) => {
   return url !== null && url.origin !== OWN_ORIGIN
 }
 
-/* absolute URL pointing back at us — plain anchor, same-tab full navigation */
+/* absolute URL pointing back at us: plain anchor, same-tab full navigation */
 export const isOwnOriginHref = (href: string) => httpUrl(href)?.origin === OWN_ORIGIN

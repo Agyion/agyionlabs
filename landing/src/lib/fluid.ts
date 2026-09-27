@@ -1,4 +1,4 @@
-/* Fluid gradient field — the template's signature hero ambience layer.
+/* Fluid gradient field: the template's signature hero ambience layer.
  * Domain-warped fbm value noise rendered to a low-res canvas (CSS upscales
  * it softly), drifting over time, with a radial pointer push that warps the
  * domain around the cursor. Zero dependencies; reduced-motion renders one
@@ -22,7 +22,7 @@ export interface FluidFieldOptions {
   /**
    * Mapping curve: 'dark' (default) fills the field broadly with mid tones
    * for a glow field on black; 'light' keeps most of the field at the base
-   * tone and lets only thin high-value bands go deep — ink bands on foam
+   * tone and lets only thin high-value bands go deep: ink bands on foam
    * (multiply compositing).
    */
   curve?: 'dark' | 'light'

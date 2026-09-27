@@ -31,7 +31,7 @@ function bindScope(actual,expected) {
 }
 function specification(value) {
   const v = record(value,['id','kind'],'grant');
-  ensure(v.kind === 'pod' || v.kind === 'envoy','GRANT_KIND_REQUIRED');
+  ensure(v.kind === 'pod' || v.kind === 'trigger' || v.kind === 'envoy','GRANT_KIND_REQUIRED');
   return {id:hex(v.id,32,'grantId',true),kind:v.kind};
 }
 function specifications(value) {
@@ -47,26 +47,26 @@ function keysOf(value) {
   const spendingSecret = scalar(v.spendingSecret,FIELD,'spendingSecret'), viewScalar = scalar(v.viewScalar,SCALAR_ORDER,'viewScalar');
   const grants = list(v.grants,64,'grants').map(value => {
     const kind = Object.getOwnPropertyDescriptor(value ?? {},'kind')?.value;
-    ensure(kind === 'pod' || kind === 'envoy','GRANT_KIND_REQUIRED');
-    const g = record(value,['id','kind','viewScalar',kind === 'pod'?'podSecret':'revocationSeed'],'grantKeys');
+    ensure(kind === 'pod' || kind === 'trigger' || kind === 'envoy','GRANT_KIND_REQUIRED');
+    const g = record(value,['id','kind','viewScalar',...(kind === 'pod'?['podSecret']:kind === 'envoy'?['revocationSeed']:[])],'grantKeys');
     const common = {id:hex(g.id,32,'grantId',true),kind,viewScalar:scalar(g.viewScalar,SCALAR_ORDER,'grantViewScalar')};
     return kind === 'pod' ? {...common,podSecret:scalar(g.podSecret,FIELD,'podSecret')}
-      : {...common,revocationSeed:hex(g.revocationSeed,32,'revocationSeed',true)};
+      : kind === 'envoy' ? {...common,revocationSeed:hex(g.revocationSeed,32,'revocationSeed',true)} : common;
   });
   specifications(grants.map(({id,kind}) => ({id,kind})));
-  const values = [asHex(spendingSecret),asHex(viewScalar),...grants.flatMap(g => [asHex(g.viewScalar),g.kind === 'pod'?asHex(g.podSecret):g.revocationSeed])];
+  const values = [asHex(spendingSecret),asHex(viewScalar),...grants.flatMap(g => [asHex(g.viewScalar),...(g.kind === 'pod'?[asHex(g.podSecret)]:g.kind === 'envoy'?[g.revocationSeed]:[])])];
   ensure(new Set(values).size === values.length,'INDEPENDENT_KEY_MATERIAL_REQUIRED');
   return freeze({spendingSecret,viewScalar,grants});
 }
 function encodeKeys(keys) {
   return {spendingSecret:asHex(keys.spendingSecret),viewScalar:asHex(keys.viewScalar),grants:keys.grants.map(g => {
     const common = {id:g.id,kind:g.kind,viewScalar:asHex(g.viewScalar)};
-    return g.kind === 'pod'?{...common,podSecret:asHex(g.podSecret)}:{...common,revocationSeed:g.revocationSeed};
+    return g.kind === 'pod'?{...common,podSecret:asHex(g.podSecret)}:g.kind === 'envoy'?{...common,revocationSeed:g.revocationSeed}:common;
   })};
 }
 function usedKeys(keys) {
   const encoded = encodeKeys(keys);
-  return new Set([encoded.spendingSecret,encoded.viewScalar,...encoded.grants.flatMap(g => [g.viewScalar,g.kind === 'pod'?g.podSecret:g.revocationSeed])]);
+  return new Set([encoded.spendingSecret,encoded.viewScalar,...encoded.grants.flatMap(g => [g.viewScalar,...(g.kind === 'pod'?[g.podSecret]:g.kind === 'envoy'?[g.revocationSeed]:[])])]);
 }
 function randomValue(order,mask,used) {
   for (let i = 0; i < 256; i++) {
@@ -81,7 +81,7 @@ function randomValue(order,mask,used) {
 function grantKeys(spec,used) {
   const common = {...spec,viewScalar:randomValue(SCALAR_ORDER,7,used)};
   return spec.kind === 'pod' ? {...common,podSecret:randomValue(FIELD,63,used)}
-    : {...common,revocationSeed:asHex(randomValue(1n<<256n,255,used))};
+    : spec.kind === 'envoy' ? {...common,revocationSeed:asHex(randomValue(1n<<256n,255,used))} : common;
 }
 function point(scalar) { const p = babyjubjub.Point.BASE.multiply(scalar); return [p.x.toString(),p.y.toString()]; }
 function state(handle) { const v = vaults.get(handle); ensure(v,'PRIVATE_VAULT_HANDLE_REQUIRED'); return v; }
@@ -96,6 +96,7 @@ function make(scope,material) {
       const podHash = podSecretHash(g.podSecret); ensure(podHash !== 0n,'NONZERO_POD_HASH_REQUIRED');
       return {...common,podHash:podHash.toString()};
     }
+    if (g.kind === 'trigger') return common;
     const seed = hexToBytes(g.revocationSeed);
     try { return {...common,revocationPublicKey:bytesToHex(ed25519.getPublicKey(seed))}; } finally { seed.fill(0); }
   })};
