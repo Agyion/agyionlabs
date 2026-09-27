@@ -19,8 +19,9 @@ export function createObservationCaseEvidence({plan,stepId,observationKind,caseI
   const source=Object.values(accounts).find(a=>a.address===call.sourceAccount);assert.ok(source);
   return new TransactionBuilder(new Account(call.sourceAccount,source.sequence),{fee:'100',networkPassphrase:plan.networkPassphrase}).addOperation(Operation.invokeContractFunction({contract:call.target,function:call.method,args,auth})).setTimebounds(0,1800000060).build().toXDR();
  }
+ const controlEnvelope=intent.control?envelope(true):null;
  const error=intent.expectedError.startsWith('Contract#')?`HostError: Error(Contract, #${intent.expectedError.slice(9)})`:`HostError: Error(${intent.expectedError.replace('/',', ')})`;
- return {request:{envelopeXdr:envelope(),authMode:intent.authMode},response:{latestLedger:ledger,error},...(intent.control?{control:{request:{envelopeXdr:envelope(true),authMode:'enforce'},response:{latestLedger:ledger,results:[{xdr:xdr.ScVal.scvVoid().toXDR('base64')}],transactionData:new SorobanDataBuilder().setResourceFee('100').build().toXDR('base64'),minResourceFee:'100'}}}:{})};
+ return {request:{envelopeXdr:envelope(),authMode:intent.authMode},response:{latestLedger:ledger,error},...(intent.control?{control:{request:{envelopeXdr:controlEnvelope,authMode:'enforce'},response:{latestLedger:ledger,results:[{xdr:xdr.ScVal.scvVoid().toXDR('base64'),auth:xdr.TransactionEnvelope.fromXDR(controlEnvelope,'base64').v1().tx().operations()[0].body().invokeHostFunctionOp().auth().map(a=>a.toXDR('base64'))}],transactionData:new SorobanDataBuilder().setResourceFee('100').build().toXDR('base64'),minResourceFee:'100'}}}:{})};
 }
 export function createObservationFixture({plan,credentialSigners,stepId,phase,state,currentSnapshotResponse,headerEvidence,historySnapshots={},pins,timestamp='1800000000'}) {
  const families=publicLifecycleObservationCases({plan,stepId,phase}),raw={},snapshots={};const current={response:currentSnapshotResponse,headerEvidence,zeroBalanceEvidence:state.expected.zeroBalanceEvidence};

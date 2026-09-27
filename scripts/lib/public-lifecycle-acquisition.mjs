@@ -10,8 +10,11 @@ import { publicLifecycleAcquisitionKeys } from './public-lifecycle-readback.mjs'
 import { verifyPublicLifecycleHeader } from './public-lifecycle-state.mjs';
 import { createPublicLifecycleRpc } from './public-lifecycle-rpc.mjs';
 const { Address, xdr } = createRequire(new URL('../../app/package.json', import.meta.url))('@stellar/stellar-sdk');
-const MAX = 2 * 1024 * 1024, failures = new WeakSet();
-function fail(code) { const error = Error(`LIFECYCLE_ACQUISITION_${code}`); failures.add(error); throw error; }
+const MAX = 2 * 1024 * 1024, failures = new WeakMap();
+const signalAborted = Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted').get;
+const addListener = EventTarget.prototype.addEventListener, removeListener = EventTarget.prototype.removeEventListener;
+const isAborted = signal => signal === undefined ? false : Reflect.apply(signalAborted, signal, []);
+function fail(code) { const error = Error(`LIFECYCLE_ACQUISITION_${code}`); failures.set(error, code); throw error; }
 const check = (ok, code) => { if (!ok) fail(code); };
 const b64 = value => value.toXDR('base64');
 const frozen = value => { if (value && typeof value === 'object') { Object.values(value).forEach(frozen); Object.freeze(value); } return value; };
@@ -101,14 +104,14 @@ async function acquire(options, funding) {
     try { planSha256 = hashPublicLifecyclePlan(plan); keys = funding ? [xdr.LedgerKey.account(new xdr.LedgerKeyAccount({ accountId: new Address(plan.actors[role]).toScAddress().accountId() }))] : publicLifecycleAcquisitionKeys(plan); } catch { fail('INPUT'); }
     const rpc = Object.hasOwn(options, 'rpc') ? options.rpc : createPublicLifecycleRpc(signal ? { signal } : {});
     exact(rpc, ['request'], [], 'INPUT'); check(typeof rpc.request === 'function', 'INPUT'); const invoke = rpc.request.bind(rpc);
-    check(!signal?.aborted, 'ABORTED');
-    const aborted = signal && new Promise((_, reject) => { onAbort = () => { try { fail('ABORTED'); } catch (error) { reject(error); } }; signal.addEventListener('abort', onAbort, { once: true }); });
+    check(!isAborted(signal), 'ABORTED');
+    const aborted = signal && new Promise((_, reject) => { onAbort = () => { try { fail('ABORTED'); } catch (error) { reject(error); } }; Reflect.apply(addListener, signal, ['abort', onAbort, { once: true }]); });
     let rawBytes = 0;
     async function request(method, params = {}) {
-      check(!signal?.aborted, 'ABORTED'); let result;
-      try { const pending = Promise.resolve().then(() => { check(!signal?.aborted, 'ABORTED'); return invoke(method, params); }); result = await (aborted ? Promise.race([pending, aborted]) : pending); }
-      catch (error) { if (signal?.aborted) fail('ABORTED'); if (failures.has(error)) throw error; fail('RPC'); }
-      check(!signal?.aborted, 'ABORTED'); const raw = copy(result);
+      check(!isAborted(signal), 'ABORTED'); let result;
+      try { const pending = Promise.resolve().then(() => { check(!isAborted(signal), 'ABORTED'); return invoke(method, params); }); result = await (aborted ? Promise.race([pending, aborted]) : pending); }
+      catch (error) { if (isAborted(signal)) fail('ABORTED'); fail(failures.get(error) ?? 'RPC'); }
+      check(!isAborted(signal), 'ABORTED'); const raw = copy(result);
       rawBytes += Buffer.byteLength(JSON.stringify(raw)); check(rawBytes <= MAX, 'BOUNDS'); return raw;
     }
     const network = await request('getNetwork');
@@ -125,11 +128,11 @@ async function acquire(options, funding) {
       headerEvidence = checkedHeader(row, 'history', network.protocolVersion);
       check(Number.isSafeInteger(history.oldestLedgerCloseTime) && history.oldestLedgerCloseTime >= 0 && Number.isSafeInteger(history.latestLedgerCloseTime) && history.latestLedgerCloseTime >= history.oldestLedgerCloseTime && BigInt(history.oldestLedgerCloseTime) <= BigInt(row.ledgerCloseTime) && BigInt(history.latestLedgerCloseTime) >= BigInt(latest.closeTime), 'HEADER');
     }
-    check(!signal?.aborted, 'ABORTED');
+    check(!isAborted(signal), 'ABORTED');
     const result = { schema: 'agyion-public-lifecycle-acquisition-v1', ...(funding ? { role } : {}), planSha256, response, headerEvidence, raw: { network, entries, latest, history } };
     check(Buffer.byteLength(JSON.stringify(result)) <= MAX, 'BOUNDS'); return frozen(result);
-  } catch (error) { if (error && failures.has(error)) throw error; fail('INPUT'); }
-  finally { if (signal && onAbort) signal.removeEventListener('abort', onAbort); }
+  } catch (error) { fail(failures.get(error) ?? 'INPUT'); }
+  finally { if (signal && onAbort) Reflect.apply(removeListener, signal, ['abort', onAbort]); }
 }
 
 export function acquirePublicLifecycleSnapshot(options) { return acquire(options, false); }

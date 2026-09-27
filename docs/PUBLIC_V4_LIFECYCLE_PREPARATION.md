@@ -483,8 +483,9 @@ getter capture and full live preflight remain outstanding.
 The signing suite passes 26 cases, including actual signatures from deterministic
 unfunded recipient and relayer keys. Seller tests verify its fixed CLI boundary
 and refusal paths; they do not sign with the original seller identity. The
-baseline suite passes 101 cases, also independently rerun with the actual pinned
-local WASM. Two additional protected-run integration cases verify original-hash
+baseline suite passes 120 cases, including the later cancellation and raw-schema
+regressions, with a matching run using the actual pinned local WASM. Two additional
+protected-run integration cases verify original-hash
 recovery after expiry and expiry between signature production and journal
 acceptance. They use real local custody, actor signatures and journal policies,
 with synthetic chain evidence and an explicit executable-authentication double.
@@ -494,6 +495,74 @@ leaks. Public error boundaries reconstruct fixed internal error codes without
 returning caller-modified errors. These results cover the stated local cases;
 they do not establish seller signing success, live wire compatibility or live
 lifecycle completion.
+
+## Strict retained observation replay
+
+Negative observations accept only the supported raw RPC error shape. Unexpected
+success, restoration or parsed-result fields fail even when their values are
+null, false or empty. Both simulation requests must be unsigned, direct v1
+transactions with one exact contract invocation, fee100, no prepared resource
+extension, minTime0 and a finite positive maxTime. The full gate also binds the
+sequence to the captured source account. An explicit control field cannot be
+silently discarded by aggregation.
+
+An enforcement control needs one void result and the exact source-account auth
+entry from its validated request, including any required token-transfer child.
+Its encoded resource fee must equal its canonical quote and remain inside the
+existing fee cap. Canonical nonempty simulated state changes and all legitimate
+diagnostic-event types remain supported within local size limits. These are
+hypothetical simulation changes; independent before/after snapshots still prove
+unchanged accounting within the trusted-RPC model.
+
+Canonical evidence encoding preserves its existing key order while enforcing
+cumulative bytes, node count and depth before concatenation. Observation and
+acquisition errors retain private fixed codes and are reconstructed at public
+boundaries, so a caller-modified earlier error cannot carry arbitrary contents
+through a later refusal. Acquisition uses native cancellation state and listener
+methods, including cleanup, instead of caller-overridden signal properties. The
+baseline adapter relays cancellation through its own signal and removes every
+listener on success, refusal or abort. Its zero-result schema also rejects an
+inner JSON-RPC id; only the transport consumes the outer response id.
+
+Historical replay does not consult the current clock or repurpose the credential
+timestamp as capture time. A structurally valid historical request may already
+be expired now. Fresh acquisition requires separate clock checks and recorded
+capture timing. The retained real Contract#3 response still parses unchanged;
+control auth echo is grounded in pinned upstream implementation and synthetic
+tests, not a newly captured live enforcement response. The stricter supported
+wire shape may refuse larger or differently represented valid RPC replies.
+
+## Acquiring one negative observation
+
+The [record-mode case adapter](../scripts/lib/public-lifecycle-observation-acquisition.mjs)
+accepts a live branded state and the complete earlier baseline capture. Before
+making any external request, it replays that capture through the existing raw
+acquisition decoder using an in-memory transport. The decoded result must equal
+the retained projection and the state snapshot. An omitted native Balance needs
+the full same-head zero-read request and response, not just a compact zero flag.
+
+The adapter selects one scheduled record-mode case, obtains its exact credential
+only when required, and constructs one unsigned simulation. A changed simulation
+head is accepted only when the original intent is identical at that head. The
+subsequent complete snapshot must preserve accounts, records, counters,
+liabilities and principal, with at most two ledgers between the before and after
+captures. Funded state with a missing Balance refuses without invoking a getter.
+It never rebuilds, re-signs or retries a case after failure.
+
+The fixed90-second acquisition horizon is checked around awaited capabilities
+and each subsequent network read. It cannot be extended by changing the captured
+credential timestamp. This is a successful-result freshness bound; an injected
+trusted capability that never settles still requires caller cancellation. The
+default RPC transport has its own15-second request deadline. Historical replay
+does not infer these acquisition-time checks from a serialized boolean.
+
+Results retain canonical snapshot references, original raw captures and separate
+capture times. Each case is bounded to2MiB. The actual journal record has its own
+unchanged2MiB limit; raw sidecars are separate evidence and cannot be discarded
+to make an oversized journal appear valid. This library does not persist those
+sidecars, grant journal authority or implement a complete phase collector.
+Enforcement controls and the early historical staging pairs still need their
+own acquisition and integration paths.
 
 ## Remaining work
 

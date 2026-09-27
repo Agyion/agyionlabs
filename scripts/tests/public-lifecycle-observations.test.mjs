@@ -54,10 +54,10 @@ function caseInput(step,k,c){const rows=anchors(),r=rows.find(r=>r.record===step
 const tree=(target,method,args,children=[])=>new xdr.SorobanAuthorizedInvocation({function:xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(new xdr.InvokeContractArgs({contractAddress:new SDK.Address(target).toScAddress(),functionName:method,args})),subInvocations:children});
 function envelope(intent,control=false){const call=control?intent.control:intent.call,args=call.argsXdr.map(v=>xdr.ScVal.fromXDR(v,'base64'));if(intent.credential){const c=intent.credential,sig=roleKeys[c.role].sign(Buffer.from(c.payloadHex,'hex'));if(c.corruptFirstByte)sig[0]^=1;args[c.argumentIndex]=xdr.ScVal.scvBytes(sig);}
  let auth=[];if(intent.authMode==='enforce'){const children=call.method==='confirm_handoff'?[tree(plan.assets[0],'transfer',[new SDK.Address(plan.actors.recipient).toScVal(),new SDK.Address(plan.actors.seller).toScVal(),SDK.nativeToScVal(1000000n,{type:'i128'})])]:[];auth=[new xdr.SorobanAuthorizationEntry({credentials:xdr.SorobanCredentials.sorobanCredentialsSourceAccount(),rootInvocation:tree(call.target,call.method,args,children)})];}
- return new SDK.TransactionBuilder(new SDK.Account(call.sourceAccount,'9'),{fee:'100',networkPassphrase:plan.networkPassphrase}).addOperation(SDK.Operation.invokeContractFunction({contract:call.target,function:call.method,args,auth})).setTimeout(60).build().toXDR();
+ return new SDK.TransactionBuilder(new SDK.Account(call.sourceAccount,'9'),{fee:'100',networkPassphrase:plan.networkPassphrase}).addOperation(SDK.Operation.invokeContractFunction({contract:call.target,function:call.method,args,auth})).setTimebounds(0,1800000060).build().toXDR();
 }
 const errorText=e=>e.startsWith('Contract#')?`HostError: Error(Contract, #${e.slice(9)})`:`HostError: Error(${e.replace('/',', ')})`;
-function rawCase(i){const intent=M.publicLifecycleObservationIntent(i);return {request:{envelopeXdr:envelope(intent),authMode:intent.authMode},response:{latestLedger:i.ledger,error:errorText(intent.expectedError)},...(intent.control?{control:{request:{envelopeXdr:envelope(intent,true),authMode:'enforce'},response:{latestLedger:i.ledger,results:[{xdr:xdr.ScVal.scvVoid().toXDR('base64')}],transactionData:new SDK.SorobanDataBuilder().setResourceFee('100').build().toXDR('base64'),minResourceFee:'100'}}}:{})};}
+function rawCase(i){const intent=M.publicLifecycleObservationIntent(i),controlEnvelope=intent.control?envelope(intent,true):null;return {request:{envelopeXdr:envelope(intent),authMode:intent.authMode},response:{latestLedger:i.ledger,error:errorText(intent.expectedError)},...(intent.control?{control:{request:{envelopeXdr:controlEnvelope,authMode:'enforce'},response:{latestLedger:i.ledger,results:[{xdr:xdr.ScVal.scvVoid().toXDR('base64'),auth:xdr.TransactionEnvelope.fromXDR(controlEnvelope,'base64').v1().tx().operations()[0].body().invokeHostFunctionOp().auth().map(a=>a.toXDR('base64'))}],transactionData:new SDK.SorobanDataBuilder().setResourceFee('100').build().toXDR('base64'),minResourceFee:'100'}}}:{})};}
 for(const step of plan.steps)for(const phase of ['before','after']){
  const families=phase==='before'?[...(step===plan.steps[0]?plan.preflightObservations:[]),...step.requiredObservations]:[...step.postObservations,...(step===plan.steps.at(-1)?plan.finalObservations:[])];
  for(const k of families)test(`all fixed case semantics: ${step.id} ${k}`,()=>{const family=M.publicLifecycleObservationCases({plan,stepId:step.id,phase}).find(r=>r.observationKind===k);for(const c of family.caseIds){const i=caseInput(step,k,c),raw=rawCase(i);assert.equal(M.verifyPublicLifecycleObservationCase(i,raw).caseId,c);}});
@@ -95,8 +95,10 @@ const initialEvidence={response,zeroBalanceEvidence:null,headerEvidence:header(h
 const raw=structuredClone(input.raw),batch={response,headerEvidence:header(h),zeroBalanceEvidence:null},id=hash(canonical(batch));raw[plan.preflightObservations[0]].snapshots={[id]:batch};for(const row of Object.values(raw))for(const c of row.cases){c.beforeSnapshot=id;c.afterSnapshot=id;}
 const options={plan,planSha256:state.planSha256,stepId,phase:'before',claim:{binding},currentInclusion:null,initialEvidence,state,verifiedPrefix:[],currentFee:null,snapshot:state.snapshot,beforeSnapshot:null,rawEvidence:raw};
 const result=M.verifyPublicLifecycleObservations(options);assert.equal(result.evidence.length,11);assert.ok(result.evidence.every(r=>r.evidenceSha256.length===64));
-assert.throws(()=>M.verifyPublicLifecycleObservations({...options,state:structuredClone(state)}),/DERIVED_BRAND/);
+assert.throws(()=>M.verifyPublicLifecycleObservations({...options,state:structuredClone(state)}),/LIFECYCLE_OBSERVATION_CONTEXT/);
 for(const mutation of [r=>delete r[plan.preflightObservations[2]],r=>r[plan.preflightObservations[2]].cases.pop(),r=>r[plan.preflightObservations[2]].cases.reverse(),r=>r[plan.preflightObservations[2]].cases[0].beforeSnapshot='11'.repeat(32),r=>r[plan.preflightObservations[0]].snapshots[id].response.latestLedger++,r=>r[plan.preflightObservations[2]].cases[0].response.error='transport failed Error(Contract, #3)',r=>r[plan.preflightObservations[2]].cases[0].response.latestLedger--,r=>{const c=r[plan.preflightObservations[2]].cases[0],e=xdr.TransactionEnvelope.fromXDR(c.request.envelopeXdr,'base64');e.v1().tx().seqNum(xdr.SequenceNumber.fromString('999'));c.request.envelopeXdr=b64(e);}]){const bad=structuredClone(raw);mutation(bad);assert.throws(()=>M.verifyPublicLifecycleObservations({...options,rawEvidence:bad}));}
+for(const value of [null,false]){const bad=structuredClone(raw),c=bad[plan.preflightObservations[2]].cases[0];c.control=value;const intent={plan,stepId,observationKind:plan.preflightObservations[2],caseId:c.caseId,ledger:c.ledger,timestamp:c.timestamp,recordAnchors:state.recordAnchors};assert.throws(()=>M.verifyPublicLifecycleObservationCase(intent,{request:c.request,response:c.response,control:value}),/CONTROL/);assert.throws(()=>M.verifyPublicLifecycleObservations({...options,rawEvidence:bad}),/CONTROL/);}
+for(const field of ['results','transactionData','minResourceFee','restorePreamble','stateChanges','id','cost','_parsed','eventsJson','transactionDataJson','unexpected'])for(const value of [null,false,'']){const bad=structuredClone(raw);bad[plan.preflightObservations[2]].cases[0].response[field]=value;assert.throws(()=>M.verifyPublicLifecycleObservations({...options,rawEvidence:bad}),/ERROR/);}
 const changed=structuredClone(batch),entry=changed.response.entries[7],a=xdr.LedgerEntryData.fromXDR(entry.val,'base64');a.account().balance(xdr.Int64.fromString('1000000001'));entry.val=b64(a);const changedId=hash(canonical(changed)),bad=structuredClone(raw);bad[plan.preflightObservations[0]].snapshots[changedId]=changed;bad[plan.preflightObservations[2]].cases[0].afterSnapshot=changedId;assert.throws(()=>M.verifyPublicLifecycleObservations({...options,rawEvidence:bad}),/UNCHANGED/);
 const P=await import(moduleURL('public-lifecycle-policies.mjs')),policies=P.createPublicLifecyclePolicies();const scope={plan,planSha256:state.planSha256,stepId,phase:'before',claim:{stepId,binding},prefix:[],initialEvidence:{expected:initial.expected,response,headerEvidence:header(h)},currentInclusion:null,snapshotResponse:response,headerEvidence:header(h),beforeSnapshot:null};assert.equal(policies.verifyStateExpectations({...scope,expected:state.expected}).expectedSha256,hash(canonical(state.expected)));assert.deepEqual(policies.verifyObservations({...scope,snapshot:state.snapshot,currentFee:null,rawEvidence:raw}),result);
 console.log(real?'actual-pinned-code full-preflight passed':'structural-full-preflight unit passed');
@@ -139,4 +141,98 @@ test('retained real zero-amount wire response and diagnostic XDR parse without n
  const {readFile}=await import('node:fs/promises'),raw=JSON.parse(await readFile(new URL('./fixtures/public-v4-zero-amount-simulation.json',import.meta.url),'utf8'));
  assert.equal(raw.latestLedger,4901961);assert.equal(raw.events.length,2);assert.equal(M.publicLifecycleSimulationError(raw),'Contract#3');
  const wrong=structuredClone(raw);wrong.error=wrong.error.replace('HostError: Error(Contract, #3)','HostError: Error(Contract, #12)');assert.throws(()=>M.publicLifecycleSimulationError(wrong),/ERROR/);
+});
+
+// Strict raw wire regressions. These preserve synthetic control provenance;
+// only the separately retained Contract#3 test above is a real RPC capture.
+const controlKind='fade-claim-wrong-source-enforce';
+const controlInput=()=>caseInput(plan.steps.find(s=>s.requiredObservations.includes(controlKind)),controlKind,'source');
+const mutateEnvelope=(raw,change,control=false)=>{const request=(control?raw.control:raw).request,e=xdr.TransactionEnvelope.fromXDR(request.envelopeXdr,'base64');change(e.v1().tx());request.envelopeXdr=e.toXDR('base64');};
+for(const field of ['results','transactionData','minResourceFee','restorePreamble','stateChanges','id','cost','_parsed','eventsJson','transactionDataJson','unexpected'])test(`negative raw rejects presence of ${field}, including falsy values`,()=>{
+ for(const value of [null,false,'',0,[],{}])assert.throws(()=>M.publicLifecycleSimulationError({latestLedger:h,error:'HostError: Error(Contract, #3)',[field]:value}),/LIFECYCLE_OBSERVATION_ERROR/);
+});
+for(const field of ['error','restorePreamble','id','cost','_parsed','eventsJson','transactionDataJson','resultsJson','unexpected'])test(`control raw rejects presence of ${field}, including falsy values`,()=>{
+ const i=controlInput();for(const value of [null,false,'',0,[],{}]){const raw=rawCase(i);raw.control.response[field]=value;assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,raw),/LIFECYCLE_OBSERVATION_CONTROL/);}
+});
+for(const [label,change] of [
+ ['non-base fee',tx=>tx.fee(101)],
+ ['Soroban extension',tx=>tx.ext(new xdr.TransactionExt(1,new SDK.SorobanDataBuilder().build()))],
+ ['no time condition',tx=>tx.cond(xdr.Preconditions.precondNone())],
+ ['infinite maxTime',tx=>tx.cond(xdr.Preconditions.precondTime(new xdr.TimeBounds({minTime:xdr.Uint64.fromString('0'),maxTime:xdr.Uint64.fromString('0')})))],
+ ['nonzero minTime',tx=>tx.cond(xdr.Preconditions.precondTime(new xdr.TimeBounds({minTime:xdr.Uint64.fromString('1'),maxTime:xdr.Uint64.fromString('1800000060')})))],
+ ['v2 preconditions',tx=>tx.cond(xdr.Preconditions.precondV2(new xdr.PreconditionsV2({timeBounds:null,ledgerBounds:null,minSeqNum:null,minSeqAge:xdr.Uint64.fromString('0'),minSeqLedgerGap:0,extraSigners:[]})))],
+])test(`both observation requests reject ${label}`,()=>{const i=controlInput();for(const control of [false,true]){const raw=rawCase(i);mutateEnvelope(raw,change,control);assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,raw),/LIFECYCLE_OBSERVATION_ENVELOPE/);}});
+test('historical request expiry is structural and independent of wall clock or credential timestamp',()=>{
+ const kind='positive-handoff-wrong-source-enforce',i=caseInput(plan.steps.find(s=>s.requiredObservations.includes(kind)),kind,'source');i.timestamp='1';const raw=rawCase(i);for(const control of [false,true])mutateEnvelope(raw,tx=>tx.cond(xdr.Preconditions.precondTime(new xdr.TimeBounds({minTime:xdr.Uint64.fromString('0'),maxTime:xdr.Uint64.fromString('2')}))),control);
+ const now=Date.now;Date.now=()=>{throw Error('wall clock forbidden in historical replay');};try{assert.equal(M.verifyPublicLifecycleObservationCase(i,raw).caseId,'source');}finally{Date.now=now;}
+});
+for(const [label,edit] of [
+ ['missing',r=>delete r.auth],['empty',r=>r.auth=[]],['null',r=>r.auth=null],['extra',r=>r.auth.push(r.auth[0])],['malformed',r=>r.auth=['AA==']],
+ ['foreign tree',r=>{const a=xdr.SorobanAuthorizationEntry.fromXDR(r.auth[0],'base64');a.rootInvocation(tree(plan.assets[0],'transfer',[]));r.auth=[a.toXDR('base64')];}],
+ ['result alias',r=>r.authJson=[]],['noncanonical void',r=>r.xdr+='\n'],['nonvoid',r=>r.xdr=xdr.ScVal.scvU32(0).toXDR('base64')],
+])test(`control refuses ${label} authorization/result`,()=>{const i=controlInput(),raw=rawCase(i);edit(raw.control.response.results[0]);assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,raw),/LIFECYCLE_OBSERVATION_(CONTROL|XDR|AUTH)/);});
+test('positive handoff control echo includes the exact payment child',()=>{
+ const k='positive-handoff-wrong-source-enforce',i=caseInput(plan.steps.find(s=>s.requiredObservations.includes(k)),k,'source'),raw=rawCase(i);assert.equal(M.verifyPublicLifecycleObservationCase(i,raw).caseId,'source');
+ const auth=xdr.SorobanAuthorizationEntry.fromXDR(raw.control.response.results[0].auth[0],'base64');assert.equal(auth.rootInvocation().subInvocations().length,1);auth.rootInvocation().subInvocations([]);raw.control.response.results[0].auth=[auth.toXDR('base64')];assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,raw),/AUTH/);
+});
+for(const [label,quote,encoded] of [['mismatch','101','100'],['negative','0','-1'],['noncanonical','01','1'],['over cap','9999901','9999901'],['signed quote','+1','1']])test(`control refuses ${label} resource fee`,()=>{
+ const i=controlInput(),raw=rawCase(i);raw.control.response.minResourceFee=quote;raw.control.response.transactionData=new SDK.SorobanDataBuilder().setResourceFee(encoded).build().toXDR('base64');assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,raw),/CONTROL/);
+});
+test('control accepts zero and exact cap resource fees and refuses restoration',()=>{
+ const i=controlInput();for(const fee of ['0','9999900']){const raw=rawCase(i);raw.control.response.minResourceFee=fee;raw.control.response.transactionData=new SDK.SorobanDataBuilder().setResourceFee(fee).build().toXDR('base64');assert.equal(M.verifyPublicLifecycleObservationCase(i,raw).caseId,'source');}
+ const raw=rawCase(i),data=xdr.SorobanTransactionData.fromXDR(raw.control.response.transactionData,'base64');data.ext(new xdr.SorobanTransactionDataExt(1,new xdr.SorobanResourcesExtV0({archivedSorobanEntries:[0]})));raw.control.response.transactionData=data.toXDR('base64');assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,raw),/RESTORE/);
+});
+const diagnostic=(type,success,data=xdr.ScVal.scvVoid())=>new xdr.DiagnosticEvent({inSuccessfulContractCall:success,event:new xdr.ContractEvent({ext:new xdr.ExtensionPoint(0),contractId:Buffer.alloc(32,7),type,body:new xdr.ContractEventBody(0,new xdr.ContractEventV0({topics:[xdr.ScVal.scvSymbol('event')],data}))})}).toXDR('base64');
+test('all legitimate DiagnosticEvent wrapper kinds and success flags retain emission order',()=>{
+ const events=[xdr.ContractEventType.system(),xdr.ContractEventType.contract(),xdr.ContractEventType.diagnostic()].flatMap(type=>[false,true].map(flag=>diagnostic(type,flag)));
+ assert.equal(M.publicLifecycleSimulationError({latestLedger:h,error:'HostError: Error(Contract, #3)',events}),'Contract#3');const i=controlInput(),raw=rawCase(i);raw.control.response.events=events;assert.equal(M.verifyPublicLifecycleObservationCase(i,raw).caseId,'source');
+ const before=M.verifyPublicLifecycleObservationCase(i,raw).evidenceSha256;raw.control.response.events.reverse();assert.notEqual(M.verifyPublicLifecycleObservationCase(i,raw).evidenceSha256,before);
+});
+for(const side of ['negative','control'])test(`${side} rejects malformed, null, oversized and deeply nested diagnostic events`,()=>{
+ let nested=xdr.ScVal.scvVoid();for(let n=0;n<12;n++)nested=xdr.ScVal.scvVec([nested]);
+ for(const events of [null,['AA=='],Array(101).fill(diagnostic(xdr.ContractEventType.contract(),false)),[diagnostic(xdr.ContractEventType.contract(),true,nested)]]){const i=controlInput(),raw=rawCase(i);(side==='control'?raw.control.response:raw.response).events=events;assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,raw),/LIFECYCLE_OBSERVATION_(ERROR|CONTROL|XDR)/);}
+});
+test('control preserves canonical nonempty created/updated/deleted simulated state changes',async()=>{
+ const {readFile}=await import('node:fs/promises'),fixture=JSON.parse(await readFile(new URL('./fixtures/public-v4-positive-assembly.json',import.meta.url),'utf8'));
+ const captured=fixture.simulation.stateChanges,created=captured.find(r=>r.type==='created'),updated=captured.find(r=>r.type==='updated');assert.ok(created&&updated);
+ const changes=[created,updated,{type:'deleted',key:created.key,before:created.after,after:null}],i=controlInput(),raw=rawCase(i);raw.control.response.stateChanges=structuredClone(changes);assert.equal(M.verifyPublicLifecycleObservationCase(i,raw).caseId,'source');
+ for(const change of [r=>r.type=0,r=>r.before=null,r=>r.after=null,r=>r.key='AA==',r=>r.after+='\n',r=>r.parsed=false,r=>delete r.before]){const bad=structuredClone(raw);change(bad.control.response.stateChanges[1]);assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,bad),/LIFECYCLE_OBSERVATION_(CONTROL|XDR)/);}
+ for(const stateChanges of [null,Array(101).fill(created)]){const bad=structuredClone(raw);bad.control.response.stateChanges=stateChanges;assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,bad),/CONTROL/);}
+});
+test('canonical digest retains sorted keys and rejects getter/cycle/sparse/nonfinite representations',()=>{
+ const i=input('creation-nonpositive-amount','fade-zero'),raw=rawCase(i),reordered={response:{error:raw.response.error,latestLedger:h},request:{authMode:raw.request.authMode,envelopeXdr:raw.request.envelopeXdr}};
+ assert.equal(M.verifyPublicLifecycleObservationCase(i,raw).evidenceSha256,M.verifyPublicLifecycleObservationCase(i,reordered).evidenceSha256);
+ let accessed=0;const getter=Object.defineProperty({},'error',{enumerable:true,get(){accessed++;return 'oops';}}),cycle={};cycle.loop=cycle;
+ for(const bad of [getter,cycle,{events:Array(2)},{latestLedger:NaN},{latestLedger:-0}])assert.throws(()=>M.publicLifecycleSimulationError(bad),/DATA/);assert.equal(accessed,0);
+});
+test('cumulative encoded-byte budget refuses before visiting later hostile values',()=>{
+ let visited=0;const tail=new Proxy({}, {ownKeys(){visited++;throw Error('UNTRUSTED');}}),raw={padding:['x'.repeat(800000),'x'.repeat(800000),'x'.repeat(800000),tail]};
+ assert.throws(()=>M.publicLifecycleSimulationError(raw),/LIFECYCLE_OBSERVATION_DATA/);assert.equal(visited,0);
+});
+test('cumulative node and depth budgets apply before canonical concatenation',()=>{
+ assert.throws(()=>M.publicLifecycleSimulationError({latestLedger:h,error:'HostError: Error(Contract, #3)',padding:Array.from({length:101},()=>Array(1000).fill(null))}),/DATA/);
+ let nested=null;for(let n=0;n<34;n++)nested=[nested];assert.throws(()=>M.publicLifecycleSimulationError({nested}),/DATA/);
+});
+test('every export refuses hostile thrown values without reading their prototype or fields',()=>{
+ let inspected=0;const thrown=new Proxy({}, {get(){inspected++;throw Error('LEAK');},getPrototypeOf(){inspected++;throw Error('LEAK');}}),bad=new Proxy({}, {getPrototypeOf(){throw thrown;}});
+ for(const invoke of [()=>M.publicLifecycleObservationCases(bad),()=>M.publicLifecycleObservationIntent(bad),()=>M.publicLifecycleSimulationError(bad),()=>M.verifyPublicLifecycleObservationCase(bad,{}),()=>M.verifyPublicLifecycleObservations(bad)])assert.throws(invoke,{message:'LIFECYCLE_OBSERVATION_INPUT'});assert.equal(inspected,0);
+});
+test('forged and mutated previous public errors cannot become error-message or identity channels',()=>{
+ let previous;try{M.publicLifecycleSimulationError({latestLedger:h,error:'bad'});}catch(e){previous=e;}assert.equal(previous.message,'LIFECYCLE_OBSERVATION_ERROR');previous.message='SECRET';
+ const inputThrowing=value=>new Proxy({}, {getPrototypeOf(){throw value;}});
+ assert.throws(()=>M.publicLifecycleSimulationError(inputThrowing(previous)),e=>e!==previous&&e.message==='LIFECYCLE_OBSERVATION_ERROR');
+ assert.throws(()=>M.publicLifecycleSimulationError(inputThrowing(Error('LIFECYCLE_OBSERVATION_SECRET'))),{message:'LIFECYCLE_OBSERVATION_INPUT'});
+});
+test('control request and echo reject address credentials even when echoed exactly',()=>{
+ const i=controlInput(),raw=rawCase(i);mutateEnvelope(raw,tx=>{const a=tx.operations()[0].body().invokeHostFunctionOp().auth()[0];a.credentials(xdr.SorobanCredentials.sorobanCredentialsAddress(new xdr.SorobanAddressCredentials({address:new SDK.Address(plan.actors.recipient).toScAddress(),nonce:xdr.Int64.fromString('1'),signatureExpirationLedger:h+10,signature:xdr.ScVal.scvVoid()})));raw.control.response.results[0].auth=[a.toXDR('base64')];},true);assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,raw),/AUTH/);
+});
+test('control refuses changed root arguments and additional returned auth subtree',()=>{
+ const i=controlInput();for(const change of [a=>a.rootInvocation().function().contractFn().args([]),a=>a.rootInvocation().subInvocations([tree(plan.assets[0],'transfer',[])])]){const raw=rawCase(i),a=xdr.SorobanAuthorizationEntry.fromXDR(raw.control.response.results[0].auth[0],'base64');change(a);raw.control.response.results[0].auth=[a.toXDR('base64')];assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,raw),/AUTH/);}
+});
+test('control requires every success field and allows a non-restoring resource extension',()=>{
+ const i=controlInput(),raw=rawCase(i);for(const key of ['latestLedger','transactionData','minResourceFee','results']){const bad=structuredClone(raw);delete bad.control.response[key];assert.throws(()=>M.verifyPublicLifecycleObservationCase(i,bad),/CONTROL/);}
+ const data=xdr.SorobanTransactionData.fromXDR(raw.control.response.transactionData,'base64');data.ext(new xdr.SorobanTransactionDataExt(1,new xdr.SorobanResourcesExtV0({archivedSorobanEntries:[]})));raw.control.response.transactionData=data.toXDR('base64');assert.equal(M.verifyPublicLifecycleObservationCase(i,raw).caseId,'source');
+});
+test('nested diagnostic maps preserve error agreement in either key or value',()=>{
+ for(const position of ['key','val']){const row={key:xdr.ScVal.scvSymbol('key'),val:xdr.ScVal.scvVoid()};row[position]=xdr.ScVal.scvError(xdr.ScError.sceContract(12));const events=[diagnostic(xdr.ContractEventType.contract(),true,xdr.ScVal.scvMap([new xdr.ScMapEntry(row)]))];assert.equal(M.publicLifecycleSimulationError({latestLedger:h,error:'HostError: Error(Contract, #12)',events}),'Contract#12');assert.throws(()=>M.publicLifecycleSimulationError({latestLedger:h,error:'HostError: Error(Contract, #3)',events}),/ERROR/);}
 });

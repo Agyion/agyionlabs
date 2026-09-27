@@ -9,24 +9,37 @@ import { assertPublicLifecycleDerivedState, verifyPublicLifecycleHeader } from '
 const { Address, Keypair, StrKey, nativeToScVal, xdr } = createRequire(new URL('../../app/package.json', import.meta.url))('@stellar/stellar-sdk');
 const OLD = 'CBIIHFELPAKC2KJD4NCJSB32BQO5QUBNEKHBMISFB4MVDKBVM6AJSRXT';
 const MAX = 2 * 1024 * 1024;
-const ensure = (ok, code) => { if (!ok) throw Error(`LIFECYCLE_OBSERVATION_${code}`); };
+// Only private fixed codes survive public boundaries. A previously returned
+// Error may be mutated by its caller, so always reconstruct a fresh Error.
+const refusals = new WeakMap();
+function refusal(code) { const error = Error(`LIFECYCLE_OBSERVATION_${code}`); refusals.set(error, code); return error; }
+const ensure = (ok, code) => { if (!ok) throw refusal(code); };
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-function canonical(v, seen = new Set(), depth = 0) {
-  ensure(depth <= 32, 'DATA');
-  if (v === null || typeof v === 'boolean') return JSON.stringify(v);
-  if (typeof v === 'string') { ensure(Buffer.byteLength(v) <= MAX, 'DATA'); return JSON.stringify(v); }
-  if (typeof v === 'number') { ensure(Number.isSafeInteger(v) && !Object.is(v, -0), 'DATA'); return String(v); }
+function canonical(value) {
+ const seen = new Set(); let nodes = 0, bytes = 0;
+ const charge = text => { bytes += Buffer.byteLength(text); ensure(bytes <= MAX, 'DATA'); return text; };
+ function visit(v, depth) {
+  ensure(depth <= 32 && ++nodes <= 100000, 'DATA');
+  if (v === null || typeof v === 'boolean') return charge(JSON.stringify(v));
+  if (typeof v === 'string') { ensure(Buffer.byteLength(v) <= MAX, 'DATA'); return charge(JSON.stringify(v)); }
+  if (typeof v === 'number') { ensure(Number.isSafeInteger(v) && !Object.is(v, -0), 'DATA'); return charge(String(v)); }
   const array = Array.isArray(v); ensure(v && typeof v === 'object' && !seen.has(v) && Object.getPrototypeOf(v) === (array ? Array.prototype : Object.prototype), 'DATA');
   const d = Object.getOwnPropertyDescriptors(v), names = Reflect.ownKeys(d); ensure(names.length <= 10000 && names.every(k => typeof k === 'string'), 'DATA'); seen.add(v);
   let out;
-  if (array) { ensure(names.length === v.length + 1, 'DATA'); out = '[' + Array.from({ length: v.length }, (_, i) => { ensure(d[i] && d[i].enumerable && Object.hasOwn(d[i], 'value'), 'DATA'); return canonical(d[i].value, seen, depth + 1); }).join(',') + ']'; }
-  else out = '{' + names.sort().map(k => { ensure(d[k].enumerable && Object.hasOwn(d[k], 'value'), 'DATA'); return JSON.stringify(k) + ':' + canonical(d[k].value, seen, depth + 1); }).join(',') + '}';
-  seen.delete(v); ensure(Buffer.byteLength(out) <= MAX, 'DATA'); return out;
+  if (array) {
+   const length=d.length.value; ensure(names.length === length + 1, 'DATA'); charge('['); charge(']');
+   out = '[' + Array.from({ length }, (_, i) => { ensure(d[i] && d[i].enumerable && Object.hasOwn(d[i], 'value'), 'DATA'); if(i)charge(','); return visit(d[i].value, depth + 1); }).join(',') + ']';
+  } else {
+   charge('{'); charge('}'); out = '{' + names.sort().map((k,i) => { ensure(d[k].enumerable && Object.hasOwn(d[k], 'value'), 'DATA'); if(i)charge(','); ensure(Buffer.byteLength(k)<=MAX,'DATA'); const name=charge(JSON.stringify(k));charge(':');return name + ':' + visit(d[k].value, depth + 1); }).join(',') + '}';
+  }
+  seen.delete(v); return out;
+ }
+ return visit(value,0);
 }
 const digest = value => sha(canonical(value));
 const copy = value => JSON.parse(canonical(value));
 const freeze = value => { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; };
-function exact(value, required, optional = []) { ensure(value && Object.getPrototypeOf(value) === Object.prototype, 'INPUT'); const keys = Reflect.ownKeys(value); ensure(required.every(k => Object.hasOwn(value, k)) && keys.every(k => typeof k === 'string' && [...required, ...optional].includes(k)), 'INPUT'); canonical(value); }
+function exact(value, required, optional = [], code = 'INPUT') { ensure(value && Object.getPrototypeOf(value) === Object.prototype, code); const keys = Reflect.ownKeys(value); ensure(required.every(k => Object.hasOwn(value, k)) && keys.every(k => typeof k === 'string' && [...required, ...optional].includes(k)), code); canonical(value); }
 const same = (a, b, code) => ensure(canonical(a) === canonical(b), code);
 const ledger = v => ensure(Number.isSafeInteger(v) && v > 0 && v < 0xffffffff, 'LEDGER');
 const decimal = v => { ensure(typeof v === 'string' && /^(0|[1-9][0-9]*)$/.test(v) && BigInt(v) < (1n << 64n), 'INTEGER'); return BigInt(v); };
@@ -49,8 +62,8 @@ function schedule(plan, stepId, phase) {
  validatePublicLifecyclePlan(plan); const i = plan.steps.findIndex(s => s.id === stepId); ensure(i >= 0 && ['before','after'].includes(phase), 'SCOPE'); const s = plan.steps[i];
  return phase === 'before' ? [...(i === 0 ? plan.preflightObservations : []), ...s.requiredObservations] : [...s.postObservations, ...(i === 38 ? plan.finalObservations : [])];
 }
-export function publicLifecycleObservationCases(input) {
- exact(input,['plan','stepId','phase']); return freeze(schedule(input.plan,input.stepId,input.phase).map(observationKind=>({observationKind,caseIds:[...R[observationKind]]})));
+function observationCases(input) {
+ input=copy(input);exact(input,['plan','stepId','phase']); return freeze(schedule(input.plan,input.stepId,input.phase).map(observationKind=>({observationKind,caseIds:[...R[observationKind]]})));
 }
 const addr = a => new Address(a).toScVal();
 const n = (v, type = 'i128') => nativeToScVal(type === 'u32' ? Number(v) : BigInt(v), {type});
@@ -64,7 +77,7 @@ function anchored(input, name) {
 /** Simulation-only public intent; placeholders never authorize a submission.
  * Credentials bind exact public payloads. For corrupted signatures, sign the
  * payload then flip its first byte; the verifier checks both relationships. */
-export function publicLifecycleObservationIntent(raw) {
+function observationIntent(raw) {
  exact(raw,['plan','stepId','observationKind','caseId','ledger','timestamp','recordAnchors']); const input=copy(raw),{plan,stepId,observationKind:k,caseId:c,ledger:h,timestamp}=input;
  validatePublicLifecyclePlan(plan); ledger(h); decimal(timestamp); ensure(Array.isArray(input.recordAnchors),'ANCHOR');
  const step=plan.steps.find(s=>s.id===stepId); ensure(step && [...schedule(plan,stepId,'before'),...schedule(plan,stepId,'after')].includes(k) && R[k]?.includes(c),'CASE');
@@ -122,7 +135,7 @@ export function publicLifecycleObservationIntent(raw) {
  else if(k==='trigger-attest-terminal-replay'){check(r().value.state===1);attest();error='Contract#2';}
  else if(k==='trigger-refund-terminal-replay'){check(r().value.state===2);refund('refund_trigger');error='Contract#2';}
  else if(k==='fade-refund-terminal-replay'){check(r().value.state===3);refund('refund');error='Contract#5';}
- else throw Error('LIFECYCLE_OBSERVATION_CASE');
+ else throw refusal('CASE');
  if(role){
   if(method==='create_pod')payloadParts=[args[0].toXDR(),args[1].toXDR(),be(BigInt(args[2].i128().hi().toBigInt()<<64n)+args[2].i128().lo().toBigInt(),16),be(args[3].u32(),4),args[4].bytes()];
   const payload=Buffer.concat([prefix(purpose,domain),...payloadParts]),actual=Buffer.concat([prefix(actualPurpose??(method==='claim_pod'?'pod-claim:v3':purpose)),...(actualParts??payloadParts)]);
@@ -133,18 +146,43 @@ export function publicLifecycleObservationIntent(raw) {
  return freeze({observationKind:k,caseId:c,ledger:h,timestamp,authMode:mode,expectedError:error,call,credential,control});
 }
 /** Supported terminal wire grammar only; a trace substring cannot count. */
-export function publicLifecycleSimulationError(raw) {
- const response=copy(raw);ensure(typeof response.error==='string'&&response.error.length<=65536&&!response.results&&!response.restorePreamble,'ERROR');ledger(response.latestLedger);
+function simulationError(raw) {
+ const response=copy(raw);exact(response,['error','latestLedger'],['events'],'ERROR');ensure(typeof response.error==='string'&&response.error.length<=65536,'ERROR');ledger(response.latestLedger);
  const first=response.error.split('\n')[0],m=/^(?:HostError: )?Error\((Contract), #(2|3|4|5|6|7|9|10|11|12|14)\)$|^(?:HostError: )?Error\((Crypto|Auth), (InvalidInput|InvalidAction)\)$/.exec(first);
  ensure(m,'ERROR');const value=m[1]?`Contract#${m[2]}`:`${m[3]}/${m[4]}`;ensure(value!=='Crypto/InvalidAction'&&value!=='Auth/InvalidInput','ERROR');
- ensure(!response.transactionData&&!response.minResourceFee,'ERROR');
- if(response.events!==undefined){ensure(Array.isArray(response.events)&&response.events.length<=100,'ERROR');for(const item of response.events){ensure(typeof item==='string'&&item.length<=65536,'ERROR');let event;try{event=xdr.DiagnosticEvent.fromXDR(item,'base64');}catch{throw Error('LIFECYCLE_OBSERVATION_ERROR');}ensure(event.toXDR('base64')===item,'ERROR');const body=event.event().body().v0();const visit=(v,depth=0)=>{ensure(depth<=10,'ERROR');const type=v.switch().name;if(type==='scvError'){const e=v.error(),kind=e.switch().name;const decoded=kind==='sceContract'?`Contract#${e.contractCode()}`:kind==='sceCrypto'&&e.code().name==='scecInvalidInput'?'Crypto/InvalidInput':kind==='sceAuth'&&e.code().name==='scecInvalidAction'?'Auth/InvalidAction':null;ensure(decoded===value,'ERROR');}else if(type==='scvVec')for(const child of v.vec()??[])visit(child,depth+1);else if(type==='scvMap')for(const row of v.map()??[]){visit(row.key(),depth+1);visit(row.val(),depth+1);}};for(const v of [...body.topics(),body.data()])visit(v);}}
+ if(Object.hasOwn(response,'events'))events(response.events,'ERROR',value);
  return value;
 }
-function decode(Type, value, max=65536){ensure(typeof value==='string'&&value.length>0&&value.length<=max,'XDR');let out;try{out=Type.fromXDR(value,'base64');}catch{throw Error('LIFECYCLE_OBSERVATION_XDR');}ensure(out.toXDR('base64')===value,'XDR');return out;}
+function decode(Type, value, max=65536, code='XDR'){ensure(typeof value==='string'&&value.length>0&&value.length<=max,code);let out;try{out=Type.fromXDR(value,'base64');}catch{throw refusal(code);}ensure(out.toXDR('base64')===value,code);return out;}
+function events(values, code, expectedError=null) {
+ ensure(Array.isArray(values)&&values.length<=100,code);let nodes=0;
+ const visit=(v,depth=0)=>{
+  ensure(depth<=10&&++nodes<=10000,code);const type=v.switch().name;
+  if(type==='scvError'&&expectedError!==null){const e=v.error(),kind=e.switch().name;const decoded=kind==='sceContract'?`Contract#${e.contractCode()}`:kind==='sceCrypto'&&e.code().name==='scecInvalidInput'?'Crypto/InvalidInput':kind==='sceAuth'&&e.code().name==='scecInvalidAction'?'Auth/InvalidAction':null;ensure(decoded===expectedError,code);}
+  else if(type==='scvVec')for(const child of v.vec()??[])visit(child,depth+1);
+  else if(type==='scvMap')for(const row of v.map()??[]){visit(row.key(),depth+1);visit(row.val(),depth+1);}
+ };
+ for(const item of values){const event=decode(xdr.DiagnosticEvent,item,65536,code).event();ensure(event.ext().switch()===0&&event.body().switch()===0&&['system','contract','diagnostic'].includes(event.type().name),code);const body=event.body().v0();for(const v of [...body.topics(),body.data()])visit(v);}
+}
+function controlResponse(raw, request, at) {
+ exact(raw,['latestLedger','transactionData','minResourceFee','results'],['events','stateChanges'],'CONTROL');ensure(raw.latestLedger===at,'CONTROL');
+ ensure(Array.isArray(raw.results)&&raw.results.length===1,'CONTROL');const result=raw.results[0];exact(result,['xdr','auth'],[],'CONTROL');
+ ensure(decode(xdr.ScVal,result.xdr,512).switch().name==='scvVoid','CONTROL');ensure(Array.isArray(result.auth)&&result.auth.length===1,'AUTH');
+ const auth=decode(xdr.SorobanAuthorizationEntry,result.auth[0],16384),expected=request.v1().tx().operations()[0].body().invokeHostFunctionOp().auth()[0];ensure(auth.toXDR('base64')===expected.toXDR('base64'),'AUTH');
+ const data=decode(xdr.SorobanTransactionData,raw.transactionData),ext=data.ext();ensure(ext.switch()===0||(ext.switch()===1&&ext.resourceExt().archivedSorobanEntries().length===0),'RESTORE');
+ ensure(typeof raw.minResourceFee==='string'&&/^(0|[1-9][0-9]{0,7})$/.test(raw.minResourceFee),'CONTROL');const fee=BigInt(raw.minResourceFee);ensure(fee===BigInt(data.resourceFee().toString())&&fee+100n<=10000000n,'CONTROL');
+ if(Object.hasOwn(raw,'events'))events(raw.events,'CONTROL');
+ // Hypothetical state changes are retained representation, not inclusion or
+ // committed state. The full gate independently requires unchanged snapshots.
+ if(Object.hasOwn(raw,'stateChanges')){
+  ensure(Array.isArray(raw.stateChanges)&&raw.stateChanges.length<=100,'CONTROL');
+  for(const row of raw.stateChanges){exact(row,['type','key','before','after'],[],'CONTROL');ensure(['created','updated','deleted'].includes(row.type),'CONTROL');ensure(row.type==='created'?row.before===null&&row.after!==null:row.type==='updated'?row.before!==null&&row.after!==null:row.before!==null&&row.after===null,'CONTROL');decode(xdr.LedgerKey,row.key,8192);for(const k of ['before','after'])if(row[k]!==null)decode(xdr.LedgerEntry,row[k],1024*1024);}
+ }
+}
 function invocation(raw, call, credential, mode, plan) {
  const envelope=decode(xdr.TransactionEnvelope,raw,131072);ensure(envelope.switch().name==='envelopeTypeTx'&&envelope.v1().signatures().length===0,'ENVELOPE');const tx=envelope.v1().tx();
  ensure(tx.sourceAccount().switch().name==='keyTypeEd25519'&&StrKey.encodeEd25519PublicKey(tx.sourceAccount().ed25519())===call.sourceAccount&&tx.memo().switch().name==='memoNone'&&tx.operations().length===1,'ENVELOPE');
+ ensure(tx.fee()===100&&tx.ext().switch()===0&&tx.cond().switch().name==='precondTime','ENVELOPE');const time=tx.cond().timeBounds();ensure(time.minTime().toString()==='0'&&BigInt(time.maxTime().toString())>0n,'ENVELOPE');
  const op=tx.operations()[0];ensure(op.sourceAccount()==null&&op.body().switch().name==='invokeHostFunction','ENVELOPE');const host=op.body().invokeHostFunctionOp();ensure(host.hostFunction().switch().name==='hostFunctionTypeInvokeContract','ENVELOPE');const f=host.hostFunction().invokeContract();
  ensure(f.contractAddress().toXDR('base64')===new Address(call.target).toScAddress().toXDR('base64')&&f.functionName().toString()===call.method,'CALL');const args=[...call.argsXdr];
  if(credential){const val=f.args()[credential.argumentIndex];ensure(val?.switch().name==='scvBytes'&&val.bytes().length===64,'SIGNATURE');const signature=Buffer.from(val.bytes()),original=Buffer.from(signature);if(credential.corruptFirstByte)original[0]^=1;
@@ -153,16 +191,15 @@ function invocation(raw, call, credential, mode, plan) {
  const tree=(target,method,values,children=[])=>new xdr.SorobanAuthorizedInvocation({function:xdr.SorobanAuthorizedFunction.sorobanAuthorizedFunctionTypeContractFn(new xdr.InvokeContractArgs({contractAddress:new Address(target).toScAddress(),functionName:method,args:values})),subInvocations:children});
  if(mode==='record')ensure(host.auth().length===0,'AUTH');
  else {const children=call.method==='confirm_handoff'?[tree(plan.assets[0],'transfer',[addr(plan.actors.recipient),addr(plan.actors.seller),n('1000000')])]:[];const auth=host.auth();ensure(auth.length===1&&auth[0].credentials().switch().name==='sorobanCredentialsSourceAccount'&&auth[0].rootInvocation().toXDR('base64')===tree(call.target,call.method,f.args(),children).toXDR('base64'),'AUTH');}
- if(tx.ext().switch()===1){const ext=tx.ext().sorobanData().ext();ensure(ext.switch()===0||(ext.switch()===1&&ext.resourceExt().archivedSorobanEntries().length===0),'RESTORE');}else ensure(tx.ext().switch()===0,'RESTORE');
  return envelope;
 }
 /** Case semantics only. Does not authenticate snapshots, RPC transport, history,
  * funds or final aggregates; never use this export to release journal work. */
-export function verifyPublicLifecycleObservationCase(input, raw) {
- const evidence=copy(raw);exact(evidence,['request','response'],['control']);exact(evidence.request,['envelopeXdr','authMode']);const intent=publicLifecycleObservationIntent(input);ensure(evidence.request.authMode===intent.authMode,'MODE');invocation(evidence.request.envelopeXdr,intent.call,intent.credential,intent.authMode,input.plan);
+function observationCase(input, raw) {
+ input=copy(input);const evidence=copy(raw);exact(evidence,['request','response'],['control']);exact(evidence.request,['envelopeXdr','authMode']);const intent=publicLifecycleObservationIntent(input);ensure(evidence.request.authMode===intent.authMode,'MODE');invocation(evidence.request.envelopeXdr,intent.call,intent.credential,intent.authMode,input.plan);
  ensure(evidence.response.latestLedger===input.ledger,'LEDGER');ensure(publicLifecycleSimulationError(evidence.response)===intent.expectedError,'ERROR');
- if(intent.control){exact(evidence.control,['request','response']);exact(evidence.control.request,['envelopeXdr','authMode']);ensure(evidence.control.request.authMode==='enforce','CONTROL');invocation(evidence.control.request.envelopeXdr,intent.control,intent.credential,'enforce',input.plan);const r=evidence.control.response;ensure(!r.error&&!r.restorePreamble&&r.latestLedger===input.ledger&&Array.isArray(r.results)&&r.results.length===1&&r.results[0].xdr===xdr.ScVal.scvVoid().toXDR('base64'),'CONTROL');const data=decode(xdr.SorobanTransactionData,r.transactionData);const ext=data.ext();ensure(ext.switch()===0||(ext.switch()===1&&ext.resourceExt().archivedSorobanEntries().length===0),'RESTORE');ensure(typeof r.minResourceFee==='string'&&/^(0|[1-9][0-9]*)$/.test(r.minResourceFee),'CONTROL');}
- else ensure(evidence.control===undefined,'CONTROL');
+ if(intent.control){exact(evidence.control,['request','response']);exact(evidence.control.request,['envelopeXdr','authMode']);ensure(evidence.control.request.authMode==='enforce','CONTROL');const request=invocation(evidence.control.request.envelopeXdr,intent.control,intent.credential,'enforce',input.plan);controlResponse(evidence.control.response,request,input.ledger);}
+ else ensure(!Object.hasOwn(evidence,'control'),'CONTROL');
  return freeze({caseId:intent.caseId,ledger:input.ledger,result:`simulation-only:${intent.expectedError}`,evidenceSha256:digest(evidence)});
 }
 
@@ -219,9 +256,9 @@ function finalRecords(snapshot){
  * compact prefix must come from the journal's same-call raw evidence replay.
  * This authenticates fixed code/bytes and semantics under trusted RPC capture;
  * it does not independently authenticate a remote node or execute a lifecycle. */
-export function verifyPublicLifecycleObservations(options) {
+function observations(options) {
  exact(options,['plan','planSha256','stepId','phase','claim','currentInclusion','initialEvidence','state','verifiedPrefix','currentFee','snapshot','beforeSnapshot','rawEvidence']);
- const {plan,planSha256,stepId,phase,state,verifiedPrefix,snapshot}=options;validatePublicLifecyclePlan(plan);ensure(planSha256===hashPublicLifecyclePlan(plan),'CONTEXT');ensure(assertPublicLifecycleDerivedState(state)===state,'CONTEXT');
+ const {plan,planSha256,stepId,phase,state,verifiedPrefix,snapshot}=options;validatePublicLifecyclePlan(plan);ensure(planSha256===hashPublicLifecyclePlan(plan),'CONTEXT');try{ensure(assertPublicLifecycleDerivedState(state)===state,'CONTEXT');}catch{throw refusal('CONTEXT');}
  const index=plan.steps.findIndex(s=>s.id===stepId),names=schedule(plan,stepId,phase);ensure(state.planSha256===planSha256&&state.stepId===stepId&&state.phase===phase&&state.prefixLength===index&&Array.isArray(verifiedPrefix)&&verifiedPrefix.length===index,'CONTEXT');same(state.snapshot,snapshot,'CONTEXT');
  ensure(snapshot.codeBytesAuthenticated===true&&snapshot.planSha256===planSha256,'CONTEXT');if(phase==='before')ensure(options.currentFee===null&&options.currentInclusion===null,'CONTEXT');else ensure(options.currentInclusion?.status==='SUCCESS'&&options.currentFee?.schema==='agyion-public-v4-lifecycle-fees-v1'&&options.currentFee.result==='txSuccess'&&options.currentFee.sourceAccount===plan.steps[index].sourceAccount&&options.currentFee.transactionHash===options.currentInclusion.hash&&options.currentFee.inclusionLedger===options.currentInclusion.ledger,'CONTEXT');
  // All phases recheck conservative remaining funds from the actual header reserve.
@@ -234,7 +271,7 @@ export function verifyPublicLifecycleObservations(options) {
  };
  const out=[];
  for(const kind of names){const row=raw[kind];let observed=snapshot.ledger;
-  for(let i=0;i<R[kind].length;i++){const c=row.cases[i];exact(c,['caseId','ledger','timestamp','beforeSnapshot','afterSnapshot','request','response'],['control']);ensure(c.caseId===R[kind][i],'CASES');const before=readSnapshot(c.beforeSnapshot),after=readSnapshot(c.afterSnapshot);ensure(before.ledger<=c.ledger&&c.ledger<=after.ledger&&after.ledger-before.ledger<=2,'BRACKET');const input={plan,stepId,observationKind:kind,caseId:c.caseId,ledger:c.ledger,timestamp:c.timestamp,recordAnchors:state.recordAnchors};verifyPublicLifecycleObservationCase(input,{request:c.request,response:c.response,...(c.control?{control:c.control}:{})});snapshotSequence(c.request,before);if(c.control)snapshotSequence(c.control.request,before);observed=Math.min(observed,c.ledger);}
+  for(let i=0;i<R[kind].length;i++){const c=row.cases[i];exact(c,['caseId','ledger','timestamp','beforeSnapshot','afterSnapshot','request','response'],['control']);ensure(c.caseId===R[kind][i],'CASES');const before=readSnapshot(c.beforeSnapshot),after=readSnapshot(c.afterSnapshot);ensure(before.ledger<=c.ledger&&c.ledger<=after.ledger&&after.ledger-before.ledger<=2,'BRACKET');const input={plan,stepId,observationKind:kind,caseId:c.caseId,ledger:c.ledger,timestamp:c.timestamp,recordAnchors:state.recordAnchors};verifyPublicLifecycleObservationCase(input,{request:c.request,response:c.response,...(Object.hasOwn(c,'control')?{control:c.control}:{})});snapshotSequence(c.request,before);if(c.control)snapshotSequence(c.control.request,before);observed=Math.min(observed,c.ledger);}
   if(kind==='initial-reviewed-code-and-empty-accounting'){ensure(index===0&&phase==='before'&&snapshot.records.length===0&&snapshot.liabilities.every(r=>r.amount==='0')&&Object.values(snapshot.counters).every(v=>v==='0'),'INITIAL');}
   if(kind==='mixed-three-obligations-backed'){ensure(snapshot.openPrincipalStroops==='30000000'&&snapshot.nativeReserveStroops===String(BigInt(snapshot.initialSurplusStroops)+30000000n)&&snapshot.liabilities[1].amount==='0','MIXED');for(const record of ['fade-mixed','pod-mixed','trigger-mixed'])ensure(snapshot.records.find(r=>r.record===record)?.value.state===0,'MIXED');}
   if(kind==='all-required-simulations-have-matching-errors-and-prerequisites')historyObservations(options,out);
@@ -246,3 +283,11 @@ export function verifyPublicLifecycleObservations(options) {
  }
  ensure(used.size===batches.size,'SNAPSHOT_UNUSED');return freeze({planSha256,stepId,phase,evidence:out});
 }
+
+// These boundaries do not inspect a thrown value's prototype, message or cause.
+const guarded=(fn,args)=>{try{return fn(...args);}catch(error){throw refusal(refusals.get(error)??'INPUT');}};
+export function publicLifecycleObservationCases(input){return guarded(observationCases,[input]);}
+export function publicLifecycleObservationIntent(input){return guarded(observationIntent,[input]);}
+export function publicLifecycleSimulationError(input){return guarded(simulationError,[input]);}
+export function verifyPublicLifecycleObservationCase(input,raw){return guarded(observationCase,[input,raw]);}
+export function verifyPublicLifecycleObservations(input){return guarded(observations,[input]);}

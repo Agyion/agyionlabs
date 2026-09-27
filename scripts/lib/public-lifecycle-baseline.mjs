@@ -11,6 +11,13 @@ import { createPublicLifecycleRpc } from './public-lifecycle-rpc.mjs';
 const { Account, Address, Operation, TransactionBuilder, nativeToScVal, xdr } = createRequire(new URL('../../app/package.json', import.meta.url))('@stellar/stellar-sdk');
 const MAX = 2 * 1024 * 1024, b64 = v => v.toXDR('base64');
 const ZERO = b64(nativeToScVal(0n, { type: 'i128' }));
+// Native operations bypass caller-owned getters/methods. Only an owned relay
+// reaches acquisition and transport; their cleanup never sees caller overrides.
+const Controller = AbortController, abortController = AbortController.prototype.abort;
+const controllerSignal = Object.getOwnPropertyDescriptor(AbortController.prototype, 'signal').get;
+const signalAborted = Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted').get;
+const addListener = EventTarget.prototype.addEventListener, removeListener = EventTarget.prototype.removeEventListener;
+const isAborted = signal => signal === undefined ? false : Reflect.apply(signalAborted, signal, []);
 // Private codes never inspect an untrusted thrown value's prototype or mutable
 // fields. Reconstruct even genuine errors: callers can mutate a prior refusal.
 const refusals = new WeakMap();
@@ -87,9 +94,8 @@ function checkedRequest(request, plan, sequence, nowSeconds) {
   check(b64(fn.contractAddress()) === b64(new Address(plan.assets[0]).toScAddress()) && fn.functionName().toString() === 'balance' && fn.args().length === 1 && b64(fn.args()[0]) === b64(new Address(plan.contractId).toScVal()), 'REQUEST');
 }
 function checkedResponse(raw, head, keys, plan) {
-  exact(raw, ['latestLedger', 'transactionData', 'minResourceFee', 'results'], ['events', 'stateChanges', 'id'], 'RAW');
+  exact(raw, ['latestLedger', 'transactionData', 'minResourceFee', 'results'], ['events', 'stateChanges'], 'RAW');
   check(u32(raw.latestLedger) && raw.latestLedger === head, 'LEDGER');
-  if (Object.hasOwn(raw, 'id')) check(typeof raw.id === 'string' && raw.id.length > 0 && raw.id.length <= 128, 'RAW');
   check(Array.isArray(raw.results) && raw.results.length === 1, 'RESULT'); exact(raw.results[0], ['xdr', 'auth'], [], 'RESULT');
   decode(raw.results[0].xdr, xdr.ScVal, 512); check(raw.results[0].xdr === ZERO, 'RESULT');
   check(Array.isArray(raw.results[0].auth) && raw.results[0].auth.length === 0, 'AUTH');
@@ -133,30 +139,40 @@ export function verifyPublicLifecycleZeroRead(value) {
  * Rebuild initial authority from this final same-head result before first use.
  */
 export async function acquirePublicLifecycleBaseline(options) {
-  let signal, onAbort;
+  let caller, signal, onCaller, onAbort;
   try {
     exact(options, ['plan'], ['rpc', 'signal']); const plan = copy(options.plan), keys = keysFor(plan);
-    signal = options.signal; check(signal === undefined || signal instanceof AbortSignal, 'INPUT'); check(!signal?.aborted, 'ABORTED');
+    caller = options.signal; check(!isAborted(caller), 'ABORTED');
+    if (caller !== undefined) {
+      const controller = new Controller(); signal = Reflect.apply(controllerSignal, controller, []);
+      onCaller = () => Reflect.apply(abortController, controller, []);
+      Reflect.apply(addListener, caller, ['abort', onCaller, { once: true }]);
+    }
     const rpc = Object.hasOwn(options, 'rpc') ? options.rpc : createPublicLifecycleRpc(signal ? { signal } : {});
     exact(rpc, ['request']); check(typeof rpc.request === 'function', 'INPUT'); const invoke = rpc.request.bind(rpc), stableRpc = { request: invoke };
     let acquisition; try { acquisition = await acquirePublicLifecycleSnapshot({ plan, rpc: stableRpc, ...(signal ? { signal } : {}) }); }
-    catch { if (signal?.aborted) throw refusal('ABORTED'); throw refusal('ACQUISITION'); }
-    check(!signal?.aborted, 'ABORTED'); let zeroBalanceEvidence = null, zeroRead = null;
+    catch { if (isAborted(signal)) throw refusal('ABORTED'); throw refusal('ACQUISITION'); }
+    check(!isAborted(signal), 'ABORTED'); let zeroBalanceEvidence = null, zeroRead = null;
     if (!acquisition.response.entries.some(row => row.key === b64(keys[6]))) {
       const sequence = snapshotFacts(acquisition.response, keys), now = Math.floor(Date.now() / 1000);
       check(Number.isSafeInteger(now) && now > 0 && now <= Number.MAX_SAFE_INTEGER - 90, 'TIME');
       const transaction = new TransactionBuilder(new Account(plan.actors.seller, String(BigInt(sequence) - 1n)), { fee: '100', networkPassphrase: plan.networkPassphrase })
         .addOperation(Operation.invokeContractFunction({ contract: plan.assets[0], function: 'balance', args: [new Address(plan.contractId).toScVal()], auth: [] })).setTimebounds(0, now + 90).build().toXDR();
       const request = frozen({ transaction, authMode: 'record' }); checkedRequest(request, plan, sequence, now);
-      const aborted = signal && new Promise((_, reject) => { onAbort = () => reject(refusal('ABORTED')); signal.addEventListener('abort', onAbort, { once: true }); });
+      const aborted = signal && new Promise((_, reject) => { onAbort = () => reject(refusal('ABORTED')); Reflect.apply(addListener, signal, ['abort', onAbort, { once: true }]); });
       let response;
-      try { const pending = Promise.resolve().then(() => { check(!signal?.aborted, 'ABORTED'); return invoke('simulateTransaction', request); }); response = await (aborted ? Promise.race([pending, aborted]) : pending); }
-      catch { if (signal?.aborted) throw refusal('ABORTED'); throw refusal('RPC'); }
-      check(!signal?.aborted, 'ABORTED'); response = copy(response); const validatedAtSeconds = Math.floor(Date.now() / 1000);
+      try { const pending = Promise.resolve().then(() => { check(!isAborted(signal), 'ABORTED'); return invoke('simulateTransaction', request); }); response = await (aborted ? Promise.race([pending, aborted]) : pending); }
+      catch { if (isAborted(signal)) throw refusal('ABORTED'); throw refusal('RPC'); }
+      check(!isAborted(signal), 'ABORTED'); response = copy(response); const validatedAtSeconds = Math.floor(Date.now() / 1000);
       zeroBalanceEvidence = verifyPublicLifecycleZeroRead({ plan, snapshot: acquisition.response, request, response, nowSeconds: validatedAtSeconds });
       zeroRead = { request, response, validatedAtSeconds };
     }
     const result = { acquisition, zeroBalanceEvidence, zeroRead }; check(Buffer.byteLength(JSON.stringify(result)) <= MAX, 'BOUNDS'); return frozen(result);
   } catch (error) { throw refusal(refusals.get(error) ?? 'INPUT'); }
-  finally { if (signal && onAbort) signal.removeEventListener('abort', onAbort); }
+  finally {
+    try {
+      if (signal && onAbort) Reflect.apply(removeListener, signal, ['abort', onAbort]);
+      if (caller && onCaller) Reflect.apply(removeListener, caller, ['abort', onCaller]);
+    } catch { throw refusal('INPUT'); }
+  }
 }

@@ -105,11 +105,51 @@ test('plan and raw replies are detached before later asynchronous work can mutat
  const r=await acquirePublicLifecycleSnapshot({plan:localPlan,rpc});assert.equal(r.raw.network.passphrase,plan.networkPassphrase);assert.equal(r.response.entries[7].key,t.projected.entries[7].key);
 });
 test('already cancelled signal performs no request',async()=>{const t=fixture(),c=new AbortController();c.abort();await assert.rejects(acquirePublicLifecycleSnapshot({plan,rpc:t.rpc,signal:c.signal}),errorIs('ABORTED'));assert.equal(t.calls.length,0);});
+test('acquisition uses the real signal state and listeners without caller method or getter overrides', async () => {
+ const t = fixture(), c = new AbortController(); let invoked = 0;
+ Object.defineProperties(c.signal, {
+  aborted: { get() { invoked++; return false; } },
+  addEventListener: { value() { invoked++; throw Error('private listener content'); } },
+  removeEventListener: { value() { invoked++; throw Error('private cleanup content'); } },
+ });
+ await acquirePublicLifecycleSnapshot({ plan, rpc: t.rpc, signal: c.signal });
+ assert.equal(invoked, 0); assert.equal(t.calls.length, 3);
+ c.abort();
+ await assert.rejects(acquirePublicLifecycleSnapshot({ plan, rpc: t.rpc, signal: c.signal }), errorIs('ABORTED'));
+ assert.equal(invoked, 0); assert.equal(t.calls.length, 3);
+});
+test('an object inheriting AbortSignal without its native state refuses before RPC', async () => {
+ const t = fixture();
+ await assert.rejects(acquirePublicLifecycleSnapshot({ plan, rpc: t.rpc, signal: Object.create(AbortSignal.prototype) }), errorIs('INPUT'));
+ assert.equal(t.calls.length, 0);
+});
 test('cancellation races a trusted injected adapter that never settles and prevents later requests',async()=>{const c=new AbortController();let calls=0;const p=acquirePublicLifecycleSnapshot({plan,signal:c.signal,rpc:{request(){calls++;return new Promise(()=>{});}}});await new Promise(r=>setImmediate(r));c.abort('untrusted reason');await assert.rejects(p,errorIs('ABORTED'));assert.equal(calls,1);});
 test('production RPC controlled fetch propagates abort and normalizes transport errors without retry',async()=>{
  const c=new AbortController();let called=0,seen;const rpc=createPublicLifecycleRpc({signal:c.signal,fetch:async(_url,init)=>{called++;seen=init.signal;return new Promise(()=>{});}});
  const p=acquirePublicLifecycleSnapshot({plan,rpc,signal:c.signal});await new Promise(r=>setImmediate(r));c.abort();await assert.rejects(p,errorIs('ABORTED'));assert.equal(seen.aborted,true);assert.equal(called,1);
  let failedCalls=0;await assert.rejects(acquirePublicLifecycleSnapshot({plan,rpc:{async request(){failedCalls++;throw Error('private raw message');}}}),errorIs('RPC'));assert.equal(failedCalls,1);
+});
+for (const funding of [false, true]) test(`${funding ? 'funding' : 'snapshot'} acquisition reconstructs a reused mutable owned error without inspecting it`, async () => {
+ const invoke = options => funding ? acquirePublicLifecycleFundingAccount({ ...options, role: 'recipient' }) : acquirePublicLifecycleSnapshot(options);
+ let captured;
+ await assert.rejects(invoke({ plan, rpc: { async request() { return { passphrase: 'wrong network', protocolVersion: 28 }; } } }), error => { captured = error; return errorIs('NETWORK')(error); });
+ let reads = 0, calls = 0;
+ for (const key of ['message', 'cause', 'stack', 'name']) Object.defineProperty(captured, key, { configurable: true, get() { reads++; throw Error('private callback detail'); } });
+ captured.rawResponse = 'private callback detail';
+ Object.setPrototypeOf(captured, new Proxy({}, { get() { reads++; throw Error('private prototype detail'); }, getPrototypeOf() { reads++; throw Error('private prototype detail'); } }));
+ for (let attempt = 0; attempt < 2; attempt++) {
+  let received;
+  try { await invoke({ plan, rpc: { async request() { calls++; throw captured; } } }); } catch (error) { received = error; }
+  assert.equal(received === captured, false, 'the caller-mutated error must not escape again');
+  errorIs('NETWORK')(received); assert.equal(received.rawResponse, undefined); assert.equal(Object.getPrototypeOf(received), Error.prototype);
+ }
+ assert.equal(reads, 0); assert.equal(calls, 2);
+});
+test('acquisition normalizes a thrown hostile object without inspecting its prototype or properties', async () => {
+ let reads = 0;
+ const hostile = new Proxy({}, { get() { reads++; throw Error('private property detail'); }, getPrototypeOf() { reads++; throw Error('private prototype detail'); } });
+ await assert.rejects(acquirePublicLifecycleSnapshot({ plan, rpc: { async request() { throw hostile; } } }), errorIs('RPC'));
+ assert.equal(reads, 0);
 });
 test('production default constructs fixed transport only inside acquisition and makes only three read requests',async()=>{
  const t=fixture(),original=globalThis.fetch;globalThis.fetch=async(url,init)=>{assert.equal(url,'https://soroban-testnet.stellar.org');const q=JSON.parse(init.body);t.calls.push(q);return new Response(JSON.stringify({jsonrpc:'2.0',id:q.id,result:t.values[q.method]}));};

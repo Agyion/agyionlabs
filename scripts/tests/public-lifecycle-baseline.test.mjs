@@ -77,7 +77,7 @@ test('pure verification is synchronous, immutable and replays at explicit valida
 });
 
 for (const [name, change] of [
-  ...['error', 'restorePreamble', '_parsed', 'cost', 'verified'].flatMap(k => [null, false, ''].map(v => [`${k} presence ${String(v)}`, p => { p.response[k] = v; }])),
+  ...['error', 'restorePreamble', '_parsed', 'cost', 'verified', 'id', 'transactionDataJson', 'eventsJson', 'resultsJson'].flatMap(k => [null, false, ''].map(v => [`${k} presence ${String(v)}`, p => { p.response[k] = v; }])),
   ...['latestLedger', 'transactionData', 'minResourceFee', 'results'].map(k => [`missing ${k}`, p => { delete p.response[k]; }]),
   ...[HEAD - 1, HEAD + 1, 0, -1, '1000', 1.5, 0x100000000].map(n => [`ledger ${n}`, p => { p.response.latestLedger = n; }]),
   ['positive result', p => { p.response.results[0].xdr = b64(nativeToScVal(1n, { type: 'i128' })); }],
@@ -124,7 +124,7 @@ test('only exact immutable plan and bounded canonical snapshot with seller seque
   const p = pure(), row = p.snapshot.entries.find(r => r.key === f.snapshot().entries[7].key), data = xdr.LedgerEntryData.fromXDR(row.val, 'base64'); data.account().seqNum(xdr.SequenceNumber.fromString('9223372036854775807')); row.val = b64(data); refusal(() => verifyPublicLifecycleZeroRead(p));
 });
 test('valid diagnostic, absent optional arrays, reversed readonly keys and empty archival extension remain accepted', () => {
-  const p = pure(); p.response.events = [diagnostic()]; p.response.id = 'synthetic'; delete p.response.stateChanges;
+  const p = pure(); p.response.events = [diagnostic()]; delete p.response.stateChanges;
   resource(p, d => { d.ext(new xdr.SorobanTransactionDataExt(1, new xdr.SorobanResourcesExtV0({ archivedSorobanEntries: [] }))); d.resources().footprint().readOnly(d.resources().footprint().readOnly().reverse()); });
   assert.equal(verifyPublicLifecycleZeroRead(p).resultXdr, zero); delete p.response.events; assert.equal(verifyPublicLifecycleZeroRead(p).ledger, HEAD);
 });
@@ -209,4 +209,61 @@ for (const kind of ['pure', 'async']) test(`${kind} boundary reconstructs a genu
   const fresh = error => { assert.notEqual(error, owned); assert.ok(!error.stack.includes('PRIVATE_SECRET')); return fail('INPUT')(error); };
   if (kind === 'pure') { const p = pure(); p.response = hostile; assert.throws(() => verifyPublicLifecycleZeroRead(p), fresh); }
   else { const fx = fixture(); fx.values.simulateTransaction = hostile; await assert.rejects(acquirePublicLifecycleBaseline({ plan, rpc: fx.rpc }), fresh); }
+});
+
+test('caller cleanup override cannot replace a successful zero read with arbitrary content', async () => {
+  const c = new AbortController(), fx = fixture(); let cleanupCalls = 0;
+  Object.defineProperty(c.signal, 'removeEventListener', { value() { cleanupCalls++; throw Error('PRIVATE_CLEANUP_CONTENT'); } });
+  const result = await acquirePublicLifecycleBaseline({ plan, rpc: fx.rpc, signal: c.signal });
+  assert.equal(result.zeroBalanceEvidence.resultXdr, zero); assert.equal(fx.calls.length, 4); assert.equal(cleanupCalls, 0);
+});
+test('native signal state and listeners ignore own overrides and clean up after success, abort and refusal', async () => {
+  const { getEventListeners } = await import('node:events');
+  for (const outcome of ['success', 'abort', 'refusal']) {
+    const c = new AbortController(), fx = fixture(); let invoked = 0, started;
+    const ready = new Promise(resolve => { started = resolve; });
+    Object.defineProperties(c.signal, { aborted: { get() { invoked++; return false; } }, addEventListener: { value() { invoked++; throw Error('PRIVATE_ADD'); } }, removeEventListener: { value() { invoked++; throw Error('PRIVATE_REMOVE'); } } });
+    const invoke = fx.rpc.request;
+    fx.rpc.request = async (...args) => { if (outcome === 'abort' && args[0] === 'simulateTransaction') { fx.calls.push({ method: args[0] }); started(); return new Promise(() => {}); } if (outcome === 'refusal' && args[0] === 'simulateTransaction') throw Error('PRIVATE_RPC'); return invoke(...args); };
+    const pending = acquirePublicLifecycleBaseline({ plan, rpc: fx.rpc, signal: c.signal });
+    if (outcome === 'abort') { await ready; assert.equal(getEventListeners(c.signal, 'abort').length, 1); c.abort('PRIVATE_REASON'); }
+    if (outcome === 'success') assert.equal((await pending).zeroBalanceEvidence.resultXdr, zero);
+    else await assert.rejects(pending, fail(outcome === 'abort' ? 'ABORTED' : 'RPC'));
+    assert.equal(invoked, 0); assert.equal(getEventListeners(c.signal, 'abort').length, 0);
+    c.abort(); const before = fx.calls.length; await assert.rejects(acquirePublicLifecycleBaseline({ plan, rpc: fx.rpc, signal: c.signal }), fail('ABORTED')); assert.equal(fx.calls.length, before); assert.equal(invoked, 0);
+  }
+});
+test('signal must have native state before any acquisition or transport request', async () => {
+  const fake = Object.create(AbortSignal.prototype); Object.defineProperties(fake, { aborted: { value: false }, addEventListener: { value() {} }, removeEventListener: { value() {} } });
+  for (const signal of [fake, {}, null]) { const fx = fixture(); await assert.rejects(acquirePublicLifecycleBaseline({ plan, rpc: fx.rpc, signal }), fail('INPUT')); assert.equal(fx.calls.length, 0); }
+});
+test('owned relay propagates cancellation through the real fixed RPC transport with controlled fetch only', async t => {
+  const { getEventListeners } = await import('node:events'), c = new AbortController(), fx = fixture(); let touched = 0, started, pendingSignal, fetches = 0;
+  const ready = new Promise(resolve => { started = resolve; });
+  Object.defineProperties(c.signal, { aborted: { get() { touched++; return false; } }, addEventListener: { value() { touched++; throw Error('PRIVATE_ADD'); } }, removeEventListener: { value() { touched++; throw Error('PRIVATE_REMOVE'); } } });
+  t.mock.method(globalThis, 'fetch', async (url, init) => {
+    assert.equal(url, 'https://soroban-testnet.stellar.org'); const body = JSON.parse(init.body); fetches++;
+    if (body.method === 'simulateTransaction') { pendingSignal = init.signal; started(); return new Promise(() => {}); }
+    assert.ok(Object.hasOwn(fx.values, body.method)); return new Response(JSON.stringify({ jsonrpc: '2.0', id: body.id, result: fx.values[body.method] }), { status: 200 });
+  });
+  const pending = acquirePublicLifecycleBaseline({ plan, signal: c.signal });
+  await ready; c.abort('PRIVATE_REASON'); await assert.rejects(pending, fail('ABORTED'));
+  assert.notEqual(pendingSignal, c.signal); assert.equal(pendingSignal.aborted, true); assert.equal(touched, 0); assert.equal(fetches, 4); assert.equal(getEventListeners(c.signal, 'abort').length, 0);
+});
+test('zero response rejects any inner JSON-RPC id, including the older synthetic nonempty string', async () => {
+  for (const id of ['synthetic', 1, null, false, '']) {
+    const p = pure(); p.response.id = id; assert.throws(() => verifyPublicLifecycleZeroRead(p), fail('RAW'));
+    const fx = fixture(); fx.values.simulateTransaction.id = id; await assert.rejects(acquirePublicLifecycleBaseline({ plan, rpc: fx.rpc }), fail('RAW')); assert.equal(fx.calls.length, 4);
+  }
+});
+test('owned cancellation during acquisition removes the caller listener without later requests', async () => {
+  const { getEventListeners } = await import('node:events'), c = new AbortController(); let calls = 0, started;
+  const ready = new Promise(resolve => { started = resolve; });
+  const pending = acquirePublicLifecycleBaseline({ plan, signal: c.signal, rpc: { request() { calls++; started(); return new Promise(() => {}); } } });
+  await ready; c.abort(); await assert.rejects(pending, fail('ABORTED')); assert.equal(calls, 1); assert.equal(getEventListeners(c.signal, 'abort').length, 0);
+});
+test('present Balance and invalid transport remove the owned caller relay without a zero-read listener', async () => {
+  const { getEventListeners } = await import('node:events'), c = new AbortController(), fx = fixture({ present: true });
+  const result = await acquirePublicLifecycleBaseline({ plan, rpc: fx.rpc, signal: c.signal }); assert.equal(result.zeroRead, null); assert.equal(fx.calls.length, 3); assert.equal(getEventListeners(c.signal, 'abort').length, 0);
+  await assert.rejects(acquirePublicLifecycleBaseline({ plan, rpc: { request: false }, signal: c.signal }), fail('INPUT')); assert.equal(getEventListeners(c.signal, 'abort').length, 0);
 });
