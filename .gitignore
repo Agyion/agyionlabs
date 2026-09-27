@@ -43,3 +43,9 @@ contracts/private-pool/test_snapshots/
 
 # Retired template media is kept in artifacts/reference-media only
 /landing/public/media/
+
+/verifier/
+/landing/info.md
+
+# Reproducible private prover binaries are packaged during the build
+/app/public/zk/private/
