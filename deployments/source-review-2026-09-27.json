@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T10:41:33.419076+00:00",
-  "sourceBaselineCommit": "b3858ea98a8830fbeb0de7bd538c313f3bacc869",
+  "reviewedAt": "2026-09-27T11:20:29.507359+00:00",
+  "sourceBaselineCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe",
   "websiteRelease": {
     "workerVersion": "b689440d-c297-4503-bf91-7bfb3970a509",
     "url": "https://agyionlabs.dev",
@@ -10,28 +10,7 @@
     "treeHashScope": "All 104 local build files including local _headers configuration; all 103 public files separately matched.",
     "files": 103,
     "bytes": 166309505,
-    "runtimeChangesFromSourceBaseline": [
-      {
-        "path": "app/app/components/app/PrivateInstrumentPanel.tsx",
-        "sha256": "660804ce68a5a5472781d9f9dbdc8a112342cb293d83d0a9011276846df31cc4"
-      },
-      {
-        "path": "app/app/components/app/PrivatePendingRecovery.tsx",
-        "sha256": "8f6142dbe5c424898821142a9da7b035ab4739a9a2e5f7d0780f558915bf87f6"
-      },
-      {
-        "path": "app/app/components/app/PrivateVault.tsx",
-        "sha256": "d2ad06c9a268e0562bb01b9983fe63c44deb83ad70a3c5289ed016491c69dc55"
-      },
-      {
-        "path": "app/app/components/app/PrivateWorkspaceProvider.tsx",
-        "sha256": "aa52c445401c12fb5f307319d8659acf1e16fd743b420a313712f38b1213ec69"
-      },
-      {
-        "path": "app/app/lib/private/backup-release.ts",
-        "sha256": "6a3f3217931ae4e50615aab485ccf284b9fe17d8af6ed18f956f15a5438f19df"
-      }
-    ],
+    "runtimeChangesFromSourceBaseline": [],
     "contractPinsChanged": false,
     "browserChecks": {
       "http": 34,
@@ -73,7 +52,8 @@
           "error": "net::ERR_NETWORK_CHANGED"
         }
       ]
-    }
+    },
+    "sourceCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe"
   },
   "undeployedContractCandidates": [
     {
@@ -82,13 +62,6 @@
       "bytes": 26696,
       "artifact": "unoptimized Stellar CLI 28.0.0 build",
       "namedNativeAndWasmTests": 75
-    },
-    {
-      "name": "private-pool-with-backing-accounting",
-      "wasmSha256": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018",
-      "bytes": 34248,
-      "artifact": "unoptimized Stellar CLI 28.0.0 build",
-      "namedNativeAndWasmTests": 44
     }
   ],
   "scope": "Tracked and nonignored first-party authored source, tests, configuration, styles, API declarations, vector assets and database migrations. Exact current bytes at this checkpoint.",
@@ -97,12 +70,12 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 544,
-    "lines": 69163,
+    "files": 551,
+    "lines": 70051,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 444,
-        "lines": 46513
+        "files": 451,
+        "lines": 47401
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 100,
@@ -122,7 +95,7 @@
   "limitations": [
     "Development source review is not an independent security audit, execution coverage, proof of cryptographic soundness or a guarantee that every exploit is absent.",
     "Passing tests do not establish source-read coverage. Testnet and browser evidence has separate scope and limitations.",
-    "These hashes are a dated source checkpoint. The website release is identified by its worker version and verified published bytes. The contract candidates are local artifacts, not replacements at active immutable addresses. No sourceBaselineCommit claim includes the listed subsequent runtime changes.",
+    "These hashes are a dated source checkpoint. The website release is identified by its worker version and verified published bytes. Public V4 remains a local artifact; the guarded private pool is deployed separately and is not yet the application default. Existing immutable addresses are not replaced. The source baseline does not include the subsequently listed tooling hashes.",
     "Any subsequent source change requires renewed review evidence and manifest reconciliation.",
     "The compiled private release catalogue currently contains only the unchanged original pool. The profile-aware UI is implemented and tested, but the second accounting contract and production custody are not activated by this website release."
   ],
@@ -1445,6 +1418,12 @@
       "path": "deployments/market-testnet.json",
       "sha256": "02c1f19579d6cafafe3ed657ffb748c88726b0ea03a8a18d9502483fd6aa64aa",
       "lines": 108,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "deployments/private-pool-guarded-testnet.json",
+      "sha256": "da21d08c301a685a23b40e3de45dc6857f09cf6da07f7bec65c3f754d640f12a",
+      "lines": 71,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2888,6 +2867,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/deploy-private-testnet.mjs",
+      "sha256": "731200a34fd9f215ffb1b0db3f98d9621a85c7ef810b3e4e609d9d0a9a5668a4",
+      "lines": 227,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/deploy_testnet.sh",
       "sha256": "b79a5ddaf48826f0da8b9755a29db00bef31c46e1eaa437e6e0d5c078dce96a7",
       "lines": 151,
@@ -2921,6 +2906,18 @@
       "path": "scripts/lib/browser-settle.mjs",
       "sha256": "b904c4b9b9757160e56021920de23b1362f84ecfeaceb237fd6be0e4d52a3d9b",
       "lines": 39,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/private-deployment-readback.mjs",
+      "sha256": "1c77159590cc0763c8ea3a1c8ddd498d3454d63e9e3cca3ba6abc34de9aa7095",
+      "lines": 71,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/private-deployment.mjs",
+      "sha256": "189ef553e2eac497bc53fe64d545b3e476834abebbe17106da58edaf41fc3f97",
+      "lines": 205,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3044,6 +3041,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/deploy-private-testnet.test.mjs",
+      "sha256": "90a97496c66bed084259ade45710a90508d09148c5cca9359b25becb5d3fdd29",
+      "lines": 55,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/fetch-private-prover.test.mjs",
       "sha256": "4ae8aa89edfe3e83c2ac62c0bb3e02c259b5c2337e06ea5f9220e45ec6bb1f40",
       "lines": 89,
@@ -3059,6 +3062,18 @@
       "path": "scripts/tests/prepare-private-integration.test.mjs",
       "sha256": "84cc13256f82a5c0273b18ba79227d68994b9f1e9b992d24255aabd7c8932274",
       "lines": 79,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/private-deployment-readback.test.mjs",
+      "sha256": "69f29d343e941a3e4a36c070c11d7b67ebf3dbe653f6b0d824b76b7ead6787a0",
+      "lines": 54,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/private-deployment.test.mjs",
+      "sha256": "530a8294565c569bc9a79ce60ad5d3280022aef84a8102721ed2370bc60f5b9f",
+      "lines": 205,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3391,5 +3406,49 @@
       "lines": 285,
       "reviewKind": "verified-baseline-plus-reviewed-diff"
     }
-  ]
+  ],
+  "deployedInactiveContractCandidates": [
+    {
+      "name": "private-pool-with-backing-accounting",
+      "wasmSha256": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018",
+      "bytes": 34248,
+      "artifact": "unoptimized Stellar CLI 28.0.0 build",
+      "namedNativeAndWasmTests": 44,
+      "pool": "CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB",
+      "applicationDefault": false,
+      "checkpoint": "deployments/private-pool-guarded-testnet.json",
+      "status": "Deployment and initial state verified; real lifecycle and activation gates remain"
+    }
+  ],
+  "deploymentTooling": {
+    "localTestsPassed": 97,
+    "sourceChangesAfterBaseline": [
+      {
+        "path": "scripts/deploy-private-testnet.mjs",
+        "sha256": "731200a34fd9f215ffb1b0db3f98d9621a85c7ef810b3e4e609d9d0a9a5668a4"
+      },
+      {
+        "path": "scripts/lib/private-deployment-readback.mjs",
+        "sha256": "1c77159590cc0763c8ea3a1c8ddd498d3454d63e9e3cca3ba6abc34de9aa7095"
+      },
+      {
+        "path": "scripts/lib/private-deployment.mjs",
+        "sha256": "189ef553e2eac497bc53fe64d545b3e476834abebbe17106da58edaf41fc3f97"
+      },
+      {
+        "path": "scripts/tests/deploy-private-testnet.test.mjs",
+        "sha256": "90a97496c66bed084259ade45710a90508d09148c5cca9359b25becb5d3fdd29"
+      },
+      {
+        "path": "scripts/tests/private-deployment-readback.test.mjs",
+        "sha256": "69f29d343e941a3e4a36c070c11d7b67ebf3dbe653f6b0d824b76b7ead6787a0"
+      },
+      {
+        "path": "scripts/tests/private-deployment.test.mjs",
+        "sha256": "530a8294565c569bc9a79ce60ad5d3280022aef84a8102721ed2370bc60f5b9f"
+      }
+    ],
+    "hostedRunForTheseChanges": null,
+    "boundary": "Dedicated valueless testnet only; no independent audit or automatic application activation."
+  }
 }

@@ -95,7 +95,9 @@ private deployments. Those candidates have not replaced the immutable contracts
 used by the application. Existing records and private notes retain their original
 deployment and recovery scope. The [issuer control review](docs/TOKEN_ISSUER_RISKS.md)
 records the reproduced limitation, tested candidate behavior and remaining
-deployment compatibility work.
+deployment compatibility work. The [guarded private candidate](docs/PRIVATE_POOL_GUARDED_TESTNET.md)
+now has a separate verified testnet deployment; instrument lifecycle checks and
+application activation remain separate gates.
 
 [Review scope and verification limits](docs/VERIFICATION.md) · [Security boundaries and reporting](SECURITY.md) · [Payment contracts](contracts/) · [Private protocol](privacy/PROTOCOL_V2.md)
 

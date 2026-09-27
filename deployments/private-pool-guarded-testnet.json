@@ -1,0 +1,71 @@
+{
+  "schema": "agyion-private-pool-guarded-testnet-checkpoint-v1",
+  "observedAt": "2026-09-27T11:19:06.327589+00:00",
+  "testOnly": true,
+  "applicationDefault": false,
+  "status": "deployed; initial state verified; lifecycle activation gates remain",
+  "networkPassphrase": "Test SDF Network ; September 2015",
+  "rpcUrl": "https://soroban-testnet.stellar.org",
+  "pool": "CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB",
+  "profileId": "c144c20b4b4d796759e44c8a7cf5c05180d9c63397dc58ff787578e0f0abf802",
+  "source": "GC6VIQG6JXLMVKXFG4SEYJVXBUWLAC7DMQMJ6XRNFGW335IQKIRVGB7O",
+  "wasmSha256": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018",
+  "wasmBytes": 34248,
+  "manifestSha256": "03054677d4061dcc416383faf91b9b86c7e140328ec31c17e6caf9b6da924516",
+  "offlinePlanSha256": "4a8b0e4e0dbd21bfb93d32677cf947d2e400718b091aff5546ae4189a7eee14f",
+  "transactions": [
+    {
+      "phase": "upload",
+      "hash": "7a1af97e5e4f706002f5f1610e9e440b0e6a91c35fba7c19ff840751c1103528",
+      "ledger": 4896787,
+      "status": "SUCCESS",
+      "maxFeeStroops": "80724081",
+      "resultFeeChargedStroops": "70201339"
+    },
+    {
+      "phase": "create",
+      "hash": "9a7f8278076b1f81dd8af169adbf94dab8e305349161cdc4304617d65b07eaae",
+      "ledger": 4896797,
+      "status": "SUCCESS",
+      "maxFeeStroops": "2136624162",
+      "resultFeeChargedStroops": "1857937774"
+    }
+  ],
+  "initialReadback": {
+    "matchesReviewedPlan": true,
+    "testOnly": true,
+    "contractId": "CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB",
+    "wasmSha256": "4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018",
+    "manifestSha256": "03054677d4061dcc416383faf91b9b86c7e140328ec31c17e6caf9b6da924516",
+    "domain": "156de80d52c9e47255f7d7c533d5ca5320211c1ae252ba95d9f4b8cf2ab9da03",
+    "ledger": 4896806,
+    "initialState": true,
+    "verifyingKeysMatch": true,
+    "canonicalSacsObserved": true,
+    "liabilities": [
+      {
+        "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+        "amount": "0",
+        "liveUntilLedger": 8007196
+      },
+      {
+        "asset": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+        "amount": "0",
+        "liveUntilLedger": 8007196
+      }
+    ],
+    "boundary": "Trusted RPC initial state only; no future solvency, independent audit or production setup claim."
+  },
+  "localToolingTests": 97,
+  "originalApplicationPinsUnchanged": {
+    "release": "4944e60b435b6f0f943b90690d53ff0ca4492b678b296c9a3c12ac3bcbcf5b1e",
+    "committee": "b3cf846a83e9d1c1d7757f6e35e6a9af45d65b3784176e36bfa516b7648d0c85"
+  },
+  "limits": [
+    "Valueless Stellar testnet only. No real wallet or user funds were used.",
+    "Result fee fields are recorded separately from net account balance changes and refunds.",
+    "Native and USDC instrument lifecycles, scoped disclosure and application activation are separate gates.",
+    "The original immutable pool remains the only compiled funding profile at this checkpoint and still has the documented backing limitation.",
+    "Development proving setup and all five trustee shares remain under one operator. No independent audit, production ceremony or exploit-free guarantee."
+  ]
+}

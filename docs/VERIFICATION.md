@@ -1,14 +1,14 @@
 # Verification checkpoint
 
-This record describes the development review on **27 September 2026**. The current website is Cloudflare version `b689440d-c297-4503-bf91-7bfb3970a509`, with local pickup discovery, private release isolation and scoped recovery controls. Its contract addresses and active code pins remain unchanged. The [source manifest](../deployments/source-review-2026-09-27.json) separates the website release from undeployed contract candidates and tooling.
+This record describes the development review on **27 September 2026**. The current website is Cloudflare version `b689440d-c297-4503-bf91-7bfb3970a509`, with local pickup discovery, private release isolation and scoped recovery controls. Its contract addresses and active code pins remain unchanged. The [source manifest](../deployments/source-review-2026-09-27.json) separates the website release from contract candidates and tooling. The guarded private candidate now has a separate [testnet deployment checkpoint](PRIVATE_POOL_GUARDED_TESTNET.md); it is not the application default.
 
 ## Source review
 
 | Evidence | Files | Current lines |
 | --- | ---: | ---: |
-| Exact current bytes with complete source-read evidence | 444 | 46,513 |
+| Exact current bytes with complete source-read evidence | 451 | 47,401 |
 | Verified reviewed baseline plus completely reviewed differences | 100 | 22,650 |
-| Total first-party authored scope | 544 | 69,163 |
+| Total first-party authored scope | 551 | 70,051 |
 | Unresolved files or line ranges at this snapshot | 0 | 0 |
 
 The first row uses explicit complete reading ranges matched to each current file hash. It does not mean every file was read again when this manifest was generated. The second row is composed coverage: the previously reviewed baseline was checked against Git bytes, every difference was reviewed, and unchanged, changed and deleted ranges were reconciled. It is not a fresh full-file reread.
@@ -23,13 +23,13 @@ Map verification covered an empty initial catalogue without global map tiles, lo
 
 The local workspace run for these changes passed 1,247 tests with six default optional skips. Final focused reruns after the remaining refinements passed all 789 app tests, all 16 marketplace UI tests, and four header tests. The unchanged other suites plus those final reruns cover 1,251 passing checks; this is an aggregate of the recorded runs, not one final monolithic run. Three explicitly enabled private browser journal checks also passed, including source reservation across different private profiles and reload. They use synthetic records and do not establish a live cross-profile transaction. The earlier cryptographic and contract test checkpoints below remain separately dated.
 
-The compiled release catalogue currently permits only the original verified private pool. Profile changes retire old vault capabilities and fee approvals; public pending recovery validates the original record without proving, signing or resending. Its transport and outer status lookup are bounded. Recovery-only funding restrictions are tested at preparation, proof and signing boundaries, but no second pool or policy transition is active yet. The additive liability reader is tested separately and is not pointed at the old pool, which has no liability counter. The accounting candidates remain undeployed. Fresh independent peer review, production setup and independently held trustee keys remain outstanding.
+The compiled release catalogue currently permits only the original verified private pool. Profile changes retire old vault capabilities and fee approvals; public pending recovery validates the original record without proving, signing or resending. Its transport and outer status lookup are bounded. Recovery-only funding restrictions are tested at preparation, proof and signing boundaries, but no second pool or policy transition is active yet. The additive liability reader is tested separately and is not pointed at the old pool, which has no liability counter. The guarded private candidate is now deployed with verified initial state, while the public V4 candidate remains undeployed. Real private lifecycle and activation gates are tracked separately. Fresh independent peer review, production setup and independently held trustee keys remain outstanding.
 
 The subsequent private UI changes passed all 804 app tests, including recovery visibility without an available vault, blocked unknown profiles, selected assets, recovery-only controls and stale callback regressions. Type checking and the static build passed; lint retained three generation-counter cleanup warnings, one of them pre-existing. Tests using synthetic second profiles establish UI isolation, not a second deployed pool. Same-account pending refreshes now keep the newest result. Scoped encrypted downloads cannot finish in a replacement workspace. An initial file-input reset regression was reproduced and corrected before the final native-browser checks.
 
 Six additional checks against the published website used a fresh unfunded local vault: creation, encrypted download, complete backup checking, wrong-password rejection, restoration and a locked reload. They used actual browser file selection and cryptography with no wallet connection, signature or transaction. No test password was observed in outgoing request bodies. Backup metadata only suggests an existing compiled pool; the unchanged authenticated restore checks the encrypted contents. Switching to another known pool clears the inputs and requires file reselection. Account-wide pending recovery remains accessible outside the selected-pool verification gate.
 
-The [hosted run for b3858ea](https://github.com/Agyion/agyionlabs/actions/runs/36312265321) passed application and contract jobs for the preceding map and release-isolation checkpoint. It does not establish hosted success for subsequent UI source changes.
+The [hosted run for ad58fed](https://github.com/Agyion/agyionlabs/actions/runs/36313392557) passed both application and contract jobs for the published private UI checkpoint. The [preceding run for b3858ea](https://github.com/Agyion/agyionlabs/actions/runs/36312265321) also passed. These exact commits do not establish hosted success for subsequent deployment tooling changes.
 
 ## Earlier verification checkpoints
 

@@ -60,7 +60,10 @@ The current source implements these guards for fresh immutable deployments:
 | Public kernel V4 | `d101e0fea1852cf057049cc08695b9e26a8b3c6a82db58d4c2706db03a22b186` | 26,696 | 75 |
 | Private pool with backing accounting | `4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018` | 34,248 | 44 |
 
-These are locally built, unoptimized artifacts, not active deployment hashes.
+These are locally built, unoptimized artifacts. The private candidate now has a
+[separate testnet deployment](PRIVATE_POOL_GUARDED_TESTNET.md) with verified initial
+state. It has not replaced the original application pool. The public V4 candidate
+remains undeployed.
 The public constructor fixes one to eight supported SACs. Both candidates check
 SAC executable identity through the host, initialize liabilities at construction,
 check existing backing before accepting new money or paying obligations, and
