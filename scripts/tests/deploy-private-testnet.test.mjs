@@ -8,7 +8,13 @@ const root = path.resolve(new URL('../../', import.meta.url).pathname);
 const script = path.join(root, 'scripts/deploy-private-testnet.mjs');
 const deny = 'data:text/javascript,' + encodeURIComponent("globalThis.fetch=()=>{throw Error('UNEXPECTED_NETWORK')};");
 function execute(args) { return spawnSync(process.execPath, ['--import', deny, script, ...args], { cwd: root, encoding: 'utf8', timeout: 20000, maxBuffer: 20000 }); }
-function runDirectory(t) { const dir = fs.mkdtempSync(path.join(root, 'artifacts/private-cli-test-')); fs.chmodSync(dir, 0o700); t.after(() => fs.rmSync(dir, { recursive: true, force: true })); return dir; }
+function runDirectory(t) {
+    fs.mkdirSync(path.join(root, 'artifacts'), { recursive: true });
+    const dir = fs.mkdtempSync(path.join(root, 'artifacts/private-cli-test-'));
+    fs.chmodSync(dir, 0o700);
+    t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+    return dir;
+}
 const sha = b => createHash('sha256').update(b).digest('hex');
 test('default plan is offline and declares separate bounded testnet phases', () => {
     const result = execute([]);

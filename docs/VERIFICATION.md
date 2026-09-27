@@ -6,9 +6,9 @@ This record describes the development review on **27 September 2026**. The curre
 
 | Evidence | Files | Current lines |
 | --- | ---: | ---: |
-| Exact current bytes with complete source-read evidence | 451 | 47,401 |
+| Exact current bytes with complete source-read evidence | 451 | 47,413 |
 | Verified reviewed baseline plus completely reviewed differences | 100 | 22,650 |
-| Total first-party authored scope | 551 | 70,051 |
+| Total first-party authored scope | 551 | 70,063 |
 | Unresolved files or line ranges at this snapshot | 0 | 0 |
 
 The first row uses explicit complete reading ranges matched to each current file hash. It does not mean every file was read again when this manifest was generated. The second row is composed coverage: the previously reviewed baseline was checked against Git bytes, every difference was reviewed, and unchanged, changed and deleted ranges were reconciled. It is not a fresh full-file reread.
@@ -30,6 +30,8 @@ The subsequent private UI changes passed all 804 app tests, including recovery v
 Six additional checks against the published website used a fresh unfunded local vault: creation, encrypted download, complete backup checking, wrong-password rejection, restoration and a locked reload. They used actual browser file selection and cryptography with no wallet connection, signature or transaction. No test password was observed in outgoing request bodies. Backup metadata only suggests an existing compiled pool; the unchanged authenticated restore checks the encrypted contents. Switching to another known pool clears the inputs and requires file reselection. Account-wide pending recovery remains accessible outside the selected-pool verification gate.
 
 The [hosted run for ad58fed](https://github.com/Agyion/agyionlabs/actions/runs/36313392557) passed both application and contract jobs for the published private UI checkpoint. The [preceding run for b3858ea](https://github.com/Agyion/agyionlabs/actions/runs/36312265321) also passed. These exact commits do not establish hosted success for subsequent deployment tooling changes.
+
+The first hosted deployment-tooling run caught a fixture setup error: the new tests assumed an existing ignored artifacts directory. An isolated source fixture with installed dependencies reproduced 16 failures, then passed all 22 focused tests after each helper created its own parent directory. All 97 tooling tests also passed locally. This correction changes test setup only; it does not change the deployment executor or deployed code. The [failed hosted run](https://github.com/Agyion/agyionlabs/actions/runs/36315479003) remains part of the evidence.
 
 ## Earlier verification checkpoints
 

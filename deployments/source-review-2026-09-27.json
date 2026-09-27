@@ -1,6 +1,6 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T11:20:29.507359+00:00",
+  "reviewedAt": "2026-09-27T11:32:08.700260+00:00",
   "sourceBaselineCommit": "ad58fedad22dc1a24a7fb7ab8f4767437d248afe",
   "websiteRelease": {
     "workerVersion": "b689440d-c297-4503-bf91-7bfb3970a509",
@@ -71,11 +71,11 @@
   },
   "counts": {
     "files": 551,
-    "lines": 70051,
+    "lines": 70063,
     "byReviewKind": {
       "complete-source-read": {
         "files": 451,
-        "lines": 47401
+        "lines": 47413
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 100,
@@ -3042,8 +3042,8 @@
     },
     {
       "path": "scripts/tests/deploy-private-testnet.test.mjs",
-      "sha256": "90a97496c66bed084259ade45710a90508d09148c5cca9359b25becb5d3fdd29",
-      "lines": 55,
+      "sha256": "152dfe3febff85ac95a203eac59c81ed4c9a243f0e0bc8699add42095ec4c232",
+      "lines": 61,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3072,8 +3072,8 @@
     },
     {
       "path": "scripts/tests/private-deployment.test.mjs",
-      "sha256": "530a8294565c569bc9a79ce60ad5d3280022aef84a8102721ed2370bc60f5b9f",
-      "lines": 205,
+      "sha256": "4c35cecaf3bdde92b97868c3f4d28c4a809b8ba6187545c62272b7ed4e472d31",
+      "lines": 211,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3437,7 +3437,7 @@
       },
       {
         "path": "scripts/tests/deploy-private-testnet.test.mjs",
-        "sha256": "90a97496c66bed084259ade45710a90508d09148c5cca9359b25becb5d3fdd29"
+        "sha256": "152dfe3febff85ac95a203eac59c81ed4c9a243f0e0bc8699add42095ec4c232"
       },
       {
         "path": "scripts/tests/private-deployment-readback.test.mjs",
@@ -3445,10 +3445,23 @@
       },
       {
         "path": "scripts/tests/private-deployment.test.mjs",
-        "sha256": "530a8294565c569bc9a79ce60ad5d3280022aef84a8102721ed2370bc60f5b9f"
+        "sha256": "4c35cecaf3bdde92b97868c3f4d28c4a809b8ba6187545c62272b7ed4e472d31"
       }
     ],
     "hostedRunForTheseChanges": null,
-    "boundary": "Dedicated valueless testnet only; no independent audit or automatic application activation."
+    "boundary": "Dedicated valueless testnet only; no independent audit or automatic application activation.",
+    "cleanFixtureRegression": {
+      "before": {
+        "passed": 6,
+        "failed": 16
+      },
+      "after": {
+        "passed": 22,
+        "failed": 0
+      },
+      "installedDependenciesReused": true,
+      "emptyArtifactDirectoryAtStart": true
+    },
+    "earlierHostedFailure": "https://github.com/Agyion/agyionlabs/actions/runs/36315479003"
   }
 }

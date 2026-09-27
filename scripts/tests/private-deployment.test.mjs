@@ -12,7 +12,13 @@ const wasm = Buffer.from([0, 97, 115, 109, 1, 0, 0, 0]);
 const sha = b => createHash('sha256').update(b).digest('hex');
 const plan = { networkPassphrase: Networks.TESTNET, rpcUrl: 'https://soroban-testnet.stellar.org', sourceAccount: key.publicKey(), wasmSha256: sha(wasm), salt: 'ab'.repeat(32), constructorXdr: [xdr.ScVal.scvU32(1).toXDR('base64')] };
 const planSha256 = 'cd'.repeat(32);
-function directory(t) { const run = fs.mkdtempSync(path.join(root, 'artifacts/private-deploy-test-')); fs.chmodSync(run, 0o700); t.after(() => fs.rmSync(run, { recursive: true, force: true })); return run; }
+function directory(t) {
+    fs.mkdirSync(path.join(root, 'artifacts'), { recursive: true });
+    const run = fs.mkdtempSync(path.join(root, 'artifacts/private-deploy-test-'));
+    fs.chmodSync(run, 0o700);
+    t.after(() => fs.rmSync(run, { recursive: true, force: true }));
+    return run;
+}
 function tx(phase = 'upload', opts = {}) { return new TransactionBuilder(new Account(opts.source || key.publicKey(), '0'), { fee: opts.fee || '100', networkPassphrase: opts.network || Networks.TESTNET }).addOperation(opts.op || expectedOperation(plan, wasm, phase)).setSorobanData(new SorobanDataBuilder().build()).setTimeout(90).build(); }
 const sign = async (value) => { value.sign(key); return value.toXDR(); };
 const options = (run, overrides = {}) => ({ run, phase: 'upload', plan, planSha256, wasm, prepare: async () => tx(), sign, getTransaction: async () => ({ status: 'NOT_FOUND' }), sendTransaction: async (value) => ({ status: 'PENDING', hash: value.hash().toString('hex') }), ...overrides });
