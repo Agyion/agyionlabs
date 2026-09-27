@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T17:43:38.138794+00:00",
-  "sourceBaselineCommit": "d4f208b3f10f0947dbf8934f271c916ca60ec4f8",
+  "reviewedAt": "2026-09-27T19:16:09.130656+00:00",
+  "sourceBaselineCommit": "373c5391e5da3cc8b6c7aa05afdba5b11a75beed",
   "websiteRelease": {
     "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
     "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
@@ -42,16 +42,16 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 578,
-    "lines": 75165,
+    "files": 590,
+    "lines": 76793,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 479,
-        "lines": 51214
+        "files": 492,
+        "lines": 52966
       },
       "verified-baseline-plus-reviewed-diff": {
-        "files": 99,
-        "lines": 23951
+        "files": 98,
+        "lines": 23827
       }
     },
     "unresolvedFiles": 0,
@@ -938,9 +938,9 @@
     },
     {
       "path": "app/tests/private-vault-ui.test.tsx",
-      "sha256": "4290d816ff4058b1a76791ea5c101d6a3e29970b989d452bc5ee53cedff57bf5",
+      "sha256": "2f45e781f2c67f74774a2dbfa7f480c46941ef75ce2ff649f4ece105a7cd7378",
       "lines": 124,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/tests/private-vault.test.ts",
@@ -2984,8 +2984,14 @@
     },
     {
       "path": "scripts/lib/public-lifecycle-journal.mjs",
-      "sha256": "8fe722f57b2699a92db7f8ea2a1d27853bdfed83a7db9fd8a37be8aca38e0f3a",
-      "lines": 323,
+      "sha256": "e2e85f9f9747709e43f2d7989e7e8ceefdb2a420356a97391e80bfedfdcee1e1",
+      "lines": 356,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-lifecycle-observations.mjs",
+      "sha256": "80a6c63300f2d90fd66e9fd758812e64a57f7831de82bb1d630d1a46c6f90d35",
+      "lines": 248,
       "reviewKind": "complete-source-read"
     },
     {
@@ -2995,9 +3001,27 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/lib/public-lifecycle-policies.mjs",
+      "sha256": "a2233d00aec8c26d0f20b558eee6dfca61adcd3deaba4b3f96a0bbe804e754c0",
+      "lines": 79,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/lib/public-lifecycle-readback.mjs",
       "sha256": "6fe966346cf06e2e32a3c45f04cbf61ec6bd25e89b6327a18a89311a8bfe1c7c",
       "lines": 236,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-lifecycle-rpc.mjs",
+      "sha256": "b5a4ab338962146ffe23287140b4fd2498b02f2e77854fe16bbba2f44755b082",
+      "lines": 167,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/lib/public-lifecycle-state.mjs",
+      "sha256": "38b78fee4c45704d900f5920a845f29233b84537ee0d0dc3d105124c71ea98ac",
+      "lines": 206,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3133,6 +3157,24 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/helpers/public-lifecycle-journal-fixture.mjs",
+      "sha256": "e7672af1dc32244f3c2840d154f230d49d84787dca7e473a4562ac2b1ebbfbd0",
+      "lines": 193,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/helpers/public-lifecycle-observation-fixture.mjs",
+      "sha256": "7738dba0b147b06820b1be195d4ae4ce9d2e4cdd59ec27940386f0e29ad67f69",
+      "lines": 50,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/helpers/public-lifecycle-state-fixture.mjs",
+      "sha256": "695a225f1116f39a25711fb4388b2b5c7d448f715d583753993387f0e90bd0ab",
+      "lines": 51,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/package-private-prover.test.mjs",
       "sha256": "94ab930494f1784561950201cc0470c74067164e9f3d575c62c0f7e5d374c481",
       "lines": 95,
@@ -3199,9 +3241,21 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/public-lifecycle-integration.test.mjs",
+      "sha256": "fa0856b602d83f24204dd60c3d8196000451b79c755f2d78b9e03b587b4566f4",
+      "lines": 38,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/public-lifecycle-journal.test.mjs",
-      "sha256": "daf630b7080efa8f80124f037df01cda45da09580d40287d76ab356b731e2d2a",
-      "lines": 273,
+      "sha256": "e03eca9965e8ac5fce2eb9b502dccdb1c8532fd6d0d943753898073419857ac4",
+      "lines": 310,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-observations.test.mjs",
+      "sha256": "b60041a0c5f4ed0a0cff02adf012894770facefe0e764b095ded6ee130968f73",
+      "lines": 142,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3211,9 +3265,27 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/public-lifecycle-policies.test.mjs",
+      "sha256": "d14fdf1601bd446cf85992978825f0e911d1a3cd8b80c43cb419550742bf3009",
+      "lines": 72,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/public-lifecycle-readback.test.mjs",
       "sha256": "a77a5ef819e32a837313a3b0ebbf0979da252d484834b695c397670842a119f0",
       "lines": 248,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-rpc.test.mjs",
+      "sha256": "0572d51a2826a096ae9b1121e5d9df7bbbcfac72f2eaa28796e3377029774a85",
+      "lines": 248,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-state.test.mjs",
+      "sha256": "81f7b988e3d935f8461a14c065bfdd775f33635ad9e4e5738022961a396a4194",
+      "lines": 64,
       "reviewKind": "complete-source-read"
     },
     {
@@ -4583,5 +4655,330 @@
     ],
     "behavior": "Exact immutable call binding, coherent full-code snapshots, full V4 fee/refund accounting, durable single-send claims and original-hash-only recovery. Included failures retain fee ceilings and block successors.",
     "boundary": "Offline libraries only. Race/order units use synthetic seller and snapshot/fee doubles; separate opt-in uses real decoders and pinned WASM with synthetic ledger evidence. Production observation/state policies, CLI, protected identity preparation, funding and live 39-step execution are unfinished. Clean hosted application job lacks local compiled WASM and skips one extra snapshot case. No new live transactions, activation or website publication, external audit or exploit-absence guarantee. Prior evidence remains historical."
+  },
+  "publicV4PolicyIntegration": {
+    "status": "source-and-synthetic-policy-integration-verified",
+    "sourceCommit": "373c5391e5da3cc8b6c7aa05afdba5b11a75beed",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36342512328",
+    "sourceInventorySha256": "3d028b3589b9d83f6e88a5c272e4b7644fcd20e1aa20ac40ea3b7b21e4cb744f",
+    "newAuthoredFiles": 12,
+    "modifiedAuthoredFiles": 3,
+    "testOnlyVaultWaitCorrection": "Initial async vault-creation assertion uses the existing 30-second crypto wait; runtime and other assertions unchanged. Original whole-suite timeout, unchanged focused pass, investigation and final seven-test pass are retained.",
+    "generatedFixtureFilesExcluded": 1,
+    "authoredLineIncrease": 1628,
+    "localWorkspacePassed": 1829,
+    "localDefaultOptionalSkips": 12,
+    "hostedWorkspacePassed": 1828,
+    "hostedDefaultOptionalSkips": 13,
+    "hostedApplicationAndContractJobs": "passed",
+    "syntheticIntegration": [
+      {
+        "completed": 38,
+        "sends": 38,
+        "signs": 38,
+        "netFees": "15200",
+        "recoveryNetworkCalls": 0,
+        "rawTamperRejected": true,
+        "maxPolicyBytes": 938550,
+        "codeBytesAuthenticated": "unit-only byte-auth double"
+      },
+      {
+        "completed": 39,
+        "sends": 39,
+        "signs": 39,
+        "netFees": "15600",
+        "recoveryNetworkCalls": 0,
+        "rawTamperRejected": true,
+        "maxPolicyBytes": 1241524,
+        "codeBytesAuthenticated": "actual pinned bytes"
+      }
+    ],
+    "localWorkspaceSourceCoverage": {
+      "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-root-source-coverage-v2.json",
+      "sha256": "e87afed7c91af7c41c81dc3ed90b3c79ca9661e3e6dd8ec832d85228fa113261"
+    },
+    "syntheticIntegrationSourceCoverage": {
+      "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-root-source-coverage.json",
+      "sha256": "f2c5cb5bbec1c287977271da875e4e6b7c362e10df9acf4efc45ebc29e00800b"
+    },
+    "formatOnlyDelta": {
+      "receipt": {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-format-only/change.json",
+        "sha256": "eab78e303fd1d0c2620beba69396dba1c662d07133dbea9fcc61a4729b553815"
+      },
+      "beforeSource": {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-format-only/before.mjs",
+        "sha256": "4e3f333bab8846c9e86683ed924c352d243da458c1ff75c01bcaefb2e116eca4"
+      }
+    },
+    "finalSourceCoverage": {
+      "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-root-source-coverage-v3.json",
+      "sha256": "e8afca649f262c091271bb72049682146b45c198f7407f8a51d0b8cfd9a2f2c0"
+    },
+    "formattingBoundary": "Local full workspace and combined synthetic integration ran on their retained pre-format hashes. Exactly one trailing ASCII space was then removed at observation source line155. Focused observation checks and exact final-source hosted CI cover corrected bytes; no repeated full local pipeline is claimed.",
+    "realReadOnlyWireProbe": {
+      "requests": 3,
+      "ledger": 4901961,
+      "result": "Contract#3",
+      "signatures": 0,
+      "fundingRequests": 0,
+      "transactionsSubmitted": 0
+    },
+    "evidence": [
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/repository-inventory.json",
+        "sha256": "3d028b3589b9d83f6e88a5c272e4b7644fcd20e1aa20ac40ea3b7b21e4cb744f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/summary.json",
+        "sha256": "55c21e1c1d2b76f8fc012d1a78ccdcdc186ac67754b7eaa08aafd6fe8b891c0c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/independent-verification.json",
+        "sha256": "017a3704efd1860fbbc809202711727a1e186b4f583e6034cb37ff301ce05ccc"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/frozen-inputs.json",
+        "sha256": "f2b038adc42eb0b83c620002e435194b78c75c3a8ada528d07c58ed6262ad653"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-local-test-summary.json",
+        "sha256": "1b1f5750fc53c26047d8d2dc3124625d44cfeed6cb406f1205b980b9803c63f4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-workspace-final.log",
+        "sha256": "66e761d9a17f01d46c8355c5f62178a148a2d519594357849a17ed50bba8a702"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-hosted-test-summary.json",
+        "sha256": "866bee712d8a3f378985b74897389ed42c8e71089650e73819698403063a3719"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-hosted-ci.json",
+        "sha256": "3aaf718ec2db3b814e7563ee3a8cabc5283fc466e60a9fcc0d4bac132fbc91f3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-hosted-ci.log",
+        "sha256": "8d8d37cb071308747d9da3db4b8db4cedd8c63e3a6cfbf03b3d63127aef5f893"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/full-integration-single-use-state.log",
+        "sha256": "ace862c0ddce553ceb3264c40c77ad351a2bf1b73298ebe69ab2aa1a5ee6145e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-root-source-coverage-v3.json",
+        "sha256": "e8afca649f262c091271bb72049682146b45c198f7407f8a51d0b8cfd9a2f2c0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/preparation-amendment-v3.json",
+        "sha256": "ad7e519ac2db24443e6cc09ff0638bb4ff75f2068f871099e280bdfc016a4135"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/final-integration-summary.json",
+        "sha256": "b8c2c5a7b5e043aaec10b040a77d426414fca73a3fcd76566f62a4b919b93365"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/full-integration-red.log",
+        "sha256": "f8901e26afc51bd429813e803c2579be14acc09d92bed9e03322a8b0d19f5c51"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/full-integration-first.log",
+        "sha256": "0dedcb9e26325b4cf664ae1feca7906175cd74d7e9fb84653ec52806c5962d65"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/full-integration-second.log",
+        "sha256": "0da021b28987610d6d973e555ed4f45c2ea29a179501a92a85a9a7d5492fb338"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/full-integration-budget-optimized.log",
+        "sha256": "0c5a93b836ada896ddf5ea7bff28083b24534c39f1ffccd408ea5905780feb34"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/full-pipeline-peer/CURRENT_REVIEW.md",
+        "sha256": "4e657203ff9b8ac68b9ba027bac8cc33fcb5adf5268b632f8e60e097d674e1a4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/full-pipeline-peer/current-review.json",
+        "sha256": "c99fb070d0ce52cb54a01a1d95d742e0b3345d3a5ffc6971ead968c1acc9af41"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/full-pipeline-peer/current-coverage.json",
+        "sha256": "51839d7493798c2d604b5d41b06e591cfee80a9d39e641f9d82bf7ce7d1dc503"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/full-pipeline-peer/metadata-correction.json",
+        "sha256": "8cd4ec523f15cde18b1c49e4c941555f2a5c4224b610bf2adfd00e271b387fa3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/capture-manifest.json",
+        "sha256": "a5524bf59b83159855b2a85484efec68c63321d940ba939eaa11e1049cf6eca1"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/rpc-implementation/REPORT.md",
+        "sha256": "5744b7dc181dadeea759d3dc8b3afe57cff363382a0b0785f6fe0608e2e721b4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-workspace.log",
+        "sha256": "2936a4815185c7b3ab687680f098ccd8425a9c18c8fcd97b2d217379d66cf5bf"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-independent-counts-final.json",
+        "sha256": "8b586622ab40eea031230a581e3045fc56bd5bb7f233fc013a1311ef57ecb4ac"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-integration/final-journal-real-decoders.log",
+        "sha256": "055dd5ca5dc01c3e30e561c8ae3f642f733479b66da97a08032e41188d727fd6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/private-vault-ui-timing/INVESTIGATION.json",
+        "sha256": "ae39f19caa9793b0a96728d54a3984476f7b313e5ebe5d871d1ff3e9f9084886"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/private-vault-ui-timing/INVESTIGATION.md",
+        "sha256": "d18d546aa9fc713fcb28ef63cd90b6f2e2ad672d586d0b52bc8ba216ea991cd0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/private-vault-ui-timing/ADDITIVE_REPORT.md",
+        "sha256": "b2ee84a6b864ffacb07993893728b4875f531fba56596aba92a9c3d522b7fad2"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/private-vault-ui-timing/final-green.log",
+        "sha256": "690fc06a682ea55d8a7fab95ae51dcc5c97ffca2e3301171bd2428100ea7aaa1"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/private-vault-ui-timing/source-coverage-final.json",
+        "sha256": "7c40083accb979a15bc4cfda940762e926bed7e2ab1f33ef0f5cdcb38ef897c8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/private-vault-ui-timing/workspace-failure-preserved.log",
+        "sha256": "2936a4815185c7b3ab687680f098ccd8425a9c18c8fcd97b2d217379d66cf5bf"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/private-vault-ui-timing/original-focused.log",
+        "sha256": "91a44465ef9657e728234cda8041c08982385bd328f3b1245032e1ed85ba9299"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-format-only/change.json",
+        "sha256": "eab78e303fd1d0c2620beba69396dba1c662d07133dbea9fcc61a4729b553815"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-format-only/before.mjs",
+        "sha256": "4e3f333bab8846c9e86683ed924c352d243da458c1ff75c01bcaefb2e116eca4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-format-only/final-default.log",
+        "sha256": "060cb4b1dfc1af926e9010bd511853491b1ca75e7e249eb143801077f05ee0d7"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-root-source-coverage.json",
+        "sha256": "f2c5cb5bbec1c287977271da875e4e6b7c362e10df9acf4efc45ebc29e00800b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/policy-root-source-coverage-v2.json",
+        "sha256": "e87afed7c91af7c41c81dc3ed90b3c79ca9661e3e6dd8ec832d85228fa113261"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/preparation-amendment-v2.json",
+        "sha256": "a11c236bb427251baabb819d6cc695a561b02ce3b8768b3036804254a9dfc5d5"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/root-increment-verification.json",
+        "sha256": "c65d675fe1ee36573385f424f186027f4daa812b9194bf3da3ceab356b648d7f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/finalize-policy-evidence.before-binary-fix.py",
+        "sha256": "a285989958fd87af41e1fd96133d30ba45d24b57262632830a06ffb234e86116"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/finalizer-binary-fix.diff",
+        "sha256": "02ab423a93f34c21c8218b8baa4890c4b5ebfab92190071611db82a041ec2e21"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/finalizer-binary-fix.json",
+        "sha256": "d3be5a5c13f65b49206d1163d955fec17aa9205a18446da297c68b998eea996c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/FINALIZER_BINARY_FIX.md",
+        "sha256": "01e7fe8ce51e156a91c3de08a91a1351799c2f93c721ac8af3aa77b147a75a4b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/finalizer-inputs.json",
+        "sha256": "576da1f52de205253fe28c53e5940d3526055bedf5709b7fdbd6080c5d10ab7f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-policy-inventory/finalize-policy-evidence.py",
+        "sha256": "892aa3ef5527755708a0ce80c4101fe836c92c9af64b460a47fc61a0cb8ee643"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/01-request.json",
+        "sha256": "3b4ab576b24341c75f49ccbd6d78d580bfc47fde5b09f420b973daf3e9fbbe73"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/01-response.json",
+        "sha256": "c5ff03f3b7c6ad0e817316f83ada0e698e1d22982e804c98df0cfd4a4c69ccf0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/02-request.json",
+        "sha256": "79a38fc80a08cebb8bfd9730d0d52721d2bfd16f3fa11b1d06d69a53d49ea718"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/02-response.json",
+        "sha256": "53ca63ac76a4fafc928fed7ed20556c621bb3ef72cbc8c4504eb0ad54403f261"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/03-request.json",
+        "sha256": "ea78e39cc42c6b07888fdae78acf2d53f8293a157f7bec08a16d79c8a3b3cd48"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/03-response.json",
+        "sha256": "6d1361703238f68bfcdc67929df3e43bc241e943822a4d7f007c6c46b935f511"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/REPORT.md",
+        "sha256": "e89d04c797baee9aad14a1ad54ab40dd53a1d1932a982c6750782c8ad9eadece"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/capture.mjs",
+        "sha256": "7bf33f3b8676350d07b584ad72f9afdb57d1d04d8a0633b170dfa89a1e692037"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/final-default.log",
+        "sha256": "2d2916122e0a458edce0143723881bbdfb033d16597a55b43bbfdb0baa12221c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/final-opt-in.log",
+        "sha256": "ef114a5f53b7d0db29f5e9a48ebb279b49033368fae7b3647db0cb03e546b293"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/intent.json",
+        "sha256": "2463e5e51e4e6c28d441f80f9b132d5f906c436569ea009df6b6035df01c85f6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/parser-regression.log",
+        "sha256": "3e0ae533e29dc73836e1fcf83e01e7b716a1c160e0618a58c03ef686bb1e60f9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/pre-network-setup-note.json",
+        "sha256": "be3e3c0d2e353cab35bcc0044a2893a26f653681352379294c262697e7c3dec8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/simulation-result.json",
+        "sha256": "985e08535022dc49686557cbf0f1a79b70fdde269e3eff97ba5ce877a743ef5b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/source-coverage.json",
+        "sha256": "2b84a8fd27ed3b58bcd58f88926cf36db131cd19a6ed78dcddc351ede3c788b6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/transport-metadata.json",
+        "sha256": "f3ec5914b638bcbded1e4b156e4f5cde26efe2cc2e2dfe61ebd1c8873785d3cf"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/observations-wire-real/verification.json",
+        "sha256": "89040007f823e4cd84dd36d388c96cd435a3cbaa3accc16b1a179a3bb15d260a"
+      }
+    ],
+    "behavior": "Concrete raw state and observation policies, bounded Testnet RPC, state then fee then observation ordering, single-use within-phase derivation reuse and raw evidence replay.",
+    "boundary": "The default synthetic pipeline covers 38 prefinal steps with only executable-byte authentication doubled; the separate local opt-in covers 39 synthetic steps with exact compiled/preserved WASM and four pins. These are overlapping local tests, not WASM host execution or live lifecycle transactions. A separate actual three-request unsigned Testnet probe establishes only Contract#3 wire compatibility. CLI, protected identity/funding preparation, complete live evidence acquisition and real 39-step execution remain unfinished. No new contract deployment, application activation, website build/publication, external audit or exploit-absence claim. Historical website/chain evidence remains unchanged."
   }
 }
