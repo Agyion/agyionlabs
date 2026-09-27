@@ -1,17 +1,17 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T15:05:27.214754+00:00",
-  "sourceBaselineCommit": "fba3b0961f3627c7e7bd1d0bde43359030baeb39",
+  "reviewedAt": "2026-09-27T16:22:24.169549+00:00",
+  "sourceBaselineCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
   "websiteRelease": {
-    "workerVersion": "11516227-d03a-4631-8ea9-1c4b67d0d904",
-    "sourceCommit": "fba3b0961f3627c7e7bd1d0bde43359030baeb39",
+    "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
+    "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
     "url": "https://agyionlabs.dev",
-    "verifiedAt": "2026-09-27T14:59:44.293Z",
-    "treeSha256": "d9793e035d5413ae38015680d4179300820d60e2fc8abe0c03286621597e346d",
+    "verifiedAt": "2026-09-27T16:18:56.861045+00:00",
+    "treeSha256": "0647e768ff3097f2be55a97a27e6ce7e84d1ffd78ba8274b83ce620af3f2fcce",
     "treeHashAlgorithm": "SHA256 of path NUL sha256 NUL decimal bytes LF in exact manifest.files order, sorted lexicographically by path-component tuples",
-    "treeHashScope": "All 104 frozen local files including _headers; 103 public files separately matched",
+    "treeHashScope": "All 104 frozen local files including local configuration; 103 public files separately matched",
     "files": 103,
-    "bytes": 166321464,
+    "bytes": 166322489,
     "runtimeChangesFromSourceBaseline": [],
     "contractPinsChanged": false,
     "browserChecks": {
@@ -21,8 +21,19 @@
       "walletRequests": 0,
       "transactions": 0
     },
-    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36327129298",
-    "limits": "Client preparation publication. Original public V3 remains selected. No new wallet, vault, map-specific or public-network archival test."
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36331432162",
+    "contentVerification": {
+      "status": "verified-across-attempts",
+      "singleScanPassed": false,
+      "report": {
+        "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/live-tree-reconciled.json",
+        "sha256": "0661990906a633c6f72efd9ab3f341955aedd25f8f93ce0f9b54f97d95f93bde"
+      },
+      "matchedFilesFromLatestFailedScan": 102,
+      "matchedFilesFromLaterTargetedTransfer": 1,
+      "scope": "Each of the 103 public files matched its exact frozen bytes/hash. Per-file provenance is in the hash-bound reconciliation report. All three complete scans remain failed. This verifies observed contents across attempts, not simultaneous availability, bulk-transfer reliability, CDN-wide consistency or future availability."
+    },
+    "limits": "Public source-account coordination publication. Original public V3 remains selected; V4 remains deployed-inactive. No fresh map-specific, vault, wallet-extension or public V4 lifecycle test."
   },
   "undeployedContractCandidates": [],
   "scope": "Tracked and nonignored first-party authored source, tests, configuration, styles, API declarations, vector assets and database migrations. Exact current bytes at this checkpoint.",
@@ -31,16 +42,16 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 564,
-    "lines": 72328,
+    "files": 566,
+    "lines": 72745,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 462,
-        "lines": 48168
+        "files": 467,
+        "lines": 48794
       },
       "verified-baseline-plus-reviewed-diff": {
-        "files": 102,
-        "lines": 24160
+        "files": 99,
+        "lines": 23951
       }
     },
     "unresolvedFiles": 0,
@@ -63,8 +74,8 @@
   "files": [
     {
       "path": ".github/workflows/checks.yml",
-      "sha256": "20e914c52c4028b7a1448cada796b3f42d648b3a06b152894b104cca79effa7e",
-      "lines": 123,
+      "sha256": "e70880b619529a1a0a5ce3e465fbe6d82065b1e973dbbdc05e8e4c66eb625b6f",
+      "lines": 124,
       "reviewKind": "complete-source-read"
     },
     {
@@ -195,8 +206,8 @@
     },
     {
       "path": "app/app/components/app/TransactionActivity.tsx",
-      "sha256": "0ec73ebdddd0244e52fed78d3d39737c2bf1cb1eb6c3869177a71293bea91395",
-      "lines": 80,
+      "sha256": "d1a7c70983f6657defe637d2c7cc78b1f257bc499b8937dcbffde7f9a57b681f",
+      "lines": 88,
       "reviewKind": "complete-source-read"
     },
     {
@@ -381,8 +392,8 @@
     },
     {
       "path": "app/app/lib/agyionClient.ts",
-      "sha256": "b4a72efb2e8bd45c798e078ddf044d57772b6193552182a1a8f7ce392fcdb4af",
-      "lines": 1371,
+      "sha256": "8bb5248cfe23200a831ceff47d11f56a73abfac0d36577e0a8b92fa2b7e2c86c",
+      "lines": 1387,
       "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
@@ -543,8 +554,8 @@
     },
     {
       "path": "app/app/lib/transactionReceipts.ts",
-      "sha256": "87fdb76808c4f7a86cdbf8a1190ee65e8af242f7837771a5ec09cd4773b78b87",
-      "lines": 152,
+      "sha256": "bcf9e61fd6dd1d255939606304efa2fefdf2a021f6f1c9d0af662ff9ead0a6dc",
+      "lines": 158,
       "reviewKind": "complete-source-read"
     },
     {
@@ -693,9 +704,9 @@
     },
     {
       "path": "app/tests/client-asset-policy.test.ts",
-      "sha256": "ba7a8791c017ca093897b15ca8cea465879d2de6e914acde7649562e4942c969",
-      "lines": 105,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "121f8601bfc4dce249b0814e6a87fc7c387286c17f8f69cf21e1eaa395426607",
+      "lines": 113,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/tests/client-deployment-config.test.ts",
@@ -711,15 +722,21 @@
     },
     {
       "path": "app/tests/client-recovery.test.ts",
-      "sha256": "1e6de182b9d39e38c323c0c36d45cdd35f3c7acb4cc2c5db5945fa5578854918",
+      "sha256": "b02f88d5fda37fe50abce6336fb9328b86a19454d59507cf2d791f1b32e6adeb",
       "lines": 226,
       "reviewKind": "complete-source-read"
     },
     {
       "path": "app/tests/client-security.test.ts",
-      "sha256": "ee4c2a052b08fc011101754f93c1342768dec74051015a282f7961bd6eba95db",
-      "lines": 78,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "8fe7b5fcd8e866e926b6ba804c809138fc6794622f55e88de45901b7d556e17d",
+      "lines": 84,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "app/tests/client-source-lock.test.ts",
+      "sha256": "8563edbc580e2992691070b2ada7f9adc62cc7cfc222a9ff3d34b893a4e56bf2",
+      "lines": 216,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/tests/config.test.ts",
@@ -849,9 +866,9 @@
     },
     {
       "path": "app/tests/pod-rpc-payload.test.ts",
-      "sha256": "1fb287f41b1f86bb57c42de5bb6a3bbeb9fd16e68ef6e28950a6f030bf14b58f",
-      "lines": 42,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "33fc2acbf1a72df461dfa8eea0405d2e91ad6ab1f6af3a21760ec6a412a1f400",
+      "lines": 50,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/tests/pointer-aim.test.ts",
@@ -915,8 +932,8 @@
     },
     {
       "path": "app/tests/private-trigger-attester.test.tsx",
-      "sha256": "9137f6593312e461355d0778d2ecf254193ded548eae8a1f7e79c6ecdf63631c",
-      "lines": 72,
+      "sha256": "e2d110887fd88cbd54407257a7e1483c2b586febf11a18fc4be6c630e6aa2064",
+      "lines": 74,
       "reviewKind": "complete-source-read"
     },
     {
@@ -969,8 +986,8 @@
     },
     {
       "path": "app/tests/recovery-ui.test.tsx",
-      "sha256": "939a3699a378cbcb9586c8e7a7113b3cc8716f041b0caeede6ecc9487fd0cb37",
-      "lines": 67,
+      "sha256": "360ddd10a36bdab0d5cf0efd93b2bd53552df10ce62d15d03e8644c30ca883b2",
+      "lines": 96,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3128,6 +3145,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/public-source-lock-browser.test.mjs",
+      "sha256": "fc2d5811e65195d1badfcc32165e41ac31be9691c46cec253aa6572fa79014e8",
+      "lines": 117,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/qa-selection.test.mjs",
       "sha256": "16b8e1af9dab76fe04e373a76ccbabfb585c086a724338f8cb0d9a48378c87fc",
       "lines": 29,
@@ -3845,6 +3868,28 @@
         ]
       },
       "browserBoundary": "Same verification assertions and original helpers; executable changed to matching Playwright-managed Chromium. First installed-Chrome navigation ERR_NETWORK_CHANGED failure retained. No inferred root cause, interception or TLS bypass."
+    },
+    {
+      "workerVersion": "11516227-d03a-4631-8ea9-1c4b67d0d904",
+      "sourceCommit": "fba3b0961f3627c7e7bd1d0bde43359030baeb39",
+      "url": "https://agyionlabs.dev",
+      "verifiedAt": "2026-09-27T14:59:44.293Z",
+      "treeSha256": "d9793e035d5413ae38015680d4179300820d60e2fc8abe0c03286621597e346d",
+      "treeHashAlgorithm": "SHA256 of path NUL sha256 NUL decimal bytes LF in exact manifest.files order, sorted lexicographically by path-component tuples",
+      "treeHashScope": "All 104 frozen local files including _headers; 103 public files separately matched",
+      "files": 103,
+      "bytes": 166321464,
+      "runtimeChangesFromSourceBaseline": [],
+      "contractPinsChanged": false,
+      "browserChecks": {
+        "http": 34,
+        "ui": 14,
+        "rpcTransport": "direct Playwright-managed Chromium networking",
+        "walletRequests": 0,
+        "transactions": 0
+      },
+      "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36327129298",
+      "limits": "Client preparation publication. Original public V3 remains selected. No new wallet, vault, map-specific or public-network archival test."
     }
   ],
   "recoveryCompatibility": {
@@ -3874,13 +3919,7 @@
     ],
     "historicalBoundary": "This section records the earlier ddeadf8 checkpoint. Its synthetic test does not claim the later separately documented isolated-ledger integration."
   },
-  "sourceChangesAfterBaseline": [
-    {
-      "path": "deployments/public-v4-testnet.json",
-      "sha256": "147f532e29ebdaecddf357e3f819a73654d40307140b34a694e73fc92d22338f",
-      "purpose": "Added public evidence receipt; no runtime changes"
-    }
-  ],
+  "sourceChangesAfterBaseline": [],
   "inactiveGuardedPublicRelease": {
     "status": "deployed-inactive",
     "contractId": "CA3QJJNHN3TDSU3MYWVLO5N2NGFUBY4AO2J77TRPNHFI5VB5P26USEMZ",
@@ -3986,5 +4025,261 @@
       "Fixture sequence jump, per-process clock offset and deliberately selected local TTL settings; no public fee benchmark.",
       "No application restoration workflow, public-network restoration, independent audit, setup, custody or exploit-absence guarantee."
     ]
+  },
+  "publicSourceGuard": {
+    "status": "published; live contents verified across attempts",
+    "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36331432162",
+    "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
+    "sourceInventorySha256": "288fe893210db69084c2c74558b5d805928db4bedd605650f5fa4ccbcf4b06d3",
+    "sourceFiles": [
+      {
+        "path": ".github/workflows/checks.yml",
+        "change": "modified",
+        "beforeLines": 123,
+        "lines": 124,
+        "sha256": "e70880b619529a1a0a5ce3e465fbe6d82065b1e973dbbdc05e8e4c66eb625b6f",
+        "status": "current-full-range-record"
+      },
+      {
+        "path": "app/app/components/app/TransactionActivity.tsx",
+        "change": "modified",
+        "beforeLines": 80,
+        "lines": 88,
+        "sha256": "d1a7c70983f6657defe637d2c7cc78b1f257bc499b8937dcbffde7f9a57b681f",
+        "status": "current-full-range-record"
+      },
+      {
+        "path": "app/app/lib/agyionClient.ts",
+        "change": "modified",
+        "beforeLines": 1371,
+        "lines": 1387,
+        "sha256": "8bb5248cfe23200a831ceff47d11f56a73abfac0d36577e0a8b92fa2b7e2c86c",
+        "status": "current-composed-full-range-record"
+      },
+      {
+        "path": "app/app/lib/transactionReceipts.ts",
+        "change": "modified",
+        "beforeLines": 152,
+        "lines": 158,
+        "sha256": "bcf9e61fd6dd1d255939606304efa2fefdf2a021f6f1c9d0af662ff9ead0a6dc",
+        "status": "current-full-range-record"
+      },
+      {
+        "path": "app/tests/client-asset-policy.test.ts",
+        "change": "modified",
+        "beforeLines": 105,
+        "lines": 113,
+        "sha256": "121f8601bfc4dce249b0814e6a87fc7c387286c17f8f69cf21e1eaa395426607",
+        "status": "current-full-range-record"
+      },
+      {
+        "path": "app/tests/client-recovery.test.ts",
+        "change": "modified",
+        "beforeLines": 226,
+        "lines": 226,
+        "sha256": "b02f88d5fda37fe50abce6336fb9328b86a19454d59507cf2d791f1b32e6adeb",
+        "status": "current-full-range-record"
+      },
+      {
+        "path": "app/tests/client-security.test.ts",
+        "change": "modified",
+        "beforeLines": 78,
+        "lines": 84,
+        "sha256": "8fe7b5fcd8e866e926b6ba804c809138fc6794622f55e88de45901b7d556e17d",
+        "status": "current-full-range-record"
+      },
+      {
+        "path": "app/tests/client-source-lock.test.ts",
+        "change": "new",
+        "beforeLines": 0,
+        "lines": 216,
+        "sha256": "8563edbc580e2992691070b2ada7f9adc62cc7cfc222a9ff3d34b893a4e56bf2",
+        "status": "current-full-range-record"
+      },
+      {
+        "path": "app/tests/pod-rpc-payload.test.ts",
+        "change": "modified",
+        "beforeLines": 42,
+        "lines": 50,
+        "sha256": "33fc2acbf1a72df461dfa8eea0405d2e91ad6ab1f6af3a21760ec6a412a1f400",
+        "status": "current-full-range-record"
+      },
+      {
+        "path": "app/tests/private-trigger-attester.test.tsx",
+        "change": "modified",
+        "beforeLines": 72,
+        "lines": 74,
+        "sha256": "e2d110887fd88cbd54407257a7e1483c2b586febf11a18fc4be6c630e6aa2064",
+        "status": "current-full-range-record"
+      },
+      {
+        "path": "app/tests/recovery-ui.test.tsx",
+        "change": "modified",
+        "beforeLines": 67,
+        "lines": 96,
+        "sha256": "360ddd10a36bdab0d5cf0efd93b2bd53552df10ce62d15d03e8644c30ca883b2",
+        "status": "current-full-range-record"
+      },
+      {
+        "path": "scripts/tests/public-source-lock-browser.test.mjs",
+        "change": "new",
+        "beforeLines": 0,
+        "lines": 117,
+        "sha256": "fc2d5811e65195d1badfcc32165e41ac31be9691c46cec253aa6572fa79014e8",
+        "status": "current-full-range-record"
+      }
+    ],
+    "scopedEvidence": [
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/workspace-crypto-wait-final.log",
+        "sha256": "d88893b0ddac900ec84cdf41a84dcb60da74095856dc6e47074bf73c0b23ef28"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/browser-green.log",
+        "sha256": "55c695ebefc55c7b9ae79e21a658fc5d4ebb68605c41b59811f6c21ccbd9ec95"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/CLIENT_REPORT.md",
+        "sha256": "0b46b0f22f448a1d562244a900e3aace6585cd159034c61292c9cc0d609052e9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/root-source-coverage.json",
+        "sha256": "67baef6601950835b32e008ed394f19db2aa7946cdb03ca894c96b0147da1978"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/client-source-coverage.json",
+        "sha256": "2ae64c942ec3a4f4d5752289b60d9761f501c1e9b6c546295ad042e75fe09ac3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/attester-timing/source-coverage.json",
+        "sha256": "ccbab7aae22aa6012c813d14f7c84dd8caef5569378a927a82f27d12af551faa"
+      }
+    ],
+    "behavior": "Updated public clients sharing one browser origin reserve network and source before readiness/record reads and SDK preparation, through signing and submission. Pending/unknown original hashes block competing public writes and remain recoverable without resend.",
+    "browserFixtureBoundary": "Two same-origin Chromium tabs with native Web Locks/localStorage, production client and actual generated SDK; controlled readiness/RPC fixtures. No external network or wallet signing. This is distinct from the read-only live-site checks.",
+    "limitations": "Older open tabs must reload. No cross-profile, private-pool, marketplace, other-application or direct-wallet coordination. No contract or release-pin change, V4 activation, credential migration, fresh map/vault/wallet claim or independent audit.",
+    "initialLiveVerification": {
+      "status": "failed",
+      "liveTreeMatchedFiles": 102,
+      "provingAsset": "zk/private/7b9fa12ff8619def9b2d0e73e44a0453c806a3354ea33b1ec2022d888c22e1ed.bin",
+      "provingAssetBytes": 16777216,
+      "provingAssetTimeoutMs": 45000,
+      "httpChecks": 34,
+      "uiChecks": 0,
+      "secondLiveTreeAttempt": {
+        "status": "failed",
+        "matchedFiles": 102,
+        "provingAsset": "zk/private/2e1bb7308add42170c490b613ea14ab39aa91b26250f5fe5e23eddb3dc1fc42a.bin",
+        "provingAssetBytes": 16777216,
+        "provingAssetTimeoutMs": 45000
+      },
+      "thirdLiveTreeAttempt": {
+        "status": "failed",
+        "matchedFiles": 102,
+        "provingAsset": "zk/private/2e1bb7308add42170c490b613ea14ab39aa91b26250f5fe5e23eddb3dc1fc42a.bin",
+        "provingAssetBytes": 16777216,
+        "provingAssetTimeoutMs": 120000,
+        "concurrentWorkers": 2
+      },
+      "requestFailures": [
+        {
+          "url": "https://agyionlabs.dev/assets/index-4_1DRJwZ.js",
+          "error": "net::ERR_NETWORK_CHANGED"
+        },
+        {
+          "url": "https://agyionlabs.dev/fonts/bricolage-var.woff2",
+          "error": "net::ERR_NETWORK_CHANGED"
+        }
+      ],
+      "evidence": [
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/initial-live-failure/live-tree.json",
+          "sha256": "92ef4fc39fef8227b22f577134bdf6450c8210b4df9dd881b27df68af9f27f22"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/initial-live-failure/live-tree.log",
+          "sha256": "216eee440c212e46f5643864e173dee7b90e5a66060571ffb9451c762ebe1722"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/initial-live-failure/live-site.log",
+          "sha256": "9a7bf4c45bd2e5d91d1c9dae204a1ed88882eb88784c3c4b3de860fac8d431c5"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/initial-live-failure/live-site/results.json",
+          "sha256": "1c5ff966940ceeeeac59791bbc78a93ce78da3bd1b72321f2021b9d895b226d2"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/initial-live-failure/README.json",
+          "sha256": "388d6dbf935defc5a55f80f11fe7a3996af65d9d4e42b10a01a52545f77dfd21"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/tree-retry-timeout/live-tree.json",
+          "sha256": "28e31fef53b2182bbccdf20cf4172bdc3b94f40ab789c7e75b8d3332bc2a4b45"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/tree-retry-timeout/live-tree.log",
+          "sha256": "ad78e3fb16cf351f53cf7b928bee772301a943bce1a94c62272d3f480ff83236"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/tree-retry-timeout/verification-adjustment.json",
+          "sha256": "53eca3ac858a7737a20ac11a600f17a53ec3e158544233ec28effdb67cf7ab4b"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/tree-retry-timeout/verify-live-tree-original.mjs",
+          "sha256": "ccf83681cd3679ca770f16e00eca0faaaf7b2727a8e13eed280644a4f550f5e2"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/tree-long-timeout/live-tree.json",
+          "sha256": "ba5068eb315ea02a2013477374489a9d401f50907e13233efea9e58797bd2aeb"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/tree-long-timeout/live-tree.log",
+          "sha256": "dc82942d725349117f5ebefb52cbca83a34c9f46c3cad7e455e5e43bd36d848c"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/tree-long-timeout/targeted-verification.json",
+          "sha256": "f00787e8502b818da71ef496599807e662029cb86ba05e23f62dbbe7cfe0f8c5"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/tree-long-timeout/targeted-transfer.json",
+          "sha256": "6ece09bc75e5452ff14ed5627eb419575048c40fa7117cebf78a7b68380bda38"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/tree-long-timeout/targeted-transfer-error.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/tree-long-timeout/targeted-proof.bin",
+          "sha256": "2e1bb7308add42170c490b613ea14ab39aa91b26250f5fe5e23eddb3dc1fc42a"
+        }
+      ],
+      "retry": "The unchanged browser verifier passed 34 HTTP and 14 UI checks with zero captured errors. The tree helper changed only its timeout from 45 to 120 seconds and concurrency from four to two, but its third complete scan also failed. A later direct targeted transfer returned the missing exact 16 MiB file with HTTP 200, verified TLS and no redirects. The aggregate uses exactly 102 matches from the third scan plus that one targeted match; no complete scan passed. Exact HTTP/origin/byte/hash requirements remained unchanged. Root reported no source, build, host network or interception change. These results do not establish the failure cause or bulk-transfer reliability."
+    },
+    "liveContentVerification": {
+      "status": "verified-across-attempts",
+      "singleScanPassed": false,
+      "report": {
+        "path": "artifacts/security/2026-09-27-compatibility/public-source-lock/publication/live-tree-reconciled.json",
+        "sha256": "0661990906a633c6f72efd9ab3f341955aedd25f8f93ce0f9b54f97d95f93bde"
+      },
+      "matchedFilesFromLatestFailedScan": 102,
+      "matchedFilesFromLaterTargetedTransfer": 1,
+      "scope": "Each of the 103 public files matched its exact frozen bytes/hash. Per-file provenance is in the hash-bound reconciliation report. All three complete scans remain failed. This verifies observed contents across attempts, not simultaneous availability, bulk-transfer reliability, CDN-wide consistency or future availability."
+    },
+    "hostedChecks": {
+      "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
+      "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36331432162",
+      "workspacePassed": 1455,
+      "defaultOptionalSkips": 7,
+      "applicationPassed": 902,
+      "separateDeploymentHelperTests": 14,
+      "separatelyEnabledBrowserChecks": 5,
+      "separatelyEnabledCryptographicChecks": 47,
+      "contractNativeAndWasmNamedChecks": 150,
+      "dependencyAuditWorkspaces": 6,
+      "dependencyAdvisoriesReported": 0,
+      "boundary": "Root-decoded exact CI logs; suites may overlap and are not a deduplicated security guarantee."
+    }
   }
 }
