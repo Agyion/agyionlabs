@@ -6,9 +6,9 @@ This record describes the development review on **27 September 2026**. The curre
 
 | Evidence | Files | Current lines |
 | --- | ---: | ---: |
-| Exact current bytes with complete source-read evidence | 510 | 56,773 |
+| Exact current bytes with complete source-read evidence | 511 | 57,085 |
 | Verified reviewed baseline plus completely reviewed differences | 98 | 23,827 |
-| Total first-party authored scope | 608 | 80,600 |
+| Total first-party authored scope | 609 | 80,912 |
 | Unresolved files or line ranges at this snapshot | 0 | 0 |
 
 The first row uses explicit complete reading ranges matched to each current file hash. It does not mean every file was read again when this manifest was generated. The second row is composed coverage: the previously reviewed baseline was checked against Git bytes, every difference was reviewed, and unchanged, changed and deleted ranges were reconciled. It is not a fresh full-file reread.
@@ -16,6 +16,8 @@ The first row uses explicit complete reading ranges matched to each current file
 The manifest lists each file's relative path, SHA-256, line count and review method. The scope includes first-party implementation, tests, configuration, styles, handwritten API declarations, vector assets and database migrations. Generated bindings, prover constants, cryptographic parameters, proof fixtures, geographic data, lockfiles, copied vendor code and dependency implementations are outside the authored totals. Ignored files, documentation, licenses and binary media are also excluded. The generated manifest excludes itself to avoid recursive hashing.
 
 ## Executed verification and limits
+
+The private recovery and [observation journey](PUBLIC_V4_LIFECYCLE_PREPARATION.md) checkpoint, source `4b7edf5cfcc17e5203da88b8be73892b3d877623`, updates two authored files and adds one test file. The local workspace passed 2,373 checks with 13 skips, and [exact-source hosted CI](https://github.com/Agyion/agyionlabs/actions/runs/36357272700) passed both jobs with 2,372 checks and 14 skips. An obsolete account/session refresh can no longer invalidate replacement pending discovery; ownership, recovery and signing boundaries remain. The synthetic journey checks 58 of 66 observation scopes across 39 transitions in stable and advancing ledger modes. Its 13 after acquisitions do not establish successful after aggregates: authenticated current fees are deliberately absent, and seven before phases remain incomplete. Default executable authentication is doubled; opt-in pinned WASM verifies bytes without running a host. Fee metadata, full66 completion, persistent acquisition replay and live wire remain outside this test. No new operator identity, live RPC, funding, live signature, transaction, deployment or website publication is claimed. Earlier fields and the published release remain unchanged.
 
 The [V4 observation acquisition helpers](PUBLIC_V4_LIFECYCLE_PREPARATION.md), source `248a602f6bdd2b0341dce70fa3415bfebf0838c9`, add two authored files and update seven. The local workspace passed 2,368 checks with 13 skips, and [exact-source hosted CI](https://github.com/Agyion/agyionlabs/actions/runs/36354995944) passed both jobs with 2,367 checks and 14 skips. Strict raw observation validation and one record-mode negative-case acquisition are tested with synthetic transport, deterministic fixture credentials, full state policies and separately identified executable-byte verification modes. The initial 24-case composition does not complete a live 39-step collector or executor. Successful ENFORCE and native-zero getter wire remain uncaptured, and complete raw-sidecar persistence and retrospective acquisition-time validation remain separate work. No new operator identity, live RPC, funding, live signature, submission or website publication is claimed. Prior evidence and published releases remain historical and unchanged.
 

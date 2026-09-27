@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T22:40:01.290145+00:00",
-  "sourceBaselineCommit": "248a602f6bdd2b0341dce70fa3415bfebf0838c9",
+  "reviewedAt": "2026-09-27T23:25:08.566423+00:00",
+  "sourceBaselineCommit": "4b7edf5cfcc17e5203da88b8be73892b3d877623",
   "websiteRelease": {
     "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
     "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
@@ -42,12 +42,12 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 608,
-    "lines": 80600,
+    "files": 609,
+    "lines": 80912,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 510,
-        "lines": 56773
+        "files": 511,
+        "lines": 57085
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 98,
@@ -188,8 +188,8 @@
     },
     {
       "path": "app/app/components/app/PrivateWorkspaceProvider.tsx",
-      "sha256": "aa52c445401c12fb5f307319d8659acf1e16fd743b420a313712f38b1213ec69",
-      "lines": 213,
+      "sha256": "4b7342b18a49627a6654d33592d0d92139efbbdfe43aa08cc396d8f2f5cb1a7b",
+      "lines": 215,
       "reviewKind": "complete-source-read"
     },
     {
@@ -962,8 +962,8 @@
     },
     {
       "path": "app/tests/private-workspace-provider.test.tsx",
-      "sha256": "5f4ede0ce06cb9daba5256e70e34376993fda7128bad8846785922630d9257ec",
-      "lines": 201,
+      "sha256": "d3e0a5725395f5a1799927f58cce0dfaf867b88c94a1b3d87f193498f044cfb8",
+      "lines": 226,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3328,6 +3328,12 @@
       "path": "scripts/tests/public-lifecycle-journal.test.mjs",
       "sha256": "e03eca9965e8ac5fce2eb9b502dccdb1c8532fd6d0d943753898073419857ac4",
       "lines": 310,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-observation-acquisition-journey.test.mjs",
+      "sha256": "49b1d0717d18e496c43e71b1d7ae85a131b0ef608c6632700575f017545db6b0",
+      "lines": 285,
       "reviewKind": "complete-source-read"
     },
     {
@@ -6517,5 +6523,168 @@
       }
     ],
     "boundary": "Strict pure observation validation and one record-mode negative-case acquisition are implemented with fixed plan/brand scope, raw replay, same-ledger zero evidence and bounded before/after snapshots. Tests use synthetic transport, deterministic fixture credentials and either an explicit executable-authentication-only double or opt-in exact local pinned code. Initial24 case composition is not a completed live39-step collector or executor. Successful ENFORCE and native-zero getter actual wire remain unconfirmed. Complete raw capture persistence and retrospective acquisition-time replay remain separate integration work. Capture clock guards do not impose an overall elapsed-time deadline; a never-settling trusted capability requires caller cancellation. No new operator identity, live RPC, funding, live signature, submission, deployment, website publication, application activation or independent audit claim."
+  },
+  "privateRecoveryObservationJourney": {
+    "status": "private-recovery-discovery-and-synthetic-journey-verified",
+    "sourceCommit": "4b7edf5cfcc17e5203da88b8be73892b3d877623",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36357272700",
+    "sourceInventorySha256": "8b920ff9245fc9bc8bdf34fad10998ad7751cff7fab35de759d11de4d6b50028",
+    "newAuthoredFiles": 1,
+    "modifiedAuthoredFiles": 2,
+    "authoredLineIncrease": 312,
+    "localWorkspacePassed": 2373,
+    "localDefaultOptionalSkips": 13,
+    "hostedWorkspacePassed": 2372,
+    "hostedDefaultOptionalSkips": 14,
+    "sourceCoverage": {
+      "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/root-final-source-coverage.json",
+      "sha256": "b7a75ab974a61f95c708c90c18fa98a9829ed279f160997ef25414a5207d0d4a"
+    },
+    "newRealIdentityPreparations": 0,
+    "newRealRpcRequests": 0,
+    "newFundingRequests": 0,
+    "newLiveSignatures": 0,
+    "newTransactionsSubmitted": 0,
+    "evidence": [
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/capture-increment.py",
+        "sha256": "7b5e1bacd2c0576053a13f285f9100e698a01db9c1c231c5a9bc8aa4a8b41111"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/preparation-provenance.json",
+        "sha256": "c0b08f0fa47f754bfac67ffcde7990cf3dfd5459836da4b1266518823a0d2b74"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/repository-inventory.json",
+        "sha256": "8b920ff9245fc9bc8bdf34fad10998ad7751cff7fab35de759d11de4d6b50028"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/summary.json",
+        "sha256": "9137cb3596caca1b354afde130a8602eaccd357fabc92327c7840d7844ca16e4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/independent-verification.json",
+        "sha256": "0f1892fd27c7480ff0c733cec27746b677e55791c2fb9158440c39fc91487c8c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/frozen-inputs.json",
+        "sha256": "5e1564236767b444031e70bbc4537e45bb68b7b423e972771c2035cdba6a8606"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/root-final-source-coverage.json",
+        "sha256": "b7a75ab974a61f95c708c90c18fa98a9829ed279f160997ef25414a5207d0d4a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/local-test-summary.source-bound.json",
+        "sha256": "5b9ca40e339d12a1b0d2aa3f2324188ac52eccc83b0f2a2d236b4c3fbf8edb36"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/workspace.log",
+        "sha256": "7dc97810536228125421aba838a2cb91d71903d6f44434083febb0f7c365e5d2"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/hosted-test-summary.json",
+        "sha256": "c725a860a3be2eefff8aecf36989681618e5944e4b68c1c8320b4d90cce61ca6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/hosted-ci.json",
+        "sha256": "f02189308f5838f6b5b7f76905f637ea4a9c8e5135fec471ddd6329dfb5ccd9b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/hosted-ci.log",
+        "sha256": "82862069888656e6fa77941674bc04a3541ef604c703b6f9687b055924b936ca"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/root-review.md",
+        "sha256": "aba3c81eb3c95f1ecb1f48e702207c7246df1abe3a5d33948462a1bb5868fd72"
+      },
+      {
+        "path": "docs/PUBLIC_V4_LIFECYCLE_PREPARATION.md",
+        "sha256": "5f60af4036ef0ed1a411036a406a6b860580de966dea4ceef553d35f318ab0bd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/journey-implementation/01-default.log",
+        "sha256": "1f7d240665a74a0d4d0d5b9d7d34191a4356d15b66624a72e8c2dd48fb632614"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/journey-implementation/02-pinned.log",
+        "sha256": "1d65809f06c9e38871cd19a8c0aa0ce12b0a03a0c62f62637ac16993b1e2abe7"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/journey-implementation/peer-final-review.json",
+        "sha256": "03279e1e6486749cbd9582f4bf01d66ed5828ac91751b2adbed8f4c61372a704"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/implementation/RED.log",
+        "sha256": "59a5fa3a44af6af40f1548282bf1f3df74ce98c387967137b3edd685d2eef863"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/implementation/focused-GREEN.log",
+        "sha256": "20002c2e74c4809bb720a0b234e17463b1ada0ca41a804445fdded7e5eb73f1c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/implementation/source-coverage.json",
+        "sha256": "e11369bf20f48bb31b86df66ded67036e4c8b2ceedf3b036a8ceed2368933632"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/peer-final-review.json",
+        "sha256": "6b8f85714175e62de9c8b74cfb31d325bded57589654c99126b0f111d2137ab8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/root-ci-verification.json",
+        "sha256": "cec7764bf30ef76a216350679c6244573d1ef894b8598a4d288d1ed9cb890376"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/root-ci-status.json",
+        "sha256": "02ff5f11f99b9cecdddb54033088baf4aa0e507528159f6d7775631c83be365b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/workspace-execution.json",
+        "sha256": "1196a80a97786d96ccc6c0c6c47a44b2fd56377a3ffaffd0be05cdd02f0431bc"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-recovery-observation-journey/local-test-summary.json",
+        "sha256": "e6cd62693bc06af854f73504ce34c81275b4d99adb138647e1d4e109d2734c82"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/preparation-checks.json",
+        "sha256": "880e1e94a584ad2973a3a9c92376a2749429678217dc03029446e94031566a1d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/root-helper-activation.json",
+        "sha256": "3daffe18585844eadb7b963003ef58829a4b967851ac19d1c287ebd1e8578911"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/root-finalizer-review.json",
+        "sha256": "64c49dc4914a4f846346bd009d6200c91bfa06c0a912a61ccd3a116ea51cf236"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/root-finalizer-activation.json",
+        "sha256": "3766dc992b5565d3f398a1b97542f5bed61f1c9ecbe452dbfbd0bf8e3a53ce85"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/finalizer-v2-checks.json",
+        "sha256": "bd422bf41afec6730d960710ac17b9035b82dc249f76a2acf1ec0eb1d3338694"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/finalizer-v2.diff",
+        "sha256": "5616d6884830e665b6430a067184d27b610b4ddeb8cb9c842e9e384b56bb8286"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/finalizer-inputs.json",
+        "sha256": "90bbe91d901303c92ef5a754fb676b7405cfbe1776064d18be4b695415050a55"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/private-recovery-observation-journey-inventory/finalize-private-recovery-journey-evidence.active.py",
+        "sha256": "52396141827a63edbbdd0f2ad7f2b2bcd26fb3cf9a23d1c3e58c13ae81482909"
+      }
+    ],
+    "journeyCasesPerHeadMode": 58,
+    "journeyEconomicPhasesPerHeadMode": 78,
+    "journeyAfterAcquisitionsPerHeadMode": 13,
+    "journeyAfterAggregateVerified": false,
+    "journeyIncompleteBeforePhasesPerHeadMode": 7,
+    "journeyFull66Verified": false,
+    "boundary": "The private provider rejects obsolete account/session refresh callbacks before they can invalidate a replacement pending read; post-await ownership checks remain. This closes a recovery-display liveness race, not a fund-theft or signing-authority flaw. Provider regressions use real React with existing dependency doubles. The added journey covers 58 of 66 case scopes across 39 synthetic transitions, stable and forward heads, with independent requests/payloads/economics and 78 phase state checks per mode. All 13 after acquisitions are exercised but every after aggregate intentionally refuses missing authenticated currentFee; seven before phases remain incomplete because eight cases are excluded. Default tests double executable authentication; opt-in pinned WASM authenticates bytes only, not host execution. Inclusion/fee data are synthetic; no full fee metadata reconciliation, full66 completion, journal persistence, actual ENFORCE/native-zero wire or live execution claim. No new real identity, RPC, funding, live signature, transaction, contract deployment, website publication or application activation."
   }
 }
