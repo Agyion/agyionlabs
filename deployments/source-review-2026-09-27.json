@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T12:18:36.565635+00:00",
-  "sourceBaselineCommit": "598ab2f93134af88501967b7379b79434fef0315",
+  "reviewedAt": "2026-09-27T13:18:56.132056+00:00",
+  "sourceBaselineCommit": "351d6f1c5ccc5e2b0873d9c0e69abe67a4b18fa3",
   "websiteRelease": {
     "workerVersion": "bcfa6538-0fac-449b-a0da-46c74c342770",
     "sourceCommit": "598ab2f93134af88501967b7379b79434fef0315",
@@ -39,16 +39,16 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 553,
-    "lines": 70810,
+    "files": 556,
+    "lines": 71073,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 454,
-        "lines": 48250
+        "files": 456,
+        "lines": 48462
       },
       "verified-baseline-plus-reviewed-diff": {
-        "files": 99,
-        "lines": 22560
+        "files": 100,
+        "lines": 22611
       }
     },
     "unresolvedFiles": 0,
@@ -161,9 +161,9 @@
     },
     {
       "path": "app/app/components/app/PrivateInstrumentPanel.tsx",
-      "sha256": "660804ce68a5a5472781d9f9dbdc8a112342cb293d83d0a9011276846df31cc4",
-      "lines": 298,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "d03e500f7751e61454e92939009584b9122a788638e8660cc556f2f5120f7365",
+      "lines": 304,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/app/components/app/PrivatePendingRecovery.tsx",
@@ -454,6 +454,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "app/app/lib/private-operation-errors.ts",
+      "sha256": "61eba078f90a56479cc5182b29ffa7c4eb9fb94a93e9cb1784ec6782b72b5192",
+      "lines": 17,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "app/app/lib/private/backup-release.ts",
       "sha256": "6a3f3217931ae4e50615aab485ccf284b9fe17d8af6ed18f956f15a5438f19df",
       "lines": 13,
@@ -497,9 +503,9 @@
     },
     {
       "path": "app/app/lib/private/protocol.ts",
-      "sha256": "8e46959a4bcc0bd86ac9144b74025ff7dfeb7edd9867042b1b924c52216928f3",
-      "lines": 243,
-      "reviewKind": "complete-source-read"
+      "sha256": "72a5236dbb9da5d4f0461064d2bd21fcda571c858b6dca7a1199d6c9dd14f23e",
+      "lines": 262,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "app/app/lib/private/release.json",
@@ -521,9 +527,9 @@
     },
     {
       "path": "app/app/lib/privateVault.ts",
-      "sha256": "8578c7ca4c0957f910c188ef167890583e8993f41efeb07b6a33c3b9b37686bb",
-      "lines": 203,
-      "reviewKind": "complete-source-read"
+      "sha256": "32cf7d6e3707582660e775b12592f839f4304761bb6fd98750f804bf425c2d3d",
+      "lines": 207,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "app/app/lib/privateWorkspaceInputs.ts",
@@ -862,10 +868,16 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "app/tests/private-cancellation-ui.test.tsx",
+      "sha256": "3c6277a75fb00ebd2a8c324fbec186c03eab164c0464eaf452bdf722048995d4",
+      "lines": 44,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "app/tests/private-instruments.test.tsx",
-      "sha256": "d3ef8a2e0695c3e0641ae0f6ee2c092e80fa029c253d3440461df554887a3c30",
-      "lines": 235,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "c552046c90db109ec1d39b17a7c307672adbb360c47402bdd497ad098c6403d9",
+      "lines": 237,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/tests/private-note-summary.test.ts",
@@ -893,9 +905,9 @@
     },
     {
       "path": "app/tests/private-protocol.test.ts",
-      "sha256": "993ea29378a42a0cc3fd54bdc7f643bc4142ef3a8683e510aa27158ba4544da6",
-      "lines": 91,
-      "reviewKind": "complete-source-read"
+      "sha256": "7f6543a7dfdab010eb392636eec84c0c8f4b410504368720c35b3e0cefc3de48",
+      "lines": 115,
+      "reviewKind": "verified-baseline-plus-reviewed-diff"
     },
     {
       "path": "app/tests/private-release.test.ts",
@@ -1399,6 +1411,12 @@
       "path": "deployments/market-testnet.json",
       "sha256": "02c1f19579d6cafafe3ed657ffb748c88726b0ea03a8a18d9502483fd6aa64aa",
       "lines": 108,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "deployments/private-pool-freighter-testnet.json",
+      "sha256": "b5564abee4c3f6ea5ea237e70aead87cc7e1de0a24fa2eba7407bcf96fededbb",
+      "lines": 147,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3566,5 +3584,62 @@
       "applicationErrors": 0,
       "transactions": 0
     }
+  },
+  "realPrivateFreighter": {
+    "receipt": "deployments/private-pool-freighter-testnet.json",
+    "receiptSha256": "b5564abee4c3f6ea5ea237e70aead87cc7e1de0a24fa2eba7407bcf96fededbb",
+    "checks": 8,
+    "genuineWalletRequests": 3,
+    "actualSignatures": 2,
+    "includedTransactions": 2,
+    "depositAmountStroops": "100000",
+    "withdrawalAmountStroops": "100000",
+    "finalPoolBalancesAndLiabilities": "zero for both assets",
+    "originalPool": "unchanged",
+    "boundary": "Actual extension on published 598ab2f website; direct RPC with a bounded outgoing transaction guard. Host network and harness failures retained separately."
+  },
+  "privateCancellationCorrection": {
+    "status": "built and tested locally; not published",
+    "sourceChangesAfterBaseline": [
+      {
+        "path": "app/app/components/app/PrivateInstrumentPanel.tsx",
+        "sha256": "d03e500f7751e61454e92939009584b9122a788638e8660cc556f2f5120f7365"
+      },
+      {
+        "path": "app/app/lib/private/protocol.ts",
+        "sha256": "72a5236dbb9da5d4f0461064d2bd21fcda571c858b6dca7a1199d6c9dd14f23e"
+      },
+      {
+        "path": "app/app/lib/privateVault.ts",
+        "sha256": "32cf7d6e3707582660e775b12592f839f4304761bb6fd98750f804bf425c2d3d"
+      },
+      {
+        "path": "app/app/lib/private-operation-errors.ts",
+        "sha256": "61eba078f90a56479cc5182b29ffa7c4eb9fb94a93e9cb1784ec6782b72b5192"
+      },
+      {
+        "path": "app/tests/private-instruments.test.tsx",
+        "sha256": "c552046c90db109ec1d39b17a7c307672adbb360c47402bdd497ad098c6403d9"
+      },
+      {
+        "path": "app/tests/private-protocol.test.ts",
+        "sha256": "7f6543a7dfdab010eb392636eec84c0c8f4b410504368720c35b3e0cefc3de48"
+      },
+      {
+        "path": "app/tests/private-cancellation-ui.test.tsx",
+        "sha256": "3c6277a75fb00ebd2a8c324fbec186c03eab164c0464eaf452bdf722048995d4"
+      }
+    ],
+    "findings": [
+      "PRIVATE-CANCEL-UX",
+      "PRIVATE-STALE-STATUS"
+    ],
+    "applicationTestsPassed": 813,
+    "finalUiTestsPassed": 21,
+    "build": "landing, application type checking, style checks, application static build and assembled site passed after final runtime changes",
+    "lintWarnings": 3,
+    "realExtensionCancellationFollowup": "in progress, no completed claim",
+    "contractsChanged": false,
+    "limitations": "The full app run preceded the final pending-notice wording change, whose 21 UI checks subsequently passed. Initial concurrent root build reinstalled dependencies during tests; those failed logs are retained. The clean full rerun passed."
   }
 }

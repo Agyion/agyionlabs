@@ -153,15 +153,17 @@ it('clears a received credential password and file when the active vault is lock
   expect((screen.getByRole('button', { name: 'Open credential locally' }) as HTMLButtonElement).disabled).toBe(true);
 });
 
-it('shows typed signature cancellation while still refreshing recovery and never resubmitting', async () => {
+it('shows typed signature cancellation, refreshes recovery and waits for an explicit new confirmation', async () => {
   protocol.submit.mockRejectedValue(new WalletSignatureRejectedError());
   renderPod(); await prepareDeposit();
   fireEvent.click(screen.getByRole('button', { name: 'Confirm private operation' }));
   await screen.findByText(/Signature declined in the wallet/);
   expect(screen.getByText(/This request was not submitted/)).toBeTruthy();
   expect(protocol.refreshPending).toHaveBeenCalledTimes(2);
-  fireEvent.click(screen.getByRole('button', { name: 'Confirm private operation' }));
   expect(protocol.submit).toHaveBeenCalledExactlyOnceWith(prepared);
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm private operation' }));
+  await waitFor(() => expect(protocol.submit).toHaveBeenCalledTimes(2));
+  expect(protocol.submit).toHaveBeenLastCalledWith(prepared);
 });
 
 

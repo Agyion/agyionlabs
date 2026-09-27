@@ -1,0 +1,147 @@
+{
+  "schema": "agyion-real-freighter-private-testnet-v1",
+  "verifiedAt": "2026-09-27T13:06:28.740Z",
+  "application": {
+    "url": "https://agyionlabs.dev/app/",
+    "sourceCommit": "598ab2f93134af88501967b7379b79434fef0315",
+    "workerVersion": "bcfa6538-0fac-449b-a0da-46c74c342770"
+  },
+  "network": "Test SDF Network ; September 2015",
+  "source": "GCMDV4NGAKUKEEFB5CSGQIUKN4PROP2LUSPYFTVH75JH4DBYQC6EROU5",
+  "pool": "CAI6HUPV6VLXRKJKSCANRM4YP7W6ZNLBUZFK4GEUG5O3OB4X43RBE2ZB",
+  "profileId": "c144c20b4b4d796759e44c8a7cf5c05180d9c63397dc58ff787578e0f0abf802",
+  "extension": {
+    "version": "5.48.0",
+    "distribution": "Unchanged official release ZIP, unpacked in isolated Chromium",
+    "zipSha256": "01ce3164fe74acbdbd56a2c4fa0c0e7a1b3a87a63fdd2482d0b3aacd54b6bd78",
+    "browserVersion": "153.0.8010.12"
+  },
+  "scope": {
+    "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+    "amountPerBridgeStroops": "100000",
+    "walletRequests": 3,
+    "explicitWalletCancellations": 1,
+    "actualSignatures": 2,
+    "broadcasts": 2,
+    "additionalFriendbotFunding": 0,
+    "checksPassed": 8,
+    "reloadBeforeDepositReconciliation": true,
+    "journalSeeded": false,
+    "automaticResubmission": false
+  },
+  "checks": [
+    "Actual official Freighter connects original dedicated account on Test Net in fresh matching Chromium profile",
+    "Actual encrypted private backup download and local key verification before funding",
+    "Direct browser RPC verifies guarded pool and recovers fresh zero balance",
+    "Genuine Freighter cancellation displays specific decline and sends no transaction",
+    "Pending private deposit survives actual page reload and reconnect; original hash reconciles with locked vault and no resend",
+    "Actual saved vault restores after reload and decrypts included 0.01 XLM deposit",
+    "Actual UI confirms original withdrawal after explicit read-only status retry with no second submission",
+    "Direct browser balance refresh recovers zero XLM and zero USDC after explicit retry; no unresolved local attempt and no resend"
+  ],
+  "transactions": [
+    {
+      "hash": "fb39c776299c5bda7d7257775eb32be6fb22c2d2153bf484a8b4ff28e176f54e",
+      "status": "SUCCESS",
+      "ledger": 4897986,
+      "feeAuthorizedStroops": "70275775",
+      "resultFeeChargedStroops": "61135833",
+      "signatureVerified": true,
+      "action": "deposit"
+    },
+    {
+      "hash": "60be6d6f8f268f1cc6d4d89d600f845da6f893d1866212fa03fa0c612370ba2f",
+      "status": "SUCCESS",
+      "ledger": 4898059,
+      "feeAuthorizedStroops": "69889309",
+      "resultFeeChargedStroops": "60781501",
+      "signatureVerified": true,
+      "action": "withdraw"
+    }
+  ],
+  "fees": {
+    "perTransactionCapStroops": "100000000",
+    "aggregateSignedMaximaWithPriorDeploymentAndLifecyclesStroops": "4376725720",
+    "aggregateCapStroops": "5000000000",
+    "interpretation": "Signed upper bounds and transaction result fee fields. Not final net account deductions after every resource refund."
+  },
+  "guardedPoolCheckpoints": {
+    "before": {
+      "root": "1667054455030779382210095158407070096011242081945856927198999266844106593978",
+      "nextIndex": "34",
+      "recordCount": "28",
+      "revocationCount": "2",
+      "revocationRoot": "16604313143248565507006151404293065710954551347316484524434533211277132134951",
+      "snapshotId": "4946f6b392e7b12cab0a9f80c2d2ab628eca2cd6fd76fd4af2d25de058fb1036"
+    },
+    "afterDeposit": {
+      "root": "16166041210841010789705315988181335681838443491155639581864579458451483692905",
+      "nextIndex": "35",
+      "recordCount": "29",
+      "revocationCount": "2",
+      "revocationRoot": "16604313143248565507006151404293065710954551347316484524434533211277132134951",
+      "snapshotId": "9fcfe6b890b7171f1f8a9c5e4de46785845dc23823760a9ebc8882e91c5a392b"
+    },
+    "afterWithdrawal": {
+      "root": "16166041210841010789705315988181335681838443491155639581864579458451483692905",
+      "nextIndex": "35",
+      "recordCount": "30",
+      "revocationCount": "2",
+      "revocationRoot": "16604313143248565507006151404293065710954551347316484524434533211277132134951",
+      "snapshotId": "fdb27e571efd35ceefcb152571353b6aad4d0a4ca54d5b2712b08968470468c0"
+    }
+  },
+  "custody": {
+    "afterDepositXlmStroops": "100000",
+    "afterDepositXlmLiabilityStroops": "100000",
+    "final": [
+      {
+        "asset": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+        "balance": "0",
+        "liability": "0",
+        "readLedger": 4898071
+      },
+      {
+        "asset": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+        "balance": "0",
+        "liability": "0",
+        "readLedger": 4898072
+      }
+    ],
+    "originalPoolCheckpointUnchanged": true,
+    "originalPoolSnapshotId": "24f92ed95ad0619cf5c9c6c80fcf0be19a6a97f87725cb30de1fee9667a43bff"
+  },
+  "findings": [
+    {
+      "id": "PRIVATE-CANCEL-UX",
+      "severity": "usability",
+      "observed": "Exact real wallet cancellation sends zero, but vault and protocol show generic errors and confirmation stays disabled. Existing discard and explicit balance refresh recover safely. Requires code correction after bounded funds lifecycle."
+    },
+    {
+      "id": "PRIVATE-STALE-STATUS",
+      "severity": "usability",
+      "observed": "Original local submit notice continues to say pending after the separate recovery record confirms the same hash. Local correction uses a historical submission notice and leaves current status to recovery."
+    }
+  ],
+  "transport": "Actual official Freighter 5.48.0 and a fresh isolated Playwright Chromium profile restoring only the retained dedicated valueless testnet account through the actual extension UI. Direct browser HTTPS, no RPC forwarding or scripted signer. Outgoing transaction-only harness guard validates the separately approved original hash and persists signed public XDR before allowing each of at most two broadcasts.",
+  "retainedDiagnostics": [
+    "Direct RPC network-change failures required explicit status and balance refresh retries. Original hashes were reconciled without another signature or broadcast.",
+    "Extension telemetry TLS failures and requests from a separate stellar.org setup page were retained; no TLS bypass.",
+    "A passive harness observer incorrectly required the optional accountToSign message hint. All three actual confirmation payloads were decoded separately; included transaction sources and signatures matched.",
+    "Two earlier Snap browser attempts ended during encrypted backup download before any signing or submission. The second native log shows SIGSEGV. Matching Playwright Chromium completed the actual lifecycle.",
+    "Some test selectors and an independent Node loader attempt failed and were corrected. They remain local diagnostics, not application security findings."
+  ],
+  "boundaries": [
+    "One dedicated valueless testnet account and one local development vault; no hardware or mobile wallet evidence.",
+    "Real private deposit and withdrawal, not extension-approved execution of every Pod, Trigger and Envoy role.",
+    "No independent cryptographic audit, production setup, independent trustee custody or live archival restoration.",
+    "Pinned RPC trust, public bridge amounts, timing and fee payer remain visible.",
+    "The completion listener recorded its generic context-close field during expected shutdown; the browser was deliberately closed after verification."
+  ],
+  "evidenceSha256": {
+    "report.json": "edf847ae3105b64f3c3ea2ef0347ed0f0fb6d80ef081fbb0421ba006a26ec23a",
+    "readback-before.json": "618d059ec9676a3aafe5ab1c632f6b33f7caca6d1e93760e77def58eb8a68dcc",
+    "readback-deposit.json": "5be31eb805114e3addefde90c5f259613c923000771d9a8692398d0e5b620c87",
+    "readback-withdraw.json": "8c8113e5855f2d2c2c73b2afe0b8157cbc568b7be294e71a9422f686667ea18a"
+  }
+}

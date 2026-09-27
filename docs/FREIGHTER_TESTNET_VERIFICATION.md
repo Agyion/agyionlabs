@@ -64,3 +64,58 @@ responses. The historical real cancellation payload was not intercepted, and
 this correction is not a second live extension signing test. It was included in
 Cloudflare website version `2ec058c3-bd70-455e-afc2-5acbbd61b5c1` and passed the
 subsequent read-only production checks described in [verification](VERIFICATION.md).
+
+## Guarded private pool with the real extension
+
+A subsequent test used website source `598ab2f` and Cloudflare version
+`bcfa6538-0fac-449b-a0da-46c74c342770`. The same dedicated testnet account was
+restored through the unchanged official extension in an isolated Playwright
+Chromium 153.0.8010.12 profile. No additional Friendbot funding was requested.
+The [public receipt](../deployments/private-pool-freighter-testnet.json) records
+eight completed checks and the exact pool, source, transactions and readbacks.
+
+The application created and checked an actual encrypted vault backup, generated
+private proofs in the browser, and requested three genuine wallet reviews.
+One was cancelled with zero broadcasts. Two explicit approvals deposited and
+withdrew 0.01 test XLM through the guarded pool. The included hashes are
+`fb39c776299c5bda7d7257775eb32be6fb22c2d2153bf484a8b4ff28e176f54e`
+at ledger 4897986 and
+`60be6d6f8f268f1cc6d4d89d600f845da6f893d1866212fa03fa0c612370ba2f`
+at ledger 4898059. Both included account signatures verified independently.
+
+After submission, the deposit remained pending in the UI. An actual page reload
+and explicit wallet reconnect recovered its original journal while the vault
+was still locked. Checking the original hash confirmed it without a new
+signature or submission. Restoring the saved encrypted vault recovered the
+0.01 XLM note. The later withdrawal returned that amount to the dedicated source.
+The final readback showed zero XLM and USDC custody and liabilities, 30 accepted
+transition records and two revocations. The original pool stayed unchanged.
+
+This phase used direct browser HTTPS and real Freighter, with an outgoing
+transaction guard that checked the separately reviewed hash and persisted the
+signed public envelope before allowing each of the two broadcasts. Other RPC
+requests continued directly. It used neither a scripted signer nor RPC
+forwarding, but it was not a test without route interception.
+
+Direct RPC network changes required explicit read-only status and balance
+refresh retries. Extension telemetry TLS errors were retained without a TLS
+bypass. A passive test observer incorrectly required an optional account hint;
+the actual confirmation payloads were decoded separately and their transaction
+sources matched. Earlier Snap browser attempts stopped during encrypted backup
+download, before any signature or send; the second native log showed SIGSEGV.
+All failed attempts remain separate evidence. The matching Playwright browser
+completed the lifecycle and was closed deliberately.
+
+Two usability findings came from this run: a genuine cancellation unnecessarily
+cleared verified balances and disabled confirmation, and the old submission
+notice continued to say pending after recovery confirmed the transaction.
+The correction preserves checked keys and permits another explicit fee review
+only after a trusted, typed cancellation. Unknown outcomes still require
+recovery. The submission notice now refers to the recovery record for the
+current result. Regression tests cover cancellation, untrusted errors, a vault
+lock during signing and prevention of an automatic second submission.
+
+This establishes the bounded private deposit, withdrawal and original journal
+recovery flow. Every private instrument role, hardware and mobile wallets,
+live archival restoration, independent security review, production setup and
+independent trustee custody remain outside this extension test.

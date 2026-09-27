@@ -141,3 +141,14 @@ initial direct browser attempt failed with RPC network-change errors and kept
 operations disabled. An intermediate test-selector failure was also retained.
 This proof run is neither a passing direct-network test nor a real extension
 approval. The separate live page and vault tests above used direct networking.
+
+A later [real Freighter lifecycle](FREIGHTER_TESTNET_VERIFICATION.md#guarded-private-pool-with-the-real-extension)
+added two included private transactions on that published website: a 0.01 test
+XLM deposit and withdrawal. Eight checks covered actual encrypted backup
+recovery, wallet cancellation, explicit approval and a page reload with original
+pending-hash recovery. Both final asset balances and liabilities remained zero;
+the pool then had 30 records, two revocations and next index 35. The original
+pool was unchanged. Aggregate signed fee maxima including these two operations
+were 4376725720 stroops, below the same 500 test XLM cap. The
+[separate receipt](../deployments/private-pool-freighter-testnet.json) preserves
+this later checkpoint without rewriting the earlier CLI lifecycle results.

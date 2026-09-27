@@ -3,6 +3,7 @@ import {afterAll,afterEach,beforeAll,expect,it,vi} from 'vitest';
 import {createPrivacyVault,backupPrivacyVault,forgetPrivacyVault} from '../../privacy/src/vault.mjs';
 import {receiveDescriptor} from '../../privacy/src/credentials.mjs';
 import {createPrivateProtocol} from '../app/lib/private/protocol';
+import {WalletSignatureRejectedError} from '../app/lib/wallet-errors';
 import {initializeProtocolFixture,protocolFixture,grants,password} from './private-protocol.fixture';
 type H=Awaited<ReturnType<typeof protocolFixture>>;
 vi.setConfig({testTimeout:30000});
@@ -36,7 +37,30 @@ it('reports exact fee, never raises a cap silently, and consumes the old opaque 
 it('cancelling the exact fee confirmation calls no signer and creates no durable attempt',async()=>{
  const x=await h(),handle=await x.protocol.prepare({action:'deposit',asset:x.asset,amount:'4'});x.hooks.acceptFee=false;
  await expect(x.protocol.submit(handle)).rejects.toThrow('PRIVATE_FEE_CONFIRMATION_CANCELLED');expect(x.calls.signs+x.calls.sends).toBe(0);expect(x.journal.rows.size).toBe(0);
+ expect(x.protocol.getSnapshot()).toMatchObject({status:'ready',phase:null,error:null});expect(x.vault.getSnapshot().error).toBeNull();
  x.hooks.acceptFee=true;expect((await x.protocol.submit(handle)).status).toBe('pending');expect(x.calls.proves).toBe(1);
+});
+it('a verified wallet decline preserves checked keys and proof for an explicit fresh fee review',async()=>{
+ const x=await h(),handle=await x.protocol.prepare({action:'deposit',asset:x.asset,amount:'4'});
+ const decline=new WalletSignatureRejectedError();x.hooks.onSign=async()=>{throw decline};
+ await expect(x.protocol.submit(handle)).rejects.toBe(decline);
+ expect(x.calls.signs).toBe(1);expect(x.calls.sends).toBe(0);expect(x.journal.rows.size).toBe(0);
+ expect(x.protocol.getSnapshot()).toMatchObject({status:'ready',phase:null,error:null});expect(x.vault.getSnapshot()).toMatchObject({status:'ready',busy:null,error:null});
+ const revised=x.protocol.withFeeLimit(handle,'2000');x.hooks.onSign=async()=>{};
+ const outcome=await x.protocol.submit(revised);expect(outcome.status).toBe('pending');
+ expect(x.calls.proves).toBe(1);expect(x.calls.signs).toBe(2);expect(x.calls.sends).toBe(1);expect(x.calls.fees).toHaveLength(2);
+ expect(await x.protocol.submit(revised)).toEqual(outcome);expect(x.calls.signs).toBe(2);expect(x.calls.sends).toBe(1);
+});
+it.each([new Error('Signature declined in the wallet. This request was not submitted.'),{name:'WalletSignatureRejectedError',code:-4,message:'The user rejected this request.'}])('an unclassified signing failure is not promoted to a safe cancellation',async failure=>{
+ const x=await h(),handle=await x.protocol.prepare({action:'deposit',asset:x.asset,amount:'4'});x.hooks.onSign=async()=>{throw failure};
+ await expect(x.protocol.submit(handle)).rejects.toBe(failure);
+ expect(x.protocol.getSnapshot()).toMatchObject({status:'unavailable',balances:[],notes:[]});expect(x.vault.getSnapshot().error).not.toBeNull();
+ expect(()=>x.protocol.withFeeLimit(handle,'2000')).toThrow('PRIVATE_PREPARATION_REQUIRED');expect(x.calls.signs).toBe(1);expect(x.calls.sends).toBe(0);
+});
+it('a late wallet decline cannot restore a locked vault or its retired proof',async()=>{
+ const x=await h(),handle=await x.protocol.prepare({action:'deposit',asset:x.asset,amount:'4'});x.hooks.onSign=async()=>{x.vault.lock();throw new WalletSignatureRejectedError()};
+ await expect(x.protocol.submit(handle)).rejects.toThrow();expect(x.protocol.getSnapshot()).toMatchObject({status:'locked',balances:[],notes:[]});
+ expect(x.vault.getSnapshot().status).toBe('locked');expect(()=>x.protocol.withFeeLimit(handle,'2000')).toThrow();expect(x.calls.sends).toBe(0);
 });
 it('locking during proving or before actual signing invalidates the opaque authority',async()=>{
  const x=await h();let finish!:()=>void;x.hooks.onProve=()=>new Promise(resolve=>{finish=resolve});

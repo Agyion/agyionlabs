@@ -10,7 +10,7 @@ import PrivateTriggerAttester from './PrivateTriggerAttester';
 import EnvoyDiscovery from '../market/EnvoyDiscovery';
 import { usePrivateVault } from '../../lib/privateVault';
 import { CONFIG } from '../../lib/config';
-import { WalletSignatureRejectedError } from '../../lib/wallet-errors';
+import { privateCancellationMessage } from '../../lib/private-operation-errors';
 import { formatMinor, shortAddress, shortHex } from '../../lib/format';
 import { newPrivateGrantId, privateAmount, privateAttestation, privateDeadline, privateDestination, readPrivateFile } from '../../lib/privateWorkspaceInputs';
 import type { PrivateCommand, PrivateNoteAction, PrivateNoteSummary, PreparedPrivateOperation } from '../../lib/private/protocol-types';
@@ -110,7 +110,7 @@ function PrivateReadyPanel({ kind, address, active, selection }: { kind: Instrum
     const token = generation.current;
     const assertCurrent = () => { if (token !== generation.current) throw new Error('Private UI session changed.'); };
     try { await operation(assertCurrent); }
-    catch (error) { if (token === generation.current) setError(error instanceof WalletSignatureRejectedError ? error.message : fallback); }
+    catch (error) { if (token === generation.current) setError(privateCancellationMessage(error) ?? fallback); }
     finally {
       // An operation may have been submitted before a lock, timeout or UI error.
       // Rediscover its durable hash even when local private keys are unavailable.
@@ -163,12 +163,18 @@ function PrivateReadyPanel({ kind, address, active, selection }: { kind: Instrum
   const submit = () => void run(async assertCurrent => {
     if (!protocol || !prepared || submitted) return;
     setSubmitted(true);
-    const outcome = await protocol.submit(prepared);
+    let outcome;
+    try { outcome = await protocol.submit(prepared); }
+    catch (error) {
+      if (privateCancellationMessage(error) !== null) { assertCurrent(); setSubmitted(false); }
+      throw error;
+    }
     assertCurrent();
     if (outcome.status === 'confirmed') {
       setNotice(`Confirmed transaction ${outcome.hash}.`); setPrepared(null); setGrantId('');
       if (vault.getSnapshot().status === 'ready') await protocol.refresh();
-    } else setNotice(`Transaction ${outcome.hash}: ${outcome.status}. Check the recovery record before another attempt.`);
+    } else if (outcome.status === 'pending') setNotice(`Transaction ${outcome.hash} submitted. Check its recovery record for the current result.`);
+    else setNotice(`Transaction ${outcome.hash}: ${outcome.status}. Check the recovery record before another attempt.`);
   }, 'The operation did not complete locally. Check pending transactions before trying again.');
   const refresh = () => void run(async () => {
     if (!protocol) throw new Error('Connect a wallet first.');

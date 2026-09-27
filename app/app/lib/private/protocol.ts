@@ -18,6 +18,8 @@ import {receiveDescriptor as describeVault,exportPrivateCredential,checkExported
 import type {PrivacyVaultHandle} from '../privateVault';
 import {PRIVATE_PROVER_ASSETS} from '../privateProverAssets';
 import {onWalletSessionChange} from '../wallet';
+import {WalletSignatureRejectedError} from '../wallet-errors';
+import {PrivateFeeConfirmationCancelledError,privateCancellationMessage} from '../private-operation-errors';
 import {DEFAULT_PRIVATE_RELEASE_KEY,resolvePrivateRelease,type PrivateReleasePolicy} from './release';
 import {bindPrivateWallet,type BoundPrivateWallet} from './wallet-session';
 import {summarizePrivateNote} from './note-summary';
@@ -125,7 +127,15 @@ export async function createPrivateProtocol(options:PrivateProtocolOptions,integ
    const assertCurrent=()=>{current();assertVault();ensure(version===generation&&!own.signal.aborted,'PRIVATE_OPERATION_CANCELLED');
     ensure(vault.scope.profileId===release.scope.profileId&&vault.scope.epoch===release.scope.epoch&&vault.scope.domain.networkId===release.scope.domain.networkId&&vault.scope.domain.contractId===release.scope.domain.contractId,'PRIVATE_VAULT_SCOPE_MISMATCH');};
    assertCurrent();const result=await work(vault,assertCurrent,own.signal);assertCurrent();return result;
-  });if(state.status==='checking')publish({status:priorStatus==='ready'?'ready':'idle'});return completed;}catch(error){disposeProver();if(!disposed&&version===generation)publish({status:options.vault.getSnapshot().status==='ready'?'unavailable':'locked',phase:null,ledger:null,balances:empty,notes:empty,error:safeError});throw error;}
+  });if(state.status==='checking')publish({status:priorStatus==='ready'?'ready':'idle'});return completed;}catch(error){
+   disposeProver();
+   if(!disposed&&version===generation){
+    if(phase==='signing'&&options.vault.getSnapshot().status==='ready'&&privateCancellationMessage(error)!==null)
+     publish({status:priorStatus==='ready'?'ready':'idle',phase:null,error:null});
+    else publish({status:options.vault.getSnapshot().status==='ready'?'unavailable':'locked',phase:null,ledger:null,balances:empty,notes:empty,error:safeError});
+   }
+   throw error;
+  }
   finally{busy=false;if(abort===own)abort=null;if(!disposed&&version===generation)publish({phase:null});}
  }
  async function recover(vault:PrivacyVaultHandle,assertCurrent:()=>void,signal:AbortSignal){
@@ -175,8 +185,17 @@ export async function createPrivateProtocol(options:PrivateProtocolOptions,integ
     assertCurrent();assertAction(entry.plan.summary.action);const tx=TransactionBuilder.fromXDR(value,Networks.TESTNET);ensure(tx instanceof Transaction,'PRIVATE_SIGNING_PAYLOAD_INVALID');
     ensure(BigInt(tx.fee)<=BigInt(handle.maxFeeStroops),'FEE_BUDGET_EXCEEDED');publish({phase:'confirming-fee',feeQuote:{feeStroops:tx.fee,maxFeeStroops:handle.maxFeeStroops}});
     const accepted=await bounded(Promise.resolve().then(()=>options.confirmFee(Object.freeze({feeStroops:tx.fee,maxFeeStroops:handle.maxFeeStroops,source:account,action:handle.summary.action,signal}))),signal,120_000);
-    assertCurrent();assertAction(entry.plan.summary.action);sameSession(bound.wallet.session(),entry.session);ensure(accepted===true,'PRIVATE_FEE_CONFIRMATION_CANCELLED');publish({phase:'signing'});
-    entry.signingStarted=true;const signed=await bound.wallet.signTransaction(value,network,account);assertCurrent();return signed;
+    assertCurrent();assertAction(entry.plan.summary.action);sameSession(bound.wallet.session(),entry.session);
+    if(accepted===false)throw new PrivateFeeConfirmationCancelledError();
+    ensure(accepted===true,'INVALID_PRIVATE_FEE_CONFIRMATION');publish({phase:'signing'});
+    entry.signingStarted=true;
+    try{const signed=await bound.wallet.signTransaction(value,network,account);assertCurrent();return signed;}
+    catch(error){
+     // An explicit wallet decline precedes receipt of signed bytes and the
+     // durable submission record. Unknown outcomes keep repricing disabled.
+     if(error instanceof WalletSignatureRejectedError){assertCurrent();entry.signingStarted=false;}
+     throw error;
+    }
    }};
    const lifecycles=await makeLifecycles(wallet,signal,handle.maxFeeStroops),outcome=entry.candidate.kind==='UnsubmittedPrivateTransition'
     ?await lifecycles.submit.submit(entry.candidate,entry.addresses!):await lifecycles.revoke.revoke(entry.candidate);

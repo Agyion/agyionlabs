@@ -6,9 +6,9 @@ This record describes the development review on **27 September 2026**. The curre
 
 | Evidence | Files | Current lines |
 | --- | ---: | ---: |
-| Exact current bytes with complete source-read evidence | 454 | 48,250 |
-| Verified reviewed baseline plus completely reviewed differences | 99 | 22,560 |
-| Total first-party authored scope | 553 | 70,810 |
+| Exact current bytes with complete source-read evidence | 456 | 48,462 |
+| Verified reviewed baseline plus completely reviewed differences | 100 | 22,611 |
+| Total first-party authored scope | 556 | 71,073 |
 | Unresolved files or line ranges at this snapshot | 0 | 0 |
 
 The first row uses explicit complete reading ranges matched to each current file hash. It does not mean every file was read again when this manifest was generated. The second row is composed coverage: the previously reviewed baseline was checked against Git bytes, every difference was reviewed, and unchanged, changed and deleted ranges were reconciled. It is not a fresh full-file reread.
@@ -42,6 +42,10 @@ The general local release check initially failed because the catalogue accepts t
 The [exact hosted source run for 598ab2f](https://github.com/Agyion/agyionlabs/actions/runs/36317078829) passed both jobs before publication. The guarded pool completed 122 XLM checks and 124 USDC checks across 30 included transactions, with exact liability and custody reconciliation, encrypted saved-file recovery, replay rejection, revocation and an unchanged original pool checkpoint. Scoped disclosure passed 13 checks. These actual chain lifecycles used a dedicated CLI signer and locally held development trustee shares.
 
 A fresh new-domain browser proof passed six additional checks using real testnet responses through a bounded HTTP test adapter after direct Chrome network changes interrupted the first attempt. A separate selector error in the test was diagnosed against the actual accessibility tree and corrected. The successful run generated and verified the proof, enforced a one XLM fee limit before wallet access, required explicit approval after raising the limit to ten, and handled a scripted wallet rejection with zero signatures or submissions. Its proof and preparation took 78,919 ms. It does not establish an actual wallet-extension private payment or direct-browser RPC reliability. The separate final live page and vault tests above used direct networking and passed without captured errors.
+
+The later [real private Freighter test](FREIGHTER_TESTNET_VERIFICATION.md#guarded-private-pool-with-the-real-extension) passed eight scoped checks on that published website. Three genuine wallet reviews produced one cancellation and two explicitly approved, included transactions. A 0.01 test XLM deposit survived page reload and original-journal reconciliation, then an actual saved vault restored the note and a withdrawal returned it. Both final pool balances and liabilities were zero, with 30 accepted records and two revocations. Direct browser RPC used a bounded outgoing transaction guard; network and harness diagnostics are retained in the separate public receipt. This closes the earlier lack of a genuine extension-approved private deposit and withdrawal, not every private instrument or wallet scenario.
+
+Two resulting UI corrections preserve verified keys and balances after trusted pre-submission cancellation, require another explicit fee confirmation, and stop an old submission notice from presenting a stale pending status. Unknown errors and changed vault sessions remain closed to automatic retry. All 813 application tests passed after the cancellation correction. The final notice wording then passed 21 focused UI tests; type checking and the complete static build passed with three existing lint warnings. An initial local build reinstalled dependencies during a concurrent test run and caused tooling failures; those logs were preserved and the isolated full rerun passed. The corrected real-extension cancellation follow-up and website publication remain separate gates at this checkpoint.
 
 ## Earlier verification checkpoints
 

@@ -2,6 +2,7 @@
 
 import { createContext, createElement, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 import type { PrivacyVaultHandle, PrivacyVaultScope, PublicVaultGrant, VaultGrantSpecification } from '../../../privacy/src/vault.mjs';
+import { privateCancellationMessage } from './private-operation-errors';
 
 export type { PrivacyVaultHandle, PrivacyVaultScope, VaultGrantSpecification } from '../../../privacy/src/vault.mjs';
 type VaultModule = typeof import('../../../privacy/src/vault.mjs');
@@ -77,6 +78,9 @@ export class PrivateVaultController {
       return result;
     } catch (error) {
       this.#assertCurrent(token);
+      // A verified cancellation does not invalidate the saved key backup.
+      // Lock/replacement still wins through the generation check above.
+      if (operation === 'preparing' && privateCancellationMessage(error) !== null) throw error;
       const message = operation === 'preparing'
         ? 'Private preparation did not complete. Check the operation result before retrying.'
         : operation === 'restoring'
