@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T19:16:09.130656+00:00",
-  "sourceBaselineCommit": "373c5391e5da3cc8b6c7aa05afdba5b11a75beed",
+  "reviewedAt": "2026-09-27T19:59:04.756553+00:00",
+  "sourceBaselineCommit": "a76cc6b7fec1aa8093351d4967b0912322e18e1b",
   "websiteRelease": {
     "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
     "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
@@ -42,12 +42,12 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 590,
-    "lines": 76793,
+    "files": 593,
+    "lines": 77436,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 492,
-        "lines": 52966
+        "files": 495,
+        "lines": 53609
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 98,
@@ -2965,6 +2965,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/lib/public-lifecycle-assembly.mjs",
+      "sha256": "fbfee06bff2780419f3d384af368aeb8a599f1bbf1f56ff21e213c2e8863e3f5",
+      "lines": 105,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/lib/public-lifecycle-call.mjs",
       "sha256": "63bd91fc037cdba4ce7d97282f192a3af3d1b35fcaed610687e23c20431d543d",
       "lines": 133,
@@ -2984,8 +2990,8 @@
     },
     {
       "path": "scripts/lib/public-lifecycle-journal.mjs",
-      "sha256": "e2e85f9f9747709e43f2d7989e7e8ceefdb2a420356a97391e80bfedfdcee1e1",
-      "lines": 356,
+      "sha256": "19202668e179afd23dc207614bc5fda28fb8619f12d852734c2ce0fec258351e",
+      "lines": 381,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3008,8 +3014,8 @@
     },
     {
       "path": "scripts/lib/public-lifecycle-readback.mjs",
-      "sha256": "6fe966346cf06e2e32a3c45f04cbf61ec6bd25e89b6327a18a89311a8bfe1c7c",
-      "lines": 236,
+      "sha256": "55c0f15a035b722bed7728b56c06df745e9928edb3d6b5919a7f601e575dafda",
+      "lines": 247,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3158,8 +3164,8 @@
     },
     {
       "path": "scripts/tests/helpers/public-lifecycle-journal-fixture.mjs",
-      "sha256": "e7672af1dc32244f3c2840d154f230d49d84787dca7e473a4562ac2b1ebbfbd0",
-      "lines": 193,
+      "sha256": "545580f5add80d2d66a0829100a68a01741d6eff6b259650a6e860464a7a4874",
+      "lines": 200,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3223,6 +3229,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/public-lifecycle-assembly.test.mjs",
+      "sha256": "9612700118ad607e690335989d32ca241b9f55eee8ef3b43f077a3201b26aac3",
+      "lines": 180,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/public-lifecycle-call.test.mjs",
       "sha256": "f6015593cb812937d42b98f190b53230c407727bd949ebff7fdc13af20cddc23",
       "lines": 149,
@@ -3272,8 +3284,14 @@
     },
     {
       "path": "scripts/tests/public-lifecycle-readback.test.mjs",
-      "sha256": "a77a5ef819e32a837313a3b0ebbf0979da252d484834b695c397670842a119f0",
-      "lines": 248,
+      "sha256": "109300b96b38babed5c8e710de3728ba4f367175dfa7265296ae1c68fd7d51e2",
+      "lines": 283,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-replay.test.mjs",
+      "sha256": "f1137840328874ae221121587308b395fb6e0dca39b3b9919479179f5cf4fce7",
+      "lines": 280,
       "reviewKind": "complete-source-read"
     },
     {
@@ -4980,5 +4998,405 @@
     ],
     "behavior": "Concrete raw state and observation policies, bounded Testnet RPC, state then fee then observation ordering, single-use within-phase derivation reuse and raw evidence replay.",
     "boundary": "The default synthetic pipeline covers 38 prefinal steps with only executable-byte authentication doubled; the separate local opt-in covers 39 synthetic steps with exact compiled/preserved WASM and four pins. These are overlapping local tests, not WASM host execution or live lifecycle transactions. A separate actual three-request unsigned Testnet probe establishes only Contract#3 wire compatibility. CLI, protected identity/funding preparation, complete live evidence acquisition and real 39-step execution remain unfinished. No new contract deployment, application activation, website build/publication, external audit or exploit-absence claim. Historical website/chain evidence remains unchanged."
+  },
+  "publicV4RunnerSeams": {
+    "status": "source-and-bounded-runner-seams-verified",
+    "sourceCommit": "a76cc6b7fec1aa8093351d4967b0912322e18e1b",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36345249539",
+    "sourceInventorySha256": "44667b64c2da82099f565f318df28bb78a2968b6d7c954f1f471b5d3208c3648",
+    "newAuthoredFiles": 3,
+    "modifiedAuthoredFiles": 4,
+    "generatedFixtureFilesExcluded": 1,
+    "authoredLineIncrease": 643,
+    "localWorkspacePassed": 1904,
+    "localDefaultOptionalSkips": 13,
+    "hostedWorkspacePassed": 1903,
+    "hostedDefaultOptionalSkips": 14,
+    "syntheticIntegration": [
+      {
+        "completed": 38,
+        "sends": 38,
+        "signs": 38,
+        "netFees": "15200",
+        "recoveryNetworkCalls": 0,
+        "rawTamperRejected": true,
+        "maxPolicyBytes": 938550,
+        "codeBytesAuthenticated": "unit-only byte-auth double"
+      },
+      {
+        "completed": 39,
+        "sends": 39,
+        "signs": 39,
+        "netFees": "15600",
+        "recoveryNetworkCalls": 0,
+        "rawTamperRejected": true,
+        "maxPolicyBytes": 1241524,
+        "codeBytesAuthenticated": "actual pinned bytes"
+      }
+    ],
+    "sourceCoverage": {
+      "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/root-source-coverage.json",
+      "sha256": "0b53a51ab7a8a5ad03ce8cd84e2147f8e166357dc2e7ba76a2ebfcc7c918742d"
+    },
+    "realReadOnlyWireProbes": {
+      "headerRequests": 3,
+      "headerLedger": 4902649,
+      "positiveSimulationRequests": 3,
+      "positiveSimulationLedger": 4902687,
+      "fundingRequests": 0,
+      "signatures": 0,
+      "transactionsSubmitted": 0
+    },
+    "evidence": [
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/capture-increment.py",
+        "sha256": "ef0bd85ba6c5057fb16a9322c4151be89a8d9723ecb8804481a25a0e471cf844"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/preparation-provenance.json",
+        "sha256": "054f5a661291a78a228bc1084b37b3bc0984c1c77d509d3eefb3bf085c8af32f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/repository-inventory.json",
+        "sha256": "44667b64c2da82099f565f318df28bb78a2968b6d7c954f1f471b5d3208c3648"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/summary.json",
+        "sha256": "9b6ecc6285cd31339f9708f1eca9ee681e7a1fc9761ee4252e2a08a3a23b77d5"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/independent-verification.json",
+        "sha256": "b62ecb9e837ee8bca68e1571d03b0bf37fee3277dc6292eb7927a7e702677f7f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/frozen-inputs.json",
+        "sha256": "5e7e025ca1c84c9612210f38e56436718cbfbf678cf7f9d5d2d890ae2a7ff5f1"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/root-source-coverage.json",
+        "sha256": "0b53a51ab7a8a5ad03ce8cd84e2147f8e166357dc2e7ba76a2ebfcc7c918742d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/local-test-summary.json",
+        "sha256": "89d6dade9aaeee27874787e3e731530d43866ab51e9e992dfe8e4f4bcb95dc7d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/workspace-final.log",
+        "sha256": "030d1419f26c8dd009cd38d9c289971932f39d82c182e0203fdc0943980d8863"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/hosted-test-summary.json",
+        "sha256": "389824e8e905c656047b7be30b1b9bf6894d83c44557d3030469db448f08ef54"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/hosted-ci.json",
+        "sha256": "8ed50511bf3244160b4b4663bb890233f0542689e2764320359bc93dc87a9c37"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/hosted-ci.log",
+        "sha256": "2a98e16e644ba8d720c4f51832727e64df310f40cefd7271354c21f382417f63"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/seams/full-pipeline-with-readonly-replay.log",
+        "sha256": "1c58fe0f2b86df292c4ab30a63482b738f28aae22d6eff500801a358f1248c89"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/manifest.json",
+        "sha256": "8d4fbe5291ac0f12cb8616c6abebe8921ff0c38803120e8e23ead557f0bb23e0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/verification.json",
+        "sha256": "eb8b5eefe921f1a19470a6a1612a8c5646ce3a00449e4ccac6749a2c6c1f494b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/manifest.json",
+        "sha256": "5253f0bafb7e92a46c6cf6a22ef10fd297d191c5e0ec9e74cd731895892c496a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/verification.json",
+        "sha256": "63e05f4598a371717e3c803f1c288b2b1b5eaefc13f950bb7543a4b0500f5f4d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/actual-wire-red.json",
+        "sha256": "d7d96a2841dd891a1c97934eeb6f957aa74975d035eda2346625d0108fe6959c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/actual-wire-green.json",
+        "sha256": "5159e7f47a49392af96fd50f412e7bbbf22263f6fe67c878b061f1d313e663d4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/REPORT.md",
+        "sha256": "6e24c7737963714520c11308978e15897fdd945b93f7237e12fe8c652bed6383"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/verification.json",
+        "sha256": "ecfc68a616ac6fd541f3f6f96fcda945a35af4e9b32fae8a6beefe9e6d2fd53c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/source-coverage.json",
+        "sha256": "7b6be11d545a5c54783b2b6628fb1aa52fc6f4d8b4b97ed47e83aad08a058110"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/seams/journal/REPORT.md",
+        "sha256": "cfbe031464db5f7cf76399a643b4438c348f97cf632e9c09fbbea72a2267d5d3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/seams/journal/implementation.json",
+        "sha256": "c4ccdf43882ad597d1e4fd0e40f7cf03962e0f3ab03a0cbcaddfe48148b7a034"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/seams/journal/source-coverage.json",
+        "sha256": "d64595a49989b53e1e08a9b14664f5cb1e38e6e3ae8413c90bad52389dc2be0c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/seams/journal/replay-red.log",
+        "sha256": "8677a02611a5102d313c65cc9f41445aa6c327ebef71c7c7e9349346e9d7d50f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/seams/journal/replay-first-green-attempt.log",
+        "sha256": "9e7477dd26e690163d8d3c7b7a150f658824dc41c49f68dcef516becae990cb9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/seams/journal/replay-focused-green.log",
+        "sha256": "a34256ffb6e05ebd4e111cff78450cba078bd583db731b08bf32e6c63e900ab5"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/seams/journal/replay-final-green.log",
+        "sha256": "428f17d77ac9cef4b042bb0589914739f15710c311f5a9b0d6ca87610251f926"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/peer-review/REPORT.md",
+        "sha256": "8962532827a7edadf83817b89218b6d6c8b3c5b7a84ff9def166463e573ba87a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/peer-review/manifest.json",
+        "sha256": "5b45bdc9bddde42c8926210aac6a053771ff03d67cc0c477ce3ddfcb2044edc6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/peer-review/probe-result.json",
+        "sha256": "90f2eb3507c6d2acfe2d71ee7c1ccd00a4a51b26aea6396e33fbdca11d316448"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/actual-wire-green.log",
+        "sha256": "2995d60c12f3fa7c45653a7a8ade29217abe83d3105fe4378b0fd7d9af7aee9b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/actual-wire-red.log",
+        "sha256": "d7d96a2841dd891a1c97934eeb6f957aa74975d035eda2346625d0108fe6959c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/final-green.log",
+        "sha256": "b80d3acd70711e3f4e0a31786cecff1e340a1ce172194fceee04867656b9c65e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/first-green.log",
+        "sha256": "87030016337559ae110760cd845f4b390b3b61ede7c66922cf1d5d3f0ce3e2f2"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/red.log",
+        "sha256": "fa2df1874b88fab1b4f85fd302dc6fa19534ea96c13d6f97a2b6e13bd629bbc0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/second-green.log",
+        "sha256": "700ea0229f2e278b5845c4f556ef0d4eb452acf7f61d87dfbddaa468ecfa8c10"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/wire-schema-green.log",
+        "sha256": "5123d8616be36fbf43ca3d47951a91dc675ee07da0a517265bdc81be67abea4c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/assembly-implementation/wire-schema-red.log",
+        "sha256": "b4f70c5fa8646ef18e718b48d43d9fcbcd4f3eb31f5b7befcef8f71cf19d36c7"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/identity-reuse/REPORT.md",
+        "sha256": "61b682ce5f227c29b0041ac84c0c84fa4c3c24c2133d3f67544e79553743bbef"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/implementation-next.md",
+        "sha256": "8e3ea5836d8dccc9b08194c3d037aef0874f55b8c644ebb6b0687a19fa780717"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/integration-test-summary.json",
+        "sha256": "9187e4d18fb688469e4b41d938055cdea5d247ccf2ed381114acd0e71838934a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/seams/readback/green.log",
+        "sha256": "c165157b78f83fd9404fb41dd7d38c04a1bf9cf271034732037f438d75d36467"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/seams/readback/red.log",
+        "sha256": "82195cb4a3ec516fdf26e033e3e442c6ec6c5964b467c0c6087e9a6613a0d06b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/REPORT.md",
+        "sha256": "47c2b48678d2e5a6bf02fcdd7ee2dd2fbe02d4dc488af6c26c836df99b5c874b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/execution.json",
+        "sha256": "cfdad6b36ad71af82616e6c3e1d85be6ddd5f374c2b77b252c4b511c711c8714"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/fixture.patch",
+        "sha256": "8683ecef28e2bb25199f91893b770f4a22d469535fe5748e81df0ebb85372bbc"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/instrumentation.json",
+        "sha256": "18c34875f8d8535300f4a6b05f00fd3d9c899cbddf25905e4a99070d26a03a66"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/instrumented-fixture.mjs",
+        "sha256": "2694e164c444fbb80de333fb46d71b5a9d15ebf80db211ce29e3b066643f804d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/manifest.json",
+        "sha256": "07b1c57776836f082254fe2db13e1e84253f59783faf0a182501c923d3ef2a6a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/measurements.json",
+        "sha256": "09f2d6c2e0ba9f6e4811ac2784a237e306e1b0a73fa9b04e405d050871e87e6c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/run-once.py",
+        "sha256": "068c6bd94fee1ff7d545a5c98781857b1829ee020cffa19e6ca3b41d7c56ed00"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/stderr.log",
+        "sha256": "1505cd3e9bb151990615817ae3a6d1f93136bf151bb631abc632ad363a0d7375"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/stdout.jsonl",
+        "sha256": "81fdd0de3760ccf96fba52aaf26362a42bf6d4b6ec18672d10265d4a079a8438"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-measurement/syntax-check.json",
+        "sha256": "6d620d1c454a90e41ee536109b1fee6ba5177ac2ee9d3aeb3a9f1e108bf3f044"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-review/REPORT.md",
+        "sha256": "a4b4e4abac0c7569a0ae78ced8f23ff58a03e832e3005092d864dbd58a6d5957"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-review/manifest.json",
+        "sha256": "5e7f7642bb73ff32c38093afb7a096021e482631f76b1b791f7c4e58d48d339a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-review/symbolic-probe-result.json",
+        "sha256": "e6fa69e892c59e54284d6c80b5a88425e51243265e730f00c002e3c16d6120eb"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/timing-review/symbolic-probe.mjs",
+        "sha256": "2e1fb57a33260b031b5ebc172706560e8edc41aadc4217d90cbddaf9562a3738"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/import-bound-preparation.json",
+        "sha256": "40a4ee4ccee3143abc6f4b35fa47ec716d5d3809ae2b1a298c31829b46d06b16"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/import-bound.diff",
+        "sha256": "73f23e1698b57eb4a49b7f34d5018a730e89fe6eadbdab19737fb2c554972bf8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/root-increment-verification.json",
+        "sha256": "d82151ee9d709b08d3be7dab9c65fe5493910997192f554db3ba1363da53ac1d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/01-request-wire.json",
+        "sha256": "3b4ab576b24341c75f49ccbd6d78d580bfc47fde5b09f420b973daf3e9fbbe73"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/01-result.json",
+        "sha256": "3ae04fb7f753c95e0ef16768ff568f8c4655a63c0600baddb1debf6191ecfbd3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/01-transport.json",
+        "sha256": "9af6cc0f24c0329c7114cde8adc771c3c13c7069ac1bcdc370a40017c82cb251"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/02-request-wire.json",
+        "sha256": "16ca53ba74686bf268cc9a35bfe28e97baf4ee42ec20aeaaff73199955f5a527"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/02-result.json",
+        "sha256": "8b463d45cd98dc47f4956240f3839943cc4f4b49db77229651630ea6bd2f5c9c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/02-transport.json",
+        "sha256": "9af6cc0f24c0329c7114cde8adc771c3c13c7069ac1bcdc370a40017c82cb251"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/03-request-wire.json",
+        "sha256": "d9637491a93856e98e669e9832788ec018e76883a913c80dcedb912fdf29a994"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/03-result.json",
+        "sha256": "7de68370db1e5b8649de10f87d26b3d93c62bfe12cf7b9f87687d262f3fc1f78"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/03-transport.json",
+        "sha256": "9af6cc0f24c0329c7114cde8adc771c3c13c7069ac1bcdc370a40017c82cb251"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/header-wire/probe.mjs",
+        "sha256": "1b3ef57cc71890972bb2188ac5b4a03e199d069bd1c59ceff282fbab8cc89424"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/01-request-wire.json",
+        "sha256": "3b4ab576b24341c75f49ccbd6d78d580bfc47fde5b09f420b973daf3e9fbbe73"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/01-result.json",
+        "sha256": "3ae04fb7f753c95e0ef16768ff568f8c4655a63c0600baddb1debf6191ecfbd3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/01-transport.json",
+        "sha256": "55470401e8296a804612c66fdde1140b8050ad664d86a479cc53a9b80243f4bd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/02-request-wire.json",
+        "sha256": "79a38fc80a08cebb8bfd9730d0d52721d2bfd16f3fa11b1d06d69a53d49ea718"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/02-result.json",
+        "sha256": "906d87e45f040d3187fb5a02f7513eff7444d66fa91a21105eb442a516282129"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/02-transport.json",
+        "sha256": "55470401e8296a804612c66fdde1140b8050ad664d86a479cc53a9b80243f4bd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/03-request-wire.json",
+        "sha256": "26cd2dd75e629eb9a291ac7d4c68faa9b5f3dfd794d8247c550928ac33a46df7"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/03-result.json",
+        "sha256": "5d58a0ae4feacdfe3af87d992bc0e6cc8407138bb6175b47e28e18138fb00ffe"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/03-transport.json",
+        "sha256": "55470401e8296a804612c66fdde1140b8050ad664d86a479cc53a9b80243f4bd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/input.json",
+        "sha256": "ba35e9e6b15b16e0a790b61e5c8ffc674ab734b693a3683c91caadd405a6c877"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/probe.mjs",
+        "sha256": "c31a3863fe916215b734b4916425d5531d15d19ab83b7b79d60442b68cfabbf7"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/positive-wire/public-simulation-plan.json",
+        "sha256": "96d5687695596558a023e8f063ab9b0f1be13b8504dbbf036a6b549f7bca966c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/finalizer-inputs.json",
+        "sha256": "aae997bd90b83cffc79cf952cdfaea904bc50d3e8d617555dfc9f6357401b398"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-runner-inventory/finalize-runner-evidence.py",
+        "sha256": "b2df1a2ac747a6a69ec10d7dfa618749ea7fe66a53cf6d9cedd784b7922bf0e6"
+      }
+    ],
+    "boundary": "Read-only verified journal replay, acquisition-only fixed keys and strict local simulation assembly. Separate synthetic 38/39-step tests are not contract-host or live lifecycle execution; their 400-stroop fee is synthetic. Six actual unsigned read-only requests cover matching ledger headers and one positive record-mode simulation, not enforce/sign/send or inclusion. Historical three-request Contract#3 evidence remains in the prior phase. Runnable CLI, protected identity/funding preparation and real39 remain unfinished. No new deployment, website build/publication, application activation or independent audit claim."
   }
 }
