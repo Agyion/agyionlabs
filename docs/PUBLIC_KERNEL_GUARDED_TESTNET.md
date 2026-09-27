@@ -81,6 +81,10 @@ two-tab browser evidence; it does not activate V4 or establish its lifecycles.
 
 ## Remaining activation gates
 
+The [offline lifecycle preparation](PUBLIC_V4_LIFECYCLE_PREPARATION.md) now binds
+the scenario schedule and signing-time invocation boundaries. It has no live
+executor and does not satisfy the following inclusion and accounting gates.
+
 1. Exercise actual V4 public lifecycles with exact custody and liability
    reconciliation. Synthetic readback and client tests do not prove inclusion.
 2. Integrate a compiled release catalogue and original-contract recovery across
