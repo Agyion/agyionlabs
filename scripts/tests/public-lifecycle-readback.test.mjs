@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { buildPublicLifecyclePlan } from '../lib/public-lifecycle-plan.mjs';
 import { publicLifecycleReadbackKeys, verifyPublicLifecycleState, verifyPublicLifecycleSnapshot } from '../lib/public-lifecycle-readback.mjs';
+import * as readback from '../lib/public-lifecycle-readback.mjs';
 const { Address, Contract, StrKey, Account, TransactionBuilder, nativeToScVal, xdr, contract } = createRequire(new URL('../../app/package.json', import.meta.url))('@stellar/stellar-sdk');
 const publicKeys = Array.from({ length: 7 }, (_, i) => StrKey.encodeEd25519PublicKey(Buffer.alloc(32, i + 1)));
 const plan = buildPublicLifecyclePlan({ preparedAt: '2026-09-27T16:30:00.000Z', recipient: publicKeys[0], relayer: publicKeys[1], credentialKeys: Object.fromEntries(['venue', 'podTimelock', 'podMixed', 'attester', 'agent'].map((r, i) => [r, publicKeys[i + 2]])) });
@@ -67,6 +68,40 @@ function zeroEvidence(f) {
 
 test('keys include fixed code, instances, liabilities, native balance, all three accounts and all journal records', () => {
   const f = fixture(16, true); assert.deepEqual(publicLifecycleReadbackKeys(plan, f.expected).map(b64), f.keys.map(b64));
+});
+test('acquisition keys request all sixteen possible records before their values or creation ledgers exist', () => {
+  assert.equal(typeof readback.publicLifecycleAcquisitionKeys, 'function');
+  const keys = readback.publicLifecycleAcquisitionKeys(plan), encoded = keys.map(b64);
+  assert.equal(encoded.length, 26); assert.equal(new Set(encoded).size, 26);
+  assert.deepEqual(encoded, fixture(16, true).keys.map(b64));
+  const records = keys.slice(10).map(k => {
+    const data = k.contractData(), tuple = data.key().vec();
+    assert.equal(data.durability().name, 'persistent');
+    assert.equal(Address.fromScAddress(data.contract()).toString(), plan.contractId);
+    return `${tuple[0].sym()}:${tuple[1].u64()}`;
+  }).sort();
+  assert.deepEqual(records, ['Fade:1', 'Fade:2', 'Fade:3', 'Fade:4', 'Fade:5', 'Fade:6', 'Fade:7', 'Fade:8', 'Mandate:1', 'Mandate:2', 'Mandate:3', 'Pod:1', 'Pod:2', 'Trigger:1', 'Trigger:2', 'Trigger:3']);
+});
+test('acquisition rejects modified plan scope and accessors without reading a getter', () => {
+  for (const mutate of [p => { p.contractId = p.assets[0]; }, p => { p.assets.reverse(); }, p => { p.actors.seller = p.actors.recipient; }, p => { p.steps.pop(); }]) {
+    const changed = structuredClone(plan); mutate(changed);
+    assert.throws(() => readback.publicLifecycleAcquisitionKeys(changed), /LIFECYCLE_PLAN_/);
+  }
+  const changed = structuredClone(plan); let calls = 0;
+  Object.defineProperty(changed, 'contractId', { enumerable: true, get() { calls++; return plan.contractId; } });
+  assert.throws(() => readback.publicLifecycleAcquisitionKeys(changed), /LIFECYCLE_PLAN_/);
+  assert.equal(calls, 0);
+});
+test('requested acquisition keys do not authorize a future record in the exact expected snapshot', () => {
+  const f = fixture(), future = fixture(1).response.entries[10];
+  assert.ok(readback.publicLifecycleAcquisitionKeys(plan).map(b64).includes(b64(future.key)));
+  f.response.entries.push(future);
+  assert.throws(() => check(f), /LIFECYCLE_READBACK_(ROWS|KEY)/);
+});
+test('mutating one acquisition result cannot redirect a later request', () => {
+  const keys = readback.publicLifecycleAcquisitionKeys(plan), original = keys.map(b64);
+  keys[10].contractData().contract(new Address(plan.assets[0]).toScAddress()); keys.pop();
+  assert.deepEqual(readback.publicLifecycleAcquisitionKeys(plan).map(b64), original);
 });
 test('synthetic initial and mixed accounting checks return exact decimal values without claiming code authentication', () => {
   assert.equal(check(fixture()).nativeReserveStroops, '0');

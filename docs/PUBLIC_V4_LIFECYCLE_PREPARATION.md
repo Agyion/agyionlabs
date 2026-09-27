@@ -4,7 +4,8 @@ The public V4 kernel is deployed but remains inactive in the application.
 Offline components prepare its next testnet verification phase: the immutable
 scenario plan, exact call binding, signing-time envelope validation, coherent
 accounting snapshots, fee reconciliation, concrete state and observation policies,
-a bounded raw RPC transport and a durable orchestration library.
+a bounded raw RPC transport, strict local simulation assembly and a durable
+orchestration library with an offline verified replay reader.
 There is no runnable lifecycle CLI, identity preparation or funding adapter yet.
 The pure validators do no I/O. The journal writes protected local records and
 can invoke explicitly supplied preparation, signing and transport adapters;
@@ -81,6 +82,17 @@ fees, so observed balances cannot define their own expected result.
 An unexpected external donation or create can therefore halt this bounded test
 run. It must not silently change its initial balance or record expectations.
 
+The [assembly adapter](../scripts/lib/public-lifecycle-assembly.mjs) validates
+the complete raw simulation response before using the SDK's local assembler.
+It accepts a fresh unsigned request with no resource extension or authorization
+entries, one exact result and canonical XDR. The encoded resource fee must equal
+the quoted minimum. Parsed SDK objects, error or restoration fields, extra
+authorization roots and ambiguous response fields are rejected. The only allowed
+changes are the verified resource data, complete authorization vector and exact
+fee addition. Every assembled byte must match that result, followed by the
+existing envelope validation. Assembly does not sign, send, check current source
+availability or replace the journal's final checks.
+
 ## Coherent accounting and fees
 
 The [snapshot decoder](../scripts/lib/public-lifecycle-readback.mjs) checks one
@@ -99,6 +111,12 @@ The structural fixture helper explicitly returns `codeBytesAuthenticated: false`
 only the full snapshot function checking the exact reviewed WASM may advance
 the journal. Durable replay uses canonical base64 keys and values, not serialized
 SDK object internals.
+
+Acquisition can request the ten fixed base entries and all sixteen possible
+record keys before their values or creation ledgers are known. This key list is
+derived only from the validated plan. It grants no state authority: the exact
+snapshot decoder still rejects returned records that the verified history does
+not yet permit. Missing entries do not acquire invented values.
 
 The [fee decoder](../scripts/lib/public-lifecycle-fees.mjs) covers successful
 single-call TransactionMeta V4 transactions. It checks the original signed
@@ -153,6 +171,14 @@ reconciliation also runs before the observation policy. A failed state or fee
 check cannot produce completion or release the source reservation. Recovery
 repeats these checks against raw evidence and compares the result to stored
 acknowledgments; those acknowledgments alone confer no authority.
+
+`readVerifiedPublicLifecycleContext` performs the same raw replay using the
+concrete policies, without a policy override, write, directory synchronization,
+network request or source release. An empty journal has no initial baseline.
+An unfinished claim must pass its original before evidence before that baseline
+can be returned; it still blocks every successor. A completed partial prefix is
+`ready`; `complete` requires all 39 steps. Returned data is frozen and historical.
+Neither status establishes current chain state or an available source lock.
 
 ## State, observations and transport
 
@@ -210,6 +236,32 @@ The transport validates envelope shape, not signing authority or chain consensus
 The immutable call/envelope checks and journal provide the former. The evidence
 remains dependent on the selected RPC source; a header hash is not an independently
 verified consensus proof.
+
+## Actual RPC compatibility checks
+
+A separate three request probe obtained the network identity, current header and
+historical header for ledger 4,902,649. Both canonical XDR forms matched the same
+block hash and base reserve of 5,000,000 stroops. This checks the actual header
+formats and bounded transport without establishing independent consensus.
+
+Another three request probe simulated the first Fade creation in explicit
+`record` mode at ledger 4,902,687. It returned ID 1, one source authorization
+tree and a resource fee of 714,138 stroops. The unchanged response exposed an
+installed SDK declaration mismatch: state change types are strings, not numbers.
+The adapter initially refused it. The correction follows the actual response
+and [documented RPC schema](https://developers.stellar.org/docs/data/apis/rpc/api-reference/methods/simulateTransaction),
+accepting only `created`, `updated` and `deleted` with consistent before and
+after presence. `deleted` is documented and tested synthetically; it was not
+observed in this capture. Offline assembly of the captured response then
+preserved its exact authorization and resource data, with a total authorized
+fee of 714,238 stroops including the fixed 100 stroop inclusion bid.
+
+These probes made six read or unsigned simulation requests in total, with no
+funding, transaction signature or submission. Response JSON is retained as the
+raw transport's reserialized values; canonical XDR bytes remain unchanged.
+The positive capture uses public fixture credential addresses and its recorded
+time for offline replay. It does not establish valid current time bounds,
+enforced credential authorization, live settlement or actual charged fees.
 
 ## Offline verification
 
@@ -271,7 +323,7 @@ confinement. Both the failing cases and final passing cases are retained in the
 development evidence. Directory synchronization does not prove every possible
 power-loss behavior of every filesystem or hardware platform.
 
-The current policy integration passed 41 default state tests, 65 observation
+The preceding policy integration passed 41 default state tests, 65 observation
 tests, 56 transport tests and nine adapter tests. Three state/observation checks
 requiring local artifacts are explicitly skipped by default; the separately
 enabled exact-WASM suites passed 42 and 67 respectively. The final journal suite
@@ -293,13 +345,31 @@ is rejected by the raw state decoder. All 39 synthetic fee receipts reconcile
 to 15,600 stroops total, which is test data rather than a live fee estimate.
 The largest policy input was 1,241,524 bytes, below its fixed two-MiB limit.
 
-The complete final local workspace passed 1,829 checks with twelve explicit
+That policy checkpoint's complete local workspace passed 1,829 checks with twelve explicit
 default skips, including 902 application and 535 tooling checks. Its earlier
 run failed at the vault UI test's one-second initial creation wait while real
 key generation was still pending. The unchanged focused case passed; the test
 now uses the same bounded thirty-second wait as its encryption checks. All
 seven vault UI tests and the final full workspace passed with real cryptography
 and every original assertion retained. The failed run remains preserved.
+
+The current runner seams passed 68 assembly checks, 92 snapshot/acquisition
+checks and four read-only replay checks with the local artifact case enabled.
+The assembly tests include the unchanged real positive response above, its
+expired historical envelope, malformed raw responses and all 39 synthetic
+scheduled calls. Read-only replay rejects altered raw evidence and blocks
+successors for every unfinished claim state, without writing or releasing locks.
+
+The complete current local workspace passed 1,904 checks with thirteen explicit
+default skips, including 902 application and 610 tooling checks. The separate
+integration run also passed both the 38-step structural mode and the full
+39-step pinned-byte mode after the new replay assertions were added. These
+scopes overlap and must not be added together as unique test counts. Default
+skips are optional test cases selected by environment or local artifact
+availability; they do not disable any application or contract security check.
+The separate enabled run does not turn synthetic ledger responses into live
+contract execution evidence. A bounded independent peer review found no
+additional actionable defect in these changes; it was not an external audit.
 
 ## Remaining work
 

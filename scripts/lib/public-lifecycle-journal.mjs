@@ -14,6 +14,7 @@ import { bindPublicLifecycleCall } from './public-lifecycle-call.mjs';
 import { validatePublicLifecycleEnvelope, validateSignedPublicLifecycleEnvelope } from './public-lifecycle-envelope.mjs';
 import { verifyPublicLifecycleSnapshot } from './public-lifecycle-readback.mjs';
 import { reconcilePublicLifecycleFees } from './public-lifecycle-fees.mjs';
+import { createPublicLifecyclePolicies } from './public-lifecycle-policies.mjs';
 const { xdr } = createRequire(new URL('../../app/package.json', import.meta.url))('@stellar/stellar-sdk');
 const MAX = 2 * 1024 * 1024, VERSION = 'agyion-public-lifecycle-journal-v1';
 const ensure = (ok, code) => { if (!ok) throw Error(`LIFECYCLE_JOURNAL_${code}`); };
@@ -65,11 +66,11 @@ function write(dir, name, value) {
   syncDirectory(dir);
 }
 function same(a, b, code) { ensure(canonical(a) === canonical(b), code); }
-function context(options) {
+function context(options, readOnly = false) {
   const { run, lockRoot } = options; privateRunDirectory(run); privateRunDirectory(lockRoot);
   ensure(run !== lockRoot, 'LOCK_ROOT');
   // The future CLI must durably create any higher ancestor directories too.
-  syncDirectory(path.dirname(run)); syncDirectory(path.dirname(lockRoot));
+  if (!readOnly) { syncDirectory(path.dirname(run)); syncDirectory(path.dirname(lockRoot)); }
   const plan = copy(options.plan), planSha256 = hashPublicLifecyclePlan(plan); ensure(options.planSha256 === planSha256, 'PLAN_HASH');
   const manifest = { schema: VERSION, planSha256, lockRoot, plan };
   const existing = read(run, 'plan.json');
@@ -274,6 +275,30 @@ function replayCompleted(c, rows, policy) {
       completionSha256: digest(row.completion), evidenceSha256: { before: digest(row.claim.evidence), after: digest(row.completion.evidence) } }));
   }
   return frozen(prefix);
+}
+/** Fresh offline replay using concrete policies, with no writes, directory
+ * fsync, manifest creation or source release. A partial completed prefix is
+ * ready; complete means all planned steps. Unfinished claims must pass their
+ * before-evidence gates but never expose a next step. This verifies retained
+ * RPC evidence, not current chain state or source-lock availability. Writable
+ * execution still replays and checks its own source reservation independently.
+ */
+export function readVerifiedPublicLifecycleContext(options) {
+  exact(options, ['run', 'lockRoot', 'plan', 'planSha256']);
+  const c = context(options, true), { rows, fees } = entries(c), policy = createPublicLifecyclePolicies();
+  const prefix = replayCompleted(c, rows, policy), last = rows.at(-1);
+  const initialEvidence = rows.length ? initialEvidenceFor(rows, rows[0].claim) : null;
+  let unfinished = null;
+  if (last && !last.completion) {
+    verifyBefore(c, last.claim, prefix, initialEvidence, policy);
+    unfinished = { stepId: last.claim.stepId,
+      status: last.included?.status === 'FAILED' ? 'failed' : last.included ? 'included' : last.attempt ? 'pending' : 'claimed',
+      hash: last.attempt?.hash ?? null, ledger: last.included?.ledger ?? null, createdId: last.included?.createdId ?? null };
+  }
+  const status = unfinished?.status ?? (prefix.length === c.plan.steps.length ? 'complete' : prefix.length ? 'ready' : 'empty');
+  return frozen({ schema: 'agyion-public-lifecycle-verified-context-v1', planSha256: c.planSha256, status,
+    nextStepId: status === 'empty' || status === 'ready' ? c.plan.steps[prefix.length].id : null,
+    signedFeesStroops: fees.toString(), prefix, initialEvidence, unfinished });
 }
 function release(c, claim, reservation, completion) {
   const name = reservation.name.replace('.claim.', '.release.'), value = { schema: VERSION, reservationSha256: digest(reservation.value), terminalFile: claim.stepId + '.completion.json', terminalSha256: digest(completion) };

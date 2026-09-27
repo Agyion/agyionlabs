@@ -182,12 +182,19 @@ for (let index = 0; index < count; index++) {
 let recoveryNetworkCalls = 0;
 const recovered = await J.recoverPublicLifecycleStep({ ...finalRecovery, getTransaction: async () => { recoveryNetworkCalls++; throw Error('completed replay must not use network'); } });
 assert.equal(recovered.status, 'complete');
+const replayed = J.readVerifiedPublicLifecycleContext(base);
+assert.equal(replayed.status, realWasm ? 'complete' : 'ready');
+assert.equal(replayed.nextStepId, realWasm ? null : plan.steps[38].id);
+assert.equal(replayed.prefix.length, count);
+assert.equal(replayed.signedFeesStroops, String(count * 1000));
+assert.equal(replayed.unfinished, null);
 // Mutate retained RAW evidence, leaving all serialized success acknowledgments
 // intact. Replay must reject before trusting them or opening another send path.
 const file = path.join(run, plan.steps[count - 1].id + '.completion.json'), bytes = fs.readFileSync(file);
 const changed = JSON.parse(bytes); changed.evidence.snapshot.response.entries[0].val += '\n';
 fs.writeFileSync(file, JSON.stringify(changed));
 await assert.rejects(J.recoverPublicLifecycleStep(finalRecovery), /LIFECYCLE_STATE_XDR/);
+assert.throws(() => J.readVerifiedPublicLifecycleContext(base), /LIFECYCLE_STATE_XDR/);
 assert.equal(sends, count); assert.equal(signs, count);
 console.log(JSON.stringify({ completed: count, sends, signs, netFees: String(netFees), recoveryNetworkCalls,
   rawTamperRejected: true, maxPolicyBytes, codeBytesAuthenticated: realWasm ? 'actual pinned bytes' : 'unit-only byte-auth double' }));

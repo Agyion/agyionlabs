@@ -111,6 +111,17 @@ function keysFor(plan, records) {
 export function publicLifecycleReadbackKeys(plan, expected) {
   return keysFor(plan, expectations(plan, expected).records);
 }
+/** Acquisition only: includes records that may not exist yet. Returned keys do
+ * not authenticate state; the exact expected snapshot still rejects extra rows. */
+export function publicLifecycleAcquisitionKeys(plan) {
+  validatePublicLifecyclePlan(plan);
+  const counters = { Fade: 0, Pod: 0, Trigger: 0, Mandate: 0 };
+  const records = plan.steps.filter(step => Object.hasOwn(types, step.method)).map(step => {
+    const type = types[step.method];
+    return { type, id: String(++counters[type]) };
+  });
+  return keysFor(plan, records);
+}
 // Durable replay uses base64 key/val, never serialized SDK object graphs.
 // An RPC adapter explicitly maps wire `xdr` to `val`; this module does no I/O.
 function responseRows(response) {
