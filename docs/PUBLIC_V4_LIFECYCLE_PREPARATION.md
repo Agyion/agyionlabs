@@ -564,6 +564,32 @@ sidecars, grant journal authority or implement a complete phase collector.
 Enforcement controls and the early historical staging pairs still need their
 own acquisition and integration paths.
 
+## Independent record-case journey
+
+The [acquisition journey test](../scripts/tests/public-lifecycle-observation-acquisition-journey.test.mjs)
+checks all 58 record cases available from the ordinary phase snapshots across
+39 synthetic transitions. Independent literals specify request arguments,
+credential payloads and expected rejection codes. A separate model checks all
+78 before/after economic snapshots, including phases without a negative case.
+It accounts for each source sequence and assumed fee, all 16 records, a peak
+principal of 30,000,000 stroops and final zero liability with one surplus stroop.
+These are fixture economics, not measured network fees or included transactions.
+
+Stable and one-ledger-forward journeys each acquire 58 cases. The forward run
+accepts 21 valid advances without changing an original included transaction or
+borrowing a future binding. Separate funded and terminal-zero omissions of the
+native Balance row refuse without a balance getter. Seven incomplete before
+phases still refuse their missing cases; every after aggregate refuses its
+missing authenticated current fee. The test does not bypass those gates.
+
+The first default and pinned-WASM executions each passed three top-level tests
+with no skips. Default mode doubles only executable authentication; pinned mode
+authenticates existing compiled bytes without running a Soroban host. Neither
+mode establishes live wire compatibility, authenticated fee metadata or durable
+raw-sidecar persistence. Four ENFORCE/control pairs and four early staged cases
+remain outside these 58 acquisitions. The measured per-case and raw phase-map
+sizes fit their limits; this is not a full persisted journal-size result.
+
 ## Remaining work
 
 The dedicated executor, full observation collector, initial preflight integration

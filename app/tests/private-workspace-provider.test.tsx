@@ -199,3 +199,28 @@ it('keeps the newest account pending refresh when an earlier read finishes late'
   expect(observed.accountPending).toEqual([]);
   view.unmount();
 });
+
+it.each(['account', 'session'] as const)('an obsolete %s refresh cannot cancel the current pending discovery', async change => {
+  const view = render(<PrivateWorkspaceProvider address="old-account"><Probe /></PrivateWorkspaceProvider>);
+  await waitFor(() => expect(observed.pendingChecked).toBe(true));
+  await waitFor(() => expect(observed.protocol).not.toBeNull());
+  const obsoleteRefresh = observed.refreshPending;
+  const currentAccount = change === 'account' ? 'new-account' : 'old-account';
+  const currentAttempt = { hash: 'ab'.repeat(32), source: currentAccount, releaseId: scope.profileId, pool: 'original-pool', operation: 'submit', releaseKey: 'private-testnet-original', releaseLabel: 'Earlier vault', releaseStatus: 'known' };
+  let finish!: (rows: unknown[]) => void;
+  boundary.pending.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+  if (change === 'account') view.rerender(<PrivateWorkspaceProvider address={currentAccount}><Probe /></PrivateWorkspaceProvider>);
+  else act(() => { boundary.version++; boundary.listeners.forEach(listener => listener()); });
+  await waitFor(() => expect(boundary.pending).toHaveBeenCalledTimes(2));
+  expect(boundary.pending).toHaveBeenLastCalledWith({ source: currentAccount });
+  expect(observed.pendingChecked).toBe(false);
+  // An old PrivateReadyPanel.run finally can invoke this callback after the
+  // replacement has already started reading its own journal.
+  await act(async () => { await obsoleteRefresh(); });
+  expect(boundary.pending).toHaveBeenCalledTimes(2);
+  await act(async () => { finish([currentAttempt]); });
+  expect(observed).toMatchObject({ accountPending: [currentAttempt], pendingChecked: true, pendingError: null });
+  expect(boundary.reconcile).not.toHaveBeenCalled();
+  expect(observed.vault?.getSnapshot().status).toBe('locked');
+  expect(screen.queryByRole('dialog')).toBeNull();
+});

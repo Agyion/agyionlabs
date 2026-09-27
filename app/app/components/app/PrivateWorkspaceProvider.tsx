@@ -78,10 +78,12 @@ export default function PrivateWorkspaceProvider({ address, children }: { addres
   const protocol = owner && protocolState?.owner === owner ? protocolState.value : null;
 
   const refreshPending = useCallback(async () => {
+    const currentSession = () => mounted.current && currentAccount.current === accountIdentity && walletSessionVersion() === session;
+    // An obsolete operation's finally must not invalidate its replacement's read.
+    if (!address || !currentSession()) return;
     const refresh = ++pendingRefresh.current;
     const revision = releaseRevision.current;
-    const current = () => mounted.current && currentAccount.current === accountIdentity && walletSessionVersion() === session && revision === releaseRevision.current && refresh === pendingRefresh.current;
-    if (!address || !current()) return;
+    const current = () => currentSession() && revision === releaseRevision.current && refresh === pendingRefresh.current;
     try {
       const helper = await import('../../lib/private/pending-recovery');
       if (!current()) return;
