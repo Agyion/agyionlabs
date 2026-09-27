@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T20:54:57.213655+00:00",
-  "sourceBaselineCommit": "8c7d7cfd7dd43528d7385ff1128148229e64ddc3",
+  "reviewedAt": "2026-09-27T21:40:38.696566+00:00",
+  "sourceBaselineCommit": "bfd2d134e5cee8497dfa195adb65de40ce4fbae5",
   "websiteRelease": {
     "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
     "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
@@ -42,12 +42,12 @@
     "verified-baseline-plus-reviewed-diff": "A complete previously reviewed baseline was verified against Git bytes; all differences were reviewed and exact unchanged, changed and deleted ranges reconciled. This is composed coverage, not a fresh full-file read."
   },
   "counts": {
-    "files": 603,
-    "lines": 79044,
+    "files": 606,
+    "lines": 79936,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 505,
-        "lines": 55217
+        "files": 508,
+        "lines": 56109
       },
       "verified-baseline-plus-reviewed-diff": {
         "files": 98,
@@ -2977,6 +2977,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/lib/public-lifecycle-baseline.mjs",
+      "sha256": "e6e18b067a6f4b6d3ee69651fb971b3f0d8929c4f89e14c8ff0db997233a7f48",
+      "lines": 162,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/lib/public-lifecycle-call.mjs",
       "sha256": "63bd91fc037cdba4ce7d97282f192a3af3d1b35fcaed610687e23c20431d543d",
       "lines": 133,
@@ -3044,8 +3050,8 @@
     },
     {
       "path": "scripts/lib/public-lifecycle-run.mjs",
-      "sha256": "27d7d867e6c1dc0940c358132b16756103ff04df0cfa4a6207580ab03fbd5761",
-      "lines": 214,
+      "sha256": "0decc4d281025ab3b26f241e2f9e21bc8261f0e4d4ff86cc3e392d92ad0cf50f",
+      "lines": 354,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3194,8 +3200,8 @@
     },
     {
       "path": "scripts/tests/helpers/public-lifecycle-journal-fixture.mjs",
-      "sha256": "545580f5add80d2d66a0829100a68a01741d6eff6b259650a6e860464a7a4874",
-      "lines": 200,
+      "sha256": "92300737c9d8e02079a460828bb5748f032f9d64e59533d1de9600bdc06ea0c4",
+      "lines": 299,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3271,6 +3277,12 @@
       "reviewKind": "complete-source-read"
     },
     {
+      "path": "scripts/tests/public-lifecycle-baseline.test.mjs",
+      "sha256": "ab64459942b664f00ff241ee0fb1f825198543177a6177f80ebc1f758717e697",
+      "lines": 212,
+      "reviewKind": "complete-source-read"
+    },
+    {
       "path": "scripts/tests/public-lifecycle-call.test.mjs",
       "sha256": "f6015593cb812937d42b98f190b53230c407727bd949ebff7fdc13af20cddc23",
       "lines": 149,
@@ -3302,8 +3314,8 @@
     },
     {
       "path": "scripts/tests/public-lifecycle-integration.test.mjs",
-      "sha256": "fa0856b602d83f24204dd60c3d8196000451b79c755f2d78b9e03b587b4566f4",
-      "lines": 38,
+      "sha256": "80da5ac436e4d899cfec81b993093e22f06486c153f0bfb01ccc9441e691a001",
+      "lines": 72,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3352,6 +3364,12 @@
       "path": "scripts/tests/public-lifecycle-run.test.mjs",
       "sha256": "1b8ad51c5dddcc38fdfe77b141db7be7dc0484d9b4b3fdb230ec978c04b4c653",
       "lines": 227,
+      "reviewKind": "complete-source-read"
+    },
+    {
+      "path": "scripts/tests/public-lifecycle-signing.test.mjs",
+      "sha256": "d1dff61bd17a6d928cd594e3fd78d433516d6dcafd9390fe2360277a05514db0",
+      "lines": 245,
       "reviewKind": "complete-source-read"
     },
     {
@@ -5869,5 +5887,374 @@
       }
     ],
     "boundary": "Protected seven-key preparation/load, bounded raw acquisition, one-attempt actor funding with read-only account recovery, and explicit CLI routing are implemented and tested with isolated fixtures. Original authority/CLI and transports are substituted; observed account state is not a verified Friendbot inclusion. The real two-child preparation race is local filesystem evidence, not power-loss or same-UID/root resistance. Lifecycle signing, complete observation/preflight integration and the 39-step live executor remain unfinished. Prior 38/39 synthetic integration and unsigned RPC captures remain historical, not new execution by this phase. No new deployment, website publication, application activation or independent audit claim."
+  },
+  "publicV4SigningBaseline": {
+    "status": "source-and-isolated-signing-baseline-verified",
+    "sourceCommit": "bfd2d134e5cee8497dfa195adb65de40ce4fbae5",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36351623802",
+    "sourceInventorySha256": "cead68b12d639c14a61e294952e0af106a480bc66b0e1ba1d3b6482cda95eb8e",
+    "newAuthoredFiles": 3,
+    "modifiedAuthoredFiles": 3,
+    "authoredLineIncrease": 892,
+    "localWorkspacePassed": 2263,
+    "localDefaultOptionalSkips": 13,
+    "hostedWorkspacePassed": 2262,
+    "hostedDefaultOptionalSkips": 14,
+    "sourceCoverage": {
+      "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-baseline-root-source-coverage.json",
+      "sha256": "38b1dfa5f9af1c2f10e1e9d857fece680685a93ced6a1571b82f486f42bfb5e6"
+    },
+    "newRealIdentityPreparations": 0,
+    "newRealRpcRequests": 0,
+    "newFundingRequests": 0,
+    "newLiveSignatures": 0,
+    "newTransactionsSubmitted": 0,
+    "evidence": [
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/capture-increment.py",
+        "sha256": "07050309f7d6a7edbb03535fb5a2f54904040db41fea1323c2e629dd2837677d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/preparation-provenance.json",
+        "sha256": "05ec23a3c47c878b3c8969926d3af05a9411ceeba34c598d6e3a7ac1e578101b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/repository-inventory.json",
+        "sha256": "cead68b12d639c14a61e294952e0af106a480bc66b0e1ba1d3b6482cda95eb8e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/summary.json",
+        "sha256": "cf35d5a9ca675feea48946bb785596d19fbeb6b899a4b579f3c2c02aff0d8178"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/independent-verification.json",
+        "sha256": "8539c836959e7bd4467895c3f2dabe40ffb51b87bb089fb9ec32ced5b46f4c2a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/frozen-inputs.json",
+        "sha256": "efea95c41472b7f044f519c22640a63b911718b179382c6d89626bbbeaec0005"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-baseline-root-source-coverage.json",
+        "sha256": "38b1dfa5f9af1c2f10e1e9d857fece680685a93ced6a1571b82f486f42bfb5e6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-baseline-local-test-summary.source-bound.json",
+        "sha256": "94bd2b816053d2b9e837b8778a08ae7c2c7e89d6790087169de686b045199f81"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-baseline-workspace.log",
+        "sha256": "d9a7ce154d3ccc61362e4ec5364876f07bad10d9dad96a3ec02f1bd545e3394e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-baseline-hosted-test-summary.json",
+        "sha256": "8ef0fb230fe96958ea84a877d8977a340573879c3813dce9519d24388dba49b0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-baseline-hosted-ci.json",
+        "sha256": "0c0bc2612a57966b4e595197e5e7f25183fff1a5ab95178d24d24fb5f90f39bc"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-baseline-hosted-ci.log",
+        "sha256": "51f798281b4a148f9086fca741c2566637804de368533be7e5250bfc07be541c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-baseline-root-review.md",
+        "sha256": "4f242a45620c3380e983c4f7e57e6bf9681a918559dfa46e5fc827b2bd9b7cdc"
+      },
+      {
+        "path": "docs/PUBLIC_V4_LIFECYCLE_PREPARATION.md",
+        "sha256": "9206ea1f8af60953a86e60d5da51251b9c321dd8a49c0d3691cf1bbe8df628ff"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-peer/EXISTING_SEAMS.md",
+        "sha256": "b72bb9e227a6008b3ca45766f87cdd5d31de3f041846ace6004efe5e331de01e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-peer/baseline-review.json",
+        "sha256": "af577568586c98134952fb2352afaeb67aee45da04e0e528e1c9bdda0e6d6a08"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-peer/baseline-v2-finding.json",
+        "sha256": "1e2c8b5a42e529de6e38b543d28c7d7191088abb1c2e7ed0314bca94c37d137c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-peer/baseline-v3-closure.json",
+        "sha256": "89de1428ff09739fb998aae3a70f21442090067019df72bcdab22258da120eda"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-peer/existing-seams.json",
+        "sha256": "9a5ad1b9dfa687226822205c0a96a830b13aab7183950c323748d56193f7c5e4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-peer/root-integration-review.json",
+        "sha256": "82279febc96c88e7f0559b783b4c90f02e4682f33bdd7b47edee1d09a3be68c0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-peer/signing-review.json",
+        "sha256": "90554e934bb919396284f1efaf0b62e75ba6a1ff5b9ffad81cfc32d7812a2cd1"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-root/baseline-pinned-wasm.log",
+        "sha256": "9e45989bbcb0d63ee88c41b3f04bd63e057bb0e4049c9e703d2d50bce81af00b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-root/baseline-v3-pinned-wasm.log",
+        "sha256": "120b109fabe1e789a493943238c33bb37655f44a4aefed1b8849f8166e339240"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-root/both-signing-red.log",
+        "sha256": "a63bd0da0f3998acb6ba0b2a71357df05eefa790e9d5051f8e507b4ccc39e651"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-root/final-signing-integration.log",
+        "sha256": "05340be75b579a4647b2eabdbc42dd1101910f4d8beb3ce79784dd0d98b7f698"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-root/first-implemented-check.log",
+        "sha256": "75841bbf1d4cdf1d103427ee1312837ae6881cdd3eafe4f7981ff1db67bb671d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-root/red-checkpoint.json",
+        "sha256": "265cb7f8dea447fe33cf762777b2bd9713990b16082c5cb0380fdc7991207a3d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-root/signer-red.log",
+        "sha256": "3a5675cca753b4f64ad6cf555a39867cd3db11af026c9ebe1cfbe5f4140fb468"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/GREEN-default-final.log",
+        "sha256": "378343ce3f5c3211b265ea1fe6ecc8bc98119b8b43512d0f43a5b7023cd0c1b5"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/GREEN-first.log",
+        "sha256": "139e094320ee077106670c646a2099062ebbe9eeb79c45dea027b3101c904962"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/GREEN-pinned-wasm-final.log",
+        "sha256": "466439adcd093d661c3fc8dcba7452eac9335a72a7d6adb32f05d2dde0866603"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/GREEN-second.log",
+        "sha256": "02a2bb8703e38c3c4a5035850b21b16d9893e558033c9deb2a9a9e84ea47c5a2"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/RED-behavior.log",
+        "sha256": "cc84b56269f1acdb7913755913b015f855d1f28b2251c4db5a260dbe4d799375"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/RED-first.log",
+        "sha256": "96112c841d64053fa259cb52ffa92780f91454c04a408227b5e1f145821b1083"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/REPORT.md",
+        "sha256": "ed03376548554d42d2f646df547c8bc02deda7704dc61553ea9aacf64682cb56"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v2/GREEN-default.log",
+        "sha256": "d9681d0970134cfeb5c11af81e28d1edb188b10f3e73290d0ff9b7eb2c2637c7"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v2/GREEN-pinned-wasm.log",
+        "sha256": "da4de43e2aebe65e2614fa4fea236049897585789d5e9908761528c78de9adcc"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v2/RED-both-entries.log",
+        "sha256": "e2d470ccdeb045d6ea9b4454bd01f461ac722cd8d26530345b4751b99bea1f0b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v2/RED.log",
+        "sha256": "59d09b7510111f3470115106ea357d1f188f78b64d17a71c5e01b8700c468198"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v2/REPORT.md",
+        "sha256": "0f3eb486ea1d9d688097c4fc80e5eb7621ae91fa299c4bd28f54a3c25fc0a223"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v2/before.mjs",
+        "sha256": "bb0939608fe5bf86ce6b730357dc168b3fad007f0a60a0bdcbb58eff040e9cad"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v2/before.test.mjs",
+        "sha256": "5b0aaf04d6d4eb698c952e8a4ab38e9bfc06027b1b15b175ef27c59a4cd7568e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v2/verification.json",
+        "sha256": "59e584cf71b929cc18beb4671de04653a07f26bbafe265fc42195913888de500"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/GREEN-default.log",
+        "sha256": "df7fb8b577cf9e4abb8937a1edd6735d9292a9851a3c322f379de34df050f1a0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/GREEN-pinned-wasm.log",
+        "sha256": "a69ef7bf3ae34212b14e884a61dceb923f215da46031a5ae387ef6021131b074"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/RED.log",
+        "sha256": "5f019669928d607cf8c94d8187204e4430f75ca893be5e642dbb24f9cfc2c06a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/REPORT.md",
+        "sha256": "d62e55bd3383f736c9e60ce15d815bc86ab67d85be54ed2ee125ce6adbf5f219"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/before.mjs",
+        "sha256": "99908602e61659c9ebbb517a25a15e7953e966b908065f1b5281d5b8ad37851e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/before.test.mjs",
+        "sha256": "0b6c44687182bfb67007cb1b1e02c08d9ca198a6e2c690e01fa05aa15e7bfc02"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/manifest.json",
+        "sha256": "7d61c7995f662941f82c73fae379ef1921d396ecb9792806cac896d3d19866fe"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/public-lifecycle-baseline.mjs.diff",
+        "sha256": "4e4dadd91d2f7c1ff142e89921dab0de75ec25b1050189a76e214bb85dc6aee1"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/public-lifecycle-baseline.test.mjs.diff",
+        "sha256": "b49c26bfbffe0cf786756d4a86e6f4f3c7f375153534e744ce03040de6231691"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/source-coverage.json",
+        "sha256": "191c53d3bd6d2585e930963c428631eab9fac1e2f2de19edca671aa88e5a459a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/error-boundary-v3/verification.json",
+        "sha256": "0635882affa096eea7161171ca71d05bdd167134127f4a20695a7ece1ef515a2"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/manifest.json",
+        "sha256": "dd846d3c1b1fb064fe861250b7d7f0213a32de03d61c0726f50d5de81e69951b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/source-coverage.json",
+        "sha256": "36a64a3b52ba6b20ed10bb5f59007e00d02e4874a592fea4943dfa75d55e5072"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/baseline-implementation/verification.json",
+        "sha256": "1d0823e7644349805991c3e74f4233557050d4518266a57a1e67bce9a1b35057"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/BASELINE-SUPPLEMENT-identities.json",
+        "sha256": "db6511b3187744341a031e9314a99f6774af1793242ba3288be0dd624ddafda7"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/BASELINE-SUPPLEMENT.md",
+        "sha256": "a76b941fe4ebab70255cf6a4d16291cf6ecaa5d0ba027635b98da4a3c7f687a3"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/REPORT.md",
+        "sha256": "d1802018ffbf302720a715e9f476bb8b6a8ad3ba0d2c0e07219c65f35884013b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/error-boundary-red.log",
+        "sha256": "45a2c386e3f15b218022578499e1ace6f2774d2ce814beaffce911c820315f72"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/final-focused-green.json",
+        "sha256": "e6265b8502c25549f6823742ea4515105c79aa25e57fe451de2970d93d2a22b9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/final-focused-green.log",
+        "sha256": "cec057d28a773c00d3cf00706c5b2386e8c44a70bf8cfb370dc654803ebfc21a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/final-portable-green.log",
+        "sha256": "2318fd9d23d777419b59e037ad6612592ac7c79371f9b764bbaf7748be9ada9c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/focused-green.json",
+        "sha256": "033da9b07521e0efa3dbef0fa157b4470e2b9ca225c1763361fc6d93a2c64ebd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/focused-green.log",
+        "sha256": "cef73f5a912867a5ca3d94ca763f43efd1d1bd7df545f4727a7f483b1d2b21a2"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/implementation-01.log",
+        "sha256": "d50bec2de34243d309a2e0ec2975f41a3b4eafc9e23c2e627481ca294548877c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/manifest.json",
+        "sha256": "9e594dce53cdfacb03971ef4cbd2795fdaeadb149f01454b47135ddeaee91f02"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/nested-input-red.log",
+        "sha256": "6b2a1846727f7f71bb2812632bda594a94a73d6bf2a157105f3ac8e21271b894"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/red.json",
+        "sha256": "074c8433dd9dfa71a33bd8e3abda740b587ca59589d076a4eb2577192a09ad2f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/red.log",
+        "sha256": "5141533b2221179af34c87898c0cbf4f5eb71bf8687fdac9af89845e1f8471dd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-implementation/source-coverage.json",
+        "sha256": "f94aefa2b6c1370d14ac887cf7df63a6d3daeca2e284ac20097c95d967d8ed6a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-next/IMPLEMENTATION-PLAN.md",
+        "sha256": "efe8a97e7841d336133bdc8d951959f7a898178218f8ac8de2bd3ea49f1fa866"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-next/REPORT.md",
+        "sha256": "77fafeeeab19ed9931fc92fce148c309989dd647fac115b0600a698cf7c36918"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-next/implementation-plan-manifest.json",
+        "sha256": "4348918cdc1e39d171a5ce38c0be7c6aee98c12a0a1bd3f2e81e7a864edd9d2d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-next/manifest.json",
+        "sha256": "4ce37e2b693e2c35e5769881458d9ddddf146a18e79887c3eee44d1b077df6ab"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-root/final-pinned-39-integration.log",
+        "sha256": "63b00261d4125f1b9d801ac2c7d66030c275e78fbf21065e2553d500363cce2f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/adapter-integration-root/final-root-test-summary.json",
+        "sha256": "699434f114c003db98063652fbdd9819e3694b7fd8d7f9e1fe37e9a4c6b17609"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-baseline-local-test-summary.json",
+        "sha256": "806aa71ca844ff805485b17f9a8a005ca7a0bce499164286e283950c8f3b7cfd"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/peer-helper-review.json",
+        "sha256": "36b88d60d496fbae63f753fc30fdaeb375ac166ab5454b5ceb5f09a73afbbf7e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/signing-baseline-root-ci-verification.json",
+        "sha256": "d7646f7a36992911eff9333adce9b1cb55cba4f35f76cd2b184db3c20380d50d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/independent-verification.json",
+        "sha256": "edf7414dea949e57ab3160481dcefb16b70e9ee8caaa563594ef03f53a6d37b8"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/peer-post-finalization.json",
+        "sha256": "4d2b664a9fcdb8a1252c5de2ac55611c232dad65ad97459167897eea27dbd8b7"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-bootstrap-inventory/evidence-finalization.json",
+        "sha256": "ba589af4000c65b5e458d6ba8e41008bc26629921bb49a6d79346f97e6a0e765"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/finalizer-inputs.json",
+        "sha256": "5528cef7f335917e3db71a16567c7b91173a63708707a23984bbfb6bd1eda6fe"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/public-lifecycle-signing-baseline-inventory/finalize-signing-baseline-evidence.py",
+        "sha256": "4ec7898e5a44ce46b6c2cc18cb0a20b6b7818d00deb769d19adca6883fe21a2c"
+      }
+    ],
+    "boundary": "Fixed run-owned credentials and envelope signing plus initial baseline/zero-read acquisition are implemented and tested with isolated identities and substituted original authority/CLI/transport. Synthetic-key signatures are real local cryptography; genuine seller CLI signing success and a real zero-getter wire capture are not claimed. The signer is not a durable journal claim or live ledger/source preflight. Retained raw zero evidence is not automatically revalidated by the existing compact-zero journal parser. Complete observation/preflight integration and the 39-step live executor remain unfinished. No new operator identity, live RPC, funding, live signature, submission, deployment, website publication, application activation or independent audit claim."
   }
 }
