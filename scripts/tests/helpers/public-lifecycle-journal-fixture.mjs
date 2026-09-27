@@ -9,9 +9,12 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { mock } from 'node:test';
+import * as realUrl from 'node:url';
+import * as processes from 'node:child_process';
 const [home, mode] = process.argv.slice(2);
-assert.ok(home && path.isAbsolute(home) && ['unit', 'real'].includes(mode));
-const realWasm = mode === 'real', count = realWasm ? 39 : 38;
+assert.ok(home && path.isAbsolute(home) && ['unit', 'real', 'signing', 'signing-expiry'].includes(mode));
+const signingMode = mode === 'signing' || mode === 'signing-expiry';
+const realWasm = mode === 'real', count = signingMode ? 2 : realWasm ? 39 : 38;
 // The child uses one explicit synthetic clock for signing bounds, persisted
 // validation time, ledger headers and transaction metadata. Never real time.
 let fixtureNow = 1800001000;
@@ -34,7 +37,8 @@ function validate(p) {
   return realPlan.validatePublicLifecyclePlan(replaceSeller(p, originalSeller));
 }
 mock.module(url('public-lifecycle-plan.mjs'), { namedExports: {
-  buildPublicLifecyclePlan: input => replaceSeller(realPlan.buildPublicLifecyclePlan(input), seller.publicKey()),
+  buildPublicLifecyclePlan: input => replaceSeller(realPlan.buildPublicLifecyclePlan(signingMode
+    ? { ...input, preparedAt: '2026-09-27T00:00:00.000Z' } : input), seller.publicKey()),
   validatePublicLifecyclePlan: validate, hashPublicLifecyclePlan: p => { validate(p); return digest(p); },
 } });
 if (!realWasm) {
@@ -52,8 +56,47 @@ const { createObservationFixture, loadLocalObservationPinFixture } = await impor
 const f = createStateFixture({ realWasm }), { plan, roles } = f, planSha256 = digest(plan);
 const keys = { seller, recipient: f.keys[0], relayer: f.keys[1],
   ...Object.fromEntries(f.credentialRoles.map((r, i) => [r, f.keys[i + 2]])) };
-const run = path.join(home, 'run'), lockRoot = path.join(home, 'locks');
-for (const dir of [run, lockRoot]) fs.mkdirSync(dir, { mode: 0o700 });
+let run = path.join(home, 'run'), lockRoot = path.join(home, 'locks'), signing, signingFactory;
+let aliasCalls = 0, generatedKeys = 0, actorSignCalls = 0;
+if (signingMode) {
+  // The bootstrap uses its real protected files and derives all seven actual
+  // deterministic keys. Only fixed root/original authority/CLI are substituted.
+  // Plan seller and preparation date are synthetic, as is every ledger here.
+  // This mode never exercises the fixed original seller's signing branch.
+  const root = path.resolve(realUrl.fileURLToPath(new URL('../../../', import.meta.url)));
+  const originalRun = path.join(home, 'artifacts/original');
+  const manifestSha256 = 'e3094fa5482fef6b6efb986d54d2540dcbd5a426c65fc856c1b9565825d0f5fc';
+  for (const dir of [path.join(home, 'artifacts'), originalRun, path.join(originalRun, 'identity'), path.join(home, 'deployments')]) fs.mkdirSync(dir, { mode: 0o700 });
+  fs.copyFileSync(path.join(root, 'deployments/public-v4-testnet.json'), path.join(home, 'deployments/public-v4-testnet.json'));
+  mock.module('node:url', { namedExports: { ...realUrl, fileURLToPath: value => {
+    const resolved = realUrl.fileURLToPath(value);
+    return path.resolve(resolved) === root ? home : resolved;
+  } } });
+  mock.module('node:child_process', { namedExports: { ...processes, spawnSync: (command, args) => {
+    aliasCalls++; assert.equal(command, 'stellar');
+    assert.deepEqual(args, ['keys', 'address', 'agyion-public-v4-testnet', '--config-dir', path.join(originalRun, 'identity')]);
+    return { status: 0, stdout: originalSeller + '\n' };
+  } } });
+  mock.module(new URL('../../deploy-public-testnet.mjs', import.meta.url).href, { namedExports: {
+    loadDeploymentPlan: async (original, manifest) => {
+      assert.equal(original, originalRun); assert.equal(manifest, manifestSha256);
+      return { run: originalRun, manifestSha256, planSha256: '21fb2aebbebd48c5802e89dadba72a2aaceb3d58642dda2d24bd28ae4471b6b7', plan: {
+        schema: 'agyion-public-kernel-offline-plan-v1', testOnly: true, manifestSha256, sourceAccount: originalSeller,
+        identityDirectory: path.join(originalRun, 'identity'), intendedContractId: plan.contractId, wasmSha256: plan.wasmSha256,
+        networkPassphrase: plan.networkPassphrase, rpcUrl: plan.rpcUrl, assets: plan.assets,
+      } };
+    },
+  } });
+  globalThis.fetch = () => { throw Error('Network forbidden in signing integration'); };
+  Keypair.random = () => { assert.ok(generatedKeys < 7); return f.keys[generatedKeys++]; };
+  const runs = await import(url('public-lifecycle-run.mjs'));
+  assert.equal(typeof runs.createPublicLifecycleSigning, 'function', 'protected signing capability must exist');
+  const context = await runs.preparePublicLifecycleRun({ originalRun, manifestSha256, run: 'journal-actor' });
+  assert.deepEqual(context.plan, plan); assert.equal(context.planSha256, planSha256);
+  assert.equal(generatedKeys, 7);
+  signingFactory = () => runs.createPublicLifecycleSigning({ run: 'journal-actor', planSha256 });
+  signing = await signingFactory(); run = context.journalRun; lockRoot = context.lockRoot;
+} else for (const dir of [run, lockRoot]) fs.mkdirSync(dir, { mode: 0o700 });
 const base = { run, lockRoot, plan, planSha256 };
 const int = n => xdr.Int64.fromString(String(n)), b64 = v => v.toXDR('base64');
 const addr = a => new Address(a).toScVal(), amount = a => nativeToScVal(BigInt(a), { type: 'i128' });
@@ -160,16 +203,72 @@ for (let index = 0; index < count; index++) {
   const beforeEvidence = evidence(index, 'before', pre), before = structuredClone(accounts);
   const deltas = Object.fromEntries(roles.map((r, i) => [r, String(f.business[index][i] || 0)]));
   let claim, response, id;
+  const actorSigner = signingMode && index === 1 ? signing.envelopeSigner({ stepId: step.id, binding }) : null;
   const options = { ...base, ...checkedPolicies, stepId: step.id, binding, evidence: beforeEvidence,
     prepare: async input => { claim = input.claim; assert.deepEqual(claim.derived.businessDeltas, deltas); return { envelopeXdr: unsigned(claim) }; },
-    sign: async ({ unsignedXdr }) => { signs++; const tx = TransactionBuilder.fromXDR(unsignedXdr, Networks.TESTNET); tx.sign(keys[step.sourceRole]); return tx.toXDR(); },
+    sign: async input => {
+      signs++;
+      if (actorSigner) {
+        assert.ok(fs.existsSync(path.join(run, step.id + '.claim.json')));
+        assert.ok(!fs.existsSync(path.join(run, step.id + '.attempt.json')));
+        actorSignCalls++;
+        const signedXdr = await actorSigner(input);
+        if (mode === 'signing-expiry') fixtureNow += 1000;
+        return signedXdr;
+      }
+      const tx = TransactionBuilder.fromXDR(input.unsignedXdr, Networks.TESTNET); tx.sign(keys[step.sourceRole]); return tx.toXDR();
+    },
     sendTransaction: async signed => { sends++; id = f.advance(records, index); const result = receipt(claim, signed, before, deltas, id);
       accounts = result.after; response = result.response; throw Error('synthetic unknown send acknowledgement'); },
-    getTransaction: async hash => { assert.equal(hash, response.txHash); return response; },
+    getTransaction: async hash => { assert.equal(hash, response.txHash); return actorSigner ? { status: 'NOT_FOUND' } : response; },
     collectEvidence: async input => { assert.equal(input.prefix.length, index); return evidence(index, 'after', stateAt(index, binding, 'after',
       { status: 'SUCCESS', ledger: response.ledger, createdId: id })); },
   };
-  const result = await J.executePublicLifecycleStep(options); assert.equal(result.status, 'complete');
+  if (actorSigner && mode === 'signing-expiry') {
+    await assert.rejects(J.executePublicLifecycleStep(options), /LIFECYCLE_TIME/);
+    const claimPath = path.join(run, step.id + '.claim.json'), claimBytes = fs.readFileSync(claimPath);
+    assert.equal(fs.existsSync(path.join(run, step.id + '.attempt.json')), false);
+    const { binding: _b, evidence: _e, prepare: _p, sign: _s, sendTransaction: _t, ...recovery } = options;
+    let queries = 0;
+    const recovered = await J.recoverPublicLifecycleStep({ ...recovery, getTransaction: async () => { queries++; throw Error('no hash to query'); } });
+    assert.equal(recovered.status, 'claimed'); assert.equal(recovered.hash, null);
+    const fresh = await signingFactory(), unused = fresh.envelopeSigner({ stepId: step.id, binding });
+    let replacementCalls = 0;
+    await assert.rejects(J.executePublicLifecycleStep({ ...options, sign: async input => { replacementCalls++; return unused(input); } }), /LIFECYCLE_JOURNAL_CLAIMED/);
+    assert.equal(replacementCalls, 0); assert.equal(actorSignCalls, 1); assert.equal(signs, 2); assert.equal(sends, 1);
+    assert.deepEqual(fs.readFileSync(claimPath), claimBytes);
+    console.log(JSON.stringify({ completed: 1, claimedWithoutAttempt: true, signs, sends, actorSignCalls, queries, replacementCalls,
+      generatedKeys, aliasCalls, originalClaimUnchanged: true, codeBytesAuthenticated: 'unit-only byte-auth double' }));
+    process.exit(0);
+  }
+  const result = await J.executePublicLifecycleStep(options);
+  if (actorSigner) {
+    assert.equal(result.status, 'pending'); assert.equal(result.hash, response.txHash);
+    const attemptPath = path.join(run, step.id + '.attempt.json'), bytes = fs.readFileSync(attemptPath);
+    const attempt = JSON.parse(bytes), source = Keypair.fromPublicKey(plan.actors.recipient);
+    const signed = TransactionBuilder.fromXDR(attempt.signedXdr, plan.networkPassphrase);
+    assert.equal(source.verify(signed.hash(), signed.signatures[0].signature()), true);
+    assert.equal(attempt.hash, result.hash); assert.equal(actorSignCalls, 1);
+    const { binding: _b, evidence: _e, prepare: _p, sign: _s, sendTransaction: _t, ...recovery } = options;
+    fixtureNow += 1000; let queries = 0;
+    for (let i = 0; i < 2; i++) {
+      const recovered = await J.recoverPublicLifecycleStep({ ...recovery, getTransaction: async hash => {
+        queries++; assert.equal(hash, attempt.hash); return { status: 'NOT_FOUND' };
+      } });
+      assert.equal(recovered.status, 'pending'); assert.equal(recovered.hash, attempt.hash);
+    }
+    const fresh = await signingFactory(), unused = fresh.envelopeSigner({ stepId: step.id, binding });
+    let replacementCalls = 0;
+    await assert.rejects(J.executePublicLifecycleStep({ ...options, sign: async input => { replacementCalls++; return unused(input); } }), /LIFECYCLE_JOURNAL_CLAIMED/);
+    assert.equal(replacementCalls, 0); assert.equal(actorSignCalls, 1); assert.equal(signs, 2); assert.equal(sends, 2);
+    assert.deepEqual(fs.readFileSync(attemptPath), bytes);
+    const replayed = J.readVerifiedPublicLifecycleContext(base);
+    assert.equal(replayed.prefix.length, 1); assert.equal(replayed.unfinished.hash, attempt.hash);
+    console.log(JSON.stringify({ completed: 1, pending: 1, signs, sends, actorSignCalls, queries, replacementCalls,
+      generatedKeys, aliasCalls, originalAttemptUnchanged: true, codeBytesAuthenticated: 'unit-only byte-auth double' }));
+    process.exit(0);
+  }
+  assert.equal(result.status, 'complete');
   const completion = JSON.parse(fs.readFileSync(path.join(run, step.id + '.completion.json'), 'utf8'));
   const verified = completion.verified; assert.equal(verified.fee.netFee, '400'); netFees += BigInt(verified.fee.netFee);
   prefix.push({ stepId: step.id, binding, inclusion: { status: 'SUCCESS', ledger: response.ledger, createdId: id, hash: response.txHash },

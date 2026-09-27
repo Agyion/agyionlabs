@@ -1,6 +1,7 @@
 /** Protected, exclusive local preparation for the fixed inactive testnet V4.
- * No funding, RPC, signing or secret export. Load performs no writes or process
- * invocation. Ordinary path access is protected; same-UID/root tampering and
+ * No funding, RPC, submission or secret export. Load performs no writes or
+ * process invocation. Fixed signing is explicit and separately scoped below.
+ * Ordinary path access is protected; same-UID/root tampering and
  * rollback are outside this boundary. Existing ancestor modes are never changed.
  */
 import fs from 'node:fs';
@@ -11,10 +12,14 @@ import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { loadDeploymentPlan } from '../deploy-public-testnet.mjs';
 import { buildPublicLifecyclePlan, hashPublicLifecyclePlan } from './public-lifecycle-plan.mjs';
+import { publicLifecycleCallIntent, bindPublicLifecycleCall } from './public-lifecycle-call.mjs';
+import { publicLifecycleObservationCases, publicLifecycleObservationIntent } from './public-lifecycle-observations.mjs';
+import { assertPublicLifecycleDerivedState } from './public-lifecycle-state.mjs';
+import { validatePublicLifecycleEnvelope, validateSignedPublicLifecycleEnvelope } from './public-lifecycle-envelope.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const BASE = path.join(ROOT, 'artifacts/public-v4-lifecycle');
-const { Keypair } = createRequire(new URL('../../app/package.json', import.meta.url))('@stellar/stellar-sdk');
+const { Keypair, TransactionBuilder } = createRequire(new URL('../../app/package.json', import.meta.url))('@stellar/stellar-sdk');
 const ROLES = ['recipient', 'relayer', 'venue', 'podTimelock', 'podMixed', 'attester', 'agent'];
 const SELLER = 'GBDINNMPHA7LWJDAXS3G3NWCOLYLSPCER2Z4HENF2JE3ZKH7TVLF7PBF';
 const MANIFEST = 'e3094fa5482fef6b6efb986d54d2540dcbd5a426c65fc856c1b9565825d0f5fc';
@@ -23,7 +28,14 @@ const RECEIPT = '147f532e29ebdaecddf357e3f819a73654d40307140b34a694e73fc92d22338
 const MAX = 2 * 1024 * 1024;
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-class RunError extends Error { constructor(suffix) { super(`LIFECYCLE_RUN_${suffix}`); } }
+const errorCodes = new Set(['INPUT', 'PATH', 'EXISTS', 'STORAGE', 'AUTHORITY', 'IDENTITY', 'KEYS', 'INCOMPLETE', 'MAPPING',
+  'REFUSED', 'BINDING', 'CREDENTIAL', 'OBSERVATION', 'ENVELOPE', 'SIGNER', 'SIGNER_USED']);
+const errors = new WeakMap();
+class RunError extends Error {
+  constructor(suffix) { const code = errorCodes.has(suffix) ? suffix : 'REFUSED'; super(`LIFECYCLE_RUN_${code}`); errors.set(this, code); }
+}
+// Do not inspect untrusted thrown values or preserve a caller-mutated Error.
+const publicError = error => new RunError(errors.get(error) ?? 'REFUSED');
 const ensure = (condition, suffix) => { if (!condition) throw new RunError(suffix); };
 const freeze = value => { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; };
 function exact(value, names) {
@@ -156,7 +168,7 @@ function output(run, plan, planSha256) {
   return freeze({ schema: 'agyion-public-lifecycle-run-v1', run, plan, planSha256, journalRun: path.join(run, 'journal'),
     lockRoot: path.join(BASE, 'source-locks'), fundingDirectories: { recipient: path.join(run, 'funding/recipient'), relayer: path.join(run, 'funding/relayer') } });
 }
-async function bounded(action) { try { return await action(); } catch (error) { throw error instanceof RunError ? error : new RunError('REFUSED'); } }
+async function bounded(action) { try { return await action(); } catch (error) { throw publicError(error); } }
 
 /** Creates a permanent claim before RNG. Any partial run consumes its name. */
 export async function preparePublicLifecycleRun(options) {
@@ -187,28 +199,156 @@ export async function preparePublicLifecycleRun(options) {
   });
 }
 
+// Private custody seam only. No caller-provided action or secret-bearing result
+// is exported; all fixed actions finish before held directories are rechecked.
+async function withRun(options, action) {
+  exact(options, ['run', 'planSha256']); selector(options.run); hash(options.planSha256);
+  const run = path.join(BASE, 'runs', options.run), held = [];
+  try {
+    for (const item of [BASE, path.join(BASE, 'runs'), path.join(BASE, 'source-locks'), run, path.join(run, 'identity'),
+      path.join(run, 'funding'), path.join(run, 'funding/recipient'), path.join(run, 'funding/relayer'), path.join(run, 'journal'), path.join(run, 'acquisition')]) held.push(directory(item));
+    const claim = record(path.join(run, 'prepare.claim.json')), completion = record(path.join(run, 'prepared.json'));
+    exact(claim.value, ['schema', 'run', 'originalRun', 'manifestSha256', 'deploymentPlanSha256', 'receiptSha256', 'preparedAt']);
+    exact(completion.value, ['schema', 'claimSha256', 'publicSha256', 'planSha256']);
+    const c = claim.value, done = completion.value;
+    ensure(c.schema === 'agyion-public-lifecycle-claim-v1' && c.run === options.run && c.manifestSha256 === MANIFEST && c.deploymentPlanSha256 === ORIGINAL_PLAN && c.receiptSha256 === RECEIPT, 'AUTHORITY');
+    ensure(done.schema === 'agyion-public-lifecycle-prepared-v1' && done.claimSha256 === claim.sha256 && done.planSha256 === options.planSha256, 'INCOMPLETE');
+    await authority(c.originalRun, c.manifestSha256);
+    const keys = record(path.join(run, 'identity/keys.json')), mapping = record(path.join(run, 'identity/public.json')), storedPlan = record(path.join(run, 'lifecycle-plan.json'));
+    exact(keys.value, ['schema', 'secrets']); ensure(keys.value.schema === 'agyion-public-lifecycle-secrets-v1', 'KEYS');
+    const { publicKeys, plan, planSha256 } = derive(keys.value.secrets, c.preparedAt);
+    ensure(planSha256 === options.planSha256 && json(storedPlan.value) === json(plan), 'MAPPING');
+    ensure(done.publicSha256 === mapping.sha256 && json(mapping.value) === json({ schema: 'agyion-public-lifecycle-identities-v1', seller: SELLER, publicKeys, planSha256 }), 'MAPPING');
+    for (const item of held) check(item);
+    const result = await action({ run, plan, planSha256, originalRun: c.originalRun, secrets: keys.value.secrets });
+    for (const item of held) check(item);
+    return result;
+  } finally { close(held); }
+}
+
 /** Re-derives public identities and immutable plan; stored flags confer no trust. */
 export async function loadPublicLifecycleRun(options) {
+  return bounded(() => withRun(options, c => output(c.run, c.plan, c.planSha256)));
+}
+
+function data(value, required, optional = []) {
+  ensure(value && Object.getPrototypeOf(value) === Object.prototype, 'INPUT');
+  const d = Object.getOwnPropertyDescriptors(value), names = Reflect.ownKeys(d);
+  ensure(required.every(n => Object.hasOwn(d, n)) && names.every(n => typeof n === 'string' && [...required, ...optional].includes(n) && d[n].enumerable && Object.hasOwn(d[n], 'value')), 'INPUT');
+  return Object.fromEntries(names.map(n => [n, d[n].value]));
+}
+function captureBinding(plan, stepId, value) {
+  const binding = data(value, ['sequence', 'headLedger', 'argsXdr'], ['timestamp', 'signatureHex']);
+  ensure(typeof binding.sequence === 'string' && /^[1-9][0-9]{0,18}$/.test(binding.sequence) && BigInt(binding.sequence) < (1n << 63n), 'BINDING');
+  const args = binding.argsXdr; ensure(Array.isArray(args) && Object.getPrototypeOf(args) === Array.prototype, 'BINDING');
+  const d = Object.getOwnPropertyDescriptors(args), length = d.length.value;
+  ensure(length <= 16 && Reflect.ownKeys(d).length === length + 1, 'BINDING');
+  binding.argsXdr = Array.from({ length }, (_, i) => {
+    ensure(d[i]?.enumerable && Object.hasOwn(d[i], 'value') && typeof d[i].value === 'string' && d[i].value.length <= 65536, 'BINDING');
+    return d[i].value;
+  });
+  const input = { plan, stepId, headLedger: binding.headLedger };
+  for (const key of ['timestamp', 'signatureHex']) if (Object.hasOwn(binding, key)) input[key] = binding[key];
+  const derived = bindPublicLifecycleCall(input); ensure(json(binding.argsXdr) === json(derived.call.argsXdr), 'BINDING');
+  return freeze({ binding, call: derived.call });
+}
+function credential(c, intent) {
+  if (!intent) return null;
+  ensure(ROLES.slice(2).includes(intent.role) && intent.publicKey === c.plan.credentialKeys[intent.role], 'CREDENTIAL');
+  const key = Keypair.fromSecret(c.secrets[intent.role]), payload = Buffer.from(intent.payloadHex, 'hex');
+  ensure(key.publicKey() === intent.publicKey, 'CREDENTIAL');
+  const signature = key.sign(payload); ensure(Keypair.fromPublicKey(intent.publicKey).verify(payload, signature), 'CREDENTIAL');
+  return { role: intent.role, publicKey: intent.publicKey, payloadSha256: sha(payload), signatureHex: signature.toString('hex') };
+}
+function observation(plan, planSha256, value) {
+  const input = data(value, ['stepId', 'phase', 'observationKind', 'caseId', 'ledger', 'timestamp', 'state']);
+  const state = assertPublicLifecycleDerivedState(input.state), i = plan.steps.findIndex(s => s.id === input.stepId);
+  ensure(i >= 0 && state.planSha256 === planSha256 && state.snapshot.codeBytesAuthenticated === true && input.ledger === state.snapshot.ledger, 'OBSERVATION');
+  const cases = publicLifecycleObservationCases({ plan, stepId: input.stepId, phase: input.phase });
+  ensure(cases.some(c => c.observationKind === input.observationKind && c.caseIds.includes(input.caseId)), 'OBSERVATION');
+  const early = [[12, 'pod-before-unlock'], [16, 'trigger-early-refund'], [18, 'fade-unclaimed-early-refund'], [21, 'fade-claimed-early-refund']];
+  const staged = input.phase === 'before' && state.phase === 'after' && early.some(([next, kind]) => i === next && input.observationKind === kind && state.stepId === plan.steps[next - 1].id && state.prefixLength === next - 1);
+  ensure(staged || (state.stepId === input.stepId && state.phase === input.phase && state.prefixLength === i), 'OBSERVATION');
+  return publicLifecycleObservationIntent({ plan, stepId: input.stepId, observationKind: input.observationKind,
+    caseId: input.caseId, ledger: input.ledger, timestamp: input.timestamp, recordAnchors: state.recordAnchors });
+}
+function unsignedAtPresent(call, binding, input) {
+  const checked = validatePublicLifecycleEnvelope({ step: call, sequence: binding.sequence, envelopeXdr: input.unsignedXdr, nowSeconds: Math.floor(Date.now() / 1000) });
+  ensure(input.sourceAccount === call.sourceAccount && input.hash === checked.hash, 'ENVELOPE');
+}
+function sellerSignature(c, call, binding, input) {
+  ensure(call.sourceAccount === SELLER, 'IDENTITY');
+  const held = [];
+  try {
+    for (const p of [c.originalRun, path.join(c.originalRun, 'identity')]) held.push(directory(p));
+    alias(c.originalRun); for (const item of held) check(item);
+    unsignedAtPresent(call, binding, input);
+    const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('STELLAR_') && !key.startsWith('SOROBAN_')));
+    const result = spawnSync('stellar', ['tx', 'sign', '--sign-with-key', 'agyion-public-v4-testnet', '--config-dir', path.join(c.originalRun, 'identity'),
+      '--rpc-url', c.plan.rpcUrl, '--network-passphrase', c.plan.networkPassphrase, '--quiet'],
+    { env, input: input.unsignedXdr, encoding: 'utf8', timeout: 20000, maxBuffer: 1048576, stdio: ['pipe', 'pipe', 'pipe'] });
+    ensure(result.status === 0 && !result.signal && !result.error && typeof result.stdout === 'string' && Buffer.byteLength(result.stdout) <= 1048576, 'SIGNER');
+    for (const item of held) check(item);
+    return result.stdout.trim();
+  } finally { close(held); }
+}
+
+/** Fixed-purpose signing only. The trusted executor/journal owns current-step
+ * eligibility, fresh ledger evidence, durable claim/reservation and single send.
+ * This factory does no RPC/writes and cannot prove callback invocation provenance.
+ * Recreated factories are NOT a durable one-shot or a recovery mechanism. */
+export async function createPublicLifecycleSigning(options) {
   return bounded(async () => {
-    exact(options, ['run', 'planSha256']); selector(options.run); hash(options.planSha256);
-    const run = path.join(BASE, 'runs', options.run), held = [];
-    try {
-      for (const item of [BASE, path.join(BASE, 'runs'), path.join(BASE, 'source-locks'), run, path.join(run, 'identity'),
-        path.join(run, 'funding'), path.join(run, 'funding/recipient'), path.join(run, 'funding/relayer'), path.join(run, 'journal'), path.join(run, 'acquisition')]) held.push(directory(item));
-      const claim = record(path.join(run, 'prepare.claim.json')), completion = record(path.join(run, 'prepared.json'));
-      exact(claim.value, ['schema', 'run', 'originalRun', 'manifestSha256', 'deploymentPlanSha256', 'receiptSha256', 'preparedAt']);
-      exact(completion.value, ['schema', 'claimSha256', 'publicSha256', 'planSha256']);
-      const c = claim.value, done = completion.value;
-      ensure(c.schema === 'agyion-public-lifecycle-claim-v1' && c.run === options.run && c.manifestSha256 === MANIFEST && c.deploymentPlanSha256 === ORIGINAL_PLAN && c.receiptSha256 === RECEIPT, 'AUTHORITY');
-      ensure(done.schema === 'agyion-public-lifecycle-prepared-v1' && done.claimSha256 === claim.sha256 && done.planSha256 === options.planSha256, 'INCOMPLETE');
-      await authority(c.originalRun, c.manifestSha256);
-      const keys = record(path.join(run, 'identity/keys.json')), mapping = record(path.join(run, 'identity/public.json')), storedPlan = record(path.join(run, 'lifecycle-plan.json'));
-      exact(keys.value, ['schema', 'secrets']); ensure(keys.value.schema === 'agyion-public-lifecycle-secrets-v1', 'KEYS');
-      const { publicKeys, plan, planSha256 } = derive(keys.value.secrets, c.preparedAt);
-      ensure(planSha256 === options.planSha256 && json(storedPlan.value) === json(plan), 'MAPPING');
-      ensure(done.publicSha256 === mapping.sha256 && json(mapping.value) === json({ schema: 'agyion-public-lifecycle-identities-v1', seller: SELLER, publicKeys, planSha256 }), 'MAPPING');
-      for (const item of held) check(item);
-      return output(run, plan, planSha256);
-    } finally { close(held); }
+    const scope = data(options, ['run', 'planSha256']); selector(scope.run); hash(scope.planSha256); Object.freeze(scope);
+    const context = await loadPublicLifecycleRun(scope), { plan, planSha256 } = context;
+    return Object.freeze({
+      callCredential(value) {
+        return bounded(async () => {
+          const input = data(value, ['stepId', 'headLedger'], ['timestamp']);
+          const intent = publicLifecycleCallIntent({ plan, ...input });
+          return withRun(scope, c => {
+            const result = credential(c, intent.credential);
+            bindPublicLifecycleCall({ plan: c.plan, ...input, ...(result ? { signatureHex: result.signatureHex } : {}) });
+            return freeze(result);
+          });
+        });
+      },
+      observationCredential(value) {
+        return bounded(async () => {
+          const intent = observation(plan, planSha256, value);
+          return withRun(scope, c => {
+            const result = credential(c, intent.credential);
+            if (result && intent.credential.corruptFirstByte) {
+              const bytes = Buffer.from(result.signatureHex, 'hex'); bytes[0] ^= 1; result.signatureHex = bytes.toString('hex');
+              ensure(!Keypair.fromPublicKey(result.publicKey).verify(Buffer.from(intent.credential.payloadHex, 'hex'), bytes), 'CREDENTIAL');
+            }
+            return freeze(result);
+          });
+        });
+      },
+      envelopeSigner(value) {
+        try {
+          const input = data(value, ['stepId', 'binding']), { binding, call } = captureBinding(plan, input.stepId, input.binding);
+          const role = plan.steps.find(s => s.id === input.stepId).sourceRole; let used = false;
+          return value => bounded(async () => {
+            ensure(!used, 'SIGNER_USED'); used = true;
+            const request = data(value, ['unsignedXdr', 'sourceAccount', 'hash']); unsignedAtPresent(call, binding, request);
+            return withRun(scope, c => {
+              unsignedAtPresent(call, binding, request);
+              let signedXdr;
+              if (role === 'seller') signedXdr = sellerSignature(c, call, binding, request);
+              else {
+                ensure(['recipient', 'relayer'].includes(role) && call.sourceAccount === c.plan.actors[role], 'IDENTITY');
+                const key = Keypair.fromSecret(c.secrets[role]); ensure(key.publicKey() === call.sourceAccount, 'IDENTITY');
+                const tx = TransactionBuilder.fromXDR(request.unsignedXdr, c.plan.networkPassphrase); tx.sign(key); signedXdr = tx.toXDR();
+              }
+              validateSignedPublicLifecycleEnvelope({ step: call, sequence: binding.sequence, unsignedXdr: request.unsignedXdr,
+                signedXdr, nowSeconds: Math.floor(Date.now() / 1000) });
+              return signedXdr;
+            });
+          });
+        } catch (error) { throw publicError(error); }
+      },
+    });
   });
 }

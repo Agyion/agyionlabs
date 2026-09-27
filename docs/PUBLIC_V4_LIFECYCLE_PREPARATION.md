@@ -7,8 +7,9 @@ accounting snapshots, fee reconciliation, concrete state and observation policie
 a bounded raw RPC transport, strict local simulation assembly and a durable
 orchestration library with an offline verified replay reader. A bounded CLI now
 supports protected identity preparation, one-attempt Testnet actor funding,
-read-only funding recovery and offline journal verification. Lifecycle preflight,
-credential/source signing, observation collection and contract execution adapters
+read-only funding recovery and offline journal verification. Protected signing
+and same-ledger initial balance reads are separate fixed library capabilities.
+Lifecycle preflight, full observation collection and contract execution adapters
 are still unfinished; the CLI does not yet execute a lifecycle step.
 The pure validators do no I/O. The journal writes protected local records and
 can invoke explicitly supplied preparation, signing and transport adapters;
@@ -433,12 +434,74 @@ before corrections. No new real identity, funding request, signature or lifecycl
 submission was made while implementing these adapters. The complete 39-step
 live sequence remains unverified.
 
+## Protected signing and initial balance reads
+
+The [run-owned signing capability](../scripts/lib/public-lifecycle-run.mjs)
+loads the protected run and rederives its keys and exact plan. It exports no
+secret, arbitrary-byte signing function, caller-selected key or network override.
+Scheduled credential payloads come from the call binder. Simulation credentials
+come from the fixed observation registry and require an actual branded derived
+state; a serialized object marked verified cannot substitute for it. Credential
+signatures bind the specified recipient, purpose and contract. They do not
+establish current ledger eligibility or authorize an outer submission.
+
+Each final-envelope callback accepts one exact captured step and binding. It
+consumes its single use before asynchronous work, verifies the unsigned source,
+hash and body, and validates the unchanged signed body with a fresh clock reading.
+Recipient and relayer use only their rederived local keys. The original seller
+uses only its fixed CLI alias and protected configuration, with bounded private
+output and a separately checked source signature. There is no CLI execute mode
+or automatic signing sequence.
+
+The callback's one-use flag belongs to that callback instance. Durable protection
+still belongs to the journal's permanent claim and source reservation, reached
+through the trusted executor. Constructing another capability does not permit
+restarting a claimed journal step. If an envelope expires after a signature is
+produced but before the journal accepts it, the claim survives without an attempt
+record. Recovery reports that condition without signing or sending again. An
+already saved attempt is recovered only by querying its original hash.
+
+The [initial balance adapter](../scripts/lib/public-lifecycle-baseline.mjs)
+retains the bounded full acquisition. If native Balance is present, it performs
+no extra balance simulation. If Balance is absent, it constructs exactly one
+unsigned native-token `balance(kernel)` request from the snapshot seller sequence.
+The success must contain one canonical zero result, no authorization or
+restoration, and the exact same ledger as the original snapshot. Unexpected
+wire shapes, mutations, head drift and oversized combined evidence fail without
+retry or relabeling. The complete request and response remain available alongside
+the compact zero evidence.
+
+This is a trusted-RPC observation, not a cryptographic absence proof or a state
+authority brand. The complete initial-state policy still checks reviewed code,
+account authority, remaining funds, liabilities and empty history. A zero result
+cannot replace an omitted Balance after funding history, records or a donation,
+or migrate from an earlier exploratory snapshot to a newer final initial head.
+Retained compact journal replay does not itself repeat the full raw getter
+decoder. The accepted wire shape is deliberately narrow; a real same-head zero
+getter capture and full live preflight remain outstanding.
+
+The signing suite passes 26 cases, including actual signatures from deterministic
+unfunded recipient and relayer keys. Seller tests verify its fixed CLI boundary
+and refusal paths; they do not sign with the original seller identity. The
+baseline suite passes 101 cases, also independently rerun with the actual pinned
+local WASM. Two additional protected-run integration cases verify original-hash
+recovery after expiry and expiry between signature production and journal
+acceptance. They use real local custody, actor signatures and journal policies,
+with synthetic chain evidence and an explicit executable-authentication double.
+
+Malformed-input regressions reproduce and close thrown-Proxy and mutable-error
+leaks. Public error boundaries reconstruct fixed internal error codes without
+returning caller-modified errors. These results cover the stated local cases;
+they do not establish seller signing success, live wire compatibility or live
+lifecycle completion.
+
 ## Remaining work
 
-The dedicated executor, credential/source signing adapters, full observation
-collector, initial preflight integration and live integration remain unfinished.
-Protected preparation, one-attempt funding and bounded raw acquisition are now
-implemented with the isolated tests above. The policy
+The dedicated executor, full observation collector, initial preflight integration
+and live integration remain unfinished. Protected preparation, one-attempt
+funding, bounded raw acquisition, fixed signing and initial balance primitives
+are separate implemented library boundaries. They do not supply the missing
+fresh ledger/source checks immediately before signing and sending. The policy
 modules, bounded transport and their full synthetic journal integration are
 verified within the scopes above. The remaining live adapters still require
 their own adversarial tests before the bounded live scenarios run. The initial
