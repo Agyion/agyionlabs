@@ -561,8 +561,8 @@ capture times. Each case is bounded to2MiB. The actual journal record has its ow
 unchanged2MiB limit; raw sidecars are separate evidence and cannot be discarded
 to make an oversized journal appear valid. This library does not persist those
 sidecars, grant journal authority or implement a complete phase collector.
-The four early historical staging pairs and the complete collector still need
-their own acquisition and integration paths.
+Fixed early cases use the separate entry described below. Complete phase
+collection, durable raw replay and executor integration remain separate work.
 
 ## Acquiring enforcement controls
 
@@ -593,6 +593,50 @@ phase policy, authenticated transaction fees where applicable and durable
 collector replay. Pod's before phase additionally needs a genuine observation
 captured before unlock; a later response cannot substitute for that history.
 
+## Acquiring early observations
+
+`acquirePublicLifecycleEarlyObservationCase` accepts a genuine derived after
+state, its complete current capture and the same optional credential, RPC and
+cancellation capabilities. It permits only four fixed predecessor-to-target
+mappings:
+
+| Completed predecessor | Later before phase | Required early refusal |
+| --- | --- | --- |
+| 12, timelocked Pod creation | 13, Pod claim | Locked before unlock |
+| 16, expiring Trigger creation | 17, Trigger refund | Refund before expiry |
+| 18, unclaimed Fade creation | 19, Fade refund | Refund before expiry |
+| 21, no-show Fade claim | 22, Fade refund | Refund before the handoff window ends |
+
+The original after-state brand remains the snapshot and credential authority.
+Only the fixed target labels change for the observation. Callers cannot choose
+a target, phase, account, authorization mode or case. The ordinary entry still
+rejects these target cases when supplied a predecessor after state. No future
+state is manufactured to make the call fit.
+
+The simulation must occur inside the actual early window. A later after-read
+may cross its boundary within the existing two-ledger bracket, provided all
+accounts, records, counters, liabilities and principal remain unchanged. The
+Pod condition is `ledger < unlock_ledger`. Refunds remain early at the deadline
+itself: `ledger <= deadline_ledger`, or `ledger <= claimed_at + handoff_window`
+for the claimed Fade. The Pod case obtains its exact scoped credential; the
+three refunds need none.
+All four requests are unsigned record-mode simulations. Existing raw replay,
+funded Balance, error, cancellation and acquisition-time checks apply.
+
+The result wraps the existing observation with its original step, after phase,
+prefix length and snapshot ledger. The complete wrapper, including this origin
+metadata, shares the 2 MiB bound and is deeply frozen. Its origin describes the
+capture; it does not prove journal completion or the predecessor's actual fee.
+
+A collector must acquire this evidence before waiting for the later phase,
+retain its original raw capture, and verify it again alongside the completed
+journal prefix and actual fees before making a durable claim. A missed window
+cannot be repaired by relabeling a late response or repeating the predecessor.
+Protected sidecar persistence, restart validation and complete collector
+integration are still unfinished. Controlled chronological fixtures do not
+establish live short-window capacity, successful host execution or a complete
+live lifecycle.
+
 ## Independent record-case journey
 
 The [acquisition journey test](../scripts/tests/public-lifecycle-observation-acquisition-journey.test.mjs)
@@ -618,6 +662,47 @@ mode establishes live wire compatibility, authenticated fee metadata or durable
 raw-sidecar persistence. Four ENFORCE/control pairs and four early staged cases
 remain outside these 58 acquisitions. The measured per-case and raw phase-map
 sizes fit their limits; this is not a full persisted journal-size result.
+
+## Complete acquisition scope in a controlled journey
+
+The separate [full observation journey test](../scripts/tests/public-lifecycle-observation-acquisition-full-journey.test.mjs)
+composes all 66 required negative cases and four matching ENFORCE controls.
+One chronological fixture advances through 39 synthetic transactions. It
+captures the four early cases immediately after their predecessors and retains
+their original immutable evidence until the later before phase. The historical
+58-case test above remains unchanged.
+
+Both default and pinned-code runs passed the one journey test without skips or
+fixture corrections. Each run checked 70 simulation requests, 30 credential
+callbacks, 78 economic snapshots and all 39 before-phase aggregates. Independent
+literals define envelopes, source sequences, credential payloads and control
+authorization trees. Removing or relabeling early evidence, swapping retained
+early cases, and changing or omitting a control all refuse without another RPC.
+
+Every one of the 39 after-phase aggregate checks deliberately refuses missing
+authenticated fee metadata, including the 13 phases with terminal negative
+cases. Acquiring all observation cases does not establish complete after-phase
+verification or a completed journal. The fixture's assumed net fee of 100
+stroops is not the separately tested journal fixture's 400-stroop fee, and those
+account histories cannot be combined without reconciliation.
+
+Measured maxima below use canonical serialized bytes. Each layer stays within
+its existing 2 MiB limit; these are distinct shapes, not additive size budgets.
+
+| Evidence shape | Default bytes | Pinned-code bytes |
+| --- | ---: | ---: |
+| Single acquired case | 58,431 | 165,063 |
+| Complete early wrapper | 42,161 | 148,793 |
+| Raw phase evidence | 27,834 | 98,922 |
+| Complete policy input | 130,358 | 248,000 |
+| Expanded observation input | 147,308 | 224,040 |
+
+These sizes do not measure an actual serialized journal claim or completion
+record. Default mode substitutes executable authentication only. Pinned mode
+authenticates existing compiled bytes; it does not execute a contract host.
+Both use controlled RPC replies, synthetic positive transitions and synthetic
+fees. Final pin verification, authenticated fee completion, protected raw
+sidecars, restart replay and live wire compatibility remain separate work.
 
 ## Remaining work
 

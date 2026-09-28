@@ -89,13 +89,37 @@ function proof(call, credential, result) {
  * retain their own timeout. Expired work can never return accepted evidence.
  */
 export async function acquirePublicLifecycleObservationCase(options) {
+  return acquireObservationCase(options, false);
+}
+
+/** Acquire only a fixed predecessor-after early case. The original brand remains
+ * the credential/snapshot authority; origin is descriptive, not journal proof.
+ * Raw sidecar persistence and completed-prefix fee authentication are external.
+ */
+export async function acquirePublicLifecycleEarlyObservationCase(options) {
+  return acquireObservationCase(options, true);
+}
+
+async function acquireObservationCase(options, early) {
   let signal, callerSignal, onAbort;
   try {
-    const input = exact(options, ['plan', 'state', 'before', 'observationKind', 'caseId'], ['observationCredential', 'rpc', 'signal']);
-    const state = guarded(() => assertPublicLifecycleDerivedState(input.state), 'STATE'), data = copy({ plan: input.plan, before: input.before, observationKind: input.observationKind, caseId: input.caseId });
-    const { plan, before, observationKind, caseId } = data, planSha256 = guarded(() => hashPublicLifecyclePlan(plan), 'PLAN');
+    const input = exact(options, early ? ['plan', 'state', 'before'] : ['plan', 'state', 'before', 'observationKind', 'caseId'], ['observationCredential', 'rpc', 'signal']);
+    const state = guarded(() => assertPublicLifecycleDerivedState(input.state), 'STATE'), data = copy({ plan: input.plan, before: input.before, ...(!early ? { observationKind: input.observationKind, caseId: input.caseId } : {}) });
+    const { plan, before } = data, planSha256 = guarded(() => hashPublicLifecyclePlan(plan), 'PLAN');
     check(state.planSha256 === planSha256 && state.snapshot.codeBytesAuthenticated === true && state.prefixLength === plan.steps.findIndex(s => s.id === state.stepId), 'STATE');
-    const stepId = state.stepId, phase = state.phase, head = state.snapshot.ledger, keys = guarded(() => publicLifecycleAcquisitionKeys(plan), 'PLAN');
+    const head = state.snapshot.ledger, keys = guarded(() => publicLifecycleAcquisitionKeys(plan), 'PLAN');
+    let stepId = state.stepId, phase = state.phase, observationKind = data.observationKind, caseId = data.caseId, origin = null;
+    if (early) {
+      const alias = [
+        ['12-pod-timelock-create_pod', 11, '13-pod-timelock-claim_pod', 'pod-before-unlock', 'locked'],
+        ['16-trigger-timeout-create_trigger', 15, '17-trigger-timeout-refund_trigger', 'trigger-early-refund', 'early'],
+        ['18-fade-unclaimed-create_fade', 17, '19-fade-unclaimed-refund', 'fade-unclaimed-early-refund', 'early'],
+        ['21-fade-no-show-claim', 20, '22-fade-no-show-refund', 'fade-claimed-early-refund', 'early'],
+      ].find(row => row[0] === state.stepId);
+      check(state.phase === 'after' && alias && state.prefixLength === alias[1], 'SCOPE');
+      [, , stepId, observationKind, caseId] = alias; phase = 'before';
+      origin = { stepId: state.stepId, phase: state.phase, prefixLength: state.prefixLength, snapshotLedger: head };
+    }
     const families = guarded(() => publicLifecycleObservationCases({ plan, stepId, phase }), 'SCOPE'); check(families.some(f => f.observationKind === observationKind && f.caseIds.includes(caseId)), 'SCOPE');
     const makeIntent = (ledger, timestamp) => guarded(() => publicLifecycleObservationIntent({ plan, stepId, observationKind, caseId, ledger, timestamp, recordAnchors: state.recordAnchors }), 'CASE');
     const preIntent = makeIntent(head, '1'), enforce = preIntent.authMode === 'enforce' && preIntent.control !== null && ['fade-claim-wrong-source-enforce', 'positive-handoff-wrong-source-enforce', 'pod-recipient-auth-enforce', 'envoy-owner-mismatch-relayer-authorized'].includes(observationKind);
@@ -164,9 +188,10 @@ export async function acquirePublicLifecycleObservationCase(options) {
     const afterReserve = guarded(() => verifyPublicLifecycleHeader({ headerEvidence: after.acquisition.headerEvidence, ledger: afterHead }), 'HEADER'); check(afterReserve.baseReserveStroops === reserve.baseReserveStroops, 'UNCHANGED'); same(economic(beforeSnapshot), economic(afterSnapshot), 'UNCHANGED');
     const batch = value => ({ response: value.acquisition.response, headerEvidence: value.acquisition.headerEvidence, zeroBalanceEvidence: value.zeroBalanceEvidence });
     const first = batch(before), last = batch(after), beforeId = sha(canonical(first)), afterId = sha(canonical(last)), completedAtSeconds = clock();
-    return copy({ schema: 'agyion-public-lifecycle-observation-acquisition-v1', planSha256, stepId, phase, observationKind,
+    const observation = { schema: 'agyion-public-lifecycle-observation-acquisition-v1', planSha256, stepId, phase, observationKind,
       case: { caseId, ledger, timestamp, beforeSnapshot: beforeId, afterSnapshot: afterId, request: caseRequest, response, ...(enforce ? { control } : {}) }, snapshots: { [beforeId]: first, [afterId]: last },
-      captures: { before: { raw: before.acquisition.raw, zeroRead: before.zeroRead }, after: { raw: after.acquisition.raw, zeroRead: after.zeroRead } }, timing: { startedAtSeconds, responseValidatedAtSeconds, ...(enforce ? { controlResponseValidatedAtSeconds } : {}), completedAtSeconds } });
+      captures: { before: { raw: before.acquisition.raw, zeroRead: before.zeroRead }, after: { raw: after.acquisition.raw, zeroRead: after.zeroRead } }, timing: { startedAtSeconds, responseValidatedAtSeconds, ...(enforce ? { controlResponseValidatedAtSeconds } : {}), completedAtSeconds } };
+    return copy(early ? { schema: 'agyion-public-lifecycle-early-acquisition-v1', planSha256, origin, observation } : observation);
   } catch (error) { throw refusal(refusals.get(error) ?? 'INPUT'); }
   finally { if (callerSignal && onAbort) removeListener.call(callerSignal, 'abort', onAbort); }
 }
