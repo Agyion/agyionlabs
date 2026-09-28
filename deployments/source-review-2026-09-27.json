@@ -1,7 +1,7 @@
 {
   "schema": "agyion-source-review-checkpoint-v1",
-  "reviewedAt": "2026-09-27T23:25:08.566423+00:00",
-  "sourceBaselineCommit": "4b7edf5cfcc17e5203da88b8be73892b3d877623",
+  "reviewedAt": "2026-09-28T00:05:18.223537+00:00",
+  "sourceBaselineCommit": "53fe84290729a9195922cc3c8dae8da016bd29b0",
   "websiteRelease": {
     "workerVersion": "d6cd3d41-b9ac-4951-935e-a4175e0393f7",
     "sourceCommit": "cc94b376f12061891fc2c7b065cd79dd671e6c25",
@@ -43,15 +43,15 @@
   },
   "counts": {
     "files": 609,
-    "lines": 80912,
+    "lines": 81286,
     "byReviewKind": {
       "complete-source-read": {
-        "files": 511,
-        "lines": 57085
+        "files": 513,
+        "lines": 57836
       },
       "verified-baseline-plus-reviewed-diff": {
-        "files": 98,
-        "lines": 23827
+        "files": 96,
+        "lines": 23450
       }
     },
     "unresolvedFiles": 0,
@@ -188,8 +188,8 @@
     },
     {
       "path": "app/app/components/app/PrivateWorkspaceProvider.tsx",
-      "sha256": "4b7342b18a49627a6654d33592d0d92139efbbdfe43aa08cc396d8f2f5cb1a7b",
-      "lines": 215,
+      "sha256": "37437a87fa5e635900c52a10f66b60fd64c9085253c4e7f177803bc86608f1f8",
+      "lines": 216,
       "reviewKind": "complete-source-read"
     },
     {
@@ -506,9 +506,9 @@
     },
     {
       "path": "app/app/lib/private/protocol.ts",
-      "sha256": "72a5236dbb9da5d4f0461064d2bd21fcda571c858b6dca7a1199d6c9dd14f23e",
+      "sha256": "a70ba3c51ba4e1738c8af924b50b1e34e206360de59a8c484edb9c0bbb91a664",
       "lines": 262,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/app/lib/private/release.json",
@@ -920,9 +920,9 @@
     },
     {
       "path": "app/tests/private-protocol.test.ts",
-      "sha256": "7f6543a7dfdab010eb392636eec84c0c8f4b410504368720c35b3e0cefc3de48",
-      "lines": 115,
-      "reviewKind": "verified-baseline-plus-reviewed-diff"
+      "sha256": "f78b897aa1208c0dce5a46b4081aada7fa41adb62fb7cba34e7aa1b0270ce917",
+      "lines": 135,
+      "reviewKind": "complete-source-read"
     },
     {
       "path": "app/tests/private-release.test.ts",
@@ -962,8 +962,8 @@
     },
     {
       "path": "app/tests/private-workspace-provider.test.tsx",
-      "sha256": "d3e0a5725395f5a1799927f58cce0dfaf867b88c94a1b3d87f193498f044cfb8",
-      "lines": 226,
+      "sha256": "9983d94ce12483ac4d2414bcd87e8a2f605dfcadc94c41f339d967b38b4ce17c",
+      "lines": 322,
       "reviewKind": "complete-source-read"
     },
     {
@@ -1064,8 +1064,8 @@
     },
     {
       "path": "app/vitest.config.mts",
-      "sha256": "5a50d0db0636d3a6fdb2502dffc5dee194f87f0a9a988ffebe5fa1eb8158bf1c",
-      "lines": 7,
+      "sha256": "45bdb34f6ebaab4f165a63cb4eeb2f8ff5ce5205a8fea5adf4f78b8c8f677428",
+      "lines": 9,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3020,8 +3020,8 @@
     },
     {
       "path": "scripts/lib/public-lifecycle-observation-acquisition.mjs",
-      "sha256": "f4167eb97d05454b5b4f992ef18166b5284ccd1e0907c50a9cf984569d16244f",
-      "lines": 152,
+      "sha256": "b48fe31efbaf6f86d3d9a596132ab71a894f2de6f4a483788714cfae09c5d68b",
+      "lines": 172,
       "reviewKind": "complete-source-read"
     },
     {
@@ -3338,8 +3338,8 @@
     },
     {
       "path": "scripts/tests/public-lifecycle-observation-acquisition.test.mjs",
-      "sha256": "e96d6f905aff575c0eaae9aa304eadf13978182c6b2f6aea956558019134c625",
-      "lines": 254,
+      "sha256": "4cad7b1414742948cc7c7ff1777ba1231384af9ba8e695e9c1bc76ad9edc8eeb",
+      "lines": 489,
       "reviewKind": "complete-source-read"
     },
     {
@@ -6686,5 +6686,316 @@
     "journeyIncompleteBeforePhasesPerHeadMode": 7,
     "journeyFull66Verified": false,
     "boundary": "The private provider rejects obsolete account/session refresh callbacks before they can invalidate a replacement pending read; post-await ownership checks remain. This closes a recovery-display liveness race, not a fund-theft or signing-authority flaw. Provider regressions use real React with existing dependency doubles. The added journey covers 58 of 66 case scopes across 39 synthetic transitions, stable and forward heads, with independent requests/payloads/economics and 78 phase state checks per mode. All 13 after acquisitions are exercised but every after aggregate intentionally refuses missing authenticated currentFee; seven before phases remain incomplete because eight cases are excluded. Default tests double executable authentication; opt-in pinned WASM authenticates bytes only, not host execution. Inclusion/fee data are synthetic; no full fee metadata reconciliation, full66 completion, journal persistence, actual ENFORCE/native-zero wire or live execution claim. No new real identity, RPC, funding, live signature, transaction, contract deployment, website publication or application activation."
+  },
+  "enforcePrivateSession": {
+    "status": "synthetic-enforce-pairs-and-private-session-regressions-verified",
+    "sourceCommit": "53fe84290729a9195922cc3c8dae8da016bd29b0",
+    "sourceCi": "https://github.com/Agyion/agyionlabs/actions/runs/36359998251",
+    "sourceInventorySha256": "c9a5ffabec1732e9bd2e1554885dc4b5b5523667909a323d2a2c2620f3d0cf1b",
+    "newAuthoredFiles": 0,
+    "modifiedAuthoredFiles": 7,
+    "authoredLineIncrease": 374,
+    "localWorkspacePassed": 2400,
+    "localDefaultOptionalSkips": 13,
+    "hostedWorkspacePassed": 2399,
+    "hostedDefaultOptionalSkips": 14,
+    "sourceCoverage": {
+      "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/root-final-source-coverage.json",
+      "sha256": "c34d9a1f33f6a78dd90bd563fd1fcd52e32e351fc081cfc7e8456f1d1a1f1016"
+    },
+    "newRealIdentityPreparations": 0,
+    "newRealRpcRequests": 0,
+    "newFundingRequests": 0,
+    "newLiveSignatures": 0,
+    "newTransactionsSubmitted": 0,
+    "evidence": [
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/capture-increment.py",
+        "sha256": "451fbd064315e743aad73f9929b00c387533f91374e5cce1ffb390acd26f2a46"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/preparation-provenance.json",
+        "sha256": "6bc4b33db9b5fc0e12af09988f5099d8b9a2b7a59d47c9d5e3f7b9edb1cc6119"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/repository-inventory.json",
+        "sha256": "c9a5ffabec1732e9bd2e1554885dc4b5b5523667909a323d2a2c2620f3d0cf1b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/summary.json",
+        "sha256": "c276807e569ca4b25f8d6bea5d1b917015fd53f27516693e030820d979dd6d50"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/independent-verification.json",
+        "sha256": "416ed0c3dd66074f14279686a73849a931006e696768dd26b17171e9e3689b25"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/frozen-inputs.json",
+        "sha256": "192891cf851cd11d5542b8ab5d369cbd646aaf2dbc4d8342fc011f8b3ce9065b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/root-final-source-coverage.json",
+        "sha256": "c34d9a1f33f6a78dd90bd563fd1fcd52e32e351fc081cfc7e8456f1d1a1f1016"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/local-test-summary.source-bound.json",
+        "sha256": "2db3b5cd8947ff68a908500f0abfc9346f41fa18b50066a0133353557b96e023"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/workspace.log",
+        "sha256": "209bf5ff09edbd71697c58aa22060459a4cf148164a8c91aaced018c3450263d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/hosted-test-summary.json",
+        "sha256": "5552016fcc242f0a6f674cace9a972ea53ef0c9b2ffa8b4bdc7a0ce71b709c76"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/hosted-ci.json",
+        "sha256": "0fa5718a24483010ab5bb0680c62fde70e07d899ff7ae6b229ae85091cf4dc2a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/hosted-ci.log",
+        "sha256": "8197994ac5c89103a14df075e9034a1f63bf5fa4c1c20f3c4051adff17868279"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/root-review.md",
+        "sha256": "cf5085e3ca6a3ba148e575fa836ff787c29e36b6a0f7597a2d53cb4918e19e51"
+      },
+      {
+        "path": "docs/PUBLIC_V4_LIFECYCLE_PREPARATION.md",
+        "sha256": "cb1921070a1b684abc24ca9585f55f57c9beaccc37bf4e0b29f7de440225135b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/manifest.json",
+        "sha256": "b063e10b42c815cf2717e663b4d7f264fbf3f3d026a11a3ee3cadad01231557e"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/verification.json",
+        "sha256": "35afb7fcd6be31e279b725efbb20c0fadad4ed6b435b1fde11cedd594ba637d1"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/source-coverage.json",
+        "sha256": "0716d6120e06fe973f9fb5a0fdc65f7b23820082d47408a2fb3c85f579608f5d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/private-peer-final-review.json",
+        "sha256": "7802b23aafeec2f6d0d4be159fb6f2c0f1747e67cf12182adababc31249712b2"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/manifest.json",
+        "sha256": "2ce1298082ccbe80189b43bb1312ac7134d91152bf0eb02de6d0fc44f26a20af"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/test-summary.json",
+        "sha256": "2c30c89d17a11cfaa77dd386bca156858dcf86d19a4d6f275ef9cc956eea7f9d"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/source-coverage.json",
+        "sha256": "800ccf1b590bfbbc8ee101312b97bfdcd1c225a2473c573ccb87ddfa64b9e149"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/peer-final-review.json",
+        "sha256": "9e674ed6bea749dadc31580dc718591c8b8255e97853dce04a7431bb6085ad65"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/app-lint-execution.json",
+        "sha256": "2dcb46b19a62bf0081caf5198d1fc25b3c4c574fda775e55092edcc3c55af428"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/app-lint.log",
+        "sha256": "a989cfa8f74b51df17b7f012f477e8d0032c547a02dcaa4039b3343d23ca3421"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/root-ci-status.json",
+        "sha256": "08032d4177b0831a03c8aae95d5b899941711624fc742ef3fb4b514093e1c917"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/root-ci-verification.json",
+        "sha256": "f53197521d75e0e344956b3c5ce4a7cbf2f9eccd9ebb63fd78273a4621c478fe"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/owner-manifest-verification.json",
+        "sha256": "8fcfb2f7c856c3b5b9b09dac95000fe674bd99469a8eeef11a8a877d519b91e4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/worker-cap-peer-review.json",
+        "sha256": "15dafdf07f5001e5fb40e3ffb071f8f00ceca4d90a7fcbd6e4ecf6647c86066b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/root-helper-review.json",
+        "sha256": "adf662c281b087342c1cf99589489357a6126e1f736b36fb2e04c07f38fe0971"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/capture-increment.pre-activation.py",
+        "sha256": "8940ae35e6873376467f0a7b830afb856810d72cd86743509d33b1bfdf969bad"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/finalizer.pre-activation.py",
+        "sha256": "82b5199aad020f8ff190013ee56f00d7d99f7b1aa03fe6fef22b5756f3d6828a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/finalizer.before-guard-fix.py.draft",
+        "sha256": "b42478c2f16c7a27a1dffd8edebce08e8af4fd98138f4f74d1aa84c898b3dbe6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/finalizer-draft-correction.diff",
+        "sha256": "e4ede818f0ad39965030a84ed08e4eff89b638485407ce3c027caf11b6aeff5c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/finalizer-draft-correction.json",
+        "sha256": "62ad75f3a1e9cc244129083bb5f80bfc0a1cc9950a570615a5b5723ecef758c0"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/01-candidates-red.json",
+        "sha256": "bb70d405624d553a9a1ade9bd39180ea91a25ae6c86a8672a5b73881a2398386"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/01-candidates-red.log",
+        "sha256": "b429ff60d6cf8dd05afa1daaeb1d924b3089e9728655b7f3d9757a7322af7c0b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/02-candidates-green.json",
+        "sha256": "caa3863d4ae010b3da7ca4ab7dbeb85f9eae5fc010626d9ad81d30c4f68b05ed"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/02-candidates-green.log",
+        "sha256": "f2c9a12d4747f933e40c4eee774826287677420f8f3520a3685d019f499c8456"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/03-focused-suites.json",
+        "sha256": "68f20ca5d5ac6b6d43e93a7c90ab64521fda414eb53c1a1b5624229ec515b5d4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/03-focused-suites.log",
+        "sha256": "10fef342b31c94e79e19db5f5a03f05c6bb9dc1df3332e26ee338dd5ee233bc5"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/04-typecheck.json",
+        "sha256": "0da7e8064539980afb9e2739804e33fe927f298097d2c9131f88f2f87d164c12"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/04-typecheck.log",
+        "sha256": "ddc959e2ef82ce08e407d630843b974d83fb4442e2215d533cfbc802ceaf07ec"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/05-app-full.json",
+        "sha256": "d7432cc59f237db771efeff1ab044bdb9b7634aa14dd7db5b1e696a78315838a"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/05-app-full.log",
+        "sha256": "e365e2ac1125e62f0a5c0e39ac212f3a3e311903ec7a7867d54a90b5592fc5d6"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/06-wallet-targeted-unchanged.json",
+        "sha256": "72a18d2b7c751baf927cb2c7a3333c6836d6d8ba29284958a95dc63a5e870ca4"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/06-wallet-targeted-unchanged.log",
+        "sha256": "dbe5d3672111dbdad81f68bec520dd0996b8f2dd331e2275a70a238e5a06d30f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/07-app-full-unchanged.json",
+        "sha256": "680570974ee2f00a609c1115522d2f2b7922deecfd55e347e07c58ef7535bd5b"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/07-app-full-unchanged.log",
+        "sha256": "36d993f5bb5a35a86adffd60a1a04e7589a69bbdb5dad08f8304be5db63763e5"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/08-app-workers4-diagnostic.json",
+        "sha256": "db2c800c456f99cc0755b5127ec451831742843c50294f3b655ff9aecad5981c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/08-app-workers4-diagnostic.log",
+        "sha256": "42545051029c3ffb9bd743deb64b38274128be2896ab5f4e5cebef218c5bbca9"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/REPORT.md",
+        "sha256": "c6197e7ae977c9c5d43eac4b643cadfa9f940a1670340fa4a612c39444a6f974"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/before.json",
+        "sha256": "06a492af01e2c144e8d62eaa935654411ab23ed3a0542f5418b75e1910979232"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/private-cleanup-review/concurrent-render-followup/implementation/source.diff",
+        "sha256": "38dece7819307bb749fb7d61f2496c4ed4b5e3d682f0be9df994b70f695a10eb"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/RED-four.log",
+        "sha256": "78cacdb2e96d8fec0bd21abf89110e4d187fa1aeffc98674063232fb2c1f06ec"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/RED-inputs.json",
+        "sha256": "4bb9ad504a8f9c4f1ff6531e0f39b44b6372d93e738df72449e3b042d5d8f559"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/REPORT.md",
+        "sha256": "a376cfdb3145f75c7e134cb050483d1edffc05f03002add95098b34ff630e871"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/before-source.mjs",
+        "sha256": "f4167eb97d05454b5b4f992ef18166b5284ccd1e0907c50a9cf984569d16244f"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/before-test.mjs",
+        "sha256": "e96d6f905aff575c0eaae9aa304eadf13978182c6b2f6aea956558019134c625"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/expanded-enforce.log",
+        "sha256": "4b5e542ae2337f96c7f5f6f39b3cb4836b3bc59236cc3c2b3ba791937cd8045c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/final-default.log",
+        "sha256": "0a9c72a0fc8952c654758f6d8a5d6f423c69d423113d0cdf4bf75a1f5a4f5778"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/final-pinned.log",
+        "sha256": "87c6e94e17570ed4f6ba9d002d1a8ecfb7ab0e21137f400cafae314232eefe6c"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/first-enforce.log",
+        "sha256": "29c1d952116b6ee0022a5916888b57522ec9e710ca7bc50244d8de3dc744fb11"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/public-v4-deployment/lifecycle/runner/collector-next/enforce-next/implementation/mutation-fixture-corrected.log",
+        "sha256": "508b735d1443f0eafa199e3c7e94b53ba638333b839a59e66d0068b81d5307e2"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/workspace-execution.json",
+        "sha256": "6031c3efb48a183ea65d7e699829483528f7d4cbf6927fc8413497b04095b754"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/enforce-private-session/local-test-summary.json",
+        "sha256": "e5246da4061af56c174d25fa19fb3af9b506d1afc74ceaaa7b31986d769b0424"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/finalizer-inputs.json",
+        "sha256": "e2cf46634f7c3ce695d8a4ed9c4b8188e622b570d1f06ca1f07d4e141c943c93"
+      },
+      {
+        "path": "artifacts/security/2026-09-27-compatibility/repository-coverage/enforce-private-session-inventory/finalize-enforce-private-session-evidence.py",
+        "sha256": "5d4a704de996749ac7d4e787545356b7e8fea3a67d0bad07a8e8ad4da821e47f"
+      }
+    ],
+    "enforcePairedScopes": 4,
+    "enforceFinalDefaultPassed": 51,
+    "enforceFinalPinnedPassed": 51,
+    "privateCandidateRed": 4,
+    "privateCandidateGreen": 4,
+    "candidateSelectionFiltered": 29,
+    "historicalAppFailuresRetained": [
+      {
+        "passed": 906,
+        "failed": 2
+      },
+      {
+        "passed": 907,
+        "failed": 1
+      }
+    ],
+    "workerCapDiagnosticPassed": 908,
+    "full66Verified": false,
+    "boundary": "Four fixed ENFORCE/control pairs use synthetic RPC/state and test credentials. Before gates 2, 11 and 26 compose; step 13 still refuses missing historical Pod evidence. Both 51-test runs include the unchanged three 58-case journey tests. Pinned WASM authenticates bytes only, not host execution. Four early historical cases, actual successful ENFORCE/native-zero wire, full66, complete fee metadata and durable raw collector replay remain open. Four private regressions protect active fee ownership, committed-account discovery and queued confirmation freshness. Direct callback/Suspense fixtures do not establish reachability in the current AppShell path. Signer/send/journal counts were zero before and after the queued-callback fix; no fund-theft or signature-bypass claim. Two default app timeout failures and the unchanged-source four-worker diagnostic remain preserved; the root-owned worker cap changes scheduling without changing assertions/timeouts. Final bare workspace and hosted CI are separately bound to final source. No new real identity, RPC, funding, live signature, submission, deployment or website publication."
   }
 }
