@@ -248,7 +248,7 @@ vulnerability advisories were found. The application job also passed its
 workspace, browser/concurrency, type/style, proof, build and npm advisory checks.
 This run did not deploy the site or activate a funds service.
 
-## Fade Market retention bound and CI runner pinning
+## Fade Market retention and reservation index lifetimes
 
 On 3 October, review found that `create_offer` accepted funded offers even
 when the network's maximum persistent-entry TTL could not retain the offer
@@ -263,10 +263,25 @@ that `duration + lease + 1 + refund margin` fits the network TTL before it
 updates accounting or transfers tokens. The test verifies rejection one ledger
 below the boundary leaves seller balance, market balance and reserved liability
 unchanged, while the exact valid boundary creates an offer with the expected
-TTL. All 32 Fade Market native/WASM tests passed, strict Clippy passed, the
-locked contract build passed, and the current complete `npm test` command
-finished without failures. The locally built WASM SHA256 is
-`6ffc68593b5b522ee8cd6cd8584a3727c4236ac6159faca621c46f86f007a5c0`.
+TTL.
+
+A second storage review found the reservation index was kept only for the
+common 172,800-ledger TTL even when its offer had a longer refund lifetime. At
+the maximum one-million-ledger offer and 720-ledger lease, the test observed a
+172,800-ledger slot against a required 1,018,001 ledgers for the offer. If that
+index archived first, expiry/refund cleanup would fail closed because
+`clear_slot` requires the index, while the funded offer remained live. `reserve`
+now retains the slot for the same computed horizon as the offer. Its regression
+test failed at the old TTL mismatch and passed with the fix. The native plus
+actual-WASM Fade Market suite then passed all 33 tests, strict Clippy passed,
+and the locked contract build passed. The deterministic contract test host does
+not perform real ledger eviction just because the sequence is advanced, so this
+test asserts the exact written TTL and cleanup behavior; it does not claim a
+live archival integration test. The complete `npm test` command also finished
+without failures before this contract-only follow-up.
+
+The current locally built Fade Market WASM SHA256 is
+`d19259f2f7171f2f1a049798835a618aa4f2dda9b5535d17b9eca94d7cf37d3d`.
 
 The GitHub Actions workflow now uses the Ubuntu 24.04 image and immutable
 Node 24 action releases, with package-manager caching disabled. Exact source
@@ -275,8 +290,8 @@ commit `29117e223c0dfbb4ed90b19f89e3662cfbf214b1` passed both jobs in
 The application job completed its workspace, browser persistence/concurrency,
 type/style, proof provenance, real private proof and adversarial circuit, static
 build, and dependency advisory checks. The contract job passed WASM tests,
-strict Rust checks and RustSec scans. This run predates the Fade Market fix, so
-exact-source hosted verification of that fix is still pending. No contract was
+strict Rust checks and RustSec scans. This run predates both Fade Market fixes,
+so exact-source hosted verification of them is still pending. No contract was
 deployed. The new WASM hash changes the artifact identity and must be reviewed
 as a new release before any deployment.
 

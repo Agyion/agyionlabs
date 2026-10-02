@@ -1062,6 +1062,41 @@ fn retention_margin_clamps_at_network_and_u32_ledger_boundary() {
 }
 
 #[test]
+fn reservation_slot_retention_covers_the_offer_refund_window() {
+    use soroban_sdk::testutils::storage::Persistent as _;
+    backends(|s| {
+        let mut terms = s.terms(0);
+        terms.duration_ledgers = MAX_OFFER;
+        terms.lease_ledgers = MAX_LEASE;
+        let id = s.client().create_offer(&s.seller, &terms);
+        let buyer = s.buyer();
+        let permit = s.permit(id, &buyer);
+        s.reserve(&permit);
+
+        let active_ttl = s.e.as_contract(&s.market, || {
+            s.e.storage()
+                .persistent()
+                .get_ttl(&Key::Slot(s.seller.clone(), buyer.clone()))
+        });
+        let required_ttl = (u64::from(MAX_OFFER)
+            + u64::from(MAX_LEASE)
+            + 1
+            + REFUND_MARGIN) as u32;
+        assert_eq!(active_ttl, required_ttl);
+
+        // The slot must outlive the reservation lease and remain present while
+        // the offer is still eligible for final cleanup.
+        s.e.ledger()
+            .set_sequence_number(permit.lease_until + 1);
+        s.client().expire_reservation(&id);
+        assert_eq!(s.client().get_offer(&id).state, OPEN);
+        assert_eq!(s.client().reserved_balance(&s.asset), 100);
+        assert_eq!(s.token().balance(&s.market), 100);
+        assert!(s.client().get_active(&s.seller, &buyer).is_none());
+    });
+}
+
+#[test]
 fn network_minimum_record_ttl_cannot_suppress_a_long_offer_retention_target() {
     use soroban_sdk::testutils::storage::Persistent as _;
     backends(|s| {

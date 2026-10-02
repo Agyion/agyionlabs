@@ -575,7 +575,9 @@ impl AgyionFadeMarket {
             lease_until: permit.lease_until,
             merchant: m,
         });
-        persist(
+        // Keep the reservation index alive for at least the same refund
+        // window as its offer; otherwise the indexed cleanup can archive first.
+        persist_with_ttl(
             &env,
             &Key::Slot(o.seller.clone(), r.claimant.clone()),
             &ActiveSlot {
@@ -583,6 +585,7 @@ impl AgyionFadeMarket {
                 sequence,
                 lease_until: permit.lease_until,
             },
+            offer_ttl(&env, &o),
         );
         save_offer(&env, &o);
         Ok(())
