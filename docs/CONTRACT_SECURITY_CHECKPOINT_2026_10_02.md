@@ -248,7 +248,7 @@ vulnerability advisories were found. The application job also passed its
 workspace, browser/concurrency, type/style, proof, build and npm advisory checks.
 This run did not deploy the site or activate a funds service.
 
-## Fade Market retention and reservation index lifetimes
+## Fade Market retention, reservation index lifetimes and exact-source CI
 
 On 3 October, review found that `create_offer` accepted funded offers even
 when the network's maximum persistent-entry TTL could not retain the offer
@@ -277,23 +277,22 @@ actual-WASM Fade Market suite then passed all 33 tests, strict Clippy passed,
 and the locked contract build passed. The deterministic contract test host does
 not perform real ledger eviction just because the sequence is advanced, so this
 test asserts the exact written TTL and cleanup behavior; it does not claim a
-live archival integration test. The complete `npm test` command also finished
-without failures before this contract-only follow-up.
+live archival integration test.
 
 The current locally built Fade Market WASM SHA256 is
 `d19259f2f7171f2f1a049798835a618aa4f2dda9b5535d17b9eca94d7cf37d3d`.
 
 The GitHub Actions workflow now uses the Ubuntu 24.04 image and immutable
 Node 24 action releases, with package-manager caching disabled. Exact source
-commit `29117e223c0dfbb4ed90b19f89e3662cfbf214b1` passed both jobs in
-[run 37073452300](https://github.com/Agyion/agyionlabs/actions/runs/37073452300).
-The application job completed its workspace, browser persistence/concurrency,
-type/style, proof provenance, real private proof and adversarial circuit, static
-build, and dependency advisory checks. The contract job passed WASM tests,
-strict Rust checks and RustSec scans. This run predates both Fade Market fixes,
-so exact-source hosted verification of them is still pending. No contract was
-deployed. The new WASM hash changes the artifact identity and must be reviewed
-as a new release before any deployment.
+commit `060045a8372055512c221a878d42311619616b25` passed both jobs in
+[run 37075540501](https://github.com/Agyion/agyionlabs/actions/runs/37075540501).
+The application job passed the full workspace tests, browser persistence and
+concurrency checks, type/style checks, proof provenance, actual private proof
+and adversarial circuit tests, static testnet build, and dependency advisories.
+The contract job rebuilt the WASM, passed all native/WASM tests and strict Rust
+checks, and completed RustSec scans. This verifies the exact source commit; no
+contract was deployed. The new WASM hash changes the artifact identity and must
+be reviewed as a new release before any deployment.
 
 ## Release boundaries
 
