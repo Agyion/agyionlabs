@@ -83,7 +83,7 @@ failure and focused result are retained alongside the workspace logs.
 
 The final normal `npm test` command passed 2,453 checks with 14 explicit optional
 skips and no failures. Group counts are 89 landing, 908 application, 150 privacy,
-59 private client, 30 market client, 48 market UI, 16 second UI group and 1,153
+59 private client, 30 market catalogue, 48 market client, 16 market UI and 1,153
 tooling. The separately enabled acquired-journal test and 150 Rust tests are
 different runs; their scope must not be conflated with these workspace totals.
 One fresh-context review found no actionable issue in the frozen journal and
