@@ -12,9 +12,10 @@ import { mock } from 'node:test';
 import * as realUrl from 'node:url';
 import * as processes from 'node:child_process';
 const [home, mode] = process.argv.slice(2);
-assert.ok(home && path.isAbsolute(home) && ['unit', 'real', 'signing', 'signing-expiry'].includes(mode));
+assert.ok(home && path.isAbsolute(home) && ['unit', 'real', 'signing', 'signing-expiry', 'acquired-real'].includes(mode));
 const signingMode = mode === 'signing' || mode === 'signing-expiry';
-const realWasm = mode === 'real', count = signingMode ? 2 : realWasm ? 39 : 38;
+const acquiredMode = mode === 'acquired-real';
+const realWasm = mode === 'real' || acquiredMode, count = signingMode ? 2 : realWasm ? 39 : 38;
 // The child uses one explicit synthetic clock for signing bounds, persisted
 // validation time, ledger headers and transaction metadata. Never real time.
 let fixtureNow = 1800001000;
@@ -163,7 +164,12 @@ function receipt(claim, signedXdr, before, deltas, createdId) {
     feeBump: false, envelopeXdr: signedXdr, resultXdr: b64(result), resultMetaXdr: b64(meta) } };
 }
 const records = [], prefix = []; let accounts = f.accounts(), sends = 0, signs = 0, maxPolicyBytes = 0, netFees = 0n;
-const initialResponse = f.snapshot(), initialHeader = f.header();
+let acquisitionHead = 1000;
+const acquired = acquiredMode ? (await import('./public-lifecycle-acquired-observation-fixture.mjs')).createAcquiredObservationFixture({
+  fixture: f, currentLedger: () => acquisitionHead, nowSeconds: () => fixtureNow,
+  currentSnapshot: () => f.snapshot(acquisitionHead, records, accounts, '0', acquisitionHead >= f.heads[34] + 1),
+}) : null;
+const initialResponse = f.snapshot(), initialHeader = acquired ? acquired.headerEvidence(1000) : f.header();
 const initial = S.initialPublicLifecycleState({ plan, response: initialResponse, zeroBalanceEvidence: null, headerEvidence: initialHeader });
 const policies = createPublicLifecyclePolicies(), checkedPolicies = Object.fromEntries(Object.entries(policies).map(([name, fn]) => [name, input => {
   maxPolicyBytes = Math.max(maxPolicyBytes, Buffer.byteLength(canonical(input))); return fn(input);
@@ -173,13 +179,19 @@ const minimalPrefix = () => prefix.map(r => ({ stepId: r.stepId, binding: r.bind
   fee: { authorizedFee: r.fee.authorizedFee, netFee: r.fee.netFee }, after: { ledger: r.after.ledger, accounts: r.after.accounts } }));
 function stateAt(index, binding, phase, included = null) {
   const head = phase === 'before' ? f.heads[index] : f.heads[index] + 1;
+  if (acquired) { acquisitionHead = head; fixtureNow = 1800000000 + head; }
   const response = f.snapshot(head, records, accounts, '0', index > 34 || (index === 34 && phase === 'after'));
-  const headerEvidence = f.header(head), state = S.derivePublicLifecycleState({ plan, initial, prefix: minimalPrefix(), stepId: plan.steps[index].id,
+  const headerEvidence = acquired ? acquired.headerEvidence(head) : f.header(head), state = S.derivePublicLifecycleState({ plan, initial, prefix: minimalPrefix(), stepId: plan.steps[index].id,
     binding, phase, inclusion: included, response, headerEvidence });
   assert.deepEqual(state.expected.records, records.map(({ type: _type, ...r }) => r));
   return { state, response, headerEvidence };
 }
 function evidence(index, phase, facts) {
+  if (acquired) return (async () => {
+    const result = await acquired.collectPhase({ index, phase, ...facts });
+    if (phase === 'after') await acquired.stageEarly({ index, state: facts.state });
+    return result;
+  })();
   const current = facts.state.snapshot.ledger, historical = new Set([current]);
   for (const r of records) {
     if (r.value.unlock_ledger) historical.add(r.value.unlock_ledger - 1);
@@ -200,7 +212,7 @@ let finalRecovery;
 for (let index = 0; index < count; index++) {
   fixtureNow = 1800000000 + f.heads[index];
   const step = plan.steps[index], binding = f.binding(index, f.heads[index], accounts), pre = stateAt(index, binding, 'before');
-  const beforeEvidence = evidence(index, 'before', pre), before = structuredClone(accounts);
+  const beforeEvidence = await evidence(index, 'before', pre), before = structuredClone(accounts);
   const deltas = Object.fromEntries(roles.map((r, i) => [r, String(f.business[index][i] || 0)]));
   let claim, response, id;
   const actorSigner = signingMode && index === 1 ? signing.envelopeSigner({ stepId: step.id, binding }) : null;
@@ -270,6 +282,7 @@ for (let index = 0; index < count; index++) {
   }
   assert.equal(result.status, 'complete');
   const completion = JSON.parse(fs.readFileSync(path.join(run, step.id + '.completion.json'), 'utf8'));
+  if (acquired) acquired.completeSource(index, completion);
   const verified = completion.verified; assert.equal(verified.fee.netFee, '400'); netFees += BigInt(verified.fee.netFee);
   prefix.push({ stepId: step.id, binding, inclusion: { status: 'SUCCESS', ledger: response.ledger, createdId: id, hash: response.txHash },
     fee: verified.fee, before: verified.before.snapshot, after: verified.after.snapshot,
@@ -287,6 +300,39 @@ assert.equal(replayed.nextStepId, realWasm ? null : plan.steps[38].id);
 assert.equal(replayed.prefix.length, count);
 assert.equal(replayed.signedFeesStroops, String(count * 1000));
 assert.equal(replayed.unfinished, null);
+let acquiredSummary;
+if (acquired) {
+  assert.equal(acquired.stats.caseScopes, 66); assert.equal(acquired.stats.simulations, 70);
+  assert.equal(acquired.stats.controls, 4); assert.equal(acquired.stats.earlyCaptured, 4);
+  assert.equal(acquired.stats.earlyConsumed, 4); assert.equal(acquired.stagedRemaining, 0);
+  assert.deepEqual(acquired.stats.credentials, { venue: 8, podTimelock: 10, podMixed: 1, attester: 5, agent: 6 });
+  let maxClaimBytes = 0, maxCompletionBytes = 0, projectedTamperRefusals = 0;
+  for (const step of plan.steps) for (const kind of ['claim', 'completion']) {
+    const filename = path.join(run, step.id + '.' + kind + '.json'), bytes = fs.readFileSync(filename);
+    assert.equal(fs.statSync(filename).mode & 0o777, 0o600); assert.equal(bytes.at(-1), 10);
+    assert.ok(bytes.length <= 2 * 1024 * 1024);
+    if (kind === 'claim') maxClaimBytes = Math.max(maxClaimBytes, bytes.length);
+    else maxCompletionBytes = Math.max(maxCompletionBytes, bytes.length);
+  }
+  function tamper(index, kind, mutate) {
+    const filename = path.join(run, plan.steps[index].id + '.' + kind + '.json'), original = fs.readFileSync(filename), value = JSON.parse(original);
+    mutate(value);
+    assert.notDeepEqual(Buffer.from(JSON.stringify(value) + '\n'), original, 'mutation must change retained bytes');
+    try {
+      fs.writeFileSync(filename, JSON.stringify(value) + '\n');
+      assert.throws(() => J.readVerifiedPublicLifecycleContext(base), /LIFECYCLE_/);
+      projectedTamperRefusals++;
+    } finally { fs.writeFileSync(filename, original); }
+    assert.equal(sends, 39); assert.equal(signs, 39);
+  }
+  tamper(12, 'claim', value => { value.evidence.observations['pod-before-unlock'].cases = []; });
+  tamper(1, 'claim', value => { delete value.evidence.observations['fade-claim-wrong-source-enforce'].cases[0].control; });
+  tamper(2, 'completion', value => { value.evidence.observations['fade-handoff-terminal-replay'].cases[0].response.error = 'HostError: Error(Contract, #999)'; });
+  acquiredSummary = { ...acquired.stats,
+    credentialCalls: Object.values(acquired.stats.credentials).reduce((a, b) => a + b, 0),
+    stagedRemaining: acquired.stagedRemaining, maxClaimBytes, maxCompletionBytes,
+    projectedTamperRefusals, nativeCaptureHistoryOnly: true, finalPinsVerified: replayed.status === 'complete', rawSidecarPersistence: false };
+}
 // Mutate retained RAW evidence, leaving all serialized success acknowledgments
 // intact. Replay must reject before trusting them or opening another send path.
 const file = path.join(run, plan.steps[count - 1].id + '.completion.json'), bytes = fs.readFileSync(file);
@@ -296,4 +342,5 @@ await assert.rejects(J.recoverPublicLifecycleStep(finalRecovery), /LIFECYCLE_STA
 assert.throws(() => J.readVerifiedPublicLifecycleContext(base), /LIFECYCLE_STATE_XDR/);
 assert.equal(sends, count); assert.equal(signs, count);
 console.log(JSON.stringify({ completed: count, sends, signs, netFees: String(netFees), recoveryNetworkCalls,
-  rawTamperRejected: true, maxPolicyBytes, codeBytesAuthenticated: realWasm ? 'actual pinned bytes' : 'unit-only byte-auth double' }));
+  rawTamperRejected: true, maxPolicyBytes, codeBytesAuthenticated: realWasm ? 'actual pinned bytes' : 'unit-only byte-auth double',
+  ...(acquiredSummary ? { acquired: acquiredSummary } : {}) }));

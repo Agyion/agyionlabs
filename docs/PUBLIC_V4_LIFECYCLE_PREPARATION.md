@@ -704,6 +704,49 @@ Both use controlled RPC replies, synthetic positive transitions and synthetic
 fees. Final pin verification, authenticated fee completion, protected raw
 sidecars, restart replay and live wire compatibility remain separate work.
 
+## Acquired observations with decoded journal fees
+
+On 2 October 2026 the separate opt-in
+[acquired journal test](../scripts/tests/public-lifecycle-acquired-journal.test.mjs)
+completed all 39 steps through the existing journal and concrete policy APIs.
+It collects the 66 negative cases and four controls through the real acquisition
+libraries, comparing every request with a finite independent oracle. Four early
+cases are captured at predecessor after-states, retained unchanged, then consumed
+once at their later before-phase gates. The original 58/66-case tests and journal
+fixture modes remain unchanged.
+
+Each synthetic signed receipt contains an authorized fee of 1,000, a refund of
+600 and a decoded net fee of 400 stroops. Actual account effects follow that
+400-stroop history; the total is 15,600. All 39 completions verify before and
+after policies, original signed attempts and final local code pins. Reopening
+the complete protected journal performs no observation RPC, signing or sending.
+Removing an early case or control, altering a terminal error, or corrupting the
+retained final snapshot refuses replay without another sign or send.
+
+The enabled test passed one test without skips. Its measured maxima are
+1,241,524 bytes for a policy input, 165,711 for a retained raw acquisition,
+156,621 for a claim and 311,378 for a completion. Claim and completion sizes
+include the actual file's terminating newline; all files retain mode 0600 and
+fit the unchanged 2 MiB limit.
+
+This is controlled integration, with 70 simulation replies and 30 credential
+callbacks. Synthetic inclusion/fee XDR is decoded by production validators;
+it is not authenticated live ledger inclusion. The collector uses one current
+fixture state and no historical RPC selector or zero-balance getter. Raw
+acquisition wrappers remain in memory, while projected journal evidence is
+persisted and reopened. Durable raw-sidecar acquisition/restart recovery,
+independent consensus verification and live 39-step V4 settlement remain open.
+Local WASM byte authentication here does not execute a Soroban host. The
+separate [contract checkpoint](CONTRACT_SECURITY_CHECKPOINT_2026_10_02.md)
+records actual native/WASM execution and its different evidence boundary.
+
+Run the opt-in with
+`PUBLIC_LIFECYCLE_ACQUIRED_JOURNAL_WASM=1 node --test scripts/tests/public-lifecycle-acquired-journal.test.mjs`.
+It requires the original local independent-readback fixture used by
+`loadLocalObservationPinFixture`, matching public/market WASM builds and the four
+unchanged release files. That ignored historical readback is not supplied by a
+fresh clone; absence must fail, never substitute invented successful pin data.
+
 ## Remaining work
 
 The dedicated executor, full observation collector, initial preflight integration

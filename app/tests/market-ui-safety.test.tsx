@@ -93,6 +93,7 @@ it('clears a revoked key and password when account changes without relying on pa
 });
 
 it('cannot continue funding after unmount while public metadata hashing is pending',async()=>{
+ vi.spyOn(Date,'now').mockReturnValue(Date.parse('2026-09-30T00:00:00Z'));
  const f=await fixture(),hash=deferred<string>(),onCreated=vi.fn();vi.spyOn(codec,'metadataHash').mockReturnValueOnce(hash.promise);
  const view=render(<MarketSell merchant={f.merchant} signingKey={f.key} onCreated={onCreated}/>);
  for(const [label,value] of Object.entries({'What is available?':'Bread',Quantity:'One bag','Shop name':'Bakery','Shop identifier':'bakery','Pickup address':'Market Street 1',Latitude:'41',Longitude:'29','Pickup starts · your local time':'2026-10-01T10:00','Pickup ends · your local time':'2026-10-01T12:00'}))fireEvent.change(screen.getByLabelText(label),{target:{value}});

@@ -4,6 +4,28 @@ This record describes the development review on **27 September 2026**. The curre
 
 On **28 September 2026**, a further source checkpoint added fixed early observation acquisition and a complete controlled acquisition journey. Its three authored files cover 915 lines; their source and independent test reviews are separate from the historical `53fe84290729a9195922cc3c8dae8da016bd29b0` manifest and table below. The new journey passed in default and pinned-code modes: 66 negative cases, four controls, 39 accepted before phases and 39 required after-phase refusals for missing fee evidence. The early suite has 52 tests; its final alternate-plan assertions passed separately in both modes after the earlier combined 103-test runs. These overlapping runs are not summed as distinct tests. [Exact scope and measured limits](PUBLIC_V4_LIFECYCLE_PREPARATION.md#complete-acquisition-scope-in-a-controlled-journey) distinguish acquired observations from completed settlement. Actual fee reconciliation, durable collector replay, final journal completion and live V4 activation remain unfinished. This checkpoint does not change the published website or establish an external audit or exploit-proof guarantee.
 
+On **2 October 2026**, the acquired-observation journal completed all 39 controlled
+steps with 66 acquired negative cases, four controls, decoded synthetic net fees
+of 400 stroops and local final-pin verification. Protected projected journal
+files reopened without another sign, send or observation RPC; retained evidence
+mutations refused replay. Raw acquisition sidecars still remain in memory and
+live V4 settlement/activation remains unfinished. Separate freshly built
+native/WASM suites passed 75 public, 44 private and 31 marketplace tests, plus
+strict Rust checks for all three. Five initial private WASM failures selected
+the historical output file; using the current build passed, and the test's
+default path was corrected and verified with all 44 tests. This is a verification
+harness correction, not five demonstrated contract exploits. The
+[dated checkpoint](CONTRACT_SECURITY_CHECKPOINT_2026_10_02.md) records the exact
+scope, code hashes and remaining boundaries separately from the historical
+source manifest below.
+
+The final local workspace at this 2 October checkpoint passed 2,453 checks with
+14 explicit optional skips and no failures. The separately enabled acquired
+journal passed one test and the contract suites passed 150 named tests; these
+are different verification layers. The initial workspace failure caused by the
+expired fixed pickup date is retained, with its test-only fixed-clock correction
+and passing final run. No runtime date validation or assertion was weakened.
+
 ## Source review
 
 | Evidence | Files | Current lines |

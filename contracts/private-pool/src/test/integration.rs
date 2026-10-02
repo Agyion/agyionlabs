@@ -150,7 +150,10 @@ fn initialized_with_bytecode(
         let bytes = legacy.unwrap_or_else(|| {
             let path = std::env::var_os("PRIVATE_POOL_WASM")
                 .map(PathBuf::from)
-                .unwrap_or_else(|| results().join("private_pool.wasm"));
+                .unwrap_or_else(|| {
+                    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                        .join("target/wasm32v1-none/release/private_pool.wasm")
+                });
             std::fs::read(path).expect("compiled pinned private-pool WASM required")
         });
         e.register_at(&pool, bytes.as_slice(), (config, vk, revocation_vk));

@@ -78,7 +78,11 @@ testnet inclusion establishes independent audit, trustee custody or mainnet read
   Missing artifacts
   fail these tests; they are never replaced by fake successful verification.
 - `--features wasm-tests` also runs the chain against the compiled WASM selected
-  by `PRIVATE_POOL_WASM` (default `artifacts/privacy-v2/private_pool.wasm`).
+  by `PRIVATE_POOL_WASM` (default
+  `contracts/private-pool/target/wasm32v1-none/release/private_pool.wasm`).
+  Build the current source first with
+  `stellar contract build --locked --manifest-path contracts/private-pool/Cargo.toml --optimize=false`.
+  Historical reporting directories do not select the default code under test.
   Full measured costs are written per step; the native default 100M comparison
   is a local reference, not a claim about current network resource settings.
   Reports go to ignored `artifacts/privacy-v2` (`PRIVATE_POOL_RESULTS` overrides
