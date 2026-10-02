@@ -68,6 +68,18 @@ It reported only the retained informational unmaintained `paste 1.0.15`
 warning, with no vulnerability advisory. No Cloudflare deployment or funds
 activation occurred.
 
+On 3 October, live Stellar testnet reported Protocol 29 while the current
+private-pool release remained pinned to Protocol 28. The reader had been
+rejecting the upgraded network before reading the unchanged deployed pool. It
+now explicitly accepts only Protocol 28 and 29, preserving the release/profile
+identity and rejecting 27 and 30. The full workspace test command passed. A
+fresh live reader check verified the published pool code hash, immutable
+configuration, 30-record state and one complete 157-field record. A separate
+read-only `liability` simulation succeeded with value zero and no restoration
+preamble. No live wallet signature, transaction, restoration, deployment or
+funds activation was performed. This validates the read path, not a Protocol 29
+funded lifecycle or the outstanding archival-restoration workflow.
+
 For private-pool archive failure handling, the focused reader suite passed 11/11
 and submission/revocation passed 33/33 on `fedb8e55e489d5092e78686daa94563f35b5666a`.
 Missing/expired archive records and restore-required simulations fail closed

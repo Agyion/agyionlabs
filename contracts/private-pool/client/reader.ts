@@ -64,6 +64,9 @@ async function fetchRead(fetcher: typeof fetch, url: string, init: RequestInit &
 const udt = (name: string) => xdr.ScSpecTypeDef.scSpecTypeUdt(new xdr.ScSpecTypeUdt({name}));
 const key = (name: string, value?: xdr.ScVal) => xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(name), ...(value ? [value] : [])]);
 const MAX_RESPONSE = 1024 * 1024;
+// Keep release identity pinned to Protocol 28 while explicitly allowing the
+// compatible Protocol 29 testnet upgrade. New protocol versions require review.
+const SUPPORTED_PROTOCOL_VERSIONS = new Set([28, 29]);
 async function boundedJson(response: Response): Promise<unknown> {
  ensure(response.ok, 'Pool RPC is unavailable', 'RPC_UNAVAILABLE');
  const length = response.headers.get('content-length');
@@ -133,7 +136,7 @@ export function createPoolReader(release: PoolRelease, options: {fetch?: typeof 
  const reader: PoolReader = {
   async readState(options = {}) {
    const network = await rpc('getNetwork',{},options.signal);
-   ensure(network.passphrase === release.networkPassphrase && network.protocolVersion === release.protocolVersion, 'Pool network or protocol differs from pinned release');
+   ensure(network.passphrase === release.networkPassphrase && network.protocolVersion >= release.protocolVersion && SUPPORTED_PROTOCOL_VERSIONS.has(network.protocolVersion), 'Pool network or protocol differs from pinned release');
    const result = await entry(instanceKey,options.signal);
    const value = result.data.contractData().val(); ensure(value.switch().name === 'scvContractInstance', 'Pool contract instance unavailable');
    const instance = value.instance(), executable = instance.executable();

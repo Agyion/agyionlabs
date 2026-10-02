@@ -63,7 +63,8 @@ test('RPC response identity, returned storage identity and bytecode bytes are in
  const f=setup(),release=await verifyPoolRelease(f.manifest,f.dkg);
  for(const mutation of [
   (v:any,m:string)=>{if(m==='getNetwork')v.result.passphrase='other network';},
-  (v:any,m:string)=>{if(m==='getNetwork')v.result.protocolVersion=29;},
+  (v:any,m:string)=>{if(m==='getNetwork')v.result.protocolVersion=27;},
+  (v:any,m:string)=>{if(m==='getNetwork')v.result.protocolVersion=30;},
   (v:any)=>{v.id+=1;},
   (v:any,m:string)=>{if(m==='getLedgerEntries')v.result.entries.push(v.result.entries[0]);},
   (v:any,m:string)=>{if(m==='getLedgerEntries')v.result.entries[0].key=f.wasmKey.toXDR('base64');},
@@ -76,6 +77,19 @@ test('RPC response identity, returned storage identity and bytecode bytes are in
  await assert.rejects(createPoolReader(release,{fetch:f.fetcher}).readState(),/storage identity/i);
  f.instance();const code=f.entries.get(f.wasmKey.toXDR('base64')),bad=xdr.LedgerEntryData.fromXDR(code.xdr,'base64');bad.contractCode().code(Buffer.from([0]));code.xdr=bad.toXDR('base64');
  await assert.rejects(createPoolReader(release,{fetch:f.fetcher}).readState(),/bytecode content/i);
+});
+
+test('Protocol 29 compatibility does not change the pinned release or recovery scope',async()=>{
+ const f=setup(),release=await verifyPoolRelease(f.manifest,f.dkg),profileId=release.scope.profileId;
+ const fetcher:typeof fetch=async(url,init)=>{
+  const value=await(await f.fetcher(url,init)).json();
+  if(JSON.parse(String(init?.body)).method==='getNetwork')value.result.protocolVersion=29;
+  return new Response(JSON.stringify(value));
+ };
+ const state=await createPoolReader(release,{fetch:fetcher}).readState();
+ assert.equal(state.recordCount,1n);
+ assert.equal(release.protocolVersion,28);
+ assert.equal(release.scope.profileId,profileId);
 });
 
 test('operator record read rejects an intervening state change and nonbranded readers',async()=>{

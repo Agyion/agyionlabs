@@ -37,6 +37,14 @@ must derive this browser profile from reviewed deployment/readback pins, rather
 than treating any downloaded deployment-plan file as an active release. Auditor
 coordinates in this in-memory API are bigint values, not lossy JSON numbers.
 
+The release manifest's `protocolVersion: 28` remains the deployment baseline and
+is part of the stable release identity. The live reader explicitly supports only
+testnet protocol versions 28 and 29; it rejects older and unreviewed newer
+versions. Protocol 29 was checked against the deployed code and configuration
+with read-only calls on live testnet. This compatibility allowance does not
+restore archived entries. Transaction paths still simulate their exact call and
+refuse a restore-required result before wallet signing.
+
 `createPoolReader(release, {fetch?})` returns the four recovery methods:
 
 - `readState({signal}?)` returns roots, counts, append index and `snapshotId`.

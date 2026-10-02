@@ -205,6 +205,26 @@ workflow, so users may be unable to access notes until the required network
 state is restored through a separately verified path. This is a recoverability
 and release-readiness gap, not proof of a theft exploit or a completed fix.
 
+## Live Protocol 29 compatibility
+
+On 3 October, the public Stellar testnet RPC reported Protocol 29 while the
+current private release manifest and its stable identity remained pinned to
+Protocol 28. The former exact-version reader check rejected the live network.
+The reader now has an explicit `{28, 29}` runtime allowlist; it still rejects
+Protocol 27 and unreviewed Protocol 30. The manifest, profile ID, pool address,
+WASM hash and private recovery scope are unchanged.
+
+After the change, the full workspace test command exited successfully. The
+private client suite passed 60 tests with one existing optional browser test
+skipped. A direct live call through the production `createPoolReader` verified
+the published WASM bytes, pinned configuration, 30 records, 35 append slots,
+two revocations and one full 157-field accepted record. A separate read-only
+Protocol 29 simulation of the deployed `liability` getter returned zero without
+a restore preamble. These live checks made no signature, send, restoration,
+deployment or funds activation. They establish current read compatibility, not
+a full write-flow validation under Protocol 29; archived-state recovery remains
+unimplemented in the client.
+
 ## Exact source CI
 
 The exact pushed source commit `5c481ac3ec3bea4299be3145cda0e7cab5b62164`
