@@ -498,6 +498,62 @@ fn adversarial_public_submission(wasm: bool) {
 }
 
 #[test]
+fn pinned_pool_verifiers_reject_a_mutation_at_every_public_signal_position() {
+    // Actual pinned keys and committed proofs, never a substituted verifier.
+    // Omitting a signal from the pairing equation would make this test fail.
+    // This isolates native host verification; it is not another WASM lifecycle
+    // or a trusted-setup/soundness audit, and does not establish a live payout.
+    let e = Env::default();
+    for (key_file, fixture_file, count, pin) in [
+        (
+            "keys/transition-vk.json",
+            "proofs/04-withdraw-pod.json",
+            157u32,
+            &crate::pins::MAIN_VK_HASH,
+        ),
+        (
+            "keys/revocation-vk.json",
+            "proofs/13-revoke-envoy.json",
+            4u32,
+            &crate::pins::REVOCATION_VK_HASH,
+        ),
+    ] {
+        let vk = key(&e, key_file, u64::from(count));
+        assert!(verifier::key_matches(&e, &vk, count, pin));
+        let fixture = read(fixture_file);
+        let original = inputs(&e, &fixture);
+        let p = proof(&e, &fixture);
+        assert_eq!(original.len(), count);
+        reset(&e);
+        assert!(verifier::verify(&e, &vk, &p, &original), "{fixture_file}");
+        for index in 0..count {
+            let mut bytes = original.get(index).unwrap().to_array();
+            if bytes.iter().all(|b| *b == 0) {
+                bytes[31] = 1;
+            } else {
+                for byte in bytes.iter_mut().rev() {
+                    let (next, borrow) = byte.overflowing_sub(1);
+                    *byte = next;
+                    if !borrow {
+                        break;
+                    }
+                }
+            }
+            let replacement = BytesN::from_array(&e, &bytes);
+            assert!(hash::canonical(&replacement));
+            assert_ne!(replacement, original.get(index).unwrap());
+            let mut changed = original.clone();
+            changed.set(index, replacement);
+            reset(&e);
+            assert!(
+                !verifier::verify(&e, &vk, &p, &changed),
+                "{fixture_file}: public signal {index} is not bound"
+            );
+        }
+    }
+}
+
+#[test]
 fn real_fee_transfer_failure_rolls_back_prior_withdrawal_nullifier_and_archive() {
     fee_failure_rollback(false);
 }

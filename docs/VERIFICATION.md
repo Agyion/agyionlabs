@@ -26,6 +26,31 @@ are different verification layers. The initial workspace failure caused by the
 expired fixed pickup date is retained, with its test-only fixed-clock correction
 and passing final run. No runtime date validation or assertion was weakened.
 
+The subsequent [484de85 hosted run](https://github.com/Agyion/agyionlabs/actions/runs/36976521342)
+passed contract, application, browser, proof and build checks but failed its
+final dependency scan. This failure is retained, not reported as a successful
+run. Stellar SDK 16.3.0's Axios 1.18.0 is now narrowly overridden to 1.20.0 in
+the application, private client and market, preserving other resolved versions
+and existing ABI/deployment pins. Three actual loopback attack regressions
+failed before the change and passed after it. They exercise inherited-header
+injection given prior prototype pollution, not a demonstrated application
+pollution entry point or live fund-theft path. All six fresh post-fix advisory
+scans reported zero advisories. The [dated report](CONTRACT_SECURITY_CHECKPOINT_2026_10_02.md#hosted-checks-and-http-dependency-hardening)
+separates this dependency hardening from the earlier test-fixture correction
+and its independent review. Website publication and chain activation remain
+unchanged.
+
+The interrupted post-fix workspace run is not counted as passing. Its resumed
+run passed 2,456 checks with 14 optional skips and no failures, including the
+three transport attack regressions. A further native verifier test rejected an
+individual canonical mutation at every public signal position in the real
+pinned Pod withdrawal and Envoy revocation proofs: 157 plus four cases, with
+two genuine successful controls. The full private native/WASM suite passed 45
+named tests and strict Rust checks; runtime code, circuits and keys were unchanged.
+This tests individual binding for those fixtures, not all coordinated changes,
+proving-system soundness or live settlement. The [exact scope](CONTRACT_SECURITY_CHECKPOINT_2026_10_02.md#native-proof-binding-attack-coverage)
+keeps those distinctions and the dated logs explicit.
+
 ## Source review
 
 | Evidence | Files | Current lines |

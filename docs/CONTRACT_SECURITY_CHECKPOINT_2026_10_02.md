@@ -2,9 +2,10 @@
 
 The starting source is `ed683e4319a4017e11c0fa79b78b6c0ac3d60732`.
 Its [exact GitHub run](https://github.com/Agyion/agyionlabs/actions/runs/36363088427)
-was freshly checked and both jobs completed successfully. This report records a
-subsequent local test/harness change; it does not attribute later changes to that
-older run. The website and selected deployments were not changed.
+was freshly checked and both jobs completed successfully. This report records
+subsequent test-fixture corrections and HTTP dependency hardening; it does not
+attribute later changes to that older run. The website and selected deployments
+were not changed.
 
 ## Contract checks
 
@@ -90,6 +91,88 @@ One fresh-context review found no actionable issue in the frozen journal and
 WASM-path increment. The later one-line test clock correction was checked by
 the actual failing workspace, passing focused scenario and final workspace;
 it is not relabeled as part of that earlier review.
+
+## Hosted checks and HTTP dependency hardening
+
+The [exact source run for 484de85](https://github.com/Agyion/agyionlabs/actions/runs/36976521342)
+passed its contract job. Its application job passed workspace tests, browser
+submission guards, type/style checks, proof provenance, genuine proof and
+adversarial-circuit reproduction, and the static site build. The final dependency
+advisory step failed, so that run is not an overall success. The source-only
+documentation follow-up `4511a8f` did not rerun identical tests.
+
+A fresh six-component local scan found the SDK's Axios 1.18.0 in the application,
+private client and marketplace. Each affected report contains two high-severity
+package entries, Axios and its dependent Stellar SDK; these are not six distinct
+demonstrated attacks. Root, landing and privacy reported no advisories. Initial
+reports and the actual failed CI log are retained without modification.
+
+The [Axios advisory](https://github.com/advisories/GHSA-vh66-26gq-q6x8)
+describes a fetch-adapter gadget requiring earlier same-process prototype
+pollution. A new mandatory test resolves Axios from the SDK in each of the three
+clients, starts a loopback server and injects inherited headers in an isolated
+child process. Each unpolluted positive control preserved its caller header;
+each polluted request on 1.18.0 lost that header and sent the synthetic attacker's
+Authorization header. All three assertions failed before the dependency fix.
+This establishes the dependency's behavior under an injected prerequisite,
+not a pollution entry point in our application or deployed fund theft.
+
+All three packages now narrowly override the SDK's Axios to 1.20.0, the
+[patched release](https://github.com/axios/axios/releases/tag/v1.20.0), while
+retaining Stellar SDK 16.3.0 and existing deployment/ABI pins. The application's
+stale nested lock entry required explicit removal and lock reconciliation;
+the SDK now resolves the already-patched root copy. Other resolved package
+versions were preserved. No forced SDK major upgrade or audit-threshold change
+was used. The same three probes then passed, retaining the original header
+without sending the injected Authorization header.
+
+All six post-fix advisory scans exited zero and reported zero advisories. This
+is a dated registry scan, not a guarantee about unreported or future flaws.
+The initial three failures, the intermediate stale-lock failure, all six scans
+and passing attack regressions are retained under
+`artifacts/security/2026-10-02-dependencies/`. This dependency follow-up was not
+part of the earlier frozen journal/WASM-path review. A separate read-only review
+verified all eight final code/package hashes, installed SDK transport resolution,
+both serialized verifying-key hashes and the preserved test evidence. It found
+no actionable issue in this bounded dependency/proof-test increment. It did not
+rerun suites or perform an external security/cryptographic audit.
+
+The first post-fix workspace run was interrupted and has no completion receipt;
+it is not counted as passing. After confirming that it was no longer running,
+the resumed whole-workspace command passed 2,456 checks with 14 optional skips
+and no failures. Its groups are 89 landing, 908 application, 150 privacy, 59
+private client, 30 market catalogue, 48 market client, 16 market UI and 1,156
+tooling. The log's SHA256 is
+`3fe64eb84f9a1eea0fcf03556e06579c43065517c8e73dafc2a7c94927820811`.
+The final dependency/test hashes are retained in `test-summary.json`; later
+Rust-only proof-binding coverage is verified by its own suite below. Application
+type checks also passed. Exact new source CI remains pending until recorded.
+
+## Native proof-binding attack coverage
+
+A new mandatory `proof-tests` scenario uses the real pinned 157-input transition
+key with the committed Pod withdrawal proof and the real pinned four-input
+revocation key with the committed Envoy revocation proof. Each original proof
+is accepted as a positive control. Each public signal position is then changed
+individually to a different canonical field value, keeping the key, proof and
+other positions unchanged. All 157 plus four variants are rejected by the
+production native verifier using actual Soroban host pairing operations. The
+test asserts the key hashes and the expected input counts before probing.
+
+These are 161 mutation cases within one named test and two genuine positive
+controls, not 161 new vulnerabilities or a general proof of cryptographic
+soundness. The verifier, circuit, keys and runtime contract source were not
+modified. This isolated native test does not execute the WASM pool or transfer
+tokens, and does not test all coordinated changes to multiple signals. The
+separate host/WASM lifecycle tests continue to cover settlement and rollback.
+
+The focused test passed; the full private native/WASM suite then passed all 45
+named tests, including that test, and strict all-target/all-feature Rust checks
+passed. The unchanged actual private WASM input was authenticated as
+`4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018`.
+Logs `07-proof-binding-focused.log`, `08-private-full.log` and
+`09-private-lint.log` are retained alongside the dependency evidence. This is
+additional regression protection, not a newly discovered deployed exploit.
 
 ## Release boundaries
 

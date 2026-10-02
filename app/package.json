@@ -39,6 +39,9 @@
     "vitest": "^4.1.11"
   },
   "overrides": {
-    "postcss": "$postcss"
+    "postcss": "$postcss",
+    "@stellar/stellar-sdk": {
+      "axios": "1.20.0"
+    }
   }
 }
