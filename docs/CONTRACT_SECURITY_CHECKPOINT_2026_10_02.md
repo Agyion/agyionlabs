@@ -146,7 +146,7 @@ tooling. The log's SHA256 is
 `3fe64eb84f9a1eea0fcf03556e06579c43065517c8e73dafc2a7c94927820811`.
 The final dependency/test hashes are retained in `test-summary.json`; later
 Rust-only proof-binding coverage is verified by its own suite below. Application
-type checks also passed. Exact new source CI remains pending until recorded.
+type checks also passed.
 
 ## Native proof-binding attack coverage
 
@@ -173,6 +173,34 @@ passed. The unchanged actual private WASM input was authenticated as
 Logs `07-proof-binding-focused.log`, `08-private-full.log` and
 `09-private-lint.log` are retained alongside the dependency evidence. This is
 additional regression protection, not a newly discovered deployed exploit.
+
+## Rust dependency advisory scan
+
+On 3 October, `cargo-audit 0.22.2` checked all four repository lockfiles against
+the RustSec database, last updated 2 October 2026. All four reported zero known
+vulnerabilities. Each reported the same informational warning that transitive
+`paste 1.0.15` is unmaintained; this is not a vulnerability advisory and was not
+silenced. The dependency path still needs routine review as Stellar SDK crates
+change.
+
+The contract CI now installs the pinned audit-tool version and scans all four
+lockfiles on every workflow run. The earlier exact-source CI below predates this
+new step; the first hosted result for the added gate must be recorded separately.
+This checks published RustSec advisories for the locked crates. It is not a
+source-level, supply-chain provenance or cryptographic audit.
+
+## Exact source CI
+
+The exact pushed source commit `5c481ac3ec3bea4299be3145cda0e7cab5b62164`
+passed both jobs in the
+[GitHub Actions run](https://github.com/Agyion/agyionlabs/actions/runs/36990232258).
+The contract job rebuilt all three contract WASMs, passed all native and WASM
+contract tests, and completed strict Rust checks. The application job passed the
+workspace and testnet helper, browser persistence and concurrent submission
+guards, type/style checks, proof fixture provenance, public proving assets,
+actual private proof and adversarial-circuit checks, the static testnet site
+build, and all dependency advisory checks. The run did not perform a Cloudflare
+deployment or activate a funds service. Published website state is separate.
 
 ## Release boundaries
 

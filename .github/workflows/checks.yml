@@ -122,3 +122,11 @@ jobs:
           cargo clippy --locked --manifest-path contracts/agyion/Cargo.toml --all-targets --all-features -- -D warnings
           cargo clippy --locked --manifest-path contracts/private-pool/Cargo.toml --all-targets --all-features -- -D warnings
           cargo clippy --locked --manifest-path contracts/fade-market/Cargo.toml --all-targets --all-features -- -D warnings
+      - name: Install pinned RustSec audit tool
+        run: cargo install cargo-audit --locked --version 0.22.2
+      - name: Rust dependency advisories
+        run: |
+          cargo audit --file contracts/agyion/Cargo.lock
+          cargo audit --file contracts/private-pool/Cargo.lock
+          cargo audit --file contracts/zk-preimage/Cargo.lock
+          cargo audit --file contracts/fade-market/Cargo.lock

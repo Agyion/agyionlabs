@@ -49,7 +49,18 @@ two genuine successful controls. The full private native/WASM suite passed 45
 named tests and strict Rust checks; runtime code, circuits and keys were unchanged.
 This tests individual binding for those fixtures, not all coordinated changes,
 proving-system soundness or live settlement. The [exact scope](CONTRACT_SECURITY_CHECKPOINT_2026_10_02.md#native-proof-binding-attack-coverage)
-keeps those distinctions and the dated logs explicit.
+keeps those distinctions and the dated logs explicit. The final pushed commit
+`5c481ac3ec3bea4299be3145cda0e7cab5b62164` passed both the [contract and
+application jobs](https://github.com/Agyion/agyionlabs/actions/runs/36990232258),
+including clean locked installation, WASM builds/tests, proof and browser checks,
+static site build and six advisory scans. This did not confirm a Cloudflare
+deployment or activate real-fund use.
+
+On 3 October, `cargo-audit 0.22.2` scanned all four Rust lockfiles against the
+RustSec database updated 2 October: zero known vulnerabilities, with one
+informational unmaintained `paste 1.0.15` warning per lockfile. A pinned Rust
+advisory scan is now part of contract CI. The exact hosted result for that new
+step is recorded after its first run completes.
 
 ## Source review
 
