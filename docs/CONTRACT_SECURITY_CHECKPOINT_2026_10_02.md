@@ -248,6 +248,38 @@ vulnerability advisories were found. The application job also passed its
 workspace, browser/concurrency, type/style, proof, build and npm advisory checks.
 This run did not deploy the site or activate a funds service.
 
+## Fade Market retention bound and CI runner pinning
+
+On 3 October, review found that `create_offer` accepted funded offers even
+when the network's maximum persistent-entry TTL could not retain the offer
+through its last lease and refund window. The later TTL calculation clamps to
+the network maximum; without an upfront bound, this could make an accepted
+offer unavailable before its final settlement/refund action on a network with
+a sufficiently low maximum TTL. This is a contract availability/fund-recovery
+risk under that network configuration, not a reproduced live testnet theft.
+
+A regression test first failed against the old code. `create_offer` now checks
+that `duration + lease + 1 + refund margin` fits the network TTL before it
+updates accounting or transfers tokens. The test verifies rejection one ledger
+below the boundary leaves seller balance, market balance and reserved liability
+unchanged, while the exact valid boundary creates an offer with the expected
+TTL. All 32 Fade Market native/WASM tests passed, strict Clippy passed, the
+locked contract build passed, and the current complete `npm test` command
+finished without failures. The locally built WASM SHA256 is
+`6ffc68593b5b522ee8cd6cd8584a3727c4236ac6159faca621c46f86f007a5c0`.
+
+The GitHub Actions workflow now uses the Ubuntu 24.04 image and immutable
+Node 24 action releases, with package-manager caching disabled. Exact source
+commit `29117e223c0dfbb4ed90b19f89e3662cfbf214b1` passed both jobs in
+[run 37073452300](https://github.com/Agyion/agyionlabs/actions/runs/37073452300).
+The application job completed its workspace, browser persistence/concurrency,
+type/style, proof provenance, real private proof and adversarial circuit, static
+build, and dependency advisory checks. The contract job passed WASM tests,
+strict Rust checks and RustSec scans. This run predates the Fade Market fix, so
+exact-source hosted verification of that fix is still pending. No contract was
+deployed. The new WASM hash changes the artifact identity and must be reviewed
+as a new release before any deployment.
+
 ## Release boundaries
 
 The public application still selects V3, and the guarded V4 public deployment is

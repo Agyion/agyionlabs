@@ -434,6 +434,15 @@ impl AgyionFadeMarket {
             .checked_add(terms.lease_ledgers)
             .and_then(|n| n.checked_add(1))
             .ok_or(Error::Overflow)?;
+        let required_ttl = u64::from(terms.duration_ledgers)
+            + u64::from(terms.lease_ledgers)
+            + 1
+            + REFUND_MARGIN;
+        if required_ttl > u64::from(env.storage().max_ttl()) {
+            // Never accept funds for an offer whose final lease/refund state
+            // cannot remain live through the network's maximum entry TTL.
+            return Err(Error::InvalidTerms);
+        }
         let count: u64 = env
             .storage()
             .instance()

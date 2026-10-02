@@ -988,6 +988,47 @@ fn long_offer_retention_covers_final_lease_and_refund_margin_without_renting_all
     });
 }
 
+#[test]
+fn offer_retention_must_fit_network_ttl_before_funding() {
+    use soroban_sdk::testutils::storage::Persistent as _;
+    backends(|s| {
+        let required = MAX_OFFER as u64 + MAX_LEASE as u64 + 1 + REFUND_MARGIN;
+        assert!(required <= u64::from(u32::MAX));
+        let set_max_ttl = |max: u32| {
+            s.e.ledger().with_mut(|ledger| {
+                ledger.min_persistent_entry_ttl = 1;
+                ledger.min_temp_entry_ttl = 1;
+                ledger.max_entry_ttl = max;
+            });
+        };
+        let mut terms = s.terms(0);
+        terms.duration_ledgers = MAX_OFFER;
+        terms.lease_ledgers = MAX_LEASE;
+
+        // Soroban max_ttl is max_entry_ttl minus the current ledger.
+        set_max_ttl(required as u32);
+        assert_eq!(s.e.storage().max_ttl(), required as u32 - 1);
+        assert_eq!(
+            s.client().try_create_offer(&s.seller, &terms),
+            Err(Ok(Error::InvalidTerms))
+        );
+        assert_eq!(s.token().balance(&s.seller), 10_000);
+        assert_eq!(s.token().balance(&s.market), 0);
+        assert_eq!(s.client().reserved_balance(&s.asset), 0);
+
+        set_max_ttl(required as u32 + 1);
+        assert_eq!(s.e.storage().max_ttl(), required as u32);
+        let id = s.client().create_offer(&s.seller, &terms);
+        assert_eq!(id, 1);
+        s.e.as_contract(&s.market, || {
+            assert_eq!(
+                s.e.storage().persistent().get_ttl(&Key::Offer(id)),
+                required as u32
+            );
+        });
+    });
+}
+
 #[cfg(feature = "wasm-tests")]
 #[test]
 fn actual_wasm_code_rent_is_bounded_to_common_retention() {
