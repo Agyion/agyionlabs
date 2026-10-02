@@ -107,10 +107,16 @@ unchanged. It does not repair existing records or deploy the revised code.
 ## Arithmetic, assets and storage
 
 Fade uses an I256 intermediate for rational price decline. Creation rejects
-unrepresentable settlement/refund horizons. Persistent records and instance
-state extend TTL on executed reads/writes; simulations do not persist TTL.
-Long locks require submitted maintenance or Soroban restoration. Archived
-state is not permission to reset counters or forget obligations.
+unrepresentable settlement/refund horizons. Funded Fade, Pod and Trigger
+records extend their persistent entry, shared asset liability, contract
+instance and Wasm code through the last permitted action plus a recovery grace
+of up to 172,800 ledgers. Mandate records use the same deadline-based policy.
+Creation rejects an obligation when the network's maximum TTL cannot fit that
+horizon, before any funds move. Executed reads renew the same horizon;
+simulations do not persist TTL changes. After the grace, entries can still
+archive, so long-lived deployments need submitted maintenance or Soroban
+restoration. Archived state is not permission to reset counters or forget
+obligations.
 
 The active V3 contract accepts token addresses implementing the expected
 interface. The V4 constructor instead checks the host's built-in Stellar Asset

@@ -35,22 +35,22 @@ pub(crate) fn read(env: &Env, fade_id: u64) -> Result<Fade, Error> {
         .ok_or(Error::NotFound)?;
     // Read paths keep the record alive as well: every successful read :
     // including pure views (get_fade, fade_price): extends TTL.
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-    env.storage()
-        .instance()
-        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
-    accounting::liability(env, &fade.asset)?;
+    let terminal = u64::from(fade.deadline_ledger) + u64::from(fade.handoff_window) + 1;
+    let target = crate::retention_ttl(env, terminal)?;
+    env.storage().persistent().extend_ttl(&key, target, target);
+    env.storage().instance().extend_ttl(target, target);
+    accounting::retain(env, &fade.asset, target)?;
     Ok(fade)
 }
 
-fn write(env: &Env, fade_id: u64, fade: &Fade) {
+fn write(env: &Env, fade_id: u64, fade: &Fade) -> Result<(), Error> {
     let key = DataKey::Fade(fade_id);
+    let terminal = u64::from(fade.deadline_ledger) + u64::from(fade.handoff_window) + 1;
+    let target = crate::retention_ttl(env, terminal)?;
     env.storage().persistent().set(&key, fade);
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+    env.storage().persistent().extend_ttl(&key, target, target);
+    accounting::retain(env, &fade.asset, target)?;
+    Ok(())
 }
 
 /// Price at a given ledger: start_price - slope*elapsed, stops at the floor.
@@ -125,6 +125,10 @@ pub fn create_fade(
         .checked_add(handoff_window)
         .and_then(|end| end.checked_add(1))
         .ok_or(Error::InvalidInput)?;
+    crate::retention_ttl(
+        env,
+        u64::from(deadline_ledger) + u64::from(handoff_window) + 1,
+    )?;
 
     // Non-custodial: the pot is deposited into the contract; from now on only
     // the rules move it.
@@ -148,7 +152,7 @@ pub fn create_fade(
     };
 
     let id = next_id(env);
-    write(env, id, &fade);
+    write(env, id, &fade)?;
     Ok(id)
 }
 
@@ -192,7 +196,7 @@ pub(crate) fn claim_internal(env: &Env, fade_id: u64, claimant: Address) -> Resu
     fade.state = 1;
     fade.claimant = Some(claimant);
     fade.claimed_at = Some(now);
-    write(env, fade_id, &fade);
+    write(env, fade_id, &fade)?;
     Ok(())
 }
 
@@ -277,7 +281,7 @@ pub fn confirm_handoff(env: &Env, fade_id: u64, ts: u64, sig: BytesN<64>) -> Res
 
     accounting::solvent(env, &fade.asset)?;
     fade.state = 2;
-    write(env, fade_id, &fade);
+    write(env, fade_id, &fade)?;
     Ok(())
 }
 
@@ -316,6 +320,6 @@ pub fn refund(env: &Env, fade_id: u64) -> Result<(), Error> {
     accounting::solvent(env, &fade.asset)?;
 
     fade.state = 3;
-    write(env, fade_id, &fade);
+    write(env, fade_id, &fade)?;
     Ok(())
 }

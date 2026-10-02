@@ -27,18 +27,31 @@ mod trigger;
 #[cfg(test)]
 mod test;
 
-/// TTL extension thresholds for persistent records (~1 day threshold, ~10 day
-/// target; assumes 5s/ledger).
-///
-/// NOTE (honesty, mirrors LIMITATIONS): records expected to live longer than
-/// TTL_EXTEND = 172_800 ledgers (~10 days) may be archived before their
-/// deadlines. The contract has no restore flow; an archived record can only be
-/// brought back via a chain-side restore preamble (Soroban restore-footprint).
-/// That is why TTL is extended on both write and read paths, and instance
-/// storage (counters) is extended as well. Still, for lifetimes beyond ~10
-/// days the restore obligation belongs to the operator.
+/// Baseline TTL and recovery grace (~10 days at 5s/ledger). Funded records,
+/// shared liabilities, instance state and contract code are extended through
+/// the last permitted action plus this grace when network limits allow it.
+/// Creation rejects a deadline that cannot fit. After the grace, state can
+/// still archive; there is no in-app restore or keeper flow.
 pub(crate) const TTL_THRESHOLD: u32 = 17_280;
 pub(crate) const TTL_EXTEND: u32 = 172_800;
+
+/// Keep state live through its final permitted action plus a post-deadline
+/// recovery window. Reject a new obligation when the network cannot retain
+/// its record and shared custody state for that full horizon.
+pub(crate) fn retention_ttl(env: &Env, terminal_ledger: u64) -> Result<u32, Error> {
+    let max_ttl = u64::from(env.storage().max_ttl());
+    let baseline = u64::from(TTL_EXTEND).min(max_ttl);
+    let grace = u64::from(TTL_EXTEND).min(max_ttl.saturating_sub(baseline));
+    let remaining = terminal_ledger.saturating_sub(u64::from(env.ledger().sequence()));
+    let target = remaining
+        .saturating_add(1)
+        .saturating_add(grace)
+        .max(baseline);
+    if target == 0 || target > max_ttl {
+        return Err(Error::InvalidInput);
+    }
+    Ok(target as u32)
+}
 
 /// On-chain meaning is generic (CANON rule 7): T1=1, T2=2, T3=3, T4=4.
 #[contracttype]

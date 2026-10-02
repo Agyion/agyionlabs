@@ -303,3 +303,39 @@ setup contribution, trustee independence and submission metadata remain material
 boundaries in [SECURITY.md](../SECURITY.md) and the dated release documents.
 This checkpoint supplies neither an exploit-proof guarantee nor permission to
 activate a real-funds service.
+
+## 3 October: V4 deadline-based state retention
+
+A further review found that public V4 could accept obligations whose ledger
+deadlines outlived the default 172,800-ledger retention of persistent records,
+the shared asset-liability counter, contract instance and Wasm code. An
+archived dependency could make an otherwise funded obligation inaccessible.
+V4 now calculates retention through each instrument's final permitted action
+plus up to 172,800 ledgers of recovery grace. Fade, Pod and Trigger extend the
+record and the corresponding shared asset liability; instance storage and code
+are extended with the same target. Envoy retains its mandate through expiry.
+Creation rejects an unretainable deadline before moving funds.
+
+Regression coverage runs against both native code and the compiled WASM. It
+checks exact per-record/shared-state TTLs, instance and code TTLs, renewal near
+the archive threshold, an exact network maximum-TTL boundary and rejection one
+ledger below that boundary without taking funds or consuming an ID. The
+simulated ledger tests do not perform real network eviction or restore an
+archived footprint. After the grace, archival remains possible and no in-app
+restore or keeper flow exists.
+
+Fresh local verification passed 77 Agyion native/WASM tests, 45 Private Pool
+native/WASM tests, 33 Fade Market native/WASM tests and strict Clippy for all
+three contracts. All three locked Stellar WASM builds succeeded. Agyion WASM
+SHA256: `32b5136f899130324041934ba8087e005eae13d36a9b4c8092e981cf909ee2a5`;
+Private Pool: `4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018`;
+Fade Market: `d19259f2f7171f2f1a049798835a618aa4f2dda9b5535d17b9eca94d7cf37d3d`.
+All four Rust lockfiles passed `cargo audit` with no known vulnerability
+advisories; the allowed `paste 1.0.15` unmaintained warning remains. These are
+local results; exact-source hosted CI is still required before treating this
+increment as verified. No deployment or activation occurred.
+
+`rustfmt --check` passes on every Rust file changed in this increment. The
+crate-wide `cargo fmt --check` still reports formatting differences in the
+untouched `accounting_test.rs` and `test.rs`; this workflow does not currently
+make crate-wide formatting a CI gate.

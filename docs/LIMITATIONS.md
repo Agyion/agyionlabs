@@ -44,7 +44,7 @@ PII submitted to the anchor stays outside kernel records, but the anchor can cor
 
 ## 8. Contract and deployment limits
 
-- Persistent records and instance state extend TTL on **executed** reads/writes. RPC simulations do not persist extensions. Long locks need submitted maintenance or Soroban restoration; no app restore/keeper flow exists.
+- Funded Fade, Pod and Trigger records now extend the record, shared asset liability, contract instance and Wasm code through the last permitted action plus up to 172,800 ledgers of recovery grace. Mandates use their expiry. Creation fails before funding when the network maximum TTL cannot fit. RPC simulations do not persist TTL changes. After the grace, entries can still archive; no app restore/keeper flow exists, so deployments with longer operational gaps still need submitted maintenance or Soroban restoration.
 - Invalid Ed25519 signatures/points can trap the host call; rejection is atomic rather than always a contract error code.
 - Fade/Trigger/Envoy sign ts as metadata, but the kernel does not enforce timestamp freshness. State, ledger deadlines and handoff windows bound acceptance. Pod V3 uses a recipient/domain-bound claim signature without a timestamp.
 - First valid competing transition wins. Retaining a bearer key means retaining claim authority; the UI cannot enforce physical uniqueness of a printed secret.

@@ -78,6 +78,17 @@ pub(crate) fn liability(env: &Env, asset: &Address) -> Result<i128, Error> {
     Ok(amount)
 }
 
+/// Extend the shared custody counter and contract instance/code together with
+/// a long-lived escrow record. A record alone is not claimable if either
+/// dependency archives first.
+pub(crate) fn retain(env: &Env, asset: &Address, target: u32) -> Result<(), Error> {
+    liability(env, asset)?;
+    let key = DataKey::Liability(asset.clone());
+    env.storage().persistent().extend_ttl(&key, target, target);
+    env.storage().instance().extend_ttl(target, target);
+    Ok(())
+}
+
 fn store(env: &Env, asset: &Address, amount: i128) {
     let key = DataKey::Liability(asset.clone());
     env.storage().persistent().set(&key, &amount);

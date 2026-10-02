@@ -24,22 +24,20 @@ pub(crate) fn read(env: &Env, trigger_id: u64) -> Result<Trigger, Error> {
         .persistent()
         .get(&key)
         .ok_or(Error::NotFound)?;
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-    env.storage()
-        .instance()
-        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
-    accounting::liability(env, &trigger.asset)?;
+    let target = crate::retention_ttl(env, u64::from(trigger.deadline_ledger) + 1)?;
+    env.storage().persistent().extend_ttl(&key, target, target);
+    env.storage().instance().extend_ttl(target, target);
+    accounting::retain(env, &trigger.asset, target)?;
     Ok(trigger)
 }
 
-fn write(env: &Env, trigger_id: u64, trigger: &Trigger) {
+fn write(env: &Env, trigger_id: u64, trigger: &Trigger) -> Result<(), Error> {
     let key = DataKey::Trigger(trigger_id);
+    let target = crate::retention_ttl(env, u64::from(trigger.deadline_ledger) + 1)?;
     env.storage().persistent().set(&key, trigger);
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+    env.storage().persistent().extend_ttl(&key, target, target);
+    accounting::retain(env, &trigger.asset, target)?;
+    Ok(())
 }
 
 /// View: returns the trigger record as-is.
@@ -78,6 +76,7 @@ pub fn create_trigger(
     if attester_pubkey == BytesN::from_array(env, &[0u8; 32]) {
         return Err(Error::BadSignature);
     }
+    crate::retention_ttl(env, u64::from(deadline_ledger) + 1)?;
 
     // Non-custodial: funds are deposited into the contract; only the
     // attest/refund rules can move them.
@@ -94,7 +93,7 @@ pub fn create_trigger(
     };
 
     let id = next_id(env);
-    write(env, id, &trigger);
+    write(env, id, &trigger)?;
     Ok(id)
 }
 
@@ -145,7 +144,7 @@ pub fn attest(env: &Env, trigger_id: u64, ts: u64, sig: BytesN<64>) -> Result<()
     accounting::solvent(env, &trigger.asset)?;
 
     trigger.state = 1;
-    write(env, trigger_id, &trigger);
+    write(env, trigger_id, &trigger)?;
     Ok(())
 }
 
@@ -174,6 +173,6 @@ pub fn refund_trigger(env: &Env, trigger_id: u64) -> Result<(), Error> {
     accounting::solvent(env, &trigger.asset)?;
 
     trigger.state = 2;
-    write(env, trigger_id, &trigger);
+    write(env, trigger_id, &trigger)?;
     Ok(())
 }

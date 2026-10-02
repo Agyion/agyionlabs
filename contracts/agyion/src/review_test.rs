@@ -328,10 +328,21 @@ fn assert_nested_token_cannot_spend_other_asset(env: &Env, wasm: Option<&[u8]>) 
         NestedTransferToken,
         (contract.clone(), asset.clone(), foreign_recipient.clone()),
     );
-    assert_eq!(client.try_create_trigger(
-        &funder, &foreign_asset, &100, &recipient, &attester_pubkey(env), &100,
-    ), Err(Ok(Error::UnsupportedAsset)));
-    assert!(matches!(client.try_get_trigger(&1), Err(Ok(Error::NotFound))));
+    assert_eq!(
+        client.try_create_trigger(
+            &funder,
+            &foreign_asset,
+            &100,
+            &recipient,
+            &attester_pubkey(env),
+            &100,
+        ),
+        Err(Ok(Error::UnsupportedAsset))
+    );
+    assert!(matches!(
+        client.try_get_trigger(&1),
+        Err(Ok(Error::NotFound))
+    ));
     assert_eq!(client.get_pod(&pod).state, 0);
     assert_eq!(token.balance(contract), 100);
     assert_eq!(token.balance(&foreign_recipient), 0);
@@ -356,6 +367,7 @@ fn assert_nested_token_cannot_spend_other_asset(env: &Env, wasm: Option<&[u8]>) 
 
 fn assert_reads_maintain_records_and_counters(env: &Env, wasm: Option<&[u8]>) {
     use soroban_sdk::testutils::storage::{Instance as _, Persistent as _};
+    use soroban_sdk::testutils::Deployer as _;
     env.mock_all_auths_allowing_non_root_auth();
     let funder = Address::generate(env);
     let recipient = Address::generate(env);
@@ -368,6 +380,7 @@ fn assert_reads_maintain_records_and_counters(env: &Env, wasm: Option<&[u8]>) {
     let client = AgyionClient::new(env, contract);
     let start = env.ledger().sequence();
     let create_all = || {
+        let deadline = env.ledger().sequence() + 500_000;
         let fade = client.create_fade(
             &funder,
             &asset,
@@ -384,9 +397,9 @@ fn assert_reads_maintain_records_and_counters(env: &Env, wasm: Option<&[u8]>) {
             &funder,
             &asset,
             &100,
-            &500_000,
+            &deadline,
             &pod_pubkey(env),
-            &pod_create_proof(env, contract, &funder, &asset, 100, 500_000),
+            &pod_create_proof(env, contract, &funder, &asset, 100, deadline),
         );
         let trigger = client.create_trigger(
             &funder,
@@ -394,12 +407,15 @@ fn assert_reads_maintain_records_and_counters(env: &Env, wasm: Option<&[u8]>) {
             &100,
             &recipient,
             &attester_pubkey(env),
-            &500_000,
+            &deadline,
         );
-        let mandate = client.create_mandate(&funder, &agent_pubkey(env), &1, &1, &500_000);
+        let mandate = client.create_mandate(&funder, &agent_pubkey(env), &1, &1, &deadline);
         (fade, pod, trigger, mandate)
     };
     assert_eq!(create_all(), (1, 1, 1, 1));
+    let fade_ttl = 500_000 + 10 + 2 + crate::TTL_EXTEND;
+    let pod_and_mandate_ttl = 500_000 + 1 + crate::TTL_EXTEND;
+    let trigger_ttl = 500_000 + 2 + crate::TTL_EXTEND;
     let keys = [
         crate::DataKey::Fade(1),
         crate::DataKey::Pod(1),
@@ -408,38 +424,199 @@ fn assert_reads_maintain_records_and_counters(env: &Env, wasm: Option<&[u8]>) {
         crate::DataKey::Liability(asset.clone()),
     ];
     env.as_contract(contract, || {
-        for key in &keys {
-            assert_eq!(env.storage().persistent().get_ttl(key), crate::TTL_EXTEND);
-        }
-        assert_eq!(env.storage().instance().get_ttl(), crate::TTL_EXTEND);
+        assert_eq!(env.storage().persistent().get_ttl(&keys[0]), fade_ttl);
+        assert_eq!(
+            env.storage().persistent().get_ttl(&keys[1]),
+            pod_and_mandate_ttl
+        );
+        assert_eq!(env.storage().persistent().get_ttl(&keys[2]), trigger_ttl);
+        assert_eq!(
+            env.storage().persistent().get_ttl(&keys[3]),
+            pod_and_mandate_ttl
+        );
+        assert_eq!(env.storage().persistent().get_ttl(&keys[4]), fade_ttl);
+        assert_eq!(env.storage().instance().get_ttl(), fade_ttl);
     });
+    if wasm.is_some() {
+        assert_eq!(env.deployer().get_contract_code_ttl(contract), fade_ttl);
+    }
     // This is a persisted local invocation, not an RPC simulation and not a
     // network restoration test. It proves the renewal branch before archive.
     env.ledger()
-        .set_sequence_number(start + crate::TTL_EXTEND - crate::TTL_THRESHOLD + 1);
+        .set_sequence_number(start + fade_ttl - crate::TTL_THRESHOLD + 1);
     env.as_contract(contract, || {
         assert_eq!(env.storage().instance().get_ttl(), crate::TTL_THRESHOLD - 1);
-        for key in &keys {
-            assert_eq!(
-                env.storage().persistent().get_ttl(key),
-                crate::TTL_THRESHOLD - 1
-            );
-        }
+        assert_eq!(
+            env.storage().persistent().get_ttl(&keys[0]),
+            crate::TTL_THRESHOLD - 1
+        );
+        assert_eq!(
+            env.storage().persistent().get_ttl(&keys[1]),
+            crate::TTL_THRESHOLD - 12
+        );
+        assert_eq!(
+            env.storage().persistent().get_ttl(&keys[2]),
+            crate::TTL_THRESHOLD - 11
+        );
+        assert_eq!(
+            env.storage().persistent().get_ttl(&keys[3]),
+            crate::TTL_THRESHOLD - 12
+        );
+        assert_eq!(
+            env.storage().persistent().get_ttl(&keys[4]),
+            crate::TTL_THRESHOLD - 1
+        );
     });
     client.get_fade(&1);
     client.get_pod(&1);
     client.get_trigger(&1);
     client.get_mandate(&1);
     env.as_contract(contract, || {
-        assert_eq!(env.storage().instance().get_ttl(), crate::TTL_EXTEND);
+        let refreshed = crate::TTL_EXTEND + 1;
+        assert_eq!(env.storage().instance().get_ttl(), refreshed);
         for key in &keys {
-            assert_eq!(env.storage().persistent().get_ttl(key), crate::TTL_EXTEND);
+            assert_eq!(env.storage().persistent().get_ttl(key), refreshed);
         }
     });
+    if wasm.is_some() {
+        assert_eq!(
+            env.deployer().get_contract_code_ttl(contract),
+            crate::TTL_EXTEND + 1
+        );
+    }
     assert_eq!(create_all(), (2, 2, 2, 2));
     assert_eq!(token::Client::new(env, &asset).balance(contract), 600);
     assert_eq!(client.get_pod(&1).amount, 100);
     assert_eq!(client.get_pod(&2).amount, 100);
+}
+
+fn assert_unretainable_deadlines_rejected_before_funding(env: &Env, wasm: Option<&[u8]>) {
+    use soroban_sdk::testutils::{storage::Persistent as _, Deployer as _};
+    env.mock_all_auths_allowing_non_root_auth();
+    let funder = Address::generate(env);
+    let sac = env.register_stellar_asset_contract_v2(funder.clone());
+    let asset = sac.address();
+    let contract = register_kernel(env, &asset, wasm);
+    let client = AgyionClient::new(env, &contract);
+    let admin = token::StellarAssetClient::new(env, &asset);
+    let token = token::Client::new(env, &asset);
+    admin.mint(&funder, &100);
+
+    let now = env.ledger().sequence();
+    env.ledger().with_mut(|ledger| {
+        ledger.min_persistent_entry_ttl = 1;
+        ledger.max_entry_ttl = now + 300_000;
+    });
+    let max_ttl = env.storage().max_ttl();
+    let distant = now + 200_000;
+    assert_eq!(
+        client.try_create_fade(
+            &funder,
+            &asset,
+            &100,
+            &0,
+            &0,
+            &0,
+            &1,
+            &200_000,
+            &10,
+            &venue_pubkey(env),
+        ),
+        Err(Ok(Error::InvalidInput))
+    );
+    assert_eq!(
+        client.try_create_trigger(
+            &funder,
+            &asset,
+            &100,
+            &Address::generate(env),
+            &attester_pubkey(env),
+            &distant,
+        ),
+        Err(Ok(Error::InvalidInput))
+    );
+    assert_eq!(
+        client.try_create_mandate(&funder, &agent_pubkey(env), &1, &1, &distant),
+        Err(Ok(Error::InvalidInput))
+    );
+    let unlock = now + max_ttl - 1;
+    let key = pod_pubkey(env);
+    let proof = pod_create_proof(env, &contract, &funder, &asset, 100, unlock);
+
+    assert_eq!(
+        client.try_create_pod(&funder, &asset, &100, &unlock, &key, &proof),
+        Err(Ok(Error::InvalidInput))
+    );
+    assert_eq!(token.balance(&funder), 100);
+    assert_eq!(token.balance(&contract), 0);
+    assert_eq!(client.asset_liability(&asset), 0);
+
+    // At the exact network boundary the full post-unlock grace still fits.
+    // One ledger less must fail before taking funds or consuming an ID.
+    let unlock_delta = 200_000u32;
+    let exact_ttl = unlock_delta + 1 + crate::TTL_EXTEND;
+    env.ledger().with_mut(|ledger| {
+        ledger.max_entry_ttl = now + exact_ttl + 1;
+    });
+    assert_eq!(env.storage().max_ttl(), exact_ttl);
+    let boundary_unlock = now + unlock_delta;
+    let boundary_key = pod_pubkey(env);
+    let boundary_proof = pod_create_proof(env, &contract, &funder, &asset, 100, boundary_unlock);
+    assert_eq!(
+        client.create_pod(
+            &funder,
+            &asset,
+            &100,
+            &boundary_unlock,
+            &boundary_key,
+            &boundary_proof,
+        ),
+        1
+    );
+    env.as_contract(&contract, || {
+        assert_eq!(
+            env.storage().persistent().get_ttl(&crate::DataKey::Pod(1)),
+            exact_ttl
+        );
+    });
+    assert_eq!(env.deployer().get_contract_code_ttl(&contract), exact_ttl);
+
+    env.ledger().with_mut(|ledger| {
+        ledger.max_entry_ttl = now + exact_ttl;
+    });
+    assert_eq!(env.storage().max_ttl(), exact_ttl - 1);
+    admin.mint(&funder, &100);
+    assert_eq!(
+        client.try_create_pod(
+            &funder,
+            &asset,
+            &100,
+            &boundary_unlock,
+            &boundary_key,
+            &boundary_proof,
+        ),
+        Err(Ok(Error::InvalidInput))
+    );
+    assert_eq!(token.balance(&funder), 100);
+    assert_eq!(token.balance(&contract), 100);
+    assert_eq!(client.asset_liability(&asset), 100);
+
+    env.ledger().with_mut(|ledger| {
+        ledger.max_entry_ttl = now + exact_ttl + 1;
+    });
+    assert_eq!(
+        client.create_pod(
+            &funder,
+            &asset,
+            &100,
+            &boundary_unlock,
+            &boundary_key,
+            &boundary_proof,
+        ),
+        2
+    );
+    assert_eq!(token.balance(&contract), 200);
+    assert_eq!(client.asset_liability(&asset), 200);
 }
 
 macro_rules! contract_review_case {
@@ -485,6 +662,11 @@ contract_review_case!(
     wasm_reads_renew_all_record_types_without_reusing_ids,
     assert_reads_maintain_records_and_counters
 );
+contract_review_case!(
+    unretainable_obligation_deadlines_fail_before_funding,
+    wasm_unretainable_obligation_deadlines_fail_before_funding,
+    assert_unretainable_deadlines_rejected_before_funding
+);
 
 // Characterization of the current issuer-trust boundary, not a passing solvency
 // guarantee. A local clawback-enabled SAC is deliberately not Circle testnet USDC.
@@ -493,17 +675,25 @@ fn assert_issuer_clawback_can_leave_later_public_claims_underfunded(env: &Env, c
     env.mock_all_auths();
     let funder = Address::generate(env);
     let sac = env.register_stellar_asset_contract_v2(funder.clone());
-    sac.issuer().set_flag(soroban_sdk::testutils::IssuerFlags::RevocableFlag);
-    sac.issuer().set_flag(soroban_sdk::testutils::IssuerFlags::ClawbackEnabledFlag);
+    sac.issuer()
+        .set_flag(soroban_sdk::testutils::IssuerFlags::RevocableFlag);
+    sac.issuer()
+        .set_flag(soroban_sdk::testutils::IssuerFlags::ClawbackEnabledFlag);
     let asset = sac.address();
     let admin = token::StellarAssetClient::new(env, &asset);
     let token = token::Client::new(env, &asset);
     let c = AgyionClient::new(env, contract);
     admin.mint(&funder, &300);
-    let create = || c.create_pod(
-        &funder, &asset, &100, &0, &pod_pubkey(env),
-        &pod_create_proof(env, contract, &funder, &asset, 100, 0),
-    );
+    let create = || {
+        c.create_pod(
+            &funder,
+            &asset,
+            &100,
+            &0,
+            &pod_pubkey(env),
+            &pod_create_proof(env, contract, &funder, &asset, 100, 0),
+        )
+    };
     let first = create();
     let second = create();
     admin.clawback(contract, &50);
@@ -513,7 +703,11 @@ fn assert_issuer_clawback_can_leave_later_public_claims_underfunded(env: &Env, c
     assert_eq!(token.balance(&funder), 0);
     for id in [first, second] {
         let recipient = Address::generate(env);
-        c.claim_pod(&id, &recipient, &pod_signature(env, contract, id, &recipient));
+        c.claim_pod(
+            &id,
+            &recipient,
+            &pod_signature(env, contract, id, &recipient),
+        );
         assert_eq!(token.balance(&recipient), 100);
         assert_eq!(c.get_pod(&id).state, 1);
     }

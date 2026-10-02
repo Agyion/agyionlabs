@@ -54,21 +54,19 @@ pub(crate) fn read(env: &Env, mandate_id: u64) -> Result<Mandate, Error> {
         .persistent()
         .get(&key)
         .ok_or(Error::NotFound)?;
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-    env.storage()
-        .instance()
-        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
+    let target = crate::retention_ttl(env, u64::from(mandate.valid_until))?;
+    env.storage().persistent().extend_ttl(&key, target, target);
+    env.storage().instance().extend_ttl(target, target);
     Ok(mandate)
 }
 
-fn write(env: &Env, mandate_id: u64, mandate: &Mandate) {
+fn write(env: &Env, mandate_id: u64, mandate: &Mandate) -> Result<(), Error> {
     let key = DataKey::Mandate(mandate_id);
+    let target = crate::retention_ttl(env, u64::from(mandate.valid_until))?;
     env.storage().persistent().set(&key, mandate);
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+    env.storage().persistent().extend_ttl(&key, target, target);
+    env.storage().instance().extend_ttl(target, target);
+    Ok(())
 }
 
 /// View: returns the mandate record as-is.
@@ -93,6 +91,7 @@ pub fn create_mandate(
     if valid_until <= env.ledger().sequence() {
         return Err(Error::InvalidInput);
     }
+    crate::retention_ttl(env, u64::from(valid_until))?;
     // Zero agent pubkey can never verify a signature: the mandate would be
     // dead on arrival.
     if agent_pubkey == BytesN::from_array(env, &[0u8; 32]) {
@@ -112,7 +111,7 @@ pub fn create_mandate(
     };
 
     let id = next_id(env);
-    write(env, id, &mandate);
+    write(env, id, &mandate)?;
     Ok(id)
 }
 
@@ -206,7 +205,7 @@ pub fn envoy_claim(
     // daily_used stays 0: the claim-count cap below is the active limit.)
     mandate.daily_used = mandate.daily_used.saturating_add(price.max(0));
     mandate.claims_used = mandate.claims_used.saturating_add(1);
-    write(env, mandate_id, &mandate);
+    write(env, mandate_id, &mandate)?;
     Ok(())
 }
 
@@ -220,6 +219,6 @@ pub fn revoke_mandate(env: &Env, owner: Address, mandate_id: u64) -> Result<(), 
         return Err(Error::Unauthorized);
     }
     mandate.revoked = true;
-    write(env, mandate_id, &mandate);
+    write(env, mandate_id, &mandate)?;
     Ok(())
 }

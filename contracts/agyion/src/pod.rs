@@ -23,23 +23,21 @@ pub(crate) fn read(env: &Env, pod_id: u64) -> Result<Pod, Error> {
         .persistent()
         .get(&key)
         .ok_or(Error::NotFound)?;
-    // Read paths (get_pod, claim_pod) keep the record alive as well.
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
-    env.storage()
-        .instance()
-        .extend_ttl(TTL_THRESHOLD, TTL_EXTEND);
-    accounting::liability(env, &pod.asset)?;
+    // Keep the record and every shared custody dependency live through unlock.
+    let target = crate::retention_ttl(env, u64::from(pod.unlock_ledger))?;
+    env.storage().persistent().extend_ttl(&key, target, target);
+    env.storage().instance().extend_ttl(target, target);
+    accounting::retain(env, &pod.asset, target)?;
     Ok(pod)
 }
 
-fn write(env: &Env, pod_id: u64, pod: &Pod) {
+fn write(env: &Env, pod_id: u64, pod: &Pod) -> Result<(), Error> {
     let key = DataKey::Pod(pod_id);
+    let target = crate::retention_ttl(env, u64::from(pod.unlock_ledger))?;
     env.storage().persistent().set(&key, pod);
-    env.storage()
-        .persistent()
-        .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
+    env.storage().persistent().extend_ttl(&key, target, target);
+    accounting::retain(env, &pod.asset, target)?;
+    Ok(())
 }
 
 /// View: returns the pod record as-is.
@@ -64,6 +62,7 @@ pub fn create_pod(
     if claim_pubkey == BytesN::from_array(env, &[0; 32]) {
         return Err(Error::BadSignature);
     }
+    crate::retention_ttl(env, u64::from(unlock_ledger))?;
     // Require possession of a usable claim key before moving any funds. Bind the
     // proof to all creation terms so a proof from another Pod is not a substitute.
     let mut payload = crate::credential_payload(env, b"agyion:pod-create:v3\0");
@@ -89,7 +88,7 @@ pub fn create_pod(
     };
 
     let id = next_id(env);
-    write(env, id, &pod);
+    write(env, id, &pod)?;
     Ok(id)
 }
 
@@ -128,6 +127,6 @@ pub fn claim_pod(
     accounting::solvent(env, &pod.asset)?;
 
     pod.state = 1;
-    write(env, pod_id, &pod);
+    write(env, pod_id, &pod)?;
     Ok(())
 }
