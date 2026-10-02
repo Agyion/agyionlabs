@@ -184,10 +184,26 @@ silenced. The dependency path still needs routine review as Stellar SDK crates
 change.
 
 The contract CI now installs the pinned audit-tool version and scans all four
-lockfiles on every workflow run. The earlier exact-source CI below predates this
-new step; the first hosted result for the added gate must be recorded separately.
-This checks published RustSec advisories for the locked crates. It is not a
-source-level, supply-chain provenance or cryptographic audit.
+lockfiles on every workflow run. This checks published RustSec advisories for the
+locked crates. It is not a source-level, supply-chain provenance or cryptographic
+audit.
+
+## Archived-state failure handling
+
+On 3 October, the private-pool reader tests passed 11/11 and the submission plus
+revocation suites passed 33/33 on commit `fedb8e55e489d5092e78686daa94563f35b5666a`.
+Missing or expired archived entries fail closed instead of becoming empty
+history or an inferred unspent note. A simulation that requests restoration is
+refused before wallet signing, and unresolved transaction reservations remain
+bound to their original signed hash. Focused logs and source hashes are retained
+locally under `artifacts/security/2026-10-03-archive-refusal/`; this ignored
+evidence is not part of the source commit.
+
+These are fixture and RPC-adapter checks. They do not exercise Stellar ledger
+archival and restoration. The app/client has no automated live restoration
+workflow, so users may be unable to access notes until the required network
+state is restored through a separately verified path. This is a recoverability
+and release-readiness gap, not proof of a theft exploit or a completed fix.
 
 ## Exact source CI
 
@@ -201,6 +217,16 @@ guards, type/style checks, proof fixture provenance, public proving assets,
 actual private proof and adversarial-circuit checks, the static testnet site
 build, and all dependency advisory checks. The run did not perform a Cloudflare
 deployment or activate a funds service. Published website state is separate.
+
+The follow-up source commit `fedb8e55e489d5092e78686daa94563f35b5666a` added
+the RustSec check and passed both jobs in
+[run 37066419389](https://github.com/Agyion/agyionlabs/actions/runs/37066419389).
+The contracts job rebuilt and tested all three WASMs, passed strict Rust checks,
+installed `cargo-audit 0.22.2`, and scanned the four lockfiles. The only reports
+were the retained informational `paste 1.0.15` unmaintained warnings; no
+vulnerability advisories were found. The application job also passed its
+workspace, browser/concurrency, type/style, proof, build and npm advisory checks.
+This run did not deploy the site or activate a funds service.
 
 ## Release boundaries
 

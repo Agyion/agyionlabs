@@ -60,7 +60,20 @@ On 3 October, `cargo-audit 0.22.2` scanned all four Rust lockfiles against the
 RustSec database updated 2 October: zero known vulnerabilities, with one
 informational unmaintained `paste 1.0.15` warning per lockfile. A pinned Rust
 advisory scan is now part of contract CI. The exact hosted result for that new
-step is recorded after its first run completes.
+step passed on the follow-up source commit
+`fedb8e55e489d5092e78686daa94563f35b5666a`; both jobs succeeded in [run
+37066419389](https://github.com/Agyion/agyionlabs/actions/runs/37066419389).
+The contracts job installed `cargo-audit 0.22.2` and scanned all four locks.
+It reported only the retained informational unmaintained `paste 1.0.15`
+warning, with no vulnerability advisory. No Cloudflare deployment or funds
+activation occurred.
+
+For private-pool archive failure handling, the focused reader suite passed 11/11
+and submission/revocation passed 33/33 on `fedb8e55e489d5092e78686daa94563f35b5666a`.
+Missing/expired archive records and restore-required simulations fail closed
+before signing. The live Stellar restoration flow remains unimplemented and
+untested; users may need separate network-state restoration before funds are
+accessible again. These tests establish local refusal behavior only.
 
 ## Source review
 
