@@ -331,11 +331,33 @@ SHA256: `32b5136f899130324041934ba8087e005eae13d36a9b4c8092e981cf909ee2a5`;
 Private Pool: `4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018`;
 Fade Market: `d19259f2f7171f2f1a049798835a618aa4f2dda9b5535d17b9eca94d7cf37d3d`.
 All four Rust lockfiles passed `cargo audit` with no known vulnerability
-advisories; the allowed `paste 1.0.15` unmaintained warning remains. These are
-local results; exact-source hosted CI is still required before treating this
-increment as verified. No deployment or activation occurred.
+advisories; the allowed `paste 1.0.15` unmaintained warning remains. Exact
+source commit `a5a7c1f252d4983b50183a6f87cf6138955e8249` then passed both jobs
+in [GitHub Actions run 37079230164](https://github.com/Agyion/agyionlabs/actions/runs/37079230164).
+The contracts job passed native/WASM tests, strict Rust checks and RustSec;
+the application job passed workspace, browser/concurrency, type/style, proof,
+static build and npm advisory checks. This verifies the recorded source
+increment only. No deployment or activation occurred.
 
 `rustfmt --check` passes on every Rust file changed in this increment. The
 crate-wide `cargo fmt --check` still reports formatting differences in the
 untouched `accounting_test.rs` and `test.rs`; this workflow does not currently
 make crate-wide formatting a CI gate.
+
+## Nullifier archival replay check
+
+The review considered whether an old spent-note nullifier could become
+replayable when its persistent entry reaches TTL. The private-pool contract
+checks the persistent nullifier before proof verification. Under Soroban,
+expired persistent entries are archived, not exposed to contract code as
+missing keys: invocation must restore the entry first or fails before contract
+execution. The [Stellar archival guide](https://developers.stellar.org/docs/learn/fundamentals/contract-development/storage/state-archival)
+describes automatic restoration through the invocation restore list and manual
+restoration when that list is unavailable.
+
+This is consistent with the isolated Protocol 28 test: after actual eviction,
+the guarded pool required explicit restoration; the original restored note was
+then spent, and simulation of the same still-time-valid withdrawal proof
+returned `Spent`. This bounded local evidence does not establish a public
+network or in-app restoration workflow. No nullifier-expiry replay was
+reproduced, so this review hypothesis is not recorded as an exploit finding.
