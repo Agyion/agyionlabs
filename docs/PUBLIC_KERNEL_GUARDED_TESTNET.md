@@ -20,6 +20,23 @@ included transactions and exact readback boundaries.
 | Native XLM SAC | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` |
 | Circle testnet USDC SAC | `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` |
 
+## Later source hardening is not deployed here
+
+The deployment above still contains the earlier V4 WASM hash
+`d101e0fea1852cf057049cc08695b9e26a8b3c6a82db58d4c2706db03a22b186`.
+The 3 October deadline-retention correction was built and tested as WASM
+`32b5136f899130324041934ba8087e005eae13d36a9b4c8092e981cf909ee2a5` (27,853
+bytes) at source commit `a5a7c1f252d4983b50183a6f87cf6138955e8249`; its exact
+source [CI run](https://github.com/Agyion/agyionlabs/actions/runs/37079230164)
+passed. That bytecode has not been deployed. The earlier testnet instance and
+its initial readback therefore do not verify deadline-based retention.
+
+Keep the existing V4 instance inactive and do not treat lifecycle preparation
+bound to its older contract/hash as a test of the corrected source. Before any
+V4 lifecycle or activation claim, deploy the reviewed current bytes to a fresh
+immutable contract, authenticate the readback, then run the actual contract
+lifecycles and recovery checks. The public application still selects V3.
+
 The [deployment entry point](../scripts/deploy-public-testnet.mjs) defaults to an
 offline plan. Funding, uploading code and creating the contract each require a
 distinct explicit phase and the reviewed manifest hash. The executor validates

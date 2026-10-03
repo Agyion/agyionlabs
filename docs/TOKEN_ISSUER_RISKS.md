@@ -57,18 +57,21 @@ The current source implements these guards for fresh immutable deployments:
 
 | Candidate | Locally tested WASM SHA-256 | Bytes | Named native and WASM tests |
 | --- | --- | ---: | ---: |
-| Public kernel V4 | `d101e0fea1852cf057049cc08695b9e26a8b3c6a82db58d4c2706db03a22b186` | 26,696 | 75 |
-| Private pool with backing accounting | `4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018` | 34,248 | 44 |
+| Public kernel V4 with 3 October deadline retention | `32b5136f899130324041934ba8087e005eae13d36a9b4c8092e981cf909ee2a5` | 27,853 | 77 |
+| Private pool with backing accounting | `4ead5defa386974742071212701f3bcb327fd0a1bc6bf14df2f97f08b11b5018` | 34,248 | 45 |
 
 These are locally built, unoptimized artifacts. The private candidate now has a
 [separate testnet deployment](PRIVATE_POOL_GUARDED_TESTNET.md) with verified initial
 state. It is now the application default after separate actual XLM and USDC
 lifecycles, scoped disclosure and compatible browser recovery checks. The
 original private pool remains available for recovery; its chain permissions are
-unchanged. The [public V4 candidate](PUBLIC_KERNEL_GUARDED_TESTNET.md) is now
-deployed separately on testnet with verified initial accounting. It is not the
-application default; actual public lifecycles and compatible recovery remain
-activation gates.
+unchanged. An earlier public V4 candidate
+(`d101e0fea1852cf057049cc08695b9e26a8b3c6a82db58d4c2706db03a22b186`) is
+deployed inactive on testnet with verified initial accounting, but it does not
+contain the later deadline-retention fix. The current tested source
+(`32b5136f899130324041934ba8087e005eae13d36a9b4c8092e981cf909ee2a5`) is not
+deployed. The public app still selects V3; actual V4 lifecycles, fresh
+deployment and compatible legacy recovery remain activation gates.
 The public constructor fixes one to eight supported SACs. Both candidates check
 SAC executable identity through the host, initialize liabilities at construction,
 check existing backing before accepting new money or paying obligations, and

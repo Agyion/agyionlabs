@@ -339,6 +339,12 @@ the application job passed workspace, browser/concurrency, type/style, proof,
 static build and npm advisory checks. This verifies the recorded source
 increment only. No deployment or activation occurred.
 
+The inactive V4 contract already present on testnet is still pinned to the
+earlier WASM `d101e0fea1852cf057049cc08695b9e26a8b3c6a82db58d4c2706db03a22b186`.
+The corrected local/CI-tested build is `32b5136f899130324041934ba8087e005eae13d36a9b4c8092e981cf909ee2a5`; it has not been deployed. The old deployment's initial readback and
+the lifecycle preparation pinned to it do not verify the new retention logic.
+V3 remains the selected public deployment.
+
 `rustfmt --check` passes on every Rust file changed in this increment. The
 crate-wide `cargo fmt --check` still reports formatting differences in the
 untouched `accounting_test.rs` and `test.rs`; this workflow does not currently
